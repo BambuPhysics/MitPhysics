@@ -327,6 +327,13 @@ void PhotonIDMod::Process()
     }    
     // ---------------------------------------------------------------------
 
+    //add for mono photon: egamma medium working point
+    if(fPhIdType == kEgammaMedium) {
+      if(PhotonTools::PassEgammaMediumSelectionWithEleVeto(ph, fElectrons,fConversions,bsp,fPV->At(0), fPFCands, fPV, rho2012, fPhotonPtMin,fApplyElectronVeto,fInvertElectronVeto) )
+        GoodPhotons->AddOwned(ph);
+      continue; // go to next Photons
+    } 
+
     //loose photon preselection for subsequent mva
     if(fPhIdType == kMITPhSelection ) {
       if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPresel(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),_tRho,fApplyElectronVeto,fInvertElectronVeto) ) {
@@ -582,6 +589,10 @@ void PhotonIDMod::SlaveBegin()
     fPhIdType = kBaseLineCiCPFNoPresel;
     fPhotonIsoType = "NoIso";
   }  
+  else if (fPhotonIDType.CompareTo("EgammaMedium") == 0) {
+    fPhIdType = kEgammaMedium;
+    fPhotonIsoType = "NoIso";
+  } 
   else if (fPhotonIDType.CompareTo("MITMVAId") == 0) {
     fPhIdType = kMITMVAId;
     fPhotonIsoType = "NoIso";

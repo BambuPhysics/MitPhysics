@@ -169,16 +169,17 @@ namespace mithep
         kTight,             //"Tight"
         kLoose,             //"Loose"
         kLooseEM,           //"LooseEM"
-	kBaseLineCiC,         //"2011" Hgg BaseLine CiC
-	kBaseLineCiCPF,       //"2012" Hgg BaseLine CiC
-	kBaseLineCiCPFNoPresel,       //"2012" Hgg BaseLine CiC plus eleveto -- for mono photon
-	kMITMVAId,            // MingMing MVA ID
-	kMITPhSelection,      //MIT loose preselection (for mva)
-	kMITPFPhSelection,    //MIT loose preselection (for mva)
+        kBaseLineCiC,          //"2011" Hgg BaseLine CiC
+        kBaseLineCiCPF,        //"2012" Hgg BaseLine CiC
+        kBaseLineCiCPFNoPresel,//"2012" Hgg BaseLine CiC plus eleveto -- for mono photon
+        kMITMVAId,             // MingMing MVA ID
+        kMITPhSelection,       //MIT loose preselection (for mva)
+        kMITPFPhSelection,     //MIT loose preselection (for mva)
         kMITPFPhSelectionNoEcal,
-	kMITPFPhSelection_NoTrigger,    //MIT loose preselection (for mva, no Trigger)
-	kVgamma2011Selection, // Vgamma 2011 Photon ID
-	kTrivialSelection,    // only pt & eta cuts
+        kMITPFPhSelection_NoTrigger,    //MIT loose preselection (for mva, no Trigger)
+        kVgamma2011Selection,  // Vgamma 2011 Photon ID
+        kTrivialSelection,     // only pt & eta cuts
+        kEgammaMedium,
         kCustomId             //"Custom"
       };
 
@@ -187,7 +188,7 @@ namespace mithep
         kNoIso,             //"NoIso"
         kCombinedIso,       //"CombinedIso"
         kCustomIso,         //"Custom"
-	kMITPUCorrected     //PileUp Corrected Hgg Isolation
+        kMITPUCorrected     //PileUp Corrected Hgg Isolation
       };
 
     protected:

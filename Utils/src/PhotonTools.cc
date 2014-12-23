@@ -775,7 +775,113 @@ bool PhotonTools::PassCiCPFIsoSelectionWithEleVeto(const Photon* ph,
 }
 
 
+bool PhotonTools::PassEgammaMediumSelectionWithEleVeto(const Photon* ph,
+                                                       const ElectronCol *els,
+                                                       const DecayParticleCol *conversions, const BaseVertex *bs,
+                                                       const Vertex* vtx,
+                                                       const PFCandidateCol* pfCol,
+                                                       const VertexCol* vtxCol,
+                                                       double rho, double ptmin,
+                                                       Bool_t applyElectronVeto, Bool_t invertElectronVeto,
+                                                       std::vector<double>* kin // store variables for debugging...
+                                                       ) {
+  Bool_t PassEleVetoRaw = PhotonTools::PassElectronVetoConvRecovery(ph, els, conversions, bs);
+  Bool_t PassEleVeto = (!applyElectronVeto && !invertElectronVeto) || (applyElectronVeto && !invertElectronVeto && PassEleVetoRaw) || (!applyElectronVeto && invertElectronVeto && !PassEleVetoRaw);
+  
+  ////debug
+  //std::cout
+  //<< " ph->Pt() " << ph->Pt()
+  //<< " ph->Eta() " << ph->Eta()
+  //<< " ph->IsEB() " << ph->IsEB()
+  //<< " ph->IsEE() " << ph->IsEE()
+  //<< " PassEleVeto " << PassEleVeto
+  //<< std::endl;
+  
+  if(!PassEleVeto){
+    return false;
+  }
+  // prepare the values of the cuts (cat 0/1 is barrel/endcap)
+  float egmedium_all_cuts[] = {
+    0.05, 0.05,
+    0.011, 0.033,
+    1.5, 1.2,
+    1.0, 1.5,
+    0.7, 1.0};
+  // prepare the values of the EA (cat 0/1/2 is CH/NH/Photons)
+  float effective_area[] = {
+    0.012, 0.030, 0.148,
+    0.010, 0.057, 0.130,
+    0.014, 0.039, 0.112,
+    0.012, 0.015, 0.216,
+    0.016, 0.024, 0.262,
+    0.020, 0.039, 0.260,
+    0.012, 0.072, 0.266};
+    
+  // determine the eta category (needed for the EA)
+  double absEta = ph->SCluster()->AbsEta();
+  int _etaCat = 0;
+  if (absEta >= 1 && absEta < 1.479) _etaCat = 1;
+  if (absEta >= 1.479 && absEta < 2.0)_etaCat = 2;
+  if (absEta >= 2.0 && absEta < 2.2) _etaCat = 3;
+  if (absEta >= 2.2 && absEta < 2.3) _etaCat = 4;
+  if (absEta >= 2.3 && absEta < 2.4) _etaCat = 5;
+  if (absEta >= 2.4) _etaCat = 6;
+  // determine EB/EE category
+  Bool_t isbarrel = true;
+  if (_etaCat >= 2) 
+    isbarrel = false;
+    
+  // compute all relevant observables first
+  double CHIso03 = IsolationTools::PFChargedIsolation(ph, vtx, 0.3, 0.0, pfCol);
+  double NHIso03 = IsolationTools::PFNeutralHadronIsolation(ph, 0.3, 0.0, pfCol);
+  double PHIso03 = IsolationTools::PFGammaIsolation(ph, 0.3, 0.0, pfCol);
+  double combIso1 = TMath::Max(CHIso03 - rho*effective_area[0+_etaCat*3], 0.);
+  double combIso2 = TMath::Max(NHIso03 - rho*effective_area[1+_etaCat*3], 0.);
+  double combIso3 = TMath::Max(PHIso03 - rho*effective_area[2+_etaCat*3], 0.);
+  double covIEtaIEta =ph->CoviEtaiEta();
+  double HoE = ph->HadOverEmTow(); //single tower H/E
+  // check which category it is ...
+  int _tCat = 1;
+  if ( !isbarrel ) 
+    _tCat = 2;
+  float passCuts = 1.;
+  if (ph->Pt() <= ptmin) 
+    passCuts = -1.;
+  if (!ph->IsEB() && !ph->IsEE()) 
+    passCuts = -1.;
+  if( !(
+      HoE < egmedium_all_cuts[_tCat-1+0*2]
+      &&covIEtaIEta < egmedium_all_cuts[_tCat-1+1*2]
+      &&combIso1 < egmedium_all_cuts[_tCat-1+2*2]
+      &&combIso2 < (egmedium_all_cuts[_tCat-1+3*2] + 0.04 * ph->Pt())
+      &&combIso3 < (egmedium_all_cuts[_tCat-1+4*2] + 0.005 * ph->Pt()) 
+      )) 
+      passCuts = -1.;
 
+  //// debug
+  //std::cout
+  //<< " rho " << rho
+  //<< " CHIso03 " << CHIso03
+  //<< " NHIso03 " << NHIso03
+  //<< " PHIso03 " << PHIso03
+  //<< " combIso1 " << combIso1
+  //<< " combIso2 " << combIso2
+  //<< " combIso3 " << combIso3
+  //<< " covIEtaIEta " << covIEtaIEta
+  //<< " HoE " << HoE
+  //<< " Decision " << (bool) (
+      //HoE < egmedium_all_cuts[_tCat-1+0*2]
+      //&&covIEtaIEta < egmedium_all_cuts[_tCat-1+1*2]
+      //&&combIso1 < egmedium_all_cuts[_tCat-1+2*2]
+      //&&combIso2 < (egmedium_all_cuts[_tCat-1+3*2] + 0.04 * ph->Pt())
+      //&&combIso3 < (egmedium_all_cuts[_tCat-1+4*2] + 0.005 * ph->Pt()) 
+      //)
+  //<< std::endl;
+
+  if(passCuts > 0.) 
+    return true;
+  return false;
+}
 
 const MCParticle *PhotonTools::MatchMC(const Particle *ph, const MCParticleCol *c, Bool_t matchElectrons) {
 

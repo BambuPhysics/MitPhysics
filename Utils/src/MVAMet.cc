@@ -59,64 +59,6 @@ MVAMet::~MVAMet()
 
 }
 //--------------------------------------------------------------------------------------------------
-/*
-void MVAMet::setVariables(TMVA::Reader *iReader,bool iScale) { 
-  iReader->AddVariable( "npv"              , &fNPV      ); 
-  iReader->AddVariable( "u"                , &fU       ); 
-  iReader->AddVariable( "uphi"             , &fUPhi    );
-  iReader->AddVariable( "chsumet/sumet"    , &fTKSumEt ); 
-  iReader->AddVariable( "tku"              , &fTKU     );
-  iReader->AddVariable( "tkuphi"           , &fTKUPhi  );
-  iReader->AddVariable( "nopusumet/sumet"  , &fNPSumEt );
-  iReader->AddVariable( "nopuu"            , &fNPU     );
-  iReader->AddVariable( "nopuuphi"         , &fNPUPhi  );
-  iReader->AddVariable( "pusumet/sumet"    , &fPUSumEt );
-  iReader->AddVariable( "pumet"            , &fPUMet   );
-  iReader->AddVariable( "pumetphi"         , &fPUMetPhi);
-  iReader->AddVariable( "pucsumet/sumet"   , &fPCSumEt );
-  iReader->AddVariable( "pucu"             , &fPCU     );
-  iReader->AddVariable( "pucuphi"          , &fPCUPhi  );
-  iReader->AddVariable( "jspt_1"           , &fJSPt1   );
-  iReader->AddVariable( "jseta_1"          , &fJSEta1  );
-  iReader->AddVariable( "jsphi_1"          , &fJSPhi1  );
-  iReader->AddVariable( "jspt_2"           , &fJSPt2   );
-  iReader->AddVariable( "jseta_2"          , &fJSEta2  );
-  iReader->AddVariable( "jsphi_2"          , &fJSPhi2  );
-  iReader->AddVariable( "nalljet"          , &fNAllJet );
-  iReader->AddVariable( "njet"             , &fNJet    );
-  if(iScale) iReader->AddVariable( "uphi_mva"         , &fUPhiMVA );
-}
-//--------------------------------------------------------------------------------------------------
-void MVAMet::Initialize( TString iU1MethodName,
-			 TString iPhiMethodName,
-			 TString iJetMVAFile, 
-			 TString iU1Weights, 
-			 TString iPhiWeights, 
-			 MVAMet::MVAType     iType) { 
-  
-  fIsInitialized = kTRUE;
-  fRecoilTools = new RecoilTools(iJetMVAFile);
-  
-  fU1MethodName  = iU1MethodName;
-  fPhiMethodName = iPhiMethodName;
-  fType          = iType;
-  fPhiReader     = new TMVA::Reader( "!Color:!Silent:Error" );  
-  fU1Reader      = new TMVA::Reader( "!Color:!Silent:Error" );  
-  if (fType == kBaseline) {
-    setVariables(fPhiReader,false);
-    setVariables(fU1Reader ,true);
-  }
-  fPhiReader->BookMVA(fPhiMethodName , iPhiWeights );
-  fU1Reader ->BookMVA(fU1MethodName  , iU1Weights );
-
-  std::cout << "Jet ID MVA Initialization\n";
-  std::cout << "Phi Method Name : " << fPhiMethodName << " , type == " << iType << std::endl;
-  std::cout << "U1  Method Name : " << fU1MethodName  << " , type == " << iType << std::endl;
-  
-
-}
-*/
-//--------------------------------------------------------------------------------------------------
 void MVAMet::Initialize(TString iJetLowPtFile, 
 			TString iJetHighPtFile,
 			TString iJetCutFile,
@@ -390,6 +332,7 @@ Met MVAMet::GetMet(	Bool_t iPhi,
 			FactorizedJetCorrector *iJetCorrector,
 			const PileupEnergyDensityCol *iPUEnergyDensity,
 			int iNPV,
+      Bool_t hasPhotons,
 			Bool_t printDebug) {
 
   int lNPV = 0;
@@ -448,14 +391,20 @@ Met MVAMet::GetMet(	Bool_t iPhi,
   fNJet     = lNJet   ;
   fNAllJet  = lNAllJet;
   fNPV      = lNPV    ;
-   Float_t lMVA = evaluatePhi();
-   if(!iPhi) fUPhiMVA = fUPhi + lMVA; 
+  Float_t lMVA = evaluatePhi();
+  //Perform photon check and fix events with unphysical properties
+  if (hasPhotons)
+    if (fTKU/iPtVis < 0.1 || fNPU/iPtVis < 0.1) lMVA = 0.;
+  if(!iPhi) fUPhiMVA = fUPhi + lMVA; 
   //Not no nice feature of teh training
   //fTKSumEt  /= lPFRec.SumEt();
   //fNPSumEt  /= lPFRec.SumEt();
   //fPUSumEt  /= lPFRec.SumEt();
   //fPCSumEt  /= lPFRec.SumEt();
-   if(!iPhi) lMVA     = evaluateU1();//fU1Reader    ->EvaluateMVA( fU1MethodName );  
+  if(!iPhi) lMVA     = evaluateU1();//fU1Reader    ->EvaluateMVA( fU1MethodName );  
+  //Perform photon check and fix events with unphysical properties
+  if (hasPhotons)
+    if (fTKU/iPtVis < 0.1 || fNPU/iPtVis < 0.1) lMVA = 1.;
   fUMVA              = fU*lMVA;
 
   TLorentzVector lUVec(0,0,0,0);   lUVec .SetPtEtaPhiM(fUMVA,0,fUPhiMVA,0);
@@ -469,10 +418,11 @@ Met MVAMet::GetMet(	Bool_t iPhi,
   double lCovU1 = evaluateCovU1();
   double lCovU2 = evaluateCovU2();
 
+  //Now Compute the covariance matrix in X and Y                                                                                                                                                           
   double lCos2 = cos(fUPhiMVA)*cos(fUPhiMVA);
   double lSin2 = sin(fUPhiMVA)*sin(fUPhiMVA);
-  
-  //Now Compute teh covariance matrix in X and Y                                                                                                                                                           
+
+  //Now Compute the covariance matrix in X and Y                                                                                                                                                           
   (*fCov)(0,0)   =  lCovU1*lCos2+lCovU2*lSin2;
   (*fCov)(1,0)   = -lCovU1*sin(fUPhiMVA)*cos(fUPhiMVA)+lCovU2*sin(fUPhiMVA)*cos(fUPhiMVA);
   (*fCov)(0,1)   =  (*fCov)(1,0);
@@ -1018,9 +968,9 @@ Met MVAMet::GetMet(	Bool_t iPhi,
   return lMet;
 }
 //--------------------------------------------------------------------------------------------------
-Met MVAMet::GetMet(const MuonCol        *iMuons,const ElectronCol *iElectrons,const PFTauCol *iTaus,
-		   const PFCandidateCol *iCands,const PFJetCol  *iJets,const Vertex *iPV,const VertexCol *iVertices,const PFMetCol *iPFMet,
-		   FactorizedJetCorrector *iJetCorrector,const PileupEnergyDensityCol* iPUEnergyDensity) {
+Met MVAMet::GetMet(const MuonCol *iMuons,const ElectronCol *iElectrons,const PFTauCol *iTaus,
+                   const PFCandidateCol *iCands,const PFJetCol *iJets,const Vertex *iPV,const VertexCol *iVertices,const PFMetCol *iPFMet,
+                   FactorizedJetCorrector *iJetCorrector,const PileupEnergyDensityCol* iPUEnergyDensity) {
   const Vertex *lPV = iPV; if(iPV == 0 && iVertices->GetEntries() > 0) lPV = iVertices->At(0); 
   FourVectorM lTotVec(0,0,0,0); double lTotSumEt = 0;
   FourVectorM lVisVec(0,0,0,0); double lVisSumEt = 0;
@@ -1099,9 +1049,10 @@ Met MVAMet::GetMet(const MuonCol        *iMuons,const ElectronCol *iElectrons,co
 			 int(iVertices->GetEntries()));//,true);  
   return lMVAMet;
 }
-Met MVAMet::GetMet(const PhotonCol        *iPhotons,
-		   const PFCandidateCol *iCands,const PFJetCol  *iJets,const Vertex *iPV,const VertexCol *iVertices,const PFMetCol *iPFMet,
-		   FactorizedJetCorrector *iJetCorrector,const PileupEnergyDensityCol* iPUEnergyDensity) {
+//--------------------------------------------------------------------------------------------------
+Met MVAMet::GetMet(const PhotonCol *iPhotons,
+                   const PFCandidateCol *iCands,const PFJetCol  *iJets,const Vertex *iPV,const VertexCol *iVertices,const PFMetCol *iPFMet,
+                   FactorizedJetCorrector *iJetCorrector,const PileupEnergyDensityCol* iPUEnergyDensity) {
   const Vertex *lPV = iPV; if(iPV == 0 && iVertices->GetEntries() > 0) lPV = iVertices->At(0); 
   FourVectorM lTotVec(0,0,0,0); double lTotSumEt = 0;
   FourVectorM lVisVec(0,0,0,0); double lVisSumEt = 0;
@@ -1160,6 +1111,105 @@ Met MVAMet::GetMet(const PhotonCol        *iPhotons,
 			 iJetCorrector,
 			 iPUEnergyDensity,
 			 int(iVertices->GetEntries()));//,true);  
+  return lMVAMet;
+}
+//--------------------------------------------------------------------------------------------------
+Met MVAMet::GetMet(const MuonCol *iMuons,const ElectronCol *iElectrons,const PFTauCol *iTaus,const PhotonCol *iPhotons,
+                   const PFCandidateCol *iCands,const PFJetCol  *iJets,const Vertex *iPV,const VertexCol *iVertices,const PFMetCol *iPFMet,
+                   FactorizedJetCorrector *iJetCorrector,const PileupEnergyDensityCol* iPUEnergyDensity, Bool_t printDebug) {
+  const Vertex *lPV = iPV; if(iPV == 0 && iVertices->GetEntries() > 0) lPV = iVertices->At(0); 
+  FourVectorM lTotVec(0,0,0,0); double lTotSumEt = 0;
+  FourVectorM lVisVec(0,0,0,0); double lVisSumEt = 0;
+  std::vector<std::pair<FourVectorM,FourVectorM> > lDecay; std::vector<int> lId;
+  fNMuons = 0;
+  for(UInt_t i0 = 0; i0 < iMuons->GetEntries(); i0++) {
+    const Muon *pMu = iMuons->At(i0);
+    if(!MetLeptonTools::looseMuId(pMu,iCands,lPV,iVertices)) continue;
+    std::pair<FourVectorM,FourVectorM> pVec(pMu->Mom(),pMu->Mom());
+    lDecay  .push_back(pVec);
+    lId     .push_back(0);
+    fNMuons++;
+  }
+  fNElectrons=0;
+  for(UInt_t i0 = 0; i0 < iElectrons->GetEntries(); i0++) {
+    const Electron *pElectron = iElectrons->At(i0);
+    if(!MetLeptonTools::looseEleId(pElectron,iPUEnergyDensity,iCands,lPV,iVertices)) continue;
+    std::pair<FourVectorM,FourVectorM> pVec(pElectron->Mom(),pElectron->Mom());
+    lDecay  .push_back(pVec);
+    lId     .push_back(1);
+    fNElectrons++;
+  }
+  fNTaus = 0;
+  for(UInt_t i0 = 0; i0 < iTaus->GetEntries(); i0++) {
+    const PFTau *pTau = iTaus->At(i0);
+    if(!fMetLeptonTools->looseTauId(pTau,iPUEnergyDensity)) continue;
+    FourVectorM pVis(0,0,0,0); pVis.SetCoordinates(pTau->Pt()*MetLeptonTools::vis(pTau),pTau->Eta(),pTau->Phi(),pTau->Mass()*MetLeptonTools::vis(pTau));
+    std::pair<FourVectorM,FourVectorM> pVec(pTau->Mom(),pVis);
+    lDecay  .push_back(pVec);
+    lId     .push_back(2);
+    fNTaus++;
+  }
+  fNPhotons = 0;
+  for(UInt_t i0 = 0; i0 < iPhotons->GetEntries(); i0++) {
+    const Photon *pPhoton = iPhotons->At(i0);
+    if(!MetLeptonTools::loosePhotonId(pPhoton)) continue;
+    Float_t photonChargedFrac = MetLeptonTools::chargedFracInCone(pPhoton,iCands,lPV);
+    FourVectorM pVis(0,0,0,0); pVis.SetCoordinates(pPhoton->Pt()*photonChargedFrac,pPhoton->Eta(),pPhoton->Phi(),0);
+    std::pair<FourVectorM,FourVectorM> pVec(pPhoton->Mom(),pVis);
+    lDecay  .push_back(pVec);
+    lId     .push_back(3);
+    fNPhotons++;
+  }
+  std::vector<std::pair<FourVectorM,FourVectorM> > lFinalDecay;
+  std::vector<int>                                 lFinalId;
+  bool hasPhotons = false;
+  for(unsigned int i0 = 0; i0 < lDecay.size(); i0++) { 
+    bool pAdd = true;
+    for(unsigned int i1 = 0; i1 < lDecay.size(); i1++) { 
+      if(i0 == i1) continue;
+      if(MathUtils::DeltaR(lDecay[i0].first,lDecay[i1].first) < 0.5)                                                     pAdd = false;
+      if(!pAdd  &&   lId[i0] != 2 && lId[i1] == 2)                                                                       pAdd = true;
+      if(!pAdd  &&  ((lId[i0] != 2 && lId[i1] != 2) || (lId[i0] == 2 && lId[i1] == 2))
+	        &&                  lDecay[i0].first.pt() >  lDecay[i1].first.pt())                                     pAdd = true;
+      if(MathUtils::DeltaR(lDecay[i0].first,lDecay[i1].first) < 0.5 && lDecay[i0].first.pt() == lDecay[i1].first.pt()) { pAdd = true;
+	for(unsigned int i2 = 0; i2 < lFinalDecay.size(); i2++) if(fabs(lFinalDecay[i2].first.pt() - lDecay[i0].first.pt()) < 0.1) pAdd = false; 
+      }
+      if(!pAdd) break;
+      //if(!pAdd && lId[i2] == 2 && lId[i1] != 2) pAdd = true;
+    }
+    if(pAdd) lFinalDecay.push_back(lDecay[i0]);
+    if(pAdd) lFinalId   .push_back(lId   [i0]);
+    // check of "lepton" is a photon
+    if (lId   [i0] == 3)
+      hasPhotons = true;  
+  }
+  for(unsigned int i0 = 0; i0 < lFinalDecay.size(); i0++) { 
+    lTotVec   += lFinalDecay[i0].first;
+    lVisVec   += lFinalDecay[i0].second;
+    lTotSumEt += lFinalDecay[i0].first.pt();
+    lVisSumEt += lFinalDecay[i0].second.pt();
+  }
+  PFJetOArr *lCleanJets = new PFJetOArr();
+  for(UInt_t i0 = 0; i0 < iJets->GetEntries(); i0++) {
+    const PFJet *pJet = iJets->At(i0);
+    bool pClean = false;
+    for(unsigned int i1 = 0; i1 < lFinalDecay.size(); i1++) {
+      if(MathUtils::DeltaR(pJet->Mom(),lFinalDecay[i1].first) < 0.5) pClean = true;
+    }
+    if(!pClean) lCleanJets->Add(pJet);
+  }
+  //for(unsigned int i0 = 0; i0 < lFinalDecay.size(); i0++) std::cout << "----> " << lFinalDecay[i0].first.pt() << " -- " << lFinalDecay[i0].first.phi() << " -- " << lFinalDecay[i0].first.eta() << " -- " << lFinalId[i0] << " -- " << MathUtils::DeltaR(lFinalDecay[i0].first,lFinalDecay[0].first)<< std::endl;
+  Met lMVAMet = GetMet(  false,
+			 lTotVec.Pt(),lTotVec.Phi(),lTotSumEt,
+			 lVisVec.Pt(),lVisVec.Phi(),lVisSumEt,
+			 iPFMet->At(0),
+			 iCands,lPV,iVertices,
+			 lCleanJets,
+			 iJetCorrector,
+			 iPUEnergyDensity,
+			 int(iVertices->GetEntries()),
+       hasPhotons,
+       printDebug);  
   return lMVAMet;
 }
 

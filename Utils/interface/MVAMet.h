@@ -105,6 +105,7 @@ namespace mithep {
 			FactorizedJetCorrector *iJetCorrector,
 			const PileupEnergyDensityCol *iPileupEnergyDensity,
 			int iNPV,
+			Bool_t hasPhotons=false,
 			Bool_t printDebug=false);
 
     Met GetMet( 	Bool_t iPhi,
@@ -139,13 +140,17 @@ namespace mithep {
 			int iNPV,
 			Bool_t printDebug=false);
 
-    Met GetMet(        const MuonCol        *iMuons,const ElectronCol *iElectrons,const PFTauCol *iTaus,
-		       const PFCandidateCol *iCands,const PFJetCol  *iJets,const Vertex *iPV,const VertexCol *iVertices,const PFMetCol *iPFMet,
-		       FactorizedJetCorrector *iJetCorrector,const PileupEnergyDensityCol* iPUEnergyDensity);
+    Met GetMet(const MuonCol        *iMuons,const ElectronCol *iElectrons,const PFTauCol *iTaus,
+               const PFCandidateCol *iCands,const PFJetCol  *iJets,const Vertex *iPV,const VertexCol *iVertices,const PFMetCol *iPFMet,
+               FactorizedJetCorrector *iJetCorrector,const PileupEnergyDensityCol* iPUEnergyDensity);
 
     Met GetMet(const PhotonCol        *iPhotons,
-	       const PFCandidateCol *iCands,const PFJetCol  *iJets,const Vertex *iPV,const VertexCol *iVertices,const PFMetCol *iPFMet,
-	       FactorizedJetCorrector *iJetCorrector,const PileupEnergyDensityCol* iPUEnergyDensity);
+               const PFCandidateCol *iCands,const PFJetCol  *iJets,const Vertex *iPV,const VertexCol *iVertices,const PFMetCol *iPFMet,
+               FactorizedJetCorrector *iJetCorrector,const PileupEnergyDensityCol* iPUEnergyDensity);
+
+    Met GetMet(const MuonCol *iMuons,const ElectronCol *iElectrons,const PFTauCol *iTaus,const PhotonCol *iPhotons,
+               const PFCandidateCol *iCands,const PFJetCol  *iJets,const Vertex *iPV,const VertexCol *iVertices,const PFMetCol *iPFMet,
+               FactorizedJetCorrector *iJetCorrector,const PileupEnergyDensityCol* iPUEnergyDensity, Bool_t printDebug=false);
 
     TMatrixD*   GetMetCovariance() { return fCov;         }
     Float_t     GetSignificance () { return fSignificance;}

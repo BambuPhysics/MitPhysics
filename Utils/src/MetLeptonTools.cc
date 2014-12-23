@@ -19,9 +19,8 @@ bool MetLeptonTools::looseTauId(const PFTau *iTau,const PileupEnergyDensityCol* 
   if(fabs(iTau->Eta()) > fabs(2.3) )                                  return false;
   if(!iTau->DiscriminationByDecayModeFinding())                       return false;
   if(!iTau->DiscriminationByLooseElectronRejection())                 return false;
-  //if(!iTau->LooseMuonRejection2())                                    return false;
-  //if(!iTau->DiscriminationByVLooseIsolation()   )                   return false;
-  if(fTauIsoMVA->MVAValue(iTau,iPUEnergyDensity->At(0)->Rho()) < 0.8) return false;
+  if(!iTau->LooseCombinedIsolationDBSumPtCorr3Hits() < 2.0)           return false;
+  if(!iTau->LooseMuonRejection2())                                    return false;
   return true;
 }
 bool MetLeptonTools::looseEleId(const Electron *iElectron,const PileupEnergyDensityCol* iPUEnergyDensity,
@@ -29,21 +28,10 @@ bool MetLeptonTools::looseEleId(const Electron *iElectron,const PileupEnergyDens
   if(iElectron->SCluster()  == 0)    return false;  
   if(iElectron->Pt()         < 9.5)  return false;
   if(fabs(iElectron->Eta())  > 2.5)  return false;
-  if(fabs(iElectron->Eta()) > 1.4442 && fabs(iElectron->Eta()) < 1.566) return false;
-  //if(!fEleTools->PassSpikeRemovalFilter(iElectron)) return false;
-  //if(isConversion(iElectron))       return false;                                                                                                                        
-  //if(iElectron->BestTrk()->D0Corrected(*iPV)     > 0.04 )    return false;                                                                                                
-  //if(iElectron->BestTrk()->DzCorrected(*iPV)     > 0.2  )    return false;                                                                                               
-  //if(!passEleMVA(iElectron ,iPUEnergyDensity,iCands,iPV)                             )    return false;                                                                  
-  //if(isoDeltaBeta(iElectron,                 iCands,iPV,iVertices) > 0.30)    return false;                                                                          
-  //return true;                                                                                                                                                                                    
-  
+  if(fabs(iElectron->Eta()) > 1.4442 && fabs(iElectron->Eta()) < 1.566) return false;  
   if(iElectron->GsfTrk() == 0) return false;
   if(iElectron->GsfTrk()) if(iElectron->GsfTrk()->NExpectedHitsInner() > 0) return false;
-  //double lIso = isoPV(iElectron,iCands,iPV,iVertices,true)/iElectron->Et();
-  //if(!iElectron->IsTrackerDriven()) return false;
-  //if(lIso > 0.2) return false;       
-  
+  if(PFIsolationNoGamma(iElectron,iCands)            > 0.3) return false;
   if(iElectron->TrackIsolationDr03()/iElectron->Et() > 0.2) return false;        
   //Electron Veto Id 
   if(fabs(iElectron->Eta()) < 1.5) { 
@@ -53,7 +41,7 @@ bool MetLeptonTools::looseEleId(const Electron *iElectron,const PileupEnergyDens
     if(iElectron->HadronicOverEm()                       > 0.15)    return false;
     double lE = iElectron->SCluster()->Energy();
     double lP = iElectron->P();
-    if(fabs(1./lE-1./lP)                                 > 0.05 )    return false;
+    if(fabs(1./lE-1./lP)                                 > 0.05 )   return false;
   } else { 
     if(fabs(iElectron->DeltaEtaSuperClusterTrackAtVtx()) > 0.009)   return false;
     if(fabs(iElectron->DeltaPhiSuperClusterTrackAtVtx()) > 0.10)    return false;
@@ -61,16 +49,14 @@ bool MetLeptonTools::looseEleId(const Electron *iElectron,const PileupEnergyDens
     if(iElectron->HadronicOverEm()                       > 0.10)    return false;
     double lE = iElectron->SCluster()->Energy();
     double lP = iElectron->P();
-    if(fabs(1./lE-1./lP)                                 > 0.05 )    return false;
+    if(fabs(1./lE-1./lP)                                 > 0.05 )   return false;
   }
   return true;
 }
 bool MetLeptonTools::looseMuId(const Muon *iMu,const PFCandidateCol *iCands,const Vertex *iPV,const VertexCol *iVertices) {
-  if(iMu->TrackerTrk() == 0)                                    return false;
-  if(iMu->Pt()                                  < 9.5 )         return false;
+  if(iMu->TrackerTrk()                         == 0  )          return false;
+  if(iMu->Pt()                                  < 9.5)          return false;
   if(fabs(iMu->BestTrk()->Eta())                > 2.5)          return false;
-  //if(fabs(iMu->BestTrk()->DzCorrected(*iPV))    > 0.2)          return false;
-  //if(iMu->BestTrk()->D0Corrected(*iPV)          > 2.0)          return false;
   if(iMu->BestTrk()->D0()                       > 2.0)          return false;
   if(iMu->BestTrk()->RChi2()                    > 10 )          return false;
   if(iMu->TrackerTrk()->NPixelHits()            < 1  )          return false;
@@ -78,14 +64,14 @@ bool MetLeptonTools::looseMuId(const Muon *iMu,const PFCandidateCol *iCands,cons
   if(iMu->NValidHits()                          < 1  )          return false;
   if(iMu->NMatches()                            < 1  )          return false;
   if(PFIsolation(iMu,iCands)                    > 0.3)          return false;
-  //if(isoPV(iMu,iCands,iPV,iVertices)/iMu->Pt()   > 0.2)          return false;
-  //if(iMu->IsoR03SumPt()/iMu->Pt()                > 0.2)         return false;
   return true;
 }
 bool MetLeptonTools::loosePhotonId(const Photon *iPhoton) { 
   if(iPhoton->Pt()        <   20)                                   return false;
   if(fabs(iPhoton->Eta()) > 1.45)                                   return false; 
   if(iPhoton->HadOverEm() > 0.05)                                   return false;
+  if(iPhoton->HadOverEm() > 0.05)                                   return false;
+  if(iPhoton->HasPixelSeed())                                       return false;
   if(iPhoton->CoviEtaiEta() > 0.01)                                 return false;
   if(iPhoton->HollowConeTrkIsoDr04()    > (2.+0.002*iPhoton->Pt())) return false;
   return true;
@@ -109,9 +95,20 @@ Float_t MetLeptonTools::PFIsolation(const ChargedParticle *iLep,const PFCandidat
      if(pDR < 0.01 && (pCand->PFType() != PFCandidate::eNeutralHadron || pCand->PFType() != PFCandidate::eGamma)) continue;
      if(pCand->Pt() < 0.5 && (pCand->PFType() != PFCandidate::eNeutralHadron || pCand->PFType() != PFCandidate::eGamma)) continue;
      if(pCand->PFType() != PFCandidate::eNeutralHadron && pCand->PFType() != PFCandidate::eGamma && pCand->PFType() != PFCandidate::eHadron ) continue;
-     //if(pCand->PFType() != PFCandidate::eHadron) continue;
-     //if(pCand->Pt() < 0.5) continue;
-     //if(pDR         < 0.0001 && fabs(iLep->Eta()) > 1.56)   continue;
+     if(pDR         > 0.3)                                 continue;
+    lPtSum += pCand->Pt();
+  }
+  return lPtSum/iLep->Pt();
+}
+Float_t MetLeptonTools::PFIsolationNoGamma(const ChargedParticle *iLep,const PFCandidateCol *iCands) {
+  Double_t lPtSum = 0.;
+  for(UInt_t i0 = 0; i0 < iCands->GetEntries(); i0++) {
+    const PFCandidate *pCand = iCands->At(i0);
+     Double_t pDR = MathUtils::DeltaR(iLep->Mom(), pCand->Mom());
+     if(pDR < 0.0001) continue;
+     if(pDR < 0.01 && (pCand->PFType() != PFCandidate::eNeutralHadron)) continue;
+     if(pCand->Pt() < 0.5 && (pCand->PFType() != PFCandidate::eNeutralHadron)) continue;
+     if(pCand->PFType() != PFCandidate::eNeutralHadron && pCand->PFType() != PFCandidate::eHadron ) continue;
      if(pDR         > 0.3)                                 continue;
     lPtSum += pCand->Pt();
   }
@@ -152,4 +149,25 @@ Float_t MetLeptonTools::isoPV(const ChargedParticle *iLep,const PFCandidateCol *
     lPtSumCharge += pCand->Pt();
   }
   return lPtSumCharge;// + TMath::Max(lPtSumNeut-lPtSumPU*0.5,0.))/iLep->Pt();
+}
+
+// ------ ported from -------------------------------------------------------- // 
+// ------ JetMETCorrections-METPUSubtraction/plugins/PFMETProducerMVA.cc ----- // 
+Float_t MetLeptonTools::chargedFracInCone(const Photon *iPhoton,const PFCandidateCol *iCands,
+                                          const Vertex *iPV) {
+  FourVectorM lVis(0,0,0,0);
+  for(UInt_t i0 = 0; i0 < iCands->GetEntries(); i0++) {
+    const PFCandidate *pCand = iCands->At(i0);
+    Double_t pDR = MathUtils::DeltaR(iPhoton->Mom(), pCand->Mom());
+    if(pDR         > 0.2)                       continue;
+    Double_t pDz = -999; // PH: If no vertex is reconstructed in the event
+                         // or PFCandidate has no track, set dZ to -999
+    if(iPV != 0 && pCand->HasTrk()) 
+      pDz = TMath::Abs(pCand->BestTrk()->DzCorrected(*iPV)); 
+    
+    if(TMath::Abs(pDz) > 0.1) continue;
+    lVis += pCand->Mom();
+  }
+  
+  return lVis.Pt()/iPhoton->Pt();
 }

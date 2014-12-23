@@ -1314,7 +1314,7 @@ Double_t IsolationTools::PFGammaIsolation(const Photon *p, Double_t extRadius, D
     
     if (isbarrel && dEta<0.015)
       continue;
-    if (!isbarrel && dR<0.07)
+    if (!isbarrel && dR<0.00864*fabs(TMath::SinH(p->SCluster()->Eta()))*4.)
       continue;
     if (dR<intRadius)
       continue;
