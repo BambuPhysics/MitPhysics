@@ -31,6 +31,7 @@
 #include "MitPhysics/Utils/interface/MVAVBF.h"
 #include "MitPhysics/Utils/interface/ElectronEnergyRegression.h"
 #include "MitPhysics/Utils/interface/AntiElectronIDMVA3.h"
+#include "MitPhysics/Utils/interface/RhoUtilities.h"
 #endif
 
 #ifdef __CINT__
@@ -77,4 +78,6 @@
 #pragma link C++ class mithep::MVAVBF;
 #pragma link C++ class mithep::ElectronEnergyRegression;
 #pragma link C++ class mithep::AntiElectronIDMVA3;
+#pragma link C++ class mithep::RhoUtilities;
+#pragma link C++ enum mithep::RhoUtilities::RhoType;
 #endif
