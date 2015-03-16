@@ -37,8 +37,8 @@ namespace mithep
       Int_t                       GetNEvents()      const { return fNEvents;       }
       Int_t                       GetNAccepted()    const { return fNAcceped;      }
       Int_t                       GetNFailed()      const { return fNFailed;       }
-      TString                     GetOutputName()   const { return fGoodVertexesName; }
-      TString                     GetGoodVertexesName() const { return GetOutputName(); }
+      const char                 *GetOutputName()   const { return fGoodVertexesName; }
+      const char                 *GetGoodVertexesName() const { return GetOutputName(); }
       void                        SetAbortIfNotAccepted(Bool_t b)   { fAbort = b;           }
       void                        SetIsMC(Bool_t b)                 { fIsMC = b;            }
       void                        SetMinVertexNTracks(UInt_t n)     { fMinVertexNTracks = n;}
