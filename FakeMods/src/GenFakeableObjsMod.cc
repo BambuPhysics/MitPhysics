@@ -47,9 +47,6 @@ GenFakeableObjsMod::GenFakeableObjsMod(const char *name, const char *title) :
   fEndcapSuperClusterBranchName(Names::gkEndcapSuperClusterBrn),
   fVertexName(ModNames::gkGoodVertexesName),
   fConversionBranchName(Names::gkMvfConversionBrn),
-  fGoodJetsName(ModNames::gkGoodJetsName),
-  fCleanElectronsName(ModNames::gkCleanElectronsName),
-  fCleanMuonsName(ModNames::gkCleanMuonsName),
   fMCLeptonsName(ModNames::gkMCLeptonsName),
   fMCTausName(ModNames::gkMCTausName),
   fElFakeableObjsName(ModNames::gkElFakeableObjsName),
@@ -142,15 +139,6 @@ void GenFakeableObjsMod::Process()
   // get input clean object collections
   mithep::ParticleOArr *CleanLeptons = dynamic_cast<mithep::ParticleOArr*>
     (FindObjThisEvt(ModNames::gkMergedLeptonsName));
-  const ElectronCol *CleanElectrons = 0;
-  if (!fCleanElectronsName.IsNull())
-    CleanElectrons = GetObjThisEvt<ElectronCol>(fCleanElectronsName);
-  const MuonCol *CleanMuons = 0;
-  if (!fCleanMuonsName.IsNull())
-    CleanMuons = GetObjThisEvt<MuonCol>(fCleanMuonsName);
-  const JetCol *GoodJets = 0;
-  if (!fGoodJetsName.IsNull())
-    GoodJets = GetObjThisEvt<JetCol>(fGoodJetsName);
 
   //get input MC collections
   const MCParticleCol *GenLeptons = 0;

@@ -28,9 +28,6 @@ GenFakesMod::GenFakesMod(const char *name, const char *title) :
   fMuonFRFunctionName("InputRequired"),
   fElectronFRHistName("InputRequired"),
   fMuonFRHistName("InputRequired"),
-  fCleanElectronsName(ModNames::gkCleanElectronsName),        
-  fCleanMuonsName(ModNames::gkCleanMuonsName),        
-  fCleanPhotonsName(ModNames::gkCleanPhotonsName),        
   fCleanJetsName(ModNames::gkCleanJetsName),
   fMCLeptonsName(ModNames::gkMCLeptonsName),
   fMCTausName(ModNames::gkMCTausName),
@@ -63,16 +60,6 @@ void GenFakesMod::Process()
    if (!fMuFakeableObjsName.IsNull())
      MuFakeableObjs = GetObjThisEvt<MuonCol>(fMuFakeableObjsName);
 
-  // get input clean object collections
-  const ElectronCol *CleanElectrons = 0;
-  if (!fCleanElectronsName.IsNull())
-    CleanElectrons = GetObjThisEvt<ElectronCol>(fCleanElectronsName);
-  const MuonCol *CleanMuons = 0;
-  if (!fCleanMuonsName.IsNull())
-    CleanMuons = GetObjThisEvt<MuonCol>(fCleanMuonsName);
-  const PhotonCol   *CleanPhotons   = 0;
-  if (!fCleanPhotonsName.IsNull())
-  CleanPhotons    = GetObjThisEvt<PhotonCol>(fCleanPhotonsName);
   const JetCol      *CleanJets       = 0;
   if (!fCleanJetsName.IsNull())
     CleanJets = GetObjThisEvt<JetCol>(fCleanJetsName);
