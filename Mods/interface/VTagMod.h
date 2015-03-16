@@ -24,7 +24,7 @@
 
 #include "fastjet/tools/Pruner.hh"
 #include "fastjet/JetDefinition.hh"
-#include "fastjet/ActiveAreaSpec.hh"
+#include "fastjet/GhostedAreaSpec.hh"
 #include "fastjet/AreaDefinition.hh"
 #include "fastjet/ClusterSequenceArea.hh"
 
@@ -63,7 +63,7 @@ namespace mithep
       double                        fConeSize;
       fastjet::Pruner              *fPruner;
       fastjet::JetDefinition       *fCAJetDef;
-      fastjet::ActiveAreaSpec      *fActiveArea;
+      fastjet::GhostedAreaSpec      *fActiveArea;
       fastjet::AreaDefinition      *fAreaDefinition;
 
     ClassDef(VTagMod, 1) // Vector boson tagging module
