@@ -83,8 +83,8 @@ ElectronIDMod::ElectronIDMod(const char *name, const char *title) :
   fElectronMVAWeights_Subdet0Pt20ToInf(""),
   fElectronMVAWeights_Subdet1Pt20ToInf(""),
   fElectronMVAWeights_Subdet2Pt20ToInf(""),
-  fTheRhoType(RhoUtilities::DEFAULT),
-  fPVName(Names::gkPVBeamSpotBrn)
+  fPVName(Names::gkPVBeamSpotBrn),
+  fTheRhoType(RhoUtilities::DEFAULT)
 {
   // Constructor.
 }
@@ -628,10 +628,6 @@ void ElectronIDMod::Process()
   GoodElectrons->SetName(fGoodElectronsName);
 
   Double_t MVAValue = -100;
-  Double_t MVAValueMax = -99;
-  Double_t MVAValueSubMax = -99;
-  int NElectronMVAValueMax = 0;
-  int NElectronMVAValueSubMax = 0;
   int NPass = 0;
 
 

@@ -37,7 +37,7 @@ namespace mithep {
   class MVAMet {
   public:
     MVAMet();
-    ~MVAMet();
+    virtual ~MVAMet();
     enum MVAMetType {
       kBaseline    = 0,
       kUseType1    = 1,

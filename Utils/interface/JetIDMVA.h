@@ -30,7 +30,7 @@ namespace mithep {
   class JetIDMVA {
     public:
       JetIDMVA();
-      ~JetIDMVA(); 
+      virtual ~JetIDMVA(); 
 
       enum MVAType {
         kBaseline  = 0,
