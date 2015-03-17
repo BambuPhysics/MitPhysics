@@ -46,6 +46,9 @@ PhotonPairSelector::PhotonPairSelector(const char *name, const char *title) :
   fGoodPhotonsName               (ModNames::gkGoodPhotonsName),
   fChosenVtxName                 ("HggChosenVtx"),
   // ----------------------------------------
+  fLeptonTagElectronsName        ("HggLeptonTagElectrons"),
+  fLeptonTagMuonsName            ("HggLeptonTagMuons"),
+  // ----------------------------------------
   // Selection Types
   fPhotonSelType                 ("NoSelection"),
   fVertexSelType                 ("StdSelection"),
@@ -69,6 +72,8 @@ PhotonPairSelector::PhotonPairSelector(const char *name, const char *title) :
   fPVFromBranch                  (true),
   fGoodElectronsFromBranch       (kTRUE),
   fUseSingleLegConversions       (kTRUE),
+  // ------------------------------------------------------
+  fStochasticSmear               (kFALSE),
   // ----------------------------------------
   // collections....
   fPhotons                       (0),
@@ -84,6 +89,8 @@ PhotonPairSelector::PhotonPairSelector(const char *name, const char *title) :
   fPileUp                        (0),
   fJets                          (0),
   fPFMet                         (0),
+  fLeptonTagElectrons            (0),
+  fLeptonTagMuons                (0),
   // ---------------------------------------
 
   fMCSmear_EBlowEta_hR9          (0.),
@@ -133,6 +140,8 @@ PhotonPairSelector::PhotonPairSelector(const char *name, const char *title) :
   fApplyEleVeto                  (true),
   fInvertElectronVeto            (kFALSE),
   // ------------------------------------------------------------------
+  fApplyLeptonTag                (kFALSE),
+  // ------------------------------------------------------------------
   // this block should eventually be deleted... 
   fVariableType_2011             (10), 
   
@@ -178,23 +187,15 @@ PhotonPairSelector::PhotonPairSelector(const char *name, const char *title) :
   fMCErrScaleEE                  (1.0),
   fRelativePtCuts                (kFALSE),
   
-  // ---------------------------------------------------------------------------
-  fApplyLeptonTag                (kFALSE),
-  fLeptonTagElectronsName        ("HggLeptonTagElectrons"),
-  fLeptonTagMuonsName            ("HggLeptonTagMuons"),
-  fLeptonTagElectrons            (0),
-  fLeptonTagMuons                (0),
-  
-  // ------------------------------------------------------
-  fStochasticSmear               (kFALSE),
-  
-  fRhoType                       (RhoUtilities::CMS_RHO_RHOKT6PFJETS),
+  fMVAMet                        (),
 
   fdor9rescale                   (false),
   fp0b                           (0.),
   fp1b                           (1.),
   fp0e                           (0.),
-  fp1e                           (1.)
+  fp1e                           (1.),
+
+  fRhoType                       (RhoUtilities::CMS_RHO_RHOKT6PFJETS)
 {
   // Constructor.
 }
@@ -1440,8 +1441,6 @@ void PhotonPairSelector::AddEnCorrFromFile(TString filename) {
     //set Et boundaries if applicable
     if (catstring.Contains("-Et_")) {
       TObjArray *substrings = catstring.Tokenize("_");
-      int minetidx = 0;
-      int maxetidx = 0;
       for (int istr=0; istr<substrings->GetSize(); ++istr) {
         TString substr = static_cast<TObjString*>(substrings->At(istr))->GetString();
         if (substr.Contains("-Et")) {

@@ -130,13 +130,13 @@ PhotonTreeWriter::PhotonTreeWriter(const char *name, const char *title) :
   fElectronMVAWeights_Subdet1Pt20ToInf(""),
   fElectronMVAWeights_Subdet2Pt20ToInf(""),
 
-  fTheRhoType(RhoUtilities::DEFAULT),
-
   fdor9rescale                   (false),
   fp0b                           (0.),
   fp1b                           (1.),
   fp0e                           (0.),
   fp1e                           (1.),
+
+  fTheRhoType(RhoUtilities::DEFAULT),
 
   fProcessedEvents(0)
 

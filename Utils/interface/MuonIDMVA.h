@@ -34,7 +34,7 @@ namespace mithep {
   class MuonIDMVA {
     public:
       MuonIDMVA();
-      ~MuonIDMVA(); 
+      virtual ~MuonIDMVA(); 
 
       enum MVAType {
         kUninitialized,

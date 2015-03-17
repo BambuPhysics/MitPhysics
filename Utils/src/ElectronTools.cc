@@ -429,7 +429,6 @@ Bool_t ElectronTools::PassD0Cut(const Electron *ele, const VertexCol *vertices, 
   Bool_t d0cut = kFALSE;
   
   Double_t d0_real = 1e30;
-  Double_t dz_real = 1e30;
   Int_t closestVtx = 0;
 
   if( nVertex >= (int) vertices->GetEntries() )
@@ -448,7 +447,6 @@ Bool_t ElectronTools::PassD0Cut(const Electron *ele, const VertexCol *vertices, 
       //printf("ming sync check nv:%d dz:%f d0:%f\n",nv,dz,d0_real);
     }
     d0_real = TMath::Abs(ele->GsfTrk()->D0Corrected(*vertices->At(closestVtx)));
-    dz_real = TMath::Abs(ele->GsfTrk()->DzCorrected(*vertices->At(closestVtx)));
   }
   
   //printf("ming sync check electonidmod vtxind:%d vtx_x:%f vtx_y:%f vtx_z:%f dz:%f d0:%f\n",closestVtx,vertices->At(closestVtx)->X(),vertices->At(closestVtx)->Y(),vertices->At(closestVtx)->Z(),dz_real,d0_real);
@@ -609,12 +607,6 @@ Int_t ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices,
   Double_t hcalIso  = ele->HcalTowerSumEtDr04()*beta;
 
   int cat = Classify(ele);
-  int eb;
-
-  if (ele->IsEB()) 
-    eb = 0;
-  else 
-    eb = 1; 
 
   // Medium cuts
   Double_t cutdcotdistMedium[9] = {
@@ -1735,9 +1727,6 @@ std::pair<Double_t,Double_t> ElectronTools::ComputeEPCombination( const Electron
 			GSF_ELECTRON_BADTRACK=2, 
 			GSF_ELECTRON_SHOWERING=3, 
 			GSF_ELECTRON_GAP=4 } ;
-
-  float newEnergyError_ = regression_energy_error;
-  float scEnergy = regression_energy;
 
   int elClass = ele->Classification();
 

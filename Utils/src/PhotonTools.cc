@@ -392,8 +392,6 @@ const DecayParticle *PhotonTools::MatchedCiCConversion(const Photon *p, const De
   const DecayParticle *match = NULL;
   int                  matchIdx = -1;
 
-  double minDeta = 999.;
-  double minDphi = 999.;
   double minDR   = 999.;
 
   double phPhi = p->SCluster()->Phi();
@@ -417,19 +415,15 @@ const DecayParticle *PhotonTools::MatchedCiCConversion(const Photon *p, const De
     
     if(dR < minDR) {
       minDR = dR;
-//       minDphi = dphi;
-//       minDeta = TMath::Abs(deta);
       match = c;
       matchIdx = (int) i;
 
       if(print) {
-	//std::cout<<" conv "<<i+1<<" matches with dPhi = "<<minDphi<<"   dEta = "<<minDeta<<std::endl;
 	std::cout<<" conv "<<i+1<<" matches with dR   = "<<minDR<<std::endl;
       }
     } 
   }
   
-  //if(minDphi < dPhiMin && minDeta < dEtaMin)
   if( minDR < dRMin && match ) {
     if ( numLegs ) (*numLegs) = match->NDaughters();
     if ( convIdx ) (*convIdx) = matchIdx;
@@ -970,18 +964,7 @@ Bool_t  PhotonTools::PassSinglePhotonPresel(const Photon *p,const ElectronCol *e
 Bool_t  PhotonTools::PassSinglePhotonPreselPFISO_NoTrigger(const Photon *p,const ElectronCol *els, const DecayParticleCol *conversions, const BaseVertex *bs, const TrackCol* trackCol,const Vertex *vtx, double rho, const PFCandidateCol *fPFCands, Bool_t applyElectronVeto, Bool_t invertElectronVeto) {
   
   float ScEta=p->SCluster()->Eta();
-  float Et=p->Et();
-  float R9=p->R9();
-  float HoE=p->HadOverEm();
   float CovIEtaIEta=p->CoviEtaiEta();
-  float EcalIsoDr03=p->EcalRecHitIsoDr03();
-  float HcalIsoDr03=p->HcalTowerSumEtDr03();
-  float TrkIsoHollowDr03=p->HollowConeTrkIsoDr03();
-
-  float NewEcalIso=EcalIsoDr03-0.012*Et;
-  float NewHcalIso=HcalIsoDr03-0.005*Et;
-  float NewTrkIsoHollowDr03=TrkIsoHollowDr03-0.002*Et;
-
 
   Bool_t IsBarrel=kFALSE;
   Bool_t IsEndcap=kFALSE;

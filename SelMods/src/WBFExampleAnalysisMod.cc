@@ -17,11 +17,7 @@ ClassImp(mithep::WBFExampleAnalysisMod)
 //--------------------------------------------------------------------------------------------------
 WBFExampleAnalysisMod::WBFExampleAnalysisMod(const char *name, const char *title) : 
   BaseMod(name,title),
-  fMetName("NoDefaultNameSet"),
   fCleanJetsName("NoDefaultNameSet"),
-  fVertexName(ModNames::gkGoodVertexesName),
-  fMet(0),
-  fVertices(0),
   fJetPtMax(30),
   fJetPtMin(30),
   fDeltaEtaMin(4),
@@ -77,21 +73,11 @@ void WBFExampleAnalysisMod::SlaveBegin()
 void WBFExampleAnalysisMod::Process()
 {
   //Obtain all the good objects from the event cleaning module
-  fVertices = GetObjThisEvt<VertexOArr>(fVertexName);
   ParticleOArr *CleanLeptons = dynamic_cast<mithep::ParticleOArr*>
      (FindObjThisEvt(ModNames::gkMergedLeptonsName));
   ObjArray<Jet> *CleanJets = dynamic_cast<ObjArray<Jet>* >
     (FindObjThisEvt(fCleanJetsName.Data()));
   TParameter<Double_t> *NNLOWeight = GetObjThisEvt<TParameter<Double_t> >("NNLOWeight");
-
-  MetCol *met = dynamic_cast<ObjArray<Met>* >(FindObjThisEvt(fMetName));
-  const Met *caloMet = 0;
-  if (met) {
-    caloMet = met->At(0);
-  } else {
-    cout << "Error: Met Collection " << fMetName << " could not be loaded.\n";
-    return;
-  }
 
   if (CleanJets->GetEntries() < 2)
     return;
