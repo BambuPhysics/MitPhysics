@@ -579,7 +579,7 @@ c$$$
        USE HTO_units
        IMPLICIT NONE
        REAL*8, dimension(2) :: lnsrs,x,y,olnsrs
-       REAL*8 ax,ay,teta,tnteta,ilnx,sr,si,sx,sy,xms
+       REAL*8 ax,ay,teta,tnteta,ilnx,sr,si,xms
        INTENT(IN) x,y
 *
        IF(abs(y(2)).ne.1.d0) THEN
@@ -832,7 +832,7 @@ c$$$
       INTENT(IN) x
 *
       INTEGER i,j,l
-      REAL*8 ym,ym2,ymod,s1,s2,s3,l2,xmo,z_exp,sum,s13m1,s22m1
+      REAL*8 ym,ym2,ymod,l2,xmo,z_exp,sum,s13m1,s22m1
       REAL*8, dimension(6) :: sign
       REAL*8, dimension(0:15) :: sumr
       REAL*8, dimension(6,2) :: aniels,bniels,add
@@ -842,7 +842,7 @@ c$$$
      #  prodl1,prodl2,add1,add2,add3,add4,add5,add6,add7,add8,add9,
      #  add10,ln_my,ln2_my,ln3_my,ln4_my,add11,add12,add13,add14,
      #  add15,add16,add17,add18,add19,add20,add21,ln4_omx,ln_ymo,
-     #  ln2_ymo,ln3_ymo,ln4_ymo
+     #  ln2_ymo,ln3_ymo
       REAL*8, parameter :: li4h=6.72510831970049127d-2
 *
       IF(abs(x(2)).ne.1.d0) THEN
@@ -1270,7 +1270,7 @@ c$$$
 *
       IMPLICIT NONE
 *
-      INTEGER n,i
+      INTEGER n
       REAL*8 theta
       REAL*8, dimension(2) :: arg,ln,z,sum2,sum3,sum4,pw2,pw3,pw4,
      #        cb2,cb3,cb4
@@ -1635,6 +1635,10 @@ c$$$
 *-----first t
 *
        t= -y
+c--- make compiler happy
+       resa(1) = 0
+       resa(2) = 0
+c---
        IF(t(1) <= 0.5d0) THEN
 *
 *-----li_3(t) is computed
@@ -1752,6 +1756,10 @@ c$$$
 *
        t(1)= y(1)*y(1)-y(2)*y(2)
        t(2)= 2.d0*y(1)*y(2)
+c--- make compiler happy
+       resb(1) = 0
+       resb(2) = 0
+c---
        IF(t(1) <= 0.5d0) THEN
 *
 *-----li_3(t^2) is computed
@@ -2577,7 +2585,7 @@ C      IVFNS = 0                 ! fixed flavour-number scheme (FFNS)
 *
       IMPLICIT NONE
       INTEGER NF,K1
-      REAL*8 R2,R20,AS0,AS1,AS2,AS3,AS4,FBETA1,FBETA2,FBETA3,FBETA4,A,
+      REAL*8 R2,R20,AS0,AS1,AS2,AS3,AS4,FBETA1,FBETA2,FBETA3,FBETA4,
      #       LRRAT,DLR,XK0,XK1,XK2,XK3,HTO_AS
       INTEGER, parameter :: NFMIN =3
       INTEGER, parameter :: NFMAX =6
@@ -2751,6 +2759,10 @@ C        (MODE = 1: Algorithm M;    MODE = 2: Algorithm R)
       DATA IM1 /2,3/, IM2 /-1,3/
 *
       HTO_DZERO = 0.d0             ! G.W. to prevent compiler warning
+c--- additional compiler silencing
+      FD = 0.d0
+      D = 0.d0
+c---
       IF(MODE .NE. 1 .AND. MODE .NE. 2) THEN
        C=0
 *       WRITE(ERRTXT,101) MODE
@@ -3214,9 +3226,9 @@ C        (MODE = 1: Algorithm M;    MODE = 2: Algorithm R)
 *
       IMPLICIT NONE
 *
-      REAL*8 scal,scal2,alsr,aexps,scaling1g,als1g,alsc4,alsc42,
+      REAL*8 scal,scal2,alsr,aexps,als1g,alsc4,alsc42,
      #       als1g2,alsb,alsb2,alsz,alsz2,fn,b03,b13,b23,g03,g13,
-     #       g23,rex3,b03s,b03c,b13s,sm1g,cfm13,cfm23,rmsc,
+     #       g23,rex3,b03s,b03c,b13s,sm1g,cfm13,cfm23,
      #       b04,b04c,b14,b24,g04,g14,g24,rex4,b04s,b14s,asldf,cfm14,
      #       cfm24,rsmb,zero,x1,x2,xacc,cmm4,cmb,b05,b15,b25,g05,g15,
      #       g25,rex5,b05s,b05c,b15s,cfm15,cfm25,rcqm,bmm5,rbqm,scal1g,
@@ -3422,8 +3434,7 @@ C        (MODE = 1: Algorithm M;    MODE = 2: Algorithm R)
 *
       IMPLICIT NONE
 *
-      INTEGER i,nci,nc
-      REAL*8 scal,scals,ps0i,ps0,xm1,xm2
+      REAL*8 scal,ps0i,ps0,xm1,xm2
       REAL*8, intent(in), dimension(2) :: xm0i
       REAL*8, intent(in), dimension(2,2) :: xmsi
       REAL*8, dimension(2) :: value,xm1c,xm2c
@@ -3682,27 +3693,21 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
 *
        IMPLICIT NONE
 *
-       INTEGER nc,iz
+       INTEGER iz
        REAL*8 HTO_SHH,muhr,rgh,muhs,scal,scals,p2,xm0,str,sti,EWC,
-     #        sconv,asmur,emc,emb,emt,as_NLO,rmbs,rmcs,rmss,
+     #        sconv,asmur,emc,emb,emt,as_NLO,
      #        crmbs,crmcs,lcxb,lcxc,lcxbs,lcxcs,lclxb,lclxc,qcdtop,neg
        REAL*8, dimension(2) :: axm0
        REAL*8, dimension(2,2) :: axms
-       REAL*8, dimension(3,2,2) :: Bmcb
-       REAL*8, dimension(8,2,2) :: Bmcf
-       REAL*8, dimension(1,2,2) :: Bmct
-       REAL*8, dimension(3,2) :: Bm0b,coefBb
-       REAL*8, dimension(8,2) :: Bm0f,coefBf
-       REAL*8, dimension(1,2) :: Bm0t,coefBt
        REAL*8, dimension(2) :: sh,shs,clh,b0sumb,b0sumf,cxp,ksumb,
      #         ksumf,coefB1,coefB2,coefB3,coefB4,coefB5,coefB6,coefB7,
-     #         coefB8,coefB9,coefB10,coefB11,coefB12,ab2,ab3,
+     #         coefB8,coefB9,coefB10,coefB11,coefB12,
      #         totalf,totalt,totalb,total,b0sumt,ksumt,xms,
      #         b0part,cpt,ccxt,deltag,sww0,coefW1,coefW2,
      #         ksumw,ccxts,cctsi,shi,clt,cxhw,cstsi,csmcts,cltmw,
      #         b0sumw,sww,DW,b0sumw1,b0sumw2,cmxw,clmw,cxtw,
-     #         kfmsb,ktmsb,kbmsb,nloqcd,runbc,ttqcd,wccxt,wclt,wccxts,
-     #         wcxtw,wcltmw,ascal
+     #         nloqcd,runbc,ttqcd,wccxt,wclt,wccxts,
+     #         wcxtw,wcltmw
 *     
        INTERFACE
         SUBROUTINE HTO_INITALPHAS(asord,FR2,MUR,asmur,emc,emb,emt)
@@ -3846,6 +3851,14 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
        cxp(2)= -muhr*rgh
        p2= muhs
 *
+c--- make compiler happy
+       b0sumt(1) = 0
+       b0sumt(2) = 0
+       b0sumf(1) = 0
+       b0sumf(2) = 0
+       b0sumb(1) = 0
+       b0sumb(2) = 0
+c---       
        IF(ifb.eq.0) THEN
 *
         xms(1)= swr
@@ -4020,10 +4033,19 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
        EWC= 4.d0*sqrt(2.d0)*g_f/pis
        sconv= muhs/scals
 *
+c--- make compiler happy
+       totalf(1) = 0
+       totalf(2) = 0
+c---
        IF(ifb.eq.0.or.ifb.eq.1) THEN
         totalf= b0sumf+ksumf
        ENDIF
 *
+c--- make compiler happy
+       totalt(1) = 0
+       totalt(2) = 0
+       qcdtop = 0
+c---
        IF(ifb.eq.0.or.ifb.eq.2) THEN
         totalt= b0sumt+ksumt
 *
@@ -4043,6 +4065,10 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
 *
        ENDIF
 *
+c--- make compiler happy
+       totalb(1) = 0
+       totalb(2) = 0
+c---
        IF(ifb.eq.0.or.ifb.eq.3) THEN
         totalb= b0sumb+ksumb
         IF((swr*totalb(2)+swi*totalb(1)) < 0.d0) THEN
@@ -4138,7 +4164,8 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
      #       (1.d0+EWC*(swr*DW(1)-swi*DW(2)))
      #       -EWC*(swr*totalt(2)+swi*totalt(1))/sconv
      #       +qcdtop
-       ELSEIF(ifb.eq.3) THEN
+c       ELSEIF(ifb.eq.3) THEN
+       ELSE
         HTO_SHH= rgh/muhr*
      #       (1.d0+EWC*(swr*DW(1)-swi*DW(2)))
      #       -EWC*(swr*totalb(2)+swi*totalb(1))/sconv
@@ -4160,7 +4187,7 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
 * 
       IMPLICIT NONE
 *
-      INTEGER i,top,gdim
+      INTEGER top,gdim
       REAL*8 u,value,evalue,mass
       REAL*8, dimension(103) :: bc,cc,dc
 * 
@@ -4397,7 +4424,7 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
 * 
       IMPLICIT NONE
 *
-      INTEGER i,top,gdim
+      INTEGER top,gdim
       REAL*8 u,value,evalue,mass
       REAL*8, dimension(22) :: bc,cc,dc
 * 
@@ -5096,8 +5123,7 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
 *
       IMPLICIT NONE
 *
-      INTEGER i
-      REAL*8 muh,cpgh,gos,mhb,ghb,m,sclaec,expgHi,EWC,ghi
+      REAL*8 muh,cpgh,gos,mhb,ghb,m,expgHi,EWC,ghi
       REAL*8, dimension(10,2) :: expc
 *
       INTERFACE
@@ -5290,6 +5316,11 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
 *
        inc= 0
        tgH= muh*HTO_zeroin(HTO_SSHH,x1,x2,zero,xacc)
+c--- make compiler happy
+       gHf = 0
+       gHt = 0
+       gHb = 0
+c---
 *
 * T
 *
@@ -6511,10 +6542,13 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
       IF(nm1 >= 1) THEN
        DO nmj= 1,nm1
         j= n-nmj
-        IF(ABS(v(j)) > one) COS= one/v(j)
-        IF(ABS(v(j)) > one) SIN= SQRT(one-COS**2)
-        IF(ABS(v(j)) <= one) SIN= v(j)
-        IF(ABS(v(j)) <= one) COS= SQRT(one-SIN**2)
+        IF(ABS(v(j)) > one) THEN
+         COS= one/v(j)
+         SIN= SQRT(one-COS**2)
+        ELSE
+         SIN= v(j)
+         COS= SQRT(one-SIN**2)
+        ENDIF
         DO i= 1,m
          temp= COS*a(i,j)-SIN*a(i,n)
          a(i,n)= SIN*a(i,j)+COS*a(i,n)
@@ -6866,13 +6900,13 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
 *
        IMPLICIT NONE
 *
-       INTEGER nc,n,iflag,iz
-       REAL*8 muh,rgh,muhs,scal,scals,p2,xm0,str,sti,rgw,
-     #        lswr,lswi,lmw,bxm0,emc,emb,emt,asmur,rgt,as_NLO,EWC,
+       INTEGER n,iflag,iz
+       REAL*8 muh,rgh,muhs,scal,scals,p2,xm0,rgw,
+     #        lswr,lswi,emc,emb,emt,asmur,rgt,as_NLO,EWC,
      #        crmbs,crmcs,lcxb,lcxc,lcxbs,lcxcs,lclxb,lclxc,as_LO
        REAL*8, dimension(n) :: xcp,fvcp
        REAL*8, dimension(2,2) :: axms
-       REAL*8, dimension(2) :: axm0,bxms,runbc
+       REAL*8, dimension(2) :: axm0,runbc
        REAL*8, dimension(2) :: sh,shs,clh,b0sumb,b0sumf,cxp,ksumb,
      #         ksumf,coefB1,coefB2,coefB3,coefB4,coefB5,coefB6,coefB7,
      #         coefB8,coefB9,coefB10,coefB11,coefB12,
@@ -6880,7 +6914,7 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
      #         b0part,cpt,cpts,ccxt,deltag,sww0,coefW1,
      #         coefW2,ksumw,ccxts,cctsi,shi,clt,cxhw,cstsi,csmcts,cltmw,
      #         b0sumw,sww,DW,b0sumw1,b0sumw2,cxw,cxz,ccts,clw,csts,
-     #         cctq,cxws,cmxw,clmw,cxtw,kfmsb,ktmsb,kbmsb,kwmsb,
+     #         cctq,cxws,cmxw,clmw,cxtw,
      #         coeft1,coeft2,coeft3,coeft4,b0sumtop,ksumtop,stt,
      #         coeft1s,b0sumtops,ksumtops,stts,cctqi,ucpt,nloqcd,ttqcd,
      #         DWW,sww0W,swwW,ksumwW,lcxwi,lclcts
@@ -6993,6 +7027,9 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
 *
        rgw= 1.d-1*xcp(1)*xcp(1)*mw
        rgh= 1.d-2*xcp(2)*xcp(2)*muh
+c--- make compiler happy
+       rgt = 0
+c---
        IF(n == 3) THEN
         rgt= 1.d-2*xcp(3)*xcp(3)*mt
        ELSEIF(n == 2) THEN
@@ -7579,7 +7616,7 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
       REAL*8 scal,ps0i,scals,ps0,xm1,xm2
       REAL*8, dimension(2,2) :: xmsi,xms
       REAL*8, dimension(2) :: value,psi,ps,lambdasc,lambdas,
-     #        lambdac,lambda,argc,arg,llam,lm,xm0,xm0i,aroot,
+     #        lambdac,lambda,argc,arg,llam,xm0,xm0i,aroot,
      #        root,rat,lnr,xm1c,xm2c
 *
       scals= scal*scal
@@ -7684,8 +7721,7 @@ c      REAL*8 HTO_SSHH,rgh,muc,scalc,x
 *
       IMPLICIT NONE
 *
-      INTEGER i,nci,nc
-      REAL*8 scal,scals,ps0i,ps0,xm1,xm2
+      REAL*8 scal,ps0i,ps0,xm1,xm2
       REAL*8, intent(in), dimension(2) :: xm0i
       REAL*8, intent(in), dimension(2,2) :: xmsi
       REAL*8, dimension(2) :: value,xm1c,xm2c
