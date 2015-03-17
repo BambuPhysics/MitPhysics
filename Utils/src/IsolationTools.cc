@@ -2,8 +2,6 @@
 #include "MitPhysics/Utils/interface/PhotonTools.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 
-ClassImp(mithep::IsolationTools)
-
 using namespace mithep;
 
 //--------------------------------------------------------------------------------------------------

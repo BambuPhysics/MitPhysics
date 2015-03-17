@@ -29,8 +29,6 @@ namespace mithep
       template<class V1, class V2> 
       static TObjArray *Closests(const V1 *v1, const Collection<V2> &col, Double_t maxR,
                                  Bool_t self=kFALSE);
-
-    ClassDef(MatchingTools, 0) // Geometric matching tools in eta-phi
   };
 
   //------------------------------------------------------------------------------------------------

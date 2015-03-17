@@ -24,6 +24,7 @@ namespace mithep {
   class ElectronTools {
     public:
       ElectronTools();
+      virtual ~ElectronTools() {}
   
      enum EElIdType {
         kIdUndef = 0,       //not defined

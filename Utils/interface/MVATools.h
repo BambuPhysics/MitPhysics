@@ -36,6 +36,7 @@ namespace mithep {
   class MVATools {
   public:
     MVATools();
+    virtual ~MVATools() {}
     
     // MVA Typles
     enum IdMVAType {

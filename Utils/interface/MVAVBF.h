@@ -28,6 +28,7 @@ namespace mithep {
   public:
     
     MVAVBF();
+    virtual ~MVAVBF() {}
     void InitializeMVA();
     float GetMVAbdtValue(float jet1pt, float jet2pt, float deltajeteta, float dijetmass, float zeppenfeld, float dphidijetgg, float diphoptOverdiphomass, float pho1ptOverdiphomass, float pho2ptOverdiphomass);
     

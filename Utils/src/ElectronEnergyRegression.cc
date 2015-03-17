@@ -1,4 +1,5 @@
 #include "MitPhysics/Utils/interface/ElectronEnergyRegression.h"
+#include "CondFormats/EgammaObjects/interface/GBRForest.h"
 #include <cmath>
 #include <cassert>
 #include <iostream>

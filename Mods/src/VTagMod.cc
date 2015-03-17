@@ -1,6 +1,11 @@
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "MitPhysics/Mods/interface/VTagMod.h"
+#include "fastjet/tools/Pruner.hh"
+#include "fastjet/JetDefinition.hh"
+#include "fastjet/GhostedAreaSpec.hh"
+#include "fastjet/AreaDefinition.hh"
 #include "fastjet/PseudoJet.hh"
+#include "fastjet/ClusterSequenceArea.hh"
 #include "fastjet/contrib/Njettiness.hh"
 #include "fastjet/contrib/Nsubjettiness.hh"
 

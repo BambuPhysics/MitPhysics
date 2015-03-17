@@ -141,8 +141,6 @@ namespace mithep
 				bool print = NULL,
 				double* ptmax = NULL, 
 				double* dRmax = NULL);
-      
-      ClassDef(IsolationTools, 0) // Isolation tools
   };
 }
 #endif

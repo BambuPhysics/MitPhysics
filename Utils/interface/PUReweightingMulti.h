@@ -21,7 +21,7 @@ namespace mithep {
 
     PUReweightingMulti(const THnSparse *sparse, int maxn = 100, double minprob = 1e-12);
 
-    ~PUReweightingMulti();
+    virtual ~PUReweightingMulti();
 
     double TargetPdf(int *npus, int ndim) const;
     TH3D *Target3D();

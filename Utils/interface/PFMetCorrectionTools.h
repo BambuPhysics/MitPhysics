@@ -26,6 +26,7 @@ namespace mithep {
   class PFMetCorrectionTools {
   public:
     PFMetCorrectionTools();
+    virtual ~PFMetCorrectionTools() {}
     static Double_t ErrEt( Double_t Et, Double_t Eta);
     static void correctMet(Met *met, const Photon *phHard,const Photon *phSoft, Bool_t smearing, Bool_t scale, const PFJetCol *fPFJet, const GenJetCol *fGenJet, const JetCol *fcorrJet, UInt_t evt);
     static void shiftMet(Met *uncormet, Bool_t fIsData, Double_t spfMet);

@@ -9,10 +9,8 @@
 #ifndef MITPHYSICS_UTILS_TAUISOMVA_H
 #define MITPHYSICS_UTILS_TAUISOMVA_H
 
-#include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
 #include <vector>
 #include "MitAna/DataTree/interface/PFTau.h"
-#include "CondFormats/EgammaObjects/interface/GBRForest.h"
 
 class TRandom3;
 class GBRForest;
@@ -48,7 +46,7 @@ namespace mithep {
       }
     };
     TauIsoMVA();
-    ~TauIsoMVA(); 
+    virtual ~TauIsoMVA(); 
     void     Initialize     (TString iWeightFile);
     void     InitializeGBR  (TString iWeightFile);
     double   MVAValue       (const PFTau *iTau,double iRho);
@@ -56,8 +54,8 @@ namespace mithep {
     
   protected:      
     bool                     fGBR;
-    GBRForest               *fGBRReader;
-    TMVA::Reader            *fReader;
+    GBRForest               *fGBRReader; //!
+    TMVA::Reader            *fReader; //!
     ClassDef(TauIsoMVA,1)
       };
 }

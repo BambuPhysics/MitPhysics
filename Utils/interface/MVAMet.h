@@ -25,15 +25,15 @@
 #include "MitAna/DataTree/interface/PFCandidateCol.h"
 #include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
-
-#include "MitPhysics/Utils/interface/RecoilTools.h"
-#include "MitPhysics/Utils/interface/MetLeptonTools.h"
-#include "CondFormats/EgammaObjects/interface/GBRForest.h"
+#include "MitPhysics/Utils/interface/JetIDMVA.h"
 
 class TRandom3;
 class GBRForest;
 
 namespace mithep {
+  class RecoilTools;
+  class MetLeptonTools;
+
   class MVAMet {
   public:
     MVAMet();

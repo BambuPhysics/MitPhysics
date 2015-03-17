@@ -11,6 +11,7 @@
 #include "MitPhysics/Utils/interface/VertexTools.h"
 #include "MitPhysics/Utils/interface/PFMetCorrectionTools.h"
 #include "MitPhysics/Utils/interface/JetTools.h"
+#include "MitPhysics/Utils/interface/ElectronIDMVA.h"
 #include "MitAna/DataTree/interface/PFJetCol.h"
 #include "MitAna/DataTree/interface/GenJetCol.h"
 #include "TDataMember.h"

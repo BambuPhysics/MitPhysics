@@ -34,6 +34,7 @@ namespace mithep {
   class PhotonTools {
     public:
       PhotonTools();
+      virtual ~PhotonTools() {}
   
      enum DiphotonR9EtaCats {
         kCat1 = 0,       //barrel-barrel highr9/highr9

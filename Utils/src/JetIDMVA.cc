@@ -1,5 +1,6 @@
 #include "FWCore/PythonParameterSet/interface/MakeParameterSets.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
 #include "MitPhysics/Utils/interface/JetIDMVA.h"
 #include "MitPhysics/Utils/interface/JetTools.h"
 #include "MitAna/DataTree/interface/StableData.h"

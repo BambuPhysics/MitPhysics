@@ -10,8 +10,9 @@
 #define MITPHYSICS_UTILS_ELECTRONENERGYREGRESSIONEVALUATE_H
 
 // For applying regression
-#include "CondFormats/EgammaObjects/interface/GBRForest.h"
 #include "TFile.h"
+
+class GBRForest;
 
 namespace mithep {
   class ElectronEnergyRegression{
@@ -127,11 +128,11 @@ namespace mithep {
     private:
       bool fIsInitialized;
       ElectronEnergyRegression::ElectronEnergyRegressionType fVersionType;
-      GBRForest *forestCorrection_eb;		// Pointer to the GBRForest for barrel
-      GBRForest *forestCorrection_ee;		// Pointer to the GBRForest for endcap
+      GBRForest *forestCorrection_eb;           //! Pointer to the GBRForest for barrel
+      GBRForest *forestCorrection_ee;		//! Pointer to the GBRForest for endcap
 
-      GBRForest *forestUncertainty_eb;	
-      GBRForest *forestUncertainty_ee;		
+      GBRForest *forestUncertainty_eb;	//!
+      GBRForest *forestUncertainty_ee;	//!	
   };
 }
 #endif
