@@ -9,6 +9,7 @@
 <use   name="CondFormats/JetMETObjects"/>
 <use   name="FWCore/ParameterSet"/>
 <use   name="fastjet"/>
+<use   name="fastjet-contrib"/>
 <use   name="lhapdf"/>
 <use   name="root"/>
 <use   name="roottmva"/>
