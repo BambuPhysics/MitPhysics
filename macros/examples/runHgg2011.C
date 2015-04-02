@@ -1,5 +1,5 @@
 // $Id: runHgg2011.C,v 1.5 2012/07/24 15:47:05 bendavid Exp $
-#if !defined(__CINT__) || defined(__MAKECINT__)
+#if !defined(__CLING__) || defined(__ROOTCLING__)
 #include <TSystem.h>
 #include <TProfile.h>
 #include "MitAna/DataUtil/interface/Debug.h"

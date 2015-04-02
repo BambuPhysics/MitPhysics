@@ -1,5 +1,5 @@
 // $Id: runHgg2013Moriond.C,v 1.2 2013/02/23 14:50:08 mingyang Exp $
-#if !defined(__CINT__) || defined(__MAKECINT__)
+#if !defined(__CLING__) || defined(__ROOTCLING__)
 #include <TSystem.h>
 #include <TProfile.h>
 #include "MitAna/DataTree/interface/Names.h"

@@ -2,7 +2,7 @@
 
 // $Id: runPhysicsExample.C,v 1.16 2011/04/29 16:18:16 ceballos Exp $
 
-#if !defined(__CINT__) || defined(__MAKECINT__)
+#if !defined(__CLING__) || defined(__ROOTCLING__)
 #include <TROOT.h>
 #include <exception>
 #include "MitAna/DataUtil/interface/Debug.h"

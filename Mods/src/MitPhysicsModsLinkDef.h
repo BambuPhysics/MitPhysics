@@ -1,7 +1,7 @@
 #ifndef MITPHYSICS_MODS_LINKDEF_H
 #define MITPHYSICS_MODS_LINKDEF_H
 
-// solve incompatibility between boost and ROOTCINT that results in an infinite loop of typedefs
+// solve incompatibility between boost and ROOTCLING that results in an infinite loop of typedefs
 //#define BOOST_NO_MEMBER_TEMPLATE_FRIENDS 1
 
 #include "MitPhysics/Mods/interface/CaloMetCorrectionMod.h"
@@ -38,7 +38,7 @@
 #include "MitPhysics/Mods/interface/VTagMod.h"
 #endif
 
-#ifdef __CINT__
+#ifdef __CLING__
 #pragma link off all globals;
 #pragma link off all classes;
 #pragma link off all functions;
