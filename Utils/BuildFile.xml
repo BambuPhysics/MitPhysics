@@ -7,7 +7,6 @@
 <use   name="root"/>
 <use   name="roofit"/>
 <use   name="roottmva"/>
-<use   name="rootcintex"/>
 <lib   name="EG"/>
 <export>
   <lib   name="1"/>
