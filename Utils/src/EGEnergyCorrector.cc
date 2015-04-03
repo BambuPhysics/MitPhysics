@@ -13,7 +13,7 @@
 #include "HiggsAnalysis/GBRLikelihood/interface/RooDoubleCBFast.h"
 #include "HiggsAnalysis/GBRLikelihood/interface/HybridGBRForest.h"
 #include "HiggsAnalysis/GBRLikelihood/interface/HybridGBRForestD.h"
-#include "Cintex/Cintex.h"
+// #include "Cintex/Cintex.h"
 #include <TFile.h>
 #include <TRandom3.h>
 
@@ -83,8 +83,9 @@ void EGEnergyCorrector::Initialize(TString phfixstring, TString phfixfile, TStri
 
       
       fVals = new Float_t[73];
-      
-      ROOT::Cintex::Cintex::Enable();   
+
+      // Is this necessary? (Y.I. Apr 2 2015)
+      //      ROOT::Cintex::Cintex::Enable();   
       
       TFile *fgbr = new TFile(regweights,"READ");
       fReadereb = (GBRForest*)fgbr->Get("EBCorrection");

@@ -70,8 +70,8 @@ void HKFactorProducer::Process()
 	theWeight = fWeightAlgo.getweight(fMh,fWidth,MTop,mH,fBWflag);
 
 	if (theWeight > 3.0) {
-          cout << "MHweights: " << fMh << " " << fWidth  << " " << MTop      << " " 
-	                        << mH  << " " << fBWflag << " " << theWeight << endl;
+      std::cout << "MHweights: " << fMh << " " << fWidth  << " " << MTop      << " " 
+                << mH  << " " << fBWflag << " " << theWeight << std::endl;
 	}
 
 	if (GetFillHist()) {

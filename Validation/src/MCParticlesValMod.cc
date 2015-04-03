@@ -47,7 +47,7 @@ void MCParticlesValMod::Process()
      if (p->IsSimulated())
        fHs[8]->Fill(mdiff);
      if (mdiff>0.01) {
-       cout << "----" << mdiff << "-> " << p->Mass() << " " << p->PdgMass() << ": ";
+       std::cout << "----" << mdiff << "-> " << p->Mass() << " " << p->PdgMass() << ": " << std::endl;
        p->Print();
        fHs[9]->Fill(p->AbsPdgId());
      }

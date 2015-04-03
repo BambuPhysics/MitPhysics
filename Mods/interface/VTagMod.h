@@ -22,14 +22,16 @@
 #ifndef MITPHYSICS_MODS_VTAGMOD_H
 #define MITPHYSICS_MODS_VTAGMOD_H
 
-#include "fastjet/tools/Pruner.hh"
-#include "fastjet/JetDefinition.hh"
-#include "fastjet/ActiveAreaSpec.hh"
-#include "fastjet/AreaDefinition.hh"
-#include "fastjet/ClusterSequenceArea.hh"
-
 #include "MitAna/TreeMod/interface/BaseMod.h"
 #include "MitAna/DataTree/interface/PFCandidateCol.h"
+
+namespace fastjet {
+  class Pruner;
+  class JetDefinition;
+  class GhostedAreaSpec;
+  class AreaDefinition;
+  class PseudoJet;
+}
 
 namespace mithep
 {
@@ -63,7 +65,7 @@ namespace mithep
       double                        fConeSize;
       fastjet::Pruner              *fPruner;
       fastjet::JetDefinition       *fCAJetDef;
-      fastjet::ActiveAreaSpec      *fActiveArea;
+      fastjet::GhostedAreaSpec     *fActiveArea;
       fastjet::AreaDefinition      *fAreaDefinition;
 
     ClassDef(VTagMod, 1) // Vector boson tagging module

@@ -96,6 +96,8 @@ void MVAMetMod::SlaveBegin()
   // we typically initialize histograms and other analysis objects and request
   // branches. For this module, we request a branch of the MitTree.
 
+  using std::string;
+
   //ReqBranch(fJetsName,   fJets);
   ReqBranch(fPFCandName, fCands);
   ReqBranch(fPFMetName,  fPFMet);
@@ -105,7 +107,7 @@ void MVAMetMod::SlaveBegin()
   fMVAMet->Initialize(TString((getenv("MIT_DATA")+string("/mva_JetID_lowpt.weights.xml"))),
                       TString((getenv("MIT_DATA")+string("/mva_JetID_highpt.weights.xml"))),
                       TString((getenv("CMSSW_BASE")+
-			       string("/src/MitPhysics/Utils/python/JetIdParams_cfi.py"))),
+                               string("/src/MitPhysics/Utils/python/JetIdParams_cfi.py"))),
                       TString((getenv("MIT_DATA")+string("/gbrmet_52.root"))),
                       TString((getenv("MIT_DATA")+string("/gbrmetphi_52.root"))),
                       TString((getenv("MIT_DATA")+string("/gbrmetu1cov_52.root"))),

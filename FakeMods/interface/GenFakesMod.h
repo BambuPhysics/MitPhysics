@@ -25,9 +25,6 @@ namespace mithep
       GenFakesMod(const char *name="GenFakesMod", 
                   const char *title="Fake Object Generation Module");
 
-      const char   *GetCleanElectronsName()          const { return fCleanElectronsName;          }
-      const char   *GetCleanMuonsName()              const { return fCleanMuonsName;              }
-      const char   *GetCleanPhotonsName()            const { return fCleanPhotonsName;            }
       const char   *GetCleanJetsName()               const { return fCleanJetsName;               }
       const char   *GetElFakeableObjsName()          const { return fElFakeableObjsName;          }
       const char   *GetMuFakeableObjsName()          const { return fMuFakeableObjsName;          }
@@ -38,9 +35,6 @@ namespace mithep
       const Bool_t  GetUse2DFakeRate()               const { return fUse2DFakeRate;               }
       const Bool_t  GetUseFitFunction()              const { return fUseFitFunction;              }
       void LoadFakeRate();
-      void SetCleanElectronsName(const char *name)         { fCleanElectronsName          = name; }
-      void SetCleanMuonssName(const char *name)            { fCleanMuonsName              = name; }
-      void SetCleanPhotonsName(const char *name)           { fCleanPhotonsName            = name; }
       void SetCleanJetsName(const char *name)              { fCleanJetsName               = name; }
       void SetElFakeableObjsName(const char *name)         { fElFakeableObjsName          = name; }
       void SetMuFakeableObjsName(const char *name)         { fMuFakeableObjsName          = name; }
@@ -69,9 +63,6 @@ namespace mithep
       TString            fMuonFRFunctionName;           //fit function containing muon fake rate
       TString            fElectronFRHistName;           //hist containing electron fake rate
       TString            fMuonFRHistName;               //hist containing muon fake rate
-      TString            fCleanElectronsName;           //name of clean electrons           (input)
-      TString            fCleanMuonsName;               //name of clean muons               (input)
-      TString            fCleanPhotonsName;             //name of clean photons             (input)
       TString            fCleanJetsName;                //name of clean jets                (input)
       TString            fMCLeptonsName;                //name of MC leptons                (input)
       TString            fMCTausName;                   //name of MC taus                   (input)

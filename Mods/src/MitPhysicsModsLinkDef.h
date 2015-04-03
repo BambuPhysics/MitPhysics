@@ -1,5 +1,9 @@
 #ifndef MITPHYSICS_MODS_LINKDEF_H
 #define MITPHYSICS_MODS_LINKDEF_H
+
+// solve incompatibility between boost and ROOTCLING that results in an infinite loop of typedefs
+//#define BOOST_NO_MEMBER_TEMPLATE_FRIENDS 1
+
 #include "MitPhysics/Mods/interface/CaloMetCorrectionMod.h"
 #include "MitPhysics/Mods/interface/EffMod.h"
 #include "MitPhysics/Mods/interface/ElectronCleaningMod.h"
@@ -34,7 +38,7 @@
 #include "MitPhysics/Mods/interface/VTagMod.h"
 #endif
 
-#ifdef __CINT__
+#ifdef __CLING__
 #pragma link off all globals;
 #pragma link off all classes;
 #pragma link off all functions;
@@ -69,7 +73,7 @@
 #pragma link C++ class mithep::PhotonPairSelector+;
 #pragma link C++ class mithep::PhotonMvaMod+;
 #pragma link C++ class mithep::PhotonTreeWriter+;
-#pragma link C++ class mithep::PhotonTreeWriterPhoton<16>+;
+#pragma link C++ class mithep::PhotonTreeWriterPhoton16+;
 #pragma link C++ class mithep::PhotonTreeWriterDiphotonEvent+;
 #pragma link C++ class mithep::PhotonTreeWriterVtx+;
 #pragma link C++ class mithep::TauCleaningMod+;

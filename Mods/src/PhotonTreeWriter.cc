@@ -11,6 +11,7 @@
 #include "MitPhysics/Utils/interface/VertexTools.h"
 #include "MitPhysics/Utils/interface/PFMetCorrectionTools.h"
 #include "MitPhysics/Utils/interface/JetTools.h"
+#include "MitPhysics/Utils/interface/ElectronIDMVA.h"
 #include "MitAna/DataTree/interface/PFJetCol.h"
 #include "MitAna/DataTree/interface/GenJetCol.h"
 #include "TDataMember.h"
@@ -21,6 +22,8 @@
 #include <TSystem.h>
 
 using namespace mithep;
+using std::cout;
+using std::endl;
 
 ClassImp(mithep::PhotonTreeWriter)
   templateClassImp(mithep::PhotonTreeWriterPhoton)//ming: what's this?
@@ -130,13 +133,13 @@ PhotonTreeWriter::PhotonTreeWriter(const char *name, const char *title) :
   fElectronMVAWeights_Subdet1Pt20ToInf(""),
   fElectronMVAWeights_Subdet2Pt20ToInf(""),
 
-  fTheRhoType(RhoUtilities::DEFAULT),
-
   fdor9rescale                   (false),
   fp0b                           (0.),
   fp1b                           (1.),
   fp0e                           (0.),
   fp1e                           (1.),
+
+  fTheRhoType(RhoUtilities::DEFAULT),
 
   fProcessedEvents(0)
 
@@ -1154,6 +1157,8 @@ void PhotonTreeWriter::SlaveBegin()
   // Run startup code on the computer (slave) doing the actual analysis. Here,
   // we just request the photon collection branch.
 
+  using std::string;
+
   if( fApplyLeptonTag || fApplyVHLepTag ) {
     ReqEventObject(fLeptonTagElectronsName,    fLeptonTagElectrons,    false);  
     ReqEventObject(fLeptonTagMuonsName,        fLeptonTagMuons,        false);  
@@ -1200,8 +1205,8 @@ void PhotonTreeWriter::SlaveBegin()
       TString("/src/MitPhysics/data/PhotonFixSTART42V13.dat");
   }
 
-  fPhfixph.initialise("4_2",std::string(fPhFixDataFile));
-  fPhfixele.initialise("4_2e",std::string(fPhFixDataFile));
+  fPhfixph.initialise("4_2",string(fPhFixDataFile));
+  fPhfixele.initialise("4_2e",string(fPhFixDataFile));
   
 //   fMVAMet.Initialize(TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/mva_JetID_lowpt.weights.xml"))),
 //                       TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/mva_JetID_highpt.weights.xml"))),
@@ -2678,7 +2683,7 @@ bool PhotonTreeWriter::VHLepHasDielectron(const Photon *phHard,
       Double_t mass12 = (ele1->Mom() + ele2->Mom()).M();
       if (mass12 < 70. || 110. < mass12) continue;
       if (fVerbosityLevel > 0) {
-        cout << "    Found a tagging dielectron!" << endl << flush;
+        cout << "    Found a tagging dielectron!" << endl;
       }
       fDiphotonEvent->ele1Pt  = ele1->Pt ();
       fDiphotonEvent->ele1Eta = ele1->Eta();
@@ -2727,7 +2732,7 @@ bool PhotonTreeWriter::VHLepHasDimuon(const Photon *phHard,
       Double_t mass12 = (mu1->Mom() + mu2->Mom()).M();
       if (mass12 < 70. || 110. < mass12) continue;
       if (fVerbosityLevel > 0) {
-        cout << "    Found a tagging dimoun!" << endl << flush;
+        cout << "    Found a tagging dimoun!" << endl;
       }      
       fDiphotonEvent->mu1Pt  = mu1->Pt ();
       fDiphotonEvent->mu1Eta = mu1->Eta();
@@ -3129,7 +3134,7 @@ PhotonTreeWriter::TTHSelectMuon(const Photon *phHard,
     }    
     cout << "+++ Finished loop over muons ..." << endl
          << "+++ selectedMuon: " << selectedMuon << endl
-         << "+++ Exiting TTHSelectMuon ..." << endl << flush;
+         << "+++ Exiting TTHSelectMuon ..." << endl;
   }   
   return selectedMuon;
 } // TTHSelectMuon

@@ -1,5 +1,5 @@
 // $Id: runH4lLightFlavorSkim.C,v 1.1 2012/06/03 20:25:56 paus Exp $
-#if !defined(__CINT__) || defined(__MAKECINT__)
+#if !defined(__CLING__) || defined(__ROOTCLING__)
 #include <cassert>
 #include <TSystem.h>
 #include <TProfile.h>

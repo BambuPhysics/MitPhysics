@@ -44,7 +44,7 @@ namespace mithep {
 	     const GenericParticle *genP = NULL);
 
 
-    ~MetTools() {}
+    virtual ~MetTools() {}
     
     void AddToCorrectedTrackMet                   ( const Particle *p, bool debug = false);
     void AddToCorrectedMet                        ( const Particle *p );

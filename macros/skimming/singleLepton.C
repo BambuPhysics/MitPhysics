@@ -1,6 +1,6 @@
 // $Id: singleLepton.C,v 1.3 2009/04/30 12:13:37 ceballos Exp $
 
-#if !defined(__CINT__) || defined(__MAKECINT__)
+#if !defined(__CLING__) || defined(__ROOTCLING__)
 #include "MitAna/DataUtil/interface/Debug.h"
 #include "MitAna/DataTree/interface/Names.h"
 #include "MitAna/Catalog/interface/Catalog.h"

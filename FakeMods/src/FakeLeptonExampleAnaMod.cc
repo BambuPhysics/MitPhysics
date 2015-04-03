@@ -70,7 +70,7 @@ void FakeLeptonExampleAnaMod::Process()
   if (fMet) {
     originalCaloMet = fMet->At(0);
   } else {
-    cout << "Error: Met Collection " << fMetName << " could not be loaded.\n";
+    std::cout << "Error: Met Collection " << fMetName << " could not be loaded." << std::endl;
   }
   ObjArray<Jet> *OriginalCleanJets = dynamic_cast<ObjArray<Jet>* > 
     (FindObjThisEvt(fCleanJetsName.Data()));
@@ -99,13 +99,13 @@ void FakeLeptonExampleAnaMod::Process()
       FakeEventHeaders = 
         dynamic_cast<Collection<FakeEventHeader>* >(FindObjThisEvt(fFakeEventHeaderName.Data()));
       if (!FakeEventHeaders) {
-        string errorMsg = "Error: FakeEventHeader with name  " + 
-          string(fFakeEventHeaderName.Data()) + "could not be loaded.\n";
+        std::string errorMsg = "Error: FakeEventHeader with name  " + 
+          std::string(fFakeEventHeaderName.Data()) + "could not be loaded.\n";
         Fatal("Process()",errorMsg.c_str());        
       }
     } else 
-      cout << "Error: FakeEventHeaders  " << fFakeEventHeaderName.Data() 
-           << " could not be loaded.\n";
+      std::cout << "Error: FakeEventHeaders  " << fFakeEventHeaderName.Data() 
+                << " could not be loaded." << std::endl;
   }  
 
   //***********************************************************************************************
@@ -311,8 +311,8 @@ void FakeLeptonExampleAnaMod::Process()
       }
       
       MDB(kAnalysis, 8) {
-        cout << "Track " << t << " : "  << fTracks->At(t)->Pt() << " " << fTracks->At(t)->Eta() 
-             << " " << fTracks->At(t)->Phi() << " islepton=" << isLepton << endl;              
+        std::cout << "Track " << t << " : "  << fTracks->At(t)->Pt() << " " << fTracks->At(t)->Eta() 
+                  << " " << fTracks->At(t)->Phi() << " islepton=" << isLepton << std::endl;
       }             
       
       if ( !isLepton && fTracks->At(t)->Pt() > 3.0 
@@ -375,7 +375,7 @@ void FakeLeptonExampleAnaMod::Process()
               (leptons->At(0)->ObjType() == kMuon && leptons->At(1)->ObjType() == kElectron)) {
       finalstateType = 12;
     } else {
-      cerr << "Error: finalstate lepton type not supported\n";
+      std::cerr << "Error: finalstate lepton type not supported" << std::endl;
     }
 
     //*********************************************************************************************

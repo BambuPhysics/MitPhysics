@@ -35,10 +35,8 @@ namespace mithep
 		 const char *title="Example analysis module with all branches");
       ~WBFExampleAnalysisMod() {}
 
-      const char *GetMetName()                       const { return fMetName;                      }
       const char *GetCleanJetsName()                 const { return fCleanJetsName;                }
 
-      void  SetMetName(const char *name)                   { fMetName                      = name; }
       void  SetCleanJetsName(const char *name)             { fCleanJetsName                = name; }
       void  SetJetPtMax(double x)                          { fJetPtMax                        = x; }
       void  SetJetPtMin(double x)                          { fJetPtMin                        = x; }
@@ -46,11 +44,7 @@ namespace mithep
       void  SetDiJetMassMin(double x)                      { fDiJetMassMin                    = x; }
 
     protected:
-      TString                  fMetName;                 //name of met collection
       TString                  fCleanJetsName;           //name of clean central jets collection
-      TString                  fVertexName;              //name of vertex collection
-      const MetCol            *fMet;                     //!Missing Et branch
-      const VertexCol         *fVertices;                //!Vertex branch
       double       	       fJetPtMax;
       double       	       fJetPtMin;
       double       	       fDeltaEtaMin;

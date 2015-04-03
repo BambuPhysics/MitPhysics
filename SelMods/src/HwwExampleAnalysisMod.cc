@@ -147,7 +147,7 @@ void HwwExampleAnalysisMod::Process()
   if (met) {
     stdMet = met->At(0);
   } else {
-    cout << "Error: Met Collection " << fMetName << " could not be loaded.\n";
+    std::cout << "Error: Met Collection " << fMetName << " could not be loaded." << std::endl;
     return;
   }
 
@@ -334,7 +334,7 @@ void HwwExampleAnalysisMod::Process()
   } else if(CleanLeptons->At(1)->ObjType() == kElectron && CleanLeptons->At(0)->ObjType() == kMuon) {
     finalstateType = 13;
   } else {
-    cerr << "Error: finalstate lepton type not supported\n";
+    std::cerr << "Error: finalstate lepton type not supported" << std::endl;
   }
                         
   double deltaPhiLLJet = 0.0;
@@ -522,7 +522,7 @@ void HwwExampleAnalysisMod::SlaveTerminate()
   
   // Run finishing code on the computer (slave) that did the analysis. For this
   // module, we dont do anything here.
-  cout << "selected events on HwwExampleAnalysisMod: " << fNEventsSelected << endl;
+  std::cout << "selected events on HwwExampleAnalysisMod: " << fNEventsSelected << std::endl;
 
 } 
 //--------------------------------------------------------------------------------------------------

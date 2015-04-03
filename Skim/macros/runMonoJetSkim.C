@@ -1,5 +1,5 @@
 // $Id: runH4lSkim.C,v 1.1 2012/06/02 20:46:24 paus Exp $
-#if !defined(__CINT__) || defined(__MAKECINT__)
+#if !defined(__CLING__) || defined(__ROOTCLING__)
 #include <TSystem.h>
 #include "MitAna/DataUtil/interface/Dbug.h"
 #include "MitAna/DataTree/interface/Names.h"

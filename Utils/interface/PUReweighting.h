@@ -20,7 +20,7 @@ namespace mithep {
 
     PUReweighting(const char* fileName, const char* histoName);
 
-    ~PUReweighting() {}
+    virtual ~PUReweighting() {}
 
     double reweightOOT(int inTimePUMultiplicity, int outOfTimePUMultiplicity);
 			     

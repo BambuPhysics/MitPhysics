@@ -114,7 +114,7 @@ namespace mithep
 					 const PFCandidateCol *PFCands,
 					 unsigned int* worstVtxIndex = NULL,
 					 const mithep::Collection<mithep::Vertex> *vtxs = NULL,
-					 bool print = NULL);
+					 bool print = false);
 
       static Double_t PFGammaIsolation(const mithep::Photon *p, 
                                          Double_t extRadius,
@@ -138,11 +138,9 @@ namespace mithep
 				unsigned int* worstVtxIndex = NULL,
 				const mithep::Collection<mithep::Vertex> *vtxs = NULL,
 				const mithep::Collection<mithep::Electron> *eles = NULL,
-				bool print = NULL,
+				bool print = false,
 				double* ptmax = NULL, 
 				double* dRmax = NULL);
-      
-      ClassDef(IsolationTools, 0) // Isolation tools
   };
 }
 #endif

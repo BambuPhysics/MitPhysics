@@ -37,6 +37,7 @@ namespace mithep {
   public:
 
     VertexTools();
+    virtual ~VertexTools() {}
     
     static double NewMass(const Photon* ph1, const Photon* ph2, const BaseVertex* vert);
 

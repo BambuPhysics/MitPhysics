@@ -22,6 +22,7 @@ namespace mithep
   class DiTauSystem {
     public:
       DiTauSystem(const Particle *t1, const Particle *t2, const Met *met);
+      virtual ~DiTauSystem() {}
 
       Double_t         RecoMass()        const { return fRecoMass;}
       Double_t         TransverseMass()  const { return fMT;      }

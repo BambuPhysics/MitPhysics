@@ -46,7 +46,7 @@ namespace mithep {
   class EGEnergyCorrector {
     public:
       EGEnergyCorrector();
-      ~EGEnergyCorrector(); 
+      virtual ~EGEnergyCorrector(); 
 
       void Initialize(TString phfixstring, TString phfixfile, TString regweights, Int_t version);
       Bool_t IsInitialized() const { return fIsInitialized; }

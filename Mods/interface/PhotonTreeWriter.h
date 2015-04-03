@@ -46,7 +46,6 @@
 #include "MitPhysics/Utils/interface/MVAVBF.h"
 
 #include "MitPhysics/Utils/interface/VertexTools.h"
-#include "MitPhysics/Utils/interface/ElectronIDMVA.h"
 
 class TNtuple;
 class TRandom3;
@@ -55,6 +54,7 @@ namespace mithep
 {
 
   class PhotonTreeWriterDiphotonEvent;
+  class ElectronIDMVA;
   
   class PhotonTreeWriterVtx
   {
@@ -486,6 +486,8 @@ namespace mithep
       
       
   };
+
+  typedef PhotonTreeWriterPhoton<16> PhotonTreeWriterPhoton16;
   
   class PhotonTreeWriterDiphotonEvent
   {
@@ -737,7 +739,7 @@ namespace mithep
       Float_t zeppenfeld;
       Float_t dphidijetgg;
       
-      PhotonTreeWriterPhoton<16> photons[2];
+      PhotonTreeWriterPhoton16 photons[2];
   }; // PhotonTreeWriterDiphotonEvent
   
   

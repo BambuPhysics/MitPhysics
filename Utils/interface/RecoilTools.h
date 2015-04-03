@@ -29,7 +29,7 @@ namespace mithep {
 		TString iJetHighPtMVAFile="$MIT_DATA/src/MitPhysics/data/mva_JetID_highpt.weights.xml",
 		TString iCutFile         ="$CMSSW_BASE/src/MitPhysics/Utils/python/JetIdParams_cfi.py",
 		bool i42=false,JetIDMVA::MVAType iType=JetIDMVA::kBaseline,bool iUseRho=true);
-    ~RecoilTools();
+    virtual ~RecoilTools();
     JetIDMVA *fJetIDMVA;
 
     Met pfRecoil(Double_t iVisPt,Double_t iVisPhi,Double_t iVisSumEt,const PFCandidateCol *iCands);

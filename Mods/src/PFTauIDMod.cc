@@ -18,8 +18,8 @@ PFTauIDMod::PFTauIDMod(const char *name, const char *title) :
   fIsoGammaEtSumMax(3.0),
   fSignalMassMin(0.13),
   fSignalMassMax(2.00),
-  fIsHPSSel(kTRUE),
   fIsLooseId(kTRUE),
+  fIsHPSSel(kTRUE),
   fHPSIso("loose"),
   fPFTaus(0)
 {

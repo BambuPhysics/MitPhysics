@@ -34,7 +34,7 @@ namespace mithep {
   class ElectronIDMVA {
     public:
       ElectronIDMVA();
-      ~ElectronIDMVA(); 
+      virtual ~ElectronIDMVA(); 
 
       enum MVAType {
         kUninitialized = 0,

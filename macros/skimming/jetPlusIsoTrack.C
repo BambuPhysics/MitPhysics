@@ -1,4 +1,4 @@
-#if !defined(__CINT__) || defined(__MAKECINT__)
+#if !defined(__CLING__) || defined(__ROOTCLING__)
 #include "MitAna/DataUtil/interface/Debug.h"
 #include "MitAna/DataTree/interface/Names.h"
 #include "MitAna/Catalog/interface/Catalog.h"

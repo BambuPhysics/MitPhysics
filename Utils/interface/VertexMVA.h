@@ -25,6 +25,7 @@ namespace mithep {
   class VertexMVA {
     public:
       VertexMVA();
+      virtual ~VertexMVA() {}
   
       Double_t GetProb(const Vertex *v) const;
       

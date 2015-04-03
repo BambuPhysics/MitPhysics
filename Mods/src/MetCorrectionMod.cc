@@ -132,9 +132,9 @@ void MetCorrectionMod::Process()
 
       // debug
       if (fPrint) {
-        cout << "PFCand index " << i << " :: this Vtx dZ: "
-	     << fabs(pfcand->SourceVertex().Z() - ZofPV) << endl;
-        cout << "PFCand index " << i << " :: sumPUMom Pt: " << sumPUMom.Pt() << endl;
+        std::cout << "PFCand index " << i << " :: this Vtx dZ: "
+                  << fabs(pfcand->SourceVertex().Z() - ZofPV) << std::endl;
+        std::cout << "PFCand index " << i << " :: sumPUMom Pt: " << sumPUMom.Pt() << std::endl;
       }
             
     }
@@ -152,14 +152,14 @@ void MetCorrectionMod::Process()
 
     // debug
     if (fPrint) {
-      cout << "\n" << endl;
-      cout << "Final sumPUMom Pt Corr: " << sumPUPtCorr << endl;
-      cout << "Final sumPUMom Phi    : " << sumPUPhi << endl;
-      cout << "Final sumPUMom Px Corr: " << sumPUPxCorr << endl;
-      cout << "Final sumPUMom Py Corr: " << sumPUPyCorr << endl;
-      cout << "raw Met Pt            : " << fPFMet->At(0)->Pt() << endl;
-      cout << "cor Met Pt            : " << CorrectedMet->Pt() << endl;
-      cout << "+++++++ End of type 0 correction scope +++++++\n\n" << endl;
+      std::cout << "\n" << std::endl;
+      std::cout << "Final sumPUMom Pt Corr: " << sumPUPtCorr << std::endl;
+      std::cout << "Final sumPUMom Phi    : " << sumPUPhi << std::endl;
+      std::cout << "Final sumPUMom Px Corr: " << sumPUPxCorr << std::endl;
+      std::cout << "Final sumPUMom Py Corr: " << sumPUPyCorr << std::endl;
+      std::cout << "raw Met Pt            : " << fPFMet->At(0)->Pt() << std::endl;
+      std::cout << "cor Met Pt            : " << CorrectedMet->Pt() << std::endl;
+      std::cout << "+++++++ End of type 0 correction scope +++++++\n\n" << std::endl;
     }
     
   } // end Type 0 correction scope
@@ -209,9 +209,9 @@ void MetCorrectionMod::Process()
       
       // debug
       if (fPrint) {
-        cout << "Jet index " << i << " :: raw jet Pt:   " << inJet->Mom().Pt() << endl;
-        cout << "Jet index " << i << " :: cor jet Pt:   " << inCorrJet->Mom().Pt() << endl;
-        cout << "Jet index " << i << " :: type1 cor Pt: " << type1Mom.Pt() << endl;
+        std::cout << "Jet index " << i << " :: raw jet Pt:   " << inJet->Mom().Pt() << std::endl;
+        std::cout << "Jet index " << i << " :: cor jet Pt:   " << inCorrJet->Mom().Pt() << std::endl;
+        std::cout << "Jet index " << i << " :: type1 cor Pt: " << type1Mom.Pt() << std::endl;
       }
     }
     
@@ -221,11 +221,11 @@ void MetCorrectionMod::Process()
 
     // debug
     if (fPrint) {
-      cout << "\n" << endl;
-      cout << "Final type1 cor Pt: " << type1Mom.Pt() << endl;
-      cout << "raw Met Pt        : " << fPFMet->At(0)->Pt() << endl;
-      cout << "cor Met Pt        : " << CorrectedMet->Pt() << endl;
-      cout << "+++++++ End of type 1 correction scope +++++++\n\n" << endl;
+      std::cout << "\n" << std::endl;
+      std::cout << "Final type1 cor Pt: " << type1Mom.Pt() << std::endl;
+      std::cout << "raw Met Pt        : " << fPFMet->At(0)->Pt() << std::endl;
+      std::cout << "cor Met Pt        : " << CorrectedMet->Pt() << std::endl;
+      std::cout << "+++++++ End of type 1 correction scope +++++++\n\n" << std::endl;
     }
   }
 
@@ -253,10 +253,10 @@ void MetCorrectionMod::Process()
 
     // debug
     if (fPrint) {
-      cout << "XY shift cor Pt: " << sqrt(xyShiftCorrX*xyShiftCorrX + xyShiftCorrY*xyShiftCorrY) << endl;
-      cout << "raw Met Pt     : " << fPFMet->At(0)->Pt() << endl;
-      cout << "cor Met Pt     : " << CorrectedMet->Pt() << endl;
-      cout << "+++++++ End of XY shift correction scope +++++++\n\n" << endl;
+      std::cout << "XY shift cor Pt: " << sqrt(xyShiftCorrX*xyShiftCorrX + xyShiftCorrY*xyShiftCorrY) << std::endl;
+      std::cout << "raw Met Pt     : " << fPFMet->At(0)->Pt() << std::endl;
+      std::cout << "cor Met Pt     : " << CorrectedMet->Pt() << std::endl;
+      std::cout << "+++++++ End of XY shift correction scope +++++++\n\n" << std::endl;
     }
   }
 

@@ -8,7 +8,6 @@
 #ifndef MITPHYSICS_UTILS_JetIDMVA_H
 #define MITPHYSICS_UTILS_JetIDMVA_H
 
-#include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
 #include "MitAna/DataTree/interface/PFJetFwd.h"
 #include "MitAna/DataTree/interface/VertexFwd.h"
 #include "MitAna/DataTree/interface/TrackFwd.h"
@@ -21,6 +20,8 @@
 // for Rho definitons
 #include "MitPhysics/Utils/interface/RhoUtilities.h"
 
+class FactorizedJetCorrector;
+
 class TRandom3;
 namespace TMVA {
   class Reader;
@@ -30,7 +31,7 @@ namespace mithep {
   class JetIDMVA {
     public:
       JetIDMVA();
-      ~JetIDMVA(); 
+      virtual ~JetIDMVA(); 
 
       enum MVAType {
         kBaseline  = 0,

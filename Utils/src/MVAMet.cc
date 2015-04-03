@@ -3,10 +3,12 @@
 #include "MitPhysics/Utils/interface/JetTools.h"
 #include "MitPhysics/Utils/interface/RecoilTools.h"
 #include "MitAna/DataTree/interface/StableData.h"
+#include "MitPhysics/Utils/interface/RecoilTools.h"
+#include "MitPhysics/Utils/interface/MetLeptonTools.h"
 #include <TFile.h>
 #include <TRandom3.h>
 #include "CondFormats/EgammaObjects/interface/GBRForest.h"
-#include "Cintex/Cintex.h"
+// #include "Cintex/Cintex.h"
 #include <utility>
 
 ClassImp(mithep::MVAMet)
@@ -77,7 +79,8 @@ void MVAMet::Initialize(TString iJetLowPtFile,
   fRecoilTools = new RecoilTools(iJetLowPtFile,iJetHighPtFile,iJetCutFile,(iMETType == kOld42),fType,lUseRho);
   if(f42) fRecoilTools->fJetIDMVA->fJetPtMin = 1.;
 
-  ROOT::Cintex::Cintex::Enable();   
+  // Is this necessary? (Y.I. Apr 2 2015)
+  //  ROOT::Cintex::Cintex::Enable();   
   
   TFile *lPhiForest = new TFile(iPhiWeights,"READ");
   fPhiReader = (GBRForest*)lPhiForest->Get(fPhiMethodName);

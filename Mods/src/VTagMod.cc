@@ -1,6 +1,11 @@
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "MitPhysics/Mods/interface/VTagMod.h"
+#include "fastjet/tools/Pruner.hh"
+#include "fastjet/JetDefinition.hh"
+#include "fastjet/GhostedAreaSpec.hh"
+#include "fastjet/AreaDefinition.hh"
 #include "fastjet/PseudoJet.hh"
+#include "fastjet/ClusterSequenceArea.hh"
 #include "fastjet/contrib/Njettiness.hh"
 #include "fastjet/contrib/Nsubjettiness.hh"
 
@@ -48,9 +53,6 @@ void VTagMod::Process()
     lJet = (*fPruner)(lOutJets[0]);
   }
 
-  // Compute the the tau 1 and tau 2 variables : 
-  double tau1 = GetTau(lJet,1,1);
-  double tau2 = GetTau(lJet,2,1);
   delete lClustering;
 }
 

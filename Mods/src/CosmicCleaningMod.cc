@@ -54,7 +54,7 @@ void CosmicCleaningMod::Process()
         }
       }
       else {
-        cout << "Warning: GoodMuons collection " << fCleanMuonsName << " was not found.\n";
+        std::cout << "Warning: GoodMuons collection " << fCleanMuonsName << " was not found." << std::endl;
       }
         
       if (isMuonOverlap)
@@ -78,7 +78,7 @@ void CosmicCleaningMod::Process()
     } 
   }
   else {
-    cout << "Warning: fCosmics collection " << fCosmicsName << " was not found.\n";
+    std::cout << "Warning: fCosmics collection " << fCosmicsName << " was not found." << std::endl;
   }
 
   // Fill the muon array with the contents of the vector:

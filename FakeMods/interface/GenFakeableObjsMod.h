@@ -50,9 +50,6 @@ namespace mithep
       const char   *GetJetBranchName()               const { return fJetBranchName;                }
       const char   *GetVertexName()                  const { return fVertexName;                   }
       const char   *GetConversionBranchName()        const { return fConversionBranchName;         }
-      const char   *GetGoodJetsName()                const { return fGoodJetsName;                 }
-      const char   *GetCleanElectronsName()          const { return fCleanElectronsName;           }
-      const char   *GetCleanMuonsName()              const { return fCleanMuonsName;               }
       const char   *GetCleanPhotonsName()            const { return fCleanPhotonsName;             }
       const char   *GetCleanJetsName()               const { return fCleanJetsName;                }
       const char   *GetElFakeableObjsName()          const { return fElFakeableObjsName;           }
@@ -85,9 +82,6 @@ namespace mithep
       void SetJetBranchName(const char *name)                { fJetBranchName              = name; }
       void SetVertexName(const char *name)                   { fVertexName                 = name; }
       void SetConversionBranchName(const char *name)         { fConversionBranchName       = name; }
-      void SetGoodJetsName(const char *name)                 { fGoodJetsName               = name; }
-      void SetCleanElectronsName(const char *name)           { fCleanElectronsName         = name; }
-      void SetCleanMuonsName(const char *name)               { fCleanMuonsName             = name; }
       void SetCleanPhotonsName(const char *name)             { fCleanPhotonsName           = name; }
       void SetCleanJetsName(const char *name)                { fCleanJetsName              = name; }
       void SetElFakeableObjsName(const char *name)           { fElFakeableObjsName         = name; }
@@ -136,9 +130,6 @@ namespace mithep
       TString          fJetBranchName;                 //name of jet branch                  (input)
       TString          fVertexName;                    //name of vertex branch               (input)
       TString          fConversionBranchName;          //name of conversion collection       (input)
-      TString          fGoodJetsName;                  //name of Good jets collection        (input)
-      TString          fCleanElectronsName;            //name of clean electrons             (input)
-      TString          fCleanMuonsName;                //name of clean muons                 (input)
       TString          fCleanPhotonsName;              //name of clean photons               (input)
       TString          fCleanJetsName;                 //name of clean jets                  (input)
       TString          fMCLeptonsName;                 //name of MC leptons                  (input)
