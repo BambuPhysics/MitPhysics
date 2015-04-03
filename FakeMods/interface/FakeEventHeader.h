@@ -14,10 +14,12 @@
  
 #include "MitAna/DataTree/interface/DataObject.h"
 #include "MitAna/DataTree/interface/JetCol.h"
-#include "MitPhysics/FakeMods/interface/FakeObjectCol.h"
+#include "MitPhysics/FakeMods/interface/FakeObjectFwd.h"
 
 namespace mithep 
 {
+  class FakeObject;
+
   class FakeEventHeader : public DataObject
   {
     public:
@@ -51,26 +53,4 @@ namespace mithep
   };
 }
 
-//--------------------------------------------------------------------------------------------------
-inline void mithep::FakeEventHeader::AddFakeObject(const Particle *p, EObjType faketype, 
-                                                   Bool_t fakeTag, Bool_t mcTag)  
-{
-  // Add new fake object
-  mithep::FakeObject *newFake = fFakeObjects.AddNew();
-  newFake->SetParticle(p);
-  newFake->SetFakeType(faketype);
-  newFake->SetFakeTag(fakeTag);
-  newFake->SetMCTag(mcTag);  
-}
-
-//--------------------------------------------------------------------------------------------------
-inline void mithep::FakeEventHeader::AddFakeObject(const mithep::FakeObject *fo)  
-{
-  // Add new fake object with default parameters taken from the original object.
-  mithep::FakeObject *newFake = fFakeObjects.AddNew();
-  newFake->SetParticle(fo->FakeParticle());
-  newFake->SetFakeType(fo->ObjType());
-  newFake->SetFakeTag(fo->FakeTag());
-  newFake->SetMCTag(fo->MCTag());  
-}
 #endif

@@ -2,7 +2,13 @@
 
 #ifndef MITANA_DATATREE_FAKEEVENTHEADERCOLLINKDEF_H
 #define MITANA_DATATREE_FAKEEVENTHEADERCOLLINKDEF_H
-#include "MitPhysics/FakeMods/interface/FakeEventHeaderCol.h"
+#include "MitAna/DataCont/interface/Collection.h"
+#include "MitAna/DataCont/interface/Array.h"
+#include "MitAna/DataCont/interface/ObjArray.h"
+#include "MitPhysics/FakeMods/interface/FakeEventHeaderFwd.h"
+#include "MitPhysics/FakeMods/interface/FakeEventHeader.h"
+#include "MitPhysics/FakeMods/interface/FakeObjectFwd.h"
+#include "MitPhysics/FakeMods/interface/FakeObject.h"
 #endif
 
 #ifdef __CLING__
@@ -19,4 +25,12 @@
 #pragma link C++ class mithep::ObjArray<mithep::FakeEventHeader>+;
 #pragma link C++ typedef mithep::FakeEventHeaderCol;
 #pragma link C++ typedef mithep::FakeEventHeaderOArr;
+
+#pragma link C++ class mithep::FakeObject+;
+#pragma link C++ class mithep::Collection<mithep::FakeObject>+;
+#pragma link C++ class mithep::Array<mithep::FakeObject>+;
+#pragma link C++ class mithep::ObjArray<mithep::FakeObject>+;
+#pragma link C++ typedef mithep::FakeObjectCol;
+#pragma link C++ typedef mithep::FakeObjectArr;
+#pragma link C++ typedef mithep::FakeObjectOArr;
 #endif
