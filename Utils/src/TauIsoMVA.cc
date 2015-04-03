@@ -8,7 +8,7 @@
 #include "MitPhysics/Utils/interface/TauIsoMVA.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "CondFormats/EgammaObjects/interface/GBRForest.h"
-#include "Cintex/Cintex.h"
+// #include "Cintex/Cintex.h"
 #include <utility>
 
 ClassImp(mithep::TauIsoMVA)
@@ -70,7 +70,8 @@ void TauIsoMVA::Initialize( TString iWeightFile) {
   fGBR = false;
 }
 void TauIsoMVA::InitializeGBR( TString iWeightFile) {
-  ROOT::Cintex::Cintex::Enable();   
+  // Is this necessary? (Y.I. Apr 2 2015)
+  // ROOT::Cintex::Cintex::Enable();   
   TFile *lForest = new TFile(iWeightFile,"READ");
   fGBRReader = (GBRForest*)lForest->Get("gbrfTauIso");
   lForest->Close();
