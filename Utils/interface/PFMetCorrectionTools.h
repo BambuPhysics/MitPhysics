@@ -1,5 +1,5 @@
 #ifndef MITPHYSICS_UTILS_PFMetCorrectionTOOLS_H
-#define MITPHYSICS_UTILS_PFMetCorrectoinTOOLS_H
+#define MITPHYSICS_UTILS_PFMetCorrectionTOOLS_H
 
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitAna/DataUtil/interface/Debug.h"
