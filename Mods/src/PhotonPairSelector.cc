@@ -1062,6 +1062,8 @@ void PhotonPairSelector::SlaveBegin()
   // Run startup code on the computer (slave) doing the actual analysis. Here, we just request the
   // photon collection branch.
 
+  using std::string;
+
   if( fApplyLeptonTag ) {
     ReqEventObject(fLeptonTagElectronsName,    fLeptonTagElectrons,    false);  
     ReqEventObject(fLeptonTagMuonsName,        fLeptonTagMuons,        false);  
@@ -1384,7 +1386,7 @@ Float_t PhotonPairSelector::GetEventCat(PhotonTools::CiCBaseLineCats cat1,
 //---------------------------------------------------------------------------------------------------
 void PhotonPairSelector::AddEnCorrFromFile(TString filename) {
   
-  ifstream f_in(filename);
+  std::ifstream f_in(filename);
   if(!f_in.good()){
     std::cerr << "[ERROR] file " << filename << " not readable" << std::endl;
     exit(1);

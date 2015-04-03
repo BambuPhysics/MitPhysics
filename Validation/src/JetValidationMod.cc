@@ -73,13 +73,13 @@ void JetValidationMod::Process()
       }
     }
     if (closestMatchIndex > -1)
-      if (fPrintDebug) cerr << "GoodIC5GenJets->At(i) " << GoodIC5GenJets->At(i)->Pt() << " " 
-                            << GoodIC5GenJets->At(i)->Eta() << " " << GoodIC5GenJets->At(i)->Phi() 
-                            << "   GoodIC5Jets->At(" << closestMatchIndex << ") " 
-                            << GoodIC5Jets->At(closestMatchIndex)->Pt() << " " 
-                            << GoodIC5Jets->At(closestMatchIndex)->Eta() << " " 
-                            << GoodIC5Jets->At(closestMatchIndex)->Phi() << "    DR = " 
-                            << minDR << endl;
+      if (fPrintDebug) std::cerr << "GoodIC5GenJets->At(i) " << GoodIC5GenJets->At(i)->Pt() << " " 
+                                 << GoodIC5GenJets->At(i)->Eta() << " " << GoodIC5GenJets->At(i)->Phi() 
+                                 << "   GoodIC5Jets->At(" << closestMatchIndex << ") " 
+                                 << GoodIC5Jets->At(closestMatchIndex)->Pt() << " " 
+                                 << GoodIC5Jets->At(closestMatchIndex)->Eta() << " " 
+                                 << GoodIC5Jets->At(closestMatchIndex)->Phi() << "    DR = " 
+                                 << minDR << std::endl;
     if (minDR < 0.5)
     {
       IC5GenJetToIC5JetMap[GoodIC5GenJets->At(i)] = GoodIC5Jets->At(closestMatchIndex);      
@@ -112,7 +112,7 @@ void JetValidationMod::Process()
     if (GoodIC5GenJets->At(i)->Pt() > 60.0 && GoodIC5GenJets->At(i)->Pt() < 80.0)
       fIC5NGenJetsVsGenJetEta_Pt60To80->Fill(GoodIC5GenJets->At(i)->Eta());
     
-    map<GenJet*, Jet*>::iterator iter = 
+    std::map<GenJet*, Jet*>::iterator iter = 
       IC5GenJetToIC5JetMap.find(GoodIC5GenJets->At(i));      
     if (iter != IC5GenJetToIC5JetMap.end()) {          
       Double_t  dR = MathUtils::DeltaR(GoodIC5GenJets->At(i)->Mom(), iter->second->Mom());
@@ -162,7 +162,7 @@ void JetValidationMod::Process()
   }
 
   for (UInt_t i=0; i<GoodIC5Jets->GetEntries(); i++) {
-    map<Jet*, GenJet*>::iterator iter = 
+    std::map<Jet*, GenJet*>::iterator iter = 
       IC5JetToIC5GenJetMap.find(GoodIC5Jets->At(i));      
     //unmatched ones
     if (iter == IC5JetToIC5GenJetMap.end()) {          
@@ -211,13 +211,13 @@ void JetValidationMod::Process()
       }
     }
     if (closestMatchIndex > -1)
-      if (fPrintDebug) cerr << "GoodSC5GenJets->At(i) " << GoodSC5GenJets->At(i)->Pt() << " " 
-                            << GoodSC5GenJets->At(i)->Eta() << " " << GoodSC5GenJets->At(i)->Phi() 
-                            << "   GoodSC5Jets->At(" << closestMatchIndex << ") " 
-                            << GoodSC5Jets->At(closestMatchIndex)->Pt() << " " 
-                            << GoodSC5Jets->At(closestMatchIndex)->Eta() << " " 
-                            << GoodSC5Jets->At(closestMatchIndex)->Phi() << "    DR = " 
-                            << minDR << endl;
+      if (fPrintDebug) std::cerr << "GoodSC5GenJets->At(i) " << GoodSC5GenJets->At(i)->Pt() << " " 
+                                 << GoodSC5GenJets->At(i)->Eta() << " " << GoodSC5GenJets->At(i)->Phi() 
+                                 << "   GoodSC5Jets->At(" << closestMatchIndex << ") " 
+                                 << GoodSC5Jets->At(closestMatchIndex)->Pt() << " " 
+                                 << GoodSC5Jets->At(closestMatchIndex)->Eta() << " " 
+                                 << GoodSC5Jets->At(closestMatchIndex)->Phi() << "    DR = " 
+                                 << minDR << std::endl;
     if (minDR < 0.5)
     {
       SC5GenJetToSC5JetMap[GoodSC5GenJets->At(i)] = GoodSC5Jets->At(closestMatchIndex);      
@@ -248,7 +248,7 @@ void JetValidationMod::Process()
     if (GoodSC5GenJets->At(i)->Pt() > 60.0 && GoodSC5GenJets->At(i)->Pt() < 80.0)
       fSC5NGenJetsVsGenJetEta_Pt60To80->Fill(GoodSC5GenJets->At(i)->Eta());
     
-    map<GenJet*, Jet*>::iterator iter = 
+    std::map<GenJet*, Jet*>::iterator iter = 
       SC5GenJetToSC5JetMap.find(GoodSC5GenJets->At(i));      
     if (iter != SC5GenJetToSC5JetMap.end()) {          
       Double_t  dR = MathUtils::DeltaR(GoodSC5GenJets->At(i)->Mom(), iter->second->Mom());
@@ -295,7 +295,7 @@ void JetValidationMod::Process()
   }
   
   for (UInt_t i=0; i<GoodSC5Jets->GetEntries(); i++) {
-    map<Jet*, GenJet*>::iterator iter = 
+    std::map<Jet*, GenJet*>::iterator iter = 
       SC5JetToSC5GenJetMap.find(GoodSC5Jets->At(i));      
     //unmatched ones
     if (iter == SC5JetToSC5GenJetMap.end()) {          

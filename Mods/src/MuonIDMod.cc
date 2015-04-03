@@ -592,6 +592,8 @@ void MuonIDMod::SlaveBegin()
   // Run startup code on the computer (slave) doing the actual analysis. Here, we just request the
   // muon collection branch.
 
+  using std::string;
+
   if (fCleanMuonsName.CompareTo("HggLeptonTagMuons") == 0) {
     ReqEventObject(fPVName,fVertices,true);
   }
@@ -716,7 +718,7 @@ void MuonIDMod::SlaveBegin()
     fMuonTools = new MuonTools();
     fMuonIDMVA = new MuonIDMVA();
     fMuonIDMVA->Initialize("BDTG method",
-			   string((getenv("MIT_DATA")+string("/MuonMVAWeights/BarrelPtBin0_IDIsoCombined_BDTG.weights.xml"))),
+                           string((getenv("MIT_DATA")+string("/MuonMVAWeights/BarrelPtBin0_IDIsoCombined_BDTG.weights.xml"))),
                            string((getenv("MIT_DATA")+string("/MuonMVAWeights/EndcapPtBin0_IDIsoCombined_BDTG.weights.xml"))),
                            string((getenv("MIT_DATA")+string("/MuonMVAWeights/BarrelPtBin1_IDIsoCombined_BDTG.weights.xml"))),
                            string((getenv("MIT_DATA")+string("/MuonMVAWeights/EndcapPtBin1_IDIsoCombined_BDTG.weights.xml"))),

@@ -11,6 +11,7 @@
 #include "MitAna/DataTree/interface/MCParticleCol.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "MitPhysics/FakeMods/interface/FakeEventHeader.h"
+#include "MitPhysics/FakeMods/interface/FakeObject.h"
 #include "MitPhysics/FakeMods/interface/FakeRate.h"
 
 using namespace mithep;

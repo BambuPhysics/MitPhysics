@@ -60,7 +60,7 @@ void PDFProducerMod::Process()
       ParticleOArr *leptons = GetObjThisEvt<ParticleOArr>(ModNames::gkMergedLeptonsName);
       if (leptons->GetEntries() >= 2) { // Nlep >= 2 to fill it
 	if (fPrintDebug) 
-	  cout << "Start loop over PDF members:" << endl;
+      std::cout << "Start loop over PDF members:" << std::endl;
 
 	for (UInt_t i=0; i<nmembers; ++i) {
 	  LHAPDF::usePDFMember(i);
@@ -69,10 +69,10 @@ void PDFProducerMod::Process()
 	  Double_t TheWeight = newpdf1/pdf1*newpdf2/pdf2;
 
 	  if (fPrintDebug) {
-	    cout << i << " --> " << pdf1 << " "   << pdf2 << " | "
-                        	 << x1   << " "   << x2   << " | "
-				 << id1  << " "   << id2  << " | "
-				 << Q    << " : " <<  TheWeight << endl;
+        std::cout << i << " --> " << pdf1 << " "   << pdf2 << " | "
+                  << x1   << " "   << x2   << " | "
+                  << id1  << " "   << id2  << " | "
+                  << Q    << " : " <<  TheWeight << std::endl;
 	  }
 	  if (GetFillHist()) {
             hDPDFHisto[6]->Fill(TMath::Min(TheWeight,99.999));

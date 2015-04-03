@@ -893,7 +893,10 @@ void ElectronIDMod::Setup()
   else if (fElectronIDType.CompareTo("Loose") == 0) 
     fElIdType = ElectronTools::kLoose;
   else if (fElectronIDType.CompareTo("Likelihood") == 0) {
-    if (!fLH) { cout << "Error: Likelihood not initialized.\n"; assert(0); }
+    if (!fLH) {
+      std::cout << "Error: Likelihood not initialized." << std::endl;
+      throw std::runtime_error("Error: Likelihood not initialized.");
+    }
     fElIdType = ElectronTools::kLikelihood;
   } else if (fElectronIDType.CompareTo("NoId") == 0) 
     fElIdType = ElectronTools::kNoId;

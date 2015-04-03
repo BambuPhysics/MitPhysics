@@ -132,8 +132,8 @@ void GenFakeableObjsMod::Process()
   //Load Trigger Objects
   const TriggerObjectCol *triggerObjects = GetHLTObjects(fTriggerObjectsName);
   if (!triggerObjects && fVetoTriggerJet) {
-    cout << "Error: Could not load Trigger Object Collection with name " 
-         << fTriggerObjectsName << endl;
+    std::cout << "Error: Could not load Trigger Object Collection with name " 
+              << fTriggerObjectsName << std::endl;
   }
 
   // get input clean object collections

@@ -50,7 +50,7 @@ void ElectronCleaningMod::Process()
           }
         }
       } else {
-        cout << "Warning: GoodMuons collection " << fCleanMuonsName << " was not found.\n";
+        std::cout << "Warning: GoodMuons collection " << fCleanMuonsName << " was not found." << std::endl;
       }
         
       if (isMuonOverlap)
@@ -90,7 +90,7 @@ void ElectronCleaningMod::Process()
       CleanElTemp.push_back(GoodElectrons->At(i));   
     } 
   } else {
-    cout << "Warning: GoodElectrons collection " << fGoodElectronsName << " was not found.\n";
+    std::cout << "Warning: GoodElectrons collection " << fGoodElectronsName << " was not found." << std::endl;
   }
 
   // Fill the electron array with the contents of the vector:

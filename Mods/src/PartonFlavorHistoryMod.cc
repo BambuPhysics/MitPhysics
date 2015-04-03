@@ -7,6 +7,9 @@
 #include "MitPhysics/Mods/interface/PartonFlavorHistoryMod.h"
 
 using namespace mithep;
+using std::cout;
+using std::endl;
+using std::string;
 
 ClassImp(mithep::PartonFlavorHistoryMod)
 

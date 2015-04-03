@@ -9,7 +9,7 @@
 //--------------------------------------------------------------------------------------------------
 
 #ifndef MITPHYSICS_MODS_MVAMETMOD_H
-#define MITPHYSICS_MODS_MVAMETOD_H
+#define MITPHYSICS_MODS_MVAMETMOD_H
 
 #include "MitAna/TreeMod/interface/BaseMod.h" 
 #include "MitAna/DataTree/interface/PFJetCol.h"
