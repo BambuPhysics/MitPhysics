@@ -1,11 +1,10 @@
 //--------------------------------------------------------------------------------------------------
 // M.Yang 2011/10/12
-// $Id: PhotonMvaMod.h,v 1.2 2012/06/17 23:12:56 bendavid Exp $
 //
 // PhotonMvaMod
 //
-//Precompute regression energy corrections and id bdt output to save memory and cpu time
-//in subsequent module chains.
+// Precompute regression energy corrections and id bdt output to save memory and cpu time in
+// subsequent module chains.
 //
 // Authors: J.Bendavid
 //--------------------------------------------------------------------------------------------------
@@ -133,7 +132,7 @@ namespace mithep
     const MCParticleCol          *fMCParticles;
     const PileupInfoCol          *fPileUp;    
 
-    EGEnergyCorrector egcor;
+    //    EGEnergyCorrector egcor;
     Bool_t fDoRegression;
     TString fPhFixString;
     TString fPhFixFile;

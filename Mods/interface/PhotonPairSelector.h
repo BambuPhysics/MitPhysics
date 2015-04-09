@@ -26,7 +26,7 @@
 #include "MitAna/DataTree/interface/PFMetCol.h"
 
 #include "MitPhysics/Utils/interface/PhotonTools.h"
-#include "MitPhysics/Utils/interface/EGEnergyCorrector.h"
+//#include "MitPhysics/Utils/interface/EGEnergyCorrector.h"
 
 #include "MitPhysics/Utils/interface/MVATools.h"
 #include "MitPhysics/Utils/interface/VertexTools.h"
@@ -382,7 +382,7 @@ namespace mithep
 
     // pointer to RNG ionstance for smearing
     TRandom3*             fRng;
-    EGEnergyCorrector     fEgCor;
+    //EGEnergyCorrector     fEgCor;
     Bool_t                fDoRegression;
     TString               fPhFixString;
     TString               fPhFixFile;

@@ -125,12 +125,13 @@ void PhotonMvaMod::Process()
     const Photon *ph = preselPh->At(iPh);
     Photon       *outph = new Photon(*ph);
     if (fDoRegression) {
-      if (!egcor.IsInitialized())
-        egcor.Initialize(fPhFixString,fPhFixFile,fRegWeights,fRegressionVersion);
-      if (fRegressionVersion>0)
-        egcor.CorrectEnergyWithError(outph,fPV,fPileUpDen->At(0)->RhoKt6PFJets(),
-				     fRegressionVersion, fApplyShowerRescaling && !fIsData);
-      ThreeVectorC scpos = outph->SCluster()->Point();
+
+    //if (!egcor.IsInitialized())
+    //  egcor.Initialize(fPhFixString,fPhFixFile,fRegWeights,fRegressionVersion);
+    //if (fRegressionVersion>0)
+    //  egcor.CorrectEnergyWithError(outph,fPV,fPileUpDen->At(0)->RhoKt6PFJets(),
+    //				     fRegressionVersion, fApplyShowerRescaling && !fIsData);
+          ThreeVectorC scpos = outph->SCluster()->Point();
       outph->SetCaloPosXYZ(scpos.X(),scpos.Y(),scpos.Z());
     }
     GoodPhotons->AddOwned(outph);

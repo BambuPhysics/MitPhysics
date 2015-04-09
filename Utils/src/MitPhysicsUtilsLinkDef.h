@@ -66,7 +66,7 @@
 #pragma link C++ class mithep::PUReweighting;
 #pragma link C++ class mithep::PUReweightingMulti;
 #pragma link C++ class PhotonFix;
-#pragma link C++ class mithep::EGEnergyCorrector;
+// #pragma link C++ class mithep::EGEnergyCorrector;
 #pragma link C++ class mithep::ElectronIDMVA;
 #pragma link C++ class mithep::MVATools;
 #pragma link C++ class mithep::MuonIDMVA;
