@@ -5,6 +5,10 @@
 #                                                                       Apr 17, 2015 - V1 Y. Iiyama
 #---------------------------------------------------------------------------------------------------
 
+echo "*************************"
+echo " MitPhysics/bin/setup.sh"
+echo "*************************"
+
 if ! [[ $HOSTNAME =~ t[23].*\.mit\.edu ]]
 then
   # download the MitPhysics/data directory
