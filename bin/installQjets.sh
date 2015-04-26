@@ -6,25 +6,29 @@
 # fastjet and the most up to date versions.
 #
 #                                                              May 29, 2014 - V0 Leonardo Di Matteo
+#                                                              Apr 26, 2015 - V1 Yutaro Iiyama
 #---------------------------------------------------------------------------------------------------
 function configureScram {
-  EXTERNAL=$1
+  local EXTERNAL=$1
+
+  echo ""
+  echo " INFO - configuring SCRAM to use Qjets at: $EXTERNAL/Qjets"
+  echo ""    
+
   # add local fastjet external to scarm config
   mv $CMSSW_BASE/config/toolbox/$SCRAM_ARCH/tools/selected/qjets.xml \
-     $CMSSW_BASE/config/toolbox/$SCRAM_ARCH/tools/selected/qjets.xml-last.$$
+     $CMSSW_BASE/config/toolbox/$SCRAM_ARCH/tools/selected/qjets.xml-last.$(date +%s)
+
   echo \
-'
-  <tool name="qjets" version="2">
+'  <tool name="qjets" version="2">
     <info url="http://jets.physics.harvard.edu/Qjets/html/Welcome.html"/>
     <lib name="qjets"/>
     <client>
-      <environment name="QJETS_BASE" default="xx-PATH-xx/Qjets"/>
+      <environment name="QJETS_BASE" default="'$EXTERNAL'/Qjets"/>
       <environment name="LIBDIR" default="$QJETS_BASE/lib"/>
       <environment name="INCLUDE" default="$QJETS_BASE"/>
     </client>
-  </tool>
-' | sed "s#xx-PATH-xx#$EXTERNAL#" \
-> $CMSSW_BASE/config/toolbox/$SCRAM_ARCH/tools/selected/qjets.xml
+  </tool>' > $CMSSW_BASE/config/toolbox/$SCRAM_ARCH/tools/selected/qjets.xml
 
   # commit the scram config changes
   cd $CMSSW_BASE/src
@@ -52,34 +56,23 @@ else
 fi
 
 # the default location
-EXTERNAL_DEF="/home/cmsprod/cms/external"
-if [ -d "$EXTERNAL_DEF/Qjets" ]
+EXTERNAL=/cvmfs/cvmfs.cmsaf.mit.edu/hidsk0001/cmsprod/cms/external
+if [ -d $EXTERNAL/Qjets ]
 then
-  EXTERNAL="$EXTERNAL_DEF"
-  echo ""
-  echo " INFO - found external location at: $EXTERNAL/Qjets"
-  echo ""
-  # use existing location just adjust scram configuration
   configureScram $EXTERNAL
   exit 0
-else
-  EXTERNAL="/home/$USER/cms/external"
-  echo " INFO - default external location ($EXTERNAL_DEF/Qjets) not found."
-  echo "        make own external at: $EXTERNAL/Qjets"
-  echo ""
 fi
 
-# make sure fastjet source code is installed locally
-# export the variable as it will be used in the plugin installation
-export FASTJET_DIR=`ls -d $EXTERNAL/fastjet-*`
-if [ -z "$FASTJET_DIR" ]
+EXTERNAL=/home/cmsprod/cms/external
+if [ -d $EXTERNAL/Qjets ]
 then
-  echo ""
-  echo " ERROR - fastjet source code not found in $EXTERNAL."
-  echo "         Please set it up with installFastjetAndContrib.sh."
-  echo ""
-  exit 1
+  configureScram $EXTERNAL
+  exit 0
 fi
+
+EXTERNAL="/home/$USER/cms/external"
+echo " INFO - make own repository at: $EXTERNAL/Qjets"
+echo ""
 
 # Here the real work starts (qjets plugin and tweaks)
 
@@ -122,8 +115,5 @@ g++ -shared -fPIC -o $QJETS_DIR/lib/libqjets.so -Wl,-soname,libqjets.so $QJETS_D
 
 # final adjustment to scram configuration
 configureScram $EXTERNAL
-
-# cleanup
-unset FASTJET_DIR
 
 exit 0

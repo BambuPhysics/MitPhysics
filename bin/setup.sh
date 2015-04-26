@@ -2,7 +2,8 @@
 #---------------------------------------------------------------------------------------------------
 # Setup the MitPhysics package adjusting things that are needed for it to compile and run properly.
 #
-#                                                                       Apr 17, 2015 - V1 Y. Iiyama
+#                                                                   Jan 16, 2014 - V0 Christoph Paus
+#                                                                   Apr 26, 2015 - V1 Yutaro Iiyama
 #---------------------------------------------------------------------------------------------------
 
 echo "*************************"
@@ -18,9 +19,6 @@ fi
 
 # Generate ROOT dictionaries for classes defined in this module
 $CMSSW_BASE/src/MitCommon/bin/genDict.sh MitPhysics/{FakeMods,Init,Mods,SelMods,Skim,Utils,Validation}
-
-# check for existing fastjet+contribution directory or install it
-$CMSSW_BASE/src/MitPhysics/bin/installFastjetAndContrib.sh
 
 # check for existing qjets directory or install it  
 $CMSSW_BASE/src/MitPhysics/bin/installQjets.sh
