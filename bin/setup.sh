@@ -10,8 +10,10 @@ echo "*************************"
 echo " MitPhysics/bin/setup.sh"
 echo "*************************"
 
-if ! [[ $HOSTNAME =~ t[23].*\.mit\.edu ]]
+if [[ $HOSTNAME =~ t[23].*\.mit\.edu ]]
 then
+  ln -s /cvmfs/cvmfs.cmsaf.mit.edu/hidsk0001/cmsprod/cms/MitPhysics/data $CMSSW_BASE/src/MitPhysics/data
+else
   # download the MitPhysics/data directory
   # At MIT T2/T3, data files are available at MIT CVMFS
   $CMSSW_BASE/src/MitPhysics/bin/updateData.sh
