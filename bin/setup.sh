@@ -12,7 +12,10 @@ echo "*************************"
 
 if [[ $HOSTNAME =~ t[23].*\.mit\.edu ]]
 then
-  ln -s /cvmfs/cvmfs.cmsaf.mit.edu/hidsk0001/cmsprod/cms/MitPhysics/data $CMSSW_BASE/src/MitPhysics/data
+  if ! [ -L $CMSSW_BASE/src/MitPhysics/data ]
+  then
+    ln -s /cvmfs/cvmfs.cmsaf.mit.edu/hidsk0001/cmsprod/cms/MitPhysics/data $CMSSW_BASE/src/MitPhysics/data
+  fi
 else
   # download the MitPhysics/data directory
   # At MIT T2/T3, data files are available at MIT CVMFS
