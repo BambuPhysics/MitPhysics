@@ -1,6 +1,8 @@
 #include "MitPhysics/Utils/interface/RecoilTools.h"
 #include "MitPhysics/Utils/interface/JetTools.h"
 #include <TFile.h>
+#include "TSystem.h"
+#include <stdexcept>
 
 ClassImp(mithep::RecoilTools)
 
@@ -10,6 +12,20 @@ using namespace mithep;
 RecoilTools::RecoilTools(TString iJetLowPtMVAFile, TString iJetHighPtMVAFile, TString iCutFile,
 			 bool i42, JetIDMVA::MVAType iType, bool iUseRho)
 { 
+  if (iJetLowPtMVAFile.Length() == 0 || iJetHighPtMVAFile.Length() == 0 || iCutFile.Length() == 0) {
+    //default
+    TString dataDir(gSystem->Getenv("MIT_DATA"));
+    if (dataDir.Length() == 0)
+      throw std::runtime_error("MIT_DATA environment is not set.");
+
+    if (iJetLowPtMVAFile.Length() == 0)
+      iJetLowPtMVAFile = dataDir + "/mva_JetID_lowpt.weights.xml";
+    if (iJetHighPtMVAFile.Length() == 0)
+      iJetHighPtMVAFile = dataDir + "/mva_JetID_highpt.weights.xml";
+    if (iCutFile.Length() == 0)
+      iCutFile = dataDir + "/JetIDMVA_JetIdParams.py";
+  }
+
   fJetIDMVA = new JetIDMVA();
   fJetIDMVA->Initialize( JetIDMVA::kMET,iJetLowPtMVAFile,iJetHighPtMVAFile,iType,iCutFile);
   f42       = i42;

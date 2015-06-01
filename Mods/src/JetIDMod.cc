@@ -1,19 +1,18 @@
 #include "MitPhysics/Mods/interface/JetIDMod.h"
-#include "MitCommon/MathTools/interface/MathUtils.h"
-#include "MitAna/DataTree/interface/JetCol.h"
 #include "MitPhysics/Init/interface/ModNames.h"
+#include "MitAna/DataTree/interface/JetCol.h"
 #include "MitAna/DataTree/interface/CaloJetCol.h"
 #include "MitAna/DataTree/interface/PFJetCol.h"
 #include "MitPhysics/Utils/interface/JetTools.h"
+#include "MitPhysics/Utils/interface/JetIDMVA.h"
+#include "MitCommon/MathTools/interface/MathUtils.h"
 
-using namespace std;
-using namespace mithep;
+#include "TSystem.h"
 
 ClassImp(mithep::JetIDMod)
 
-//--------------------------------------------------------------------------------------------------
-JetIDMod::JetIDMod(const char *name, const char *title) : 
-  BaseMod(name,title),
+mithep::JetIDMod::JetIDMod(const char* name, const char* title) :
+  BaseMod(name, title),
   fJetsName(ModNames::gkPubJetsName),
   fGoodJetsName(ModNames::gkGoodJetsName),  
   fVertexName(ModNames::gkGoodVertexesName),
@@ -21,32 +20,43 @@ JetIDMod::JetIDMod(const char *name, const char *title) :
   fJetPtCut(35.0),
   fJetEtaMaxCut(5.0),
   fJetEEMFractionMinCut(0.01),
+  fMinChargedHadronFraction(0.),
+  fMaxChargedHadronFraction(1.),
+  fMinNeutralHadronFraction(0.),
+  fMaxNeutralHadronFraction(1.),
+  fMinChargedEMFraction(0.),
+  fMaxChargedEMFraction(1.),
+  fMinNeutralEMFraction(0.),
+  fMaxNeutralEMFraction(1.),
   fApplyBetaCut(kFALSE),
+  fApplyPFLooseId(kFALSE),
   fApplyMVACut(kFALSE),
-  fApplyMVACHS(kFALSE),
-  fVertices(0)
+  fApplyMVACHS(kFALSE)
 {
 }
 
-//-------------------------------------------------------------------------------------------------
-void JetIDMod::Process()
+void
+mithep::JetIDMod::Process()
 {
   // Process entries of the tree. 
 
-  const JetCol *inJets = GetObjThisEvt<JetCol>(fJetsName);
+  mithep::JetCol const* inJets = GetObjThisEvt<JetCol>(fJetsName);
   if (!inJets) {
-    SendError(kAbortModule,"Process","Pointer to input jet collection %s null.",fJetsName.Data());
+    SendError(kAbortModule, "Process","Pointer to input jet collection %s null.", fJetsName.Data());
+    return;
+  }
+  mithep::VertexCol const* inVertices = GetObjThisEvt<VertexOArr>(fVertexName);
+  if (!inVertices) {
+    SendError(kAbortModule, "Process","Pointer to input jet collection %s null.", fVertexName.Data());
     return;
   }
 
-  JetOArr *GoodJets = new JetOArr; 
+  mithep::JetOArr* GoodJets = new mithep::JetOArr; 
   GoodJets->SetName(fGoodJetsName);
 
-  fVertices = GetObjThisEvt<VertexOArr>(fVertexName);
-
   // loop over jets
-  for (UInt_t i=0; i<inJets->GetEntries(); ++i) {
-    const Jet *jet = inJets->At(i);
+  for (UInt_t i=0; i < inJets->GetEntries(); ++i) {
+    mithep::Jet const* jet = inJets->At(i);
 
     if (jet->AbsEta() > fJetEtaMaxCut) 
       continue;
@@ -59,32 +69,49 @@ void JetIDMod::Process()
 
     if (jetpt < fJetPtCut)
       continue;
-    
-    Bool_t passEEMFractionMinCut = kTRUE;
+
     if (fJetEEMFractionMinCut > 0) {
-      const CaloJet *caloJet = dynamic_cast<const CaloJet*>(jet); 
+      mithep::CaloJet const* caloJet = dynamic_cast<mithep::CaloJet const*>(jet); 
       // The 2.6 value is hardcoded, no reason to change that value in CMS
       if (caloJet && caloJet->AbsEta() < 2.6 &&
           caloJet->EnergyFractionEm() < fJetEEMFractionMinCut)
-        passEEMFractionMinCut = kFALSE;
+        continue;
     }
-    if (passEEMFractionMinCut == kFALSE)
-      continue;
+
+    PFJet const* pfJet = dynamic_cast<mithep::PFJet const*>(jet);
 
     // Jet to vertex association cut
-    const PFJet *pfJet = dynamic_cast<const PFJet*>(jet);     
-    Bool_t passBetaCut = kTRUE;
+    if (fApplyBetaCut || fApplyPFLooseId || fApplyMVACut) {
+      if (!pfJet)
+        continue;
 
-    if (pfJet && fApplyBetaCut == kTRUE)
-      passBetaCut = JetTools::PassBetaVertexAssociationCut(dynamic_cast<const PFJet*>(jet),
-							   fVertices->At(0), fVertices, 0.2);
+      if (fApplyBetaCut && !JetTools::PassBetaVertexAssociationCut(pfJet, inVertices->At(0), inVertices, 0.2))
+        continue;
 
-    if (passBetaCut == kFALSE)
-      continue;
+      if (fApplyPFLooseId && !JetTools::passPFLooseId(pfJet))
+        continue;
+      
+      if (fApplyMVACut && !fJetIDMVA->pass(pfJet, inVertices->At(0), inVertices))
+        continue;
+    }
 
-    if (fApplyMVACut == kTRUE && 
-	fJetIDMVA->pass(pfJet,fVertices->At(0),fVertices) == kFALSE)
-      continue;
+    if (pfJet) {
+      double chargedHadronFraction = pfJet->ChargedHadronEnergy() / pfJet->E();
+      if (chargedHadronFraction < fMinChargedHadronFraction || chargedHadronFraction > fMaxChargedHadronFraction)
+        continue;
+
+      double neutralHadronFraction = pfJet->NeutralHadronEnergy() / pfJet->E();
+      if (neutralHadronFraction < fMinNeutralHadronFraction || neutralHadronFraction > fMaxNeutralHadronFraction)
+        continue;
+
+      double chargedEMFraction = pfJet->ChargedEMEnergy() / pfJet->E();
+      if (chargedEMFraction < fMinChargedEMFraction || chargedEMFraction > fMaxChargedEMFraction)
+        continue;
+
+      double neutralEMFraction = pfJet->NeutralEMEnergy() / pfJet->E();
+      if (neutralEMFraction < fMinNeutralEMFraction || neutralEMFraction > fMaxNeutralEMFraction)
+        continue;
+    }
 
     // add good jet to collection
     GoodJets->Add(jet);
@@ -92,42 +119,48 @@ void JetIDMod::Process()
 
   // sort according to pt
   GoodJets->Sort();
+
+  if (GoodJets->GetEntries() < fMinNJets) {
+    SkipEvent();
+    continue;
+  }
   
   // add to event for other modules to use
   AddObjThisEvt(GoodJets);  
 }
 
-//--------------------------------------------------------------------------------------------------
-void JetIDMod::SlaveBegin()
+void
+mithep::JetIDMod::SlaveBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis. Here, we typically
   // initialize histograms and other analysis objects and request branches. For this module, we
   // request a branch of the MitTree.
   
-  if (fApplyMVACut == kTRUE) {
+  if (fApplyMVACut) {
     fJetIDMVA = new JetIDMVA();
-    if (fApplyMVACHS == kTRUE)
+    TString dataDir(gSystem->Getenv("MIT_DATA"));
+    if (dataDir.Length() == 0) {
+      SendError(kAbortModule, "SlaveBegin", "MIT_DATA environment is not set.");
+      return;
+    }
+
+    if (fApplyMVACHS)
       fJetIDMVA->Initialize(JetIDMVA::kLoose,
-			    TString(getenv("MIT_DATA")+
-				    string("/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml")),
-			    TString(getenv("MIT_DATA")+
-				    string("/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml")),
+                            dataDir + "/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml",
+			    dataDir + "/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml",
 			    JetIDMVA::k53,
-			    TString(getenv("CMSSW_BASE")+
-				    string("/src/MitPhysics/Utils/python/JetIdParams_cfi.py")));
+                            dataDir + "/JetIDMVA_JetIdParams.py");
     else
       fJetIDMVA->Initialize(JetIDMVA::kLoose,
-			    TString(getenv("MIT_DATA")+string("/mva_JetID_lowpt.weights.xml")),
-			    TString(getenv("MIT_DATA")+string("/mva_JetID_highpt.weights.xml")),
+			    dataDir + "/mva_JetID_lowpt.weights.xml",
+			    dataDir + "/mva_JetID_highpt.weights.xml",
 			    JetIDMVA::kBaseline,
-			    TString(getenv("CMSSW_BASE")+
-				    string("/src/MitPhysics/Utils/python/JetIdParams_cfi.py")));
+			    dataDir + "/JetIDMVA_JetIdParams.py");
   }
 }
 
-//--------------------------------------------------------------------------------------------------
-void JetIDMod::SlaveTerminate()
+void
+mithep::JetIDMod::SlaveTerminate()
 {
-  if (fApplyMVACut == kTRUE)
-    delete fJetIDMVA;
+  delete fJetIDMVA;
 }

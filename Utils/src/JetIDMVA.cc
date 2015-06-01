@@ -6,6 +6,7 @@
 #include "MitAna/DataTree/interface/StableData.h"
 #include <TFile.h>
 #include <TRandom3.h>
+#include <TSystem.h>
 #include "TMVA/Tools.h"
 #include "TMVA/Reader.h"
 
@@ -56,6 +57,19 @@ void JetIDMVA::Initialize( JetIDMVA::CutType iCutType,
 			   JetIDMVA::MVAType iType,
 			   TString iCutFileName,bool i42) 
 { 
+  if (iLowPtWeights.Length() == 0 || iHighPtWeights.Length() == 0 || iCutFileName.Length() == 0) {
+    // default
+    TString dataDir(gSystem->Getenv("MIT_DATA"));
+    if (dataDir.Length() == 0)
+      throw std::runtime_error("MIT_DATA environment is not set.");
+
+    if (iLowPtWeights.Length() == 0)
+      iLowPtWeights = dataDir + "/mva_JetID_lowpt.weights.xml";
+    if (iHighPtWeights.Length() == 0)
+      iHighPtWeights = dataDir + "/mva_JetID_highpt.weights.xml";
+    if (iCutFileName.Length() == 0)
+      iCutFileName = dataDir + "/JetIDMVA_JetIdParams.py";
+  }
   
   fIsInitialized = kTRUE;
   fType          = iType;

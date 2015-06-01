@@ -28,13 +28,14 @@ void MVAVBF::InitializeMVA() {
   if (fReader) delete fReader;  
   
   fReader = new TMVA::Reader( "!Color:!Silent:Error" );       
+
+  TString dataDir(gSystem->Getenv("MIT_DATA"));
+  if (dataDir.Length() == 0)
+    throw std::runtime_error("MIT_DATA environment is not set.");
   
   TString Weights;
   
-  Weights =  (gSystem->Getenv("CMSSW_BASE")+
-	      TString("/src/MitPhysics/data/")+
-	      TString("TMVA_vbf_6var_mjj100_diphopt_phopt_BDTG.")+
-	      TString("weights.xml"));
+  Weights = dataDir + "/TMVA_vbf_6var_mjj100_diphopt_phopt_BDTG.weights.xml";
   
   fReader->AddVariable("jet1pt",&_jet1pt);
   fReader->AddVariable("jet2pt",&_jet2pt);

@@ -1,5 +1,3 @@
-// $Id: MVAMetMod.cc,v 1.9 2012/04/25 10:12:00 pharris Exp $
-
 #include "MitPhysics/Mods/interface/MVAMetMod.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitAna/DataTree/interface/MetCol.h"
@@ -7,6 +5,7 @@
 #include "MitAna/DataTree/interface/Names.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 
+#include "TSystem.h"
 
 using namespace mithep;
 
@@ -25,7 +24,8 @@ MVAMetMod::MVAMetMod(const char *name, const char *title) :
   fCands(0),
   fVertices(0),
   fPFMet(0),
-  fRhoCol(0)
+  fRhoCol(0),
+  fMVAMet(0)
 {
 }
 
@@ -98,20 +98,25 @@ void MVAMetMod::SlaveBegin()
 
   using std::string;
 
+  TString dataDir(gSystem->Getenv("MIT_DATA"));
+  if (dataDir.Length() == 0) {
+    SendError(kAbortModule, "SlaveBegin", "MIT_DATA environment is not set.");
+    return;
+  }
+
   //ReqBranch(fJetsName,   fJets);
   ReqBranch(fPFCandName, fCands);
   ReqBranch(fPFMetName,  fPFMet);
   ReqBranch(fRhoName,    fRhoCol);
 
   fMVAMet    = new MVAMet();
-  fMVAMet->Initialize(TString((getenv("MIT_DATA")+string("/mva_JetID_lowpt.weights.xml"))),
-                      TString((getenv("MIT_DATA")+string("/mva_JetID_highpt.weights.xml"))),
-                      TString((getenv("CMSSW_BASE")+
-                               string("/src/MitPhysics/Utils/python/JetIdParams_cfi.py"))),
-                      TString((getenv("MIT_DATA")+string("/gbrmet_52.root"))),
-                      TString((getenv("MIT_DATA")+string("/gbrmetphi_52.root"))),
-                      TString((getenv("MIT_DATA")+string("/gbrmetu1cov_52.root"))),
-                      TString((getenv("MIT_DATA")+string("/gbrmetu2cov_52.root")))
+  fMVAMet->Initialize(dataDir + "/mva_JetID_lowpt.weights.xml",
+                      dataDir + "/mva_JetID_highpt.weights.xml",
+                      dataDir + "/JetIDMVA_JetIdParams.py",
+                      dataDir + "/gbrmet_52.root",
+                      dataDir + "/gbrmetphi_52.root",
+                      dataDir + "/gbrmetu1cov_52.root",
+                      dataDir + "/gbrmetu2cov_52.root"
                       );
 }
 

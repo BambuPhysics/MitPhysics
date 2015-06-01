@@ -52,11 +52,11 @@ namespace mithep {
       };
 
       void     Initialize(JetIDMVA::CutType iCutType,
-			  TString           iLowPtWeights ="$MIT_DATA/mva_JetID_lowpt.weights.xml",
-			  TString           iHighPtWeights="$MIT_DATA/mva_JetID_highpt.weights.xml",
-			  JetIDMVA::MVAType iType=kBaseline,
-			  TString           iCutFileName  ="$CMSSW_BASE/src/MitPhysics/Utils/python/JetIdParams_cfi.py",bool i42=false);
-    
+                          TString           iLowPtWeights = "",
+                          TString           iHighPtWeights= "",
+                          JetIDMVA::MVAType iType=kBaseline,
+                          TString           iCutFileName  = "",
+                          bool i42=false);
       Bool_t   IsInitialized() const { return fIsInitialized; }
       Double_t MVAValue(    
 			Float_t iNPV    ,

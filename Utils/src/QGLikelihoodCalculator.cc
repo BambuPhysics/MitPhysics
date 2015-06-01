@@ -13,13 +13,22 @@ using namespace std;
 
 // constructor:
 
-QGLikelihoodCalculator::QGLikelihoodCalculator(const TString dataDir, Bool_t chs)
+QGLikelihoodCalculator::QGLikelihoodCalculator(TString const& dataDir, Bool_t chs)
 {
   TString histoFileName = "ReducedHisto_2012.root";
-
   if (chs)
     histoFileName = "ReducedHisto_2012_CHS.root";
-  histoFile_ = TFile::Open(TString(edm::FileInPath(dataDir + histoFileName).fullPath()));
+
+  TString fullPath;
+
+  if (dataDir.Length() == 0)
+    throw std::runtime_error("No dataDir passed to QGLikelihoodCalculator");
+  else if (dataDir[0] == '/')
+    fullPath = dataDir + "/" + histoFileName;
+  else
+    fullPath = edm::FileInPath(dataDir + histoFileName).fullPath();
+
+  histoFile_ = TFile::Open(fullPath);
 
   nPtBins_ = 21;
   nRhoBins_ = 45 ;

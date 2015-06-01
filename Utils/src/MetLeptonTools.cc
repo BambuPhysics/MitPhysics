@@ -2,16 +2,21 @@
 #include <algorithm>
 #include <vector>
 #include "TString.h"
+#include "TSystem.h"
 
 using namespace mithep;
 
 ClassImp(mithep::MetLeptonTools)
 
 MetLeptonTools::MetLeptonTools() { 
+  TString dataDir(gSystem->Getenv("MIT_DATA"));
+  if (dataDir.Length() == 0)
+    throw std::runtime_error("MIT_DATA environment is not set.");
+
   //fTauIsoMVA = new TauIsoMVA();
-  //fTauIsoMVA->Initialize(TString(getenv("CMSSW_BASE")+std::string("/src/MitPhysics/data/SXIsoMVA_BDTG.weights.xml")));
+  //fTauIsoMVA->Initialize(dataDir + "/SXIsoMVA_BDTG.weights.xml");
   fTauIsoMVA = new TauIsoMVA();
-  fTauIsoMVA->InitializeGBR(TString(getenv("CMSSW_BASE")+std::string("/src/MitPhysics/data/gbrfTauIso_v2.root")));
+  fTauIsoMVA->InitializeGBR(dataDir + "/gbrfTauIso_v2.root");
 }
 
 bool MetLeptonTools::looseTauId(const PFTau *iTau,const PileupEnergyDensityCol* iPUEnergyDensity) {

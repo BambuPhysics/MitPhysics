@@ -1,6 +1,3 @@
-
-// $Id: PhotonIDMod.cc,v 1.41 2013/12/09 17:55:50 bendavid Exp $
-
 #include "TDataMember.h"
 #include "TTree.h"
 #include "TRandom3.h"
@@ -80,8 +77,8 @@ PhotonIDMod::PhotonIDMod(const char *name, const char *title) :
   // ------------------------------------------------------------------------------
   // this stuff should go away ..... (fab)
   fVariableType       (10), //please use 4 which is the correct type
-  fEndcapWeights      (gSystem->Getenv("CMSSW_BASE")+TString("/src/MitPhysics/data/TMVAClassificationPhotonID_Endcap_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml")),
-  fBarrelWeights      (gSystem->Getenv("CMSSW_BASE")+TString("/src/MitPhysics/data/TMVAClassificationPhotonID_Barrel_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml")),
+  fEndcapWeights      (),
+  fBarrelWeights      (),
   // ------------------------------------------------------------------------------  
 
   fIdMVATypeName     ("2011IdMVA"),
@@ -135,6 +132,14 @@ PhotonIDMod::PhotonIDMod(const char *name, const char *title) :
 
 {
   // Constructor.
+  TString dataDir(gSystem->Getenv("MIT_DATA"));
+  if (dataDir.Length() == 0) {
+    SendError(kAbortModule, "Constructor", "MIT_DATA environment is not set.");
+    return;
+  }
+
+  fEndcapWeights = dataDir + "/TMVAClassificationPhotonID_Endcap_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml";
+  fBarrelWeights = dataDir + "/TMVAClassificationPhotonID_Barrel_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml";
 }
 
 //--------------------------------------------------------------------------------------------------
