@@ -8,6 +8,7 @@
 #include "MitPhysics/Utils/interface/PhotonTools.h"
 
 #include <TSystem.h>
+#include "TFormula.h"
 
 using namespace mithep;
 
@@ -15,7 +16,7 @@ ClassImp(mithep::PhotonIDMod)
   
 //--------------------------------------------------------------------------------------------------
 PhotonIDMod::PhotonIDMod(const char *name, const char *title) : 
-  BaseMod(name,title),
+BaseMod(name,title),
   fPhotonBranchName  (Names::gkPhotonBrn),
   fGoodPhotonsName   (ModNames::gkGoodPhotonsName),
   fTrackBranchName   (Names::gkTrackBrn),
@@ -25,7 +26,7 @@ PhotonIDMod::PhotonIDMod(const char *name, const char *title) :
   fElectronName      ("Electrons"),
   fGoodElectronName  ("Electrons"),
   fPVName            (Names::gkPVBeamSpotBrn),
-  // MC specific stuff...
+// MC specific stuff...
   fMCParticleName    (Names::gkMCPartBrn),
   fPileUpName        (Names::gkPileupInfoBrn),
   fPFCandsName       ("PFCandidates"),
@@ -48,6 +49,7 @@ PhotonIDMod::PhotonIDMod(const char *name, const char *title) :
   fEtaWidthEB        (0.01),
   fEtaWidthEE        (0.028),
   fAbsEtaMax         (999.99),
+  fAbsEtaMin         (0.),
   fApplyR9Min        (kFALSE),
   
   fEffAreaEcalEE     (0.089),
@@ -57,6 +59,13 @@ PhotonIDMod::PhotonIDMod(const char *name, const char *title) :
   fEffAreaEcalEB     (0.183),
   fEffAreaHcalEB     (0.062),
   fEffAreaTrackEB    (0.306),
+
+  fIsoCalcCHEB(),
+  fIsoCalcCHEE(),
+  fIsoCalcNHEB(),
+  fIsoCalcNHEE(),
+  fIsoCalcPhEB(),
+  fIsoCalcPhEE(),
   
   fPhotons(0),
   fTracks(0),
@@ -70,25 +79,25 @@ PhotonIDMod::PhotonIDMod(const char *name, const char *title) :
   fPileUp            (0),
   fPFCands           (0),
   
-  // MVA ID Stuff
+// MVA ID Stuff
   fbdtCutBarrel      (0.0744), //cuts give the same effiiciency (relative to preselection) with cic
   fbdtCutEndcap      (0.0959), //cuts give the same effiiciency (relative to preselection) with cic  
 
-  // ------------------------------------------------------------------------------
-  // this stuff should go away ..... (fab)
+// ------------------------------------------------------------------------------
+// this stuff should go away ..... (fab)
   fVariableType       (10), //please use 4 which is the correct type
   fEndcapWeights      (),
   fBarrelWeights      (),
-  // ------------------------------------------------------------------------------  
+// ------------------------------------------------------------------------------  
 
   fIdMVATypeName     ("2011IdMVA"),
   fIdMVAType         (MVATools::k2011IdMVA),
 
-  //   fDoMCR9Scaling         (kFALSE),
-  //   fMCR9ScaleEB           (1.0),
-  //   fMCR9ScaleEE           (1.0),
-  //   fDoMCSigIEtaIEtaScaling(kFALSE),
-  //   fDoMCWidthScaling      (kFALSE),
+//   fDoMCR9Scaling         (kFALSE),
+//   fMCR9ScaleEB           (1.0),
+//   fMCR9ScaleEE           (1.0),
+//   fDoMCSigIEtaIEtaScaling(kFALSE),
+//   fDoMCWidthScaling      (kFALSE),
   
   fDoMCErrScaling        (kFALSE),
   fMCErrScaleEB          (1.0),
@@ -99,14 +108,14 @@ PhotonIDMod::PhotonIDMod(const char *name, const char *title) :
   fGoodElectronsFromBranch (kTRUE),
   fIsData(false),
 
-  // ------------------------------------------------
-  // added by fab: smearing/scaling options...
+// ------------------------------------------------
+// added by fab: smearing/scaling options...
   fDoDataEneCorr                 (false),
   fDoMCSmear                     (false),
   
   fDoShowerShapeScaling          (false),
 
-  // ---------------------------------------
+// ---------------------------------------
   fDataEnCorr_EBlowEta_hR9       (0.),
   fDataEnCorr_EBlowEta_lR9       (0.),
   fDataEnCorr_EBhighEta_hR9      (0.),
@@ -181,7 +190,7 @@ void PhotonIDMod::Process()
   }
   
   Float_t theRho = _tRho;
-    switch (fRhoType) {
+  switch (fRhoType) {
   case RhoUtilities::CMS_RHO_RHOKT6PFJETS:
     theRho = rho2012;
     break;
@@ -196,6 +205,9 @@ void PhotonIDMod::Process()
     break;    
   case RhoUtilities::MIT_RHO_RANDOM_HIGH_ETA:       
     theRho = ( fPileUpDen->GetEntries() ? fPileUpDen->At(0)->RhoRandom() : _tRho);
+    break;
+  case RhoUtilities::CMS_RHO_FIXEDGRIDFASTJETALL:
+    theRho = ( fPileUpDen->GetEntries() ? fPileUpDen->At(0)->RhoFixedGridFastjetAll() : _tRho);
     break;
   default:
     theRho = _tRho;
@@ -238,20 +250,20 @@ void PhotonIDMod::Process()
     }
 
     // fab: replaced by shower-shape scaling above...
-//     if (fDoMCR9Scaling && !fIsData) {
-//       if (ph->SCluster()->AbsEta()<1.5) PhotonTools::ScalePhotonR9(ph,fMCR9ScaleEB);
-//       else PhotonTools::ScalePhotonR9(ph,fMCR9ScaleEE);
-//     }
+    //     if (fDoMCR9Scaling && !fIsData) {
+    //       if (ph->SCluster()->AbsEta()<1.5) PhotonTools::ScalePhotonR9(ph,fMCR9ScaleEB);
+    //       else PhotonTools::ScalePhotonR9(ph,fMCR9ScaleEE);
+    //     }
 
-//     if (fDoMCSigIEtaIEtaScaling && !fIsData) {
-//       if (ph->SCluster()->AbsEta()<1.5) ph->SetCoviEtaiEta(0.87*ph->CoviEtaiEta() + 0.0011);
-//       else ph->SetCoviEtaiEta(0.99*ph->CoviEtaiEta());
-//     }
+    //     if (fDoMCSigIEtaIEtaScaling && !fIsData) {
+    //       if (ph->SCluster()->AbsEta()<1.5) ph->SetCoviEtaiEta(0.87*ph->CoviEtaiEta() + 0.0011);
+    //       else ph->SetCoviEtaiEta(0.99*ph->CoviEtaiEta());
+    //     }
 
-//     if (fDoMCWidthScaling && !fIsData) {
-//       ph->SetEtaWidth(0.99*ph->EtaWidth());
-//       ph->SetPhiWidth(0.99*ph->PhiWidth());
-//     }
+    //     if (fDoMCWidthScaling && !fIsData) {
+    //       ph->SetEtaWidth(0.99*ph->EtaWidth());
+    //       ph->SetPhiWidth(0.99*ph->PhiWidth());
+    //     }
     
     PhotonTools::eScaleCats escalecat;
 
@@ -290,23 +302,26 @@ void PhotonIDMod::Process()
     
     // ---------------------------------------------------------------------
     // set the photonIdMVA value of requested...
-    double idMvaVal = fTool.GetMVAbdtValue(ph,fPV->At(0),fTracks, fPV, theRho, fPFCands, fElectrons, fApplyElectronVeto);
+    if (fIdMVAType != MVATools::kNone) {
+      double idMvaVal = fTool.GetMVAbdtValue(ph,fPV->At(0),fTracks, fPV, theRho, fPFCands, fElectrons, fApplyElectronVeto);
 
-    ph->SetIdMva(idMvaVal);
+      ph->SetIdMva(idMvaVal);
+    }
 
     // ---------------------------------------------------------------------
     // check if we use the Vgamma2011 Selection. If yes, bypass all the below...
     if( fPhIdType == kTrivialSelection ) {
-      if( ph->Pt() > fPhotonPtMin && ph->SCluster()->AbsEta() <= fAbsEtaMax )
-	GoodPhotons->AddOwned(ph);
+      if( ph->Pt() > fPhotonPtMin && ph->SCluster()->AbsEta() <= fAbsEtaMax && ph->SCluster()->AbsEta() >= fAbsEtaMin )
+        GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
     }
     
     // ---------------------------------------------------------------------
     // check if we use the Vgamma2011 Selection. If yes, bypass all the below...
     if( fPhIdType == kVgamma2011Selection ) {
-      if( ph->Pt() > fPhotonPtMin && ph->SCluster()->AbsEta() <= fAbsEtaMax && PhotonTools::PassVgamma2011Selection(ph, _tRho) )
-	GoodPhotons->AddOwned(ph);
+      if( ph->Pt() > fPhotonPtMin && ph->SCluster()->AbsEta() <= fAbsEtaMax && ph->SCluster()->AbsEta() >= fAbsEtaMin &&
+          PhotonTools::PassVgamma2011Selection(ph, _tRho) )
+        GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
     }
 
@@ -314,27 +329,27 @@ void PhotonIDMod::Process()
     // check if we use the CiC Selection. If yes, bypass all the below...
     if(fPhIdType == kBaseLineCiC) {
       if( PhotonTools::PassCiCSelection(ph, fPV->At(0), fTracks, fElectrons, fPV, _tRho, fPhotonPtMin, fApplyElectronVeto) )
-	GoodPhotons->AddOwned(ph);
+        GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
     }
     
     if(fPhIdType == kBaseLineCiCPF) {
-      if( PhotonTools::PassSinglePhotonPreselPFISO(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),rho2012,fPFCands,fApplyElectronVeto,fInvertElectronVeto) && PhotonTools::PassCiCPFIsoSelection(ph, fPV->At(0), fPFCands, fPV, rho2012, fPhotonPtMin, false,0.,1.,0.,1.) )
-	GoodPhotons->AddOwned(ph);
+      if( PhotonTools::PassSinglePhotonPreselPFISO(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),theRho,fPFCands,fApplyElectronVeto,fInvertElectronVeto) && PhotonTools::PassCiCPFIsoSelection(ph, fPV->At(0), fPFCands, fPV, theRho, fPhotonPtMin, false,0.,1.,0.,1.) )
+        GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
     }    
 
     //add for mono photon: cic id without presel
     if(fPhIdType == kBaseLineCiCPFNoPresel) {
-      if(PhotonTools::PassCiCPFIsoSelectionWithEleVeto(ph, fElectrons,fConversions,bsp,fPV->At(0), fPFCands, fPV, rho2012, fPhotonPtMin,fApplyElectronVeto,fInvertElectronVeto) )
-	GoodPhotons->AddOwned(ph);
+      if(PhotonTools::PassCiCPFIsoSelectionWithEleVeto(ph, fElectrons,fConversions,bsp,fPV->At(0), fPFCands, fPV, theRho, fPhotonPtMin,fApplyElectronVeto,fInvertElectronVeto) )
+        GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
     }    
     // ---------------------------------------------------------------------
 
     //add for mono photon: egamma medium working point
     if(fPhIdType == kEgammaMedium) {
-      if(PhotonTools::PassEgammaMediumSelectionWithEleVeto(ph, fElectrons,fConversions,bsp,fPV->At(0), fPFCands, fPV, rho2012, fPhotonPtMin,fApplyElectronVeto,fInvertElectronVeto) )
+      if(PhotonTools::PassEgammaMediumSelectionWithEleVeto(ph, fElectrons,fConversions,bsp,fPV->At(0), fPFCands, fPV, theRho, fPhotonPtMin,fApplyElectronVeto,fInvertElectronVeto) )
         GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
     } 
@@ -349,7 +364,7 @@ void PhotonIDMod::Process()
 
     //loose photon preselection for subsequent mva
     if(fPhIdType == kMITPFPhSelection ) {
-      if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISO(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),rho2012,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
+      if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISO(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),theRho,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
         GoodPhotons->AddOwned(ph);
       }
       continue;
@@ -357,7 +372,7 @@ void PhotonIDMod::Process()
     
     //loose photon preselection for subsequent mva
     if(fPhIdType == kMITPFPhSelectionNoEcal) {
-      if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISONoEcal(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),rho2012,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
+      if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISONoEcal(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),theRho,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
         GoodPhotons->AddOwned(ph);
       }
       continue;
@@ -365,7 +380,7 @@ void PhotonIDMod::Process()
     
     //loose photon preselection for subsequent mva
     if(fPhIdType == kMITPFPhSelection_NoTrigger ) {
-      if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISO_NoTrigger(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),rho2012,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
+      if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISO_NoTrigger(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),theRho,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
         GoodPhotons->AddOwned(ph);
       }
       continue;
@@ -381,13 +396,13 @@ void PhotonIDMod::Process()
 	
       if( ph->Pt()>fPhotonPtMin &&
           PhotonTools::PassSinglePhotonPresel(
-             ph, fElectrons, fConversions, bsp, fTracks, fPV->At(0), _tRho,
-             fApplyElectronVeto
-          ) &&
+                                              ph, fElectrons, fConversions, bsp, fTracks, fPV->At(0), _tRho,
+                                              fApplyElectronVeto
+                                              ) &&
           ( ( isbarrel && ph->IdMva() > fbdtCutBarrel ) ||
             (             ph->IdMva() > fbdtCutEndcap ) )
-            )
-	GoodPhotons->AddOwned(ph);
+          )
+        GoodPhotons->AddOwned(ph);
       
       continue;
     }  // go to next Photon
@@ -400,7 +415,7 @@ void PhotonIDMod::Process()
     if (ph->SCluster() && ph->SCluster()->Seed()) {
       if(ph->SCluster()->Seed()->Energy() > 5.0 && 
          ph->SCluster()->Seed()->EMax() / ph->SCluster()->Seed()->E3x3() > 0.95
-	 ) {
+         ) {
         passSpikeRemovalFilter = kFALSE;
       }
     }
@@ -431,19 +446,19 @@ void PhotonIDMod::Process()
 
     Bool_t idcut = kFALSE;
     switch (fPhIdType) {
-      case kTight:
-        idcut = ph->IsTightPhoton();
-        break;
-      case kLoose:
-        idcut = ph->IsLoosePhoton();
-       break;
-      case kLooseEM:
-        idcut = ph->IsLooseEM();
-        break;
-      case kCustomId:
-        idcut = kTRUE;
-      default:
-        break;
+    case kTight:
+      idcut = ph->IsTightPhoton();
+      break;
+    case kLoose:
+      idcut = ph->IsLoosePhoton();
+      break;
+    case kLooseEM:
+      idcut = ph->IsLooseEM();
+      break;
+    case kCustomId:
+      idcut = kTRUE;
+    default:
+      break;
     }
 
     if (!idcut) 
@@ -451,56 +466,129 @@ void PhotonIDMod::Process()
 
     Bool_t isocut = kFALSE;
     switch (fPhIsoType) {      
-      case kNoIso:
-        isocut = kTRUE;
-        break;
-      case kCombinedIso:
-        {
-          Double_t totalIso = ph->HollowConeTrkIsoDr04()+
-                              ph->EcalRecHitIsoDr04() +
-                              ph->HcalTowerSumEtDr04();
-          if (totalIso/ph->Pt() < 0.25)
-            isocut = kTRUE;
-        }
-        break;
-      case kCustomIso:
-        {
-          if ( ph->HollowConeTrkIsoDr04() < (1.5 + 0.001*ph->Pt()) && ph->EcalRecHitIsoDr04()<(2.0+0.006*ph->Pt()) && ph->HcalTowerSumEtDr04()<(2.0+0.0025*ph->Pt()) )
-            isocut = kTRUE;
-        }
-	break;
+    case kNoIso:
+      isocut = kTRUE;
+      break;
+    case kCombinedIso:
+      {
+        Double_t totalIso = ph->HollowConeTrkIsoDr04()+
+          ph->EcalRecHitIsoDr04() +
+          ph->HcalTowerSumEtDr04();
+        if (totalIso/ph->Pt() < 0.25)
+          isocut = kTRUE;
+      }
+      break;
+    case kCustomIso:
+      {
+        if ( ph->HollowConeTrkIsoDr04() < (1.5 + 0.001*ph->Pt()) && ph->EcalRecHitIsoDr04()<(2.0+0.006*ph->Pt()) && ph->HcalTowerSumEtDr04()<(2.0+0.0025*ph->Pt()) )
+          isocut = kTRUE;
+      }
+      break;
 	
     case kMITPUCorrected:
       {
-	// compute the PU corrections only if Rho is available
-	// ... otherwise (_tRho = 0.0) it's the std isolation
-	isocut = kTRUE;
-	Double_t fEffAreaEcal = fEffAreaEcalEB;
-	Double_t fEffAreaHcal = fEffAreaHcalEB;
-	Double_t fEffAreaTrack = fEffAreaTrackEB;
+        // compute the PU corrections only if Rho is available
+        // ... otherwise (_tRho = 0.0) it's the std isolation
+        isocut = kTRUE;
+        Double_t fEffAreaEcal = fEffAreaEcalEB;
+        Double_t fEffAreaHcal = fEffAreaHcalEB;
+        Double_t fEffAreaTrack = fEffAreaTrackEB;
 
-	if( !isbarrel ) {
-	  fEffAreaEcal = fEffAreaEcalEE;
-	  fEffAreaHcal = fEffAreaHcalEE;
-	  fEffAreaTrack = fEffAreaTrackEE;
-	}	  
+        if( !isbarrel ) {
+          fEffAreaEcal = fEffAreaEcalEE;
+          fEffAreaHcal = fEffAreaHcalEE;
+          fEffAreaTrack = fEffAreaTrackEE;
+        }	  
 
-	Double_t EcalCorrISO =   ph->EcalRecHitIsoDr04();
-	if(_tRho > -0.5 ) EcalCorrISO -= _tRho * fEffAreaEcal;
-	if ( EcalCorrISO > (2.0+0.006*ph->Pt()) ) isocut = kFALSE; 
-	if ( isocut || true ) {
-	  Double_t HcalCorrISO = ph->HcalTowerSumEtDr04(); 
-	  if(_tRho > -0.5 ) HcalCorrISO -= _tRho * fEffAreaHcal;
-	  if ( HcalCorrISO > (2.0+0.0025*ph->Pt()) ) isocut = kFALSE;
-	}
-	if ( isocut || true ) {
-	  Double_t TrackCorrISO = IsolationTools::TrackIsolationNoPV(ph, bsp, 0.4, 0.04, 0.0, 0.015, 0.1, TrackQuality::highPurity, fTracks);
-	  if(_tRho > -0.5 )
-	    TrackCorrISO -= _tRho * fEffAreaTrack;
-	  if ( TrackCorrISO > (1.5 + 0.001*ph->Pt()) ) isocut = kFALSE;
-	}
-	break;
+        Double_t EcalCorrISO =   ph->EcalRecHitIsoDr04();
+        if(_tRho > -0.5 ) EcalCorrISO -= _tRho * fEffAreaEcal;
+        if ( EcalCorrISO > (2.0+0.006*ph->Pt()) ) isocut = kFALSE; 
+        if ( isocut || true ) {
+          Double_t HcalCorrISO = ph->HcalTowerSumEtDr04(); 
+          if(_tRho > -0.5 ) HcalCorrISO -= _tRho * fEffAreaHcal;
+          if ( HcalCorrISO > (2.0+0.0025*ph->Pt()) ) isocut = kFALSE;
+        }
+        if ( isocut || true ) {
+          Double_t TrackCorrISO = IsolationTools::TrackIsolationNoPV(ph, bsp, 0.4, 0.04, 0.0, 0.015, 0.1, TrackQuality::highPurity, fTracks);
+          if(_tRho > -0.5 )
+            TrackCorrISO -= _tRho * fEffAreaTrack;
+          if ( TrackCorrISO > (1.5 + 0.001*ph->Pt()) ) isocut = kFALSE;
+        }
+        break;
       }
+
+    case kPFPUCorrected:
+      {
+        isocut = kFALSE;
+
+        double effACH(0.);
+        double effANH(0.);
+        double effAPh(0.);
+
+        double scEta(ph->SCluster()->AbsEta());
+        if (scEta < 1.0) {
+          effACH = 0.0234;
+          effANH = 0.0053;
+          effAPh = 0.078;
+        }
+        else if (scEta < 1.479) {
+          effACH = 0.0189;
+          effANH = 0.0103;
+          effAPh = 0.0629;
+        }
+        else if (scEta < 2.) {
+          effACH = 0.0171;
+          effANH = 0.0057;
+          effAPh = 0.0264;
+        }
+        else if (scEta < 2.2) {
+          effACH = 0.0129;
+          effANH = 0.0070;
+          effAPh = 0.0462;
+        }
+        else if (scEta < 2.3) {
+          effACH = 0.0110;
+          effANH = 0.0152;
+          effAPh = 0.0740;
+        }
+        else if (scEta < 2.4) {
+          effACH = 0.0074;
+          effANH = 0.0232;
+          effAPh = 0.0924;
+        }
+        else {
+          effACH = 0.0035;
+          effANH = 0.1709;
+          effAPh = 0.1484;
+        }
+
+        TFormula* chCalc(0);
+        TFormula* nhCalc(0);
+        TFormula* phCalc(0);
+
+        if (scEta < 1.479) {
+          chCalc = &fIsoCalcCHEB;
+          nhCalc = &fIsoCalcNHEB;
+          phCalc = &fIsoCalcPhEB;
+        }
+        else {
+          chCalc = &fIsoCalcCHEE;
+          nhCalc = &fIsoCalcNHEE;
+          phCalc = &fIsoCalcPhEE;
+        }
+
+        double corrCHIso(ph->PFChargedHadronIso() - effACH * theRho);
+        if (corrCHIso < chCalc->Eval(ph->Pt())) {
+          double corrNHIso(ph->PFNeutralHadronIso() - effANH * theRho);
+          if (corrNHIso < nhCalc->Eval(ph->Pt())) {
+            double corrPhIso(ph->PFPhotonIso() - effAPh * theRho);
+            if (corrPhIso < phCalc->Eval(ph->Pt()))
+              isocut = kTRUE;
+          }
+        }
+        break;
+      }
+
     default:
       break;
     }
@@ -515,7 +603,7 @@ void PhotonIDMod::Process()
         (!isbarrel && ph->CoviEtaiEta() >= fEtaWidthEE))
       continue;
 
-    if (ph->AbsEta() >= fAbsEtaMax) 
+    if (ph->SCluster()->AbsEta() > fAbsEtaMax && ph->SCluster()->AbsEta() < fAbsEtaMin)
       continue;
     
     // add good electron
@@ -660,7 +748,13 @@ void PhotonIDMod::SlaveBegin()
     std::cerr<<"shower shape scale "<<fShowerShapeType<<" not implemented."<<std::endl;
     return;
   }
-  
+
+  fIsoCalcCHEB.Compile();
+  fIsoCalcCHEE.Compile();
+  fIsoCalcNHEB.Compile();
+  fIsoCalcNHEE.Compile();
+  fIsoCalcPhEB.Compile();
+  fIsoCalcPhEE.Compile();
 }
 
 

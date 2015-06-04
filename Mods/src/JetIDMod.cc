@@ -104,11 +104,11 @@ mithep::JetIDMod::Process()
       if (neutralHadronFraction < fMinNeutralHadronFraction || neutralHadronFraction > fMaxNeutralHadronFraction)
         continue;
 
-      double chargedEMFraction = pfJet->ChargedEMEnergy() / pfJet->E();
+      double chargedEMFraction = pfJet->ChargedEmEnergy() / pfJet->E();
       if (chargedEMFraction < fMinChargedEMFraction || chargedEMFraction > fMaxChargedEMFraction)
         continue;
 
-      double neutralEMFraction = pfJet->NeutralEMEnergy() / pfJet->E();
+      double neutralEMFraction = pfJet->NeutralEmEnergy() / pfJet->E();
       if (neutralEMFraction < fMinNeutralEMFraction || neutralEMFraction > fMaxNeutralEMFraction)
         continue;
     }
@@ -122,7 +122,7 @@ mithep::JetIDMod::Process()
 
   if (GoodJets->GetEntries() < fMinNJets) {
     SkipEvent();
-    continue;
+    return;
   }
   
   // add to event for other modules to use
