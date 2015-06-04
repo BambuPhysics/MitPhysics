@@ -1,6 +1,3 @@
-
-// $Id: PhotonIDMod.cc,v 1.41 2013/12/09 17:55:50 bendavid Exp $
-
 #include "TDataMember.h"
 #include "TTree.h"
 #include "TRandom3.h"
@@ -37,21 +34,21 @@ PhotonIDMod::PhotonIDMod(const char *name, const char *title) :
   fPhotonIsoType     ("Custom"),
   fPhotonPtMin       (15.0),
   fHadOverEmMax      (0.02),
-  fApplySpikeRemoval (kFALSE),
-  fApplyPixelSeed    (kTRUE),
-  fApplyElectronVeto (kFALSE),
-  fInvertElectronVeto(kFALSE),
-  fApplyElectronVetoConvRecovery(kFALSE),
-  fApplyConversionId (kFALSE),
-  fApplyTriggerMatching(kFALSE),
+  fApplySpikeRemoval (false),
+  fApplyPixelSeed    (true),
+  fApplyElectronVeto (false),
+  fInvertElectronVeto(false),
+  fApplyElectronVetoConvRecovery(false),
+  fApplyConversionId (false),
+  fApplyTriggerMatching(false),
   fPhotonR9Min       (0.5),
   fPhIdType          (kIdUndef),
   fPhIsoType         (kIsoUndef),
-  fFiduciality       (kTRUE),
+  fFiduciality       (true),
   fEtaWidthEB        (0.01),
   fEtaWidthEE        (0.028),
   fAbsEtaMax         (999.99),
-  fApplyR9Min        (kFALSE),
+  fApplyR9Min        (false),
   
   fEffAreaEcalEE     (0.089),
   fEffAreaHcalEE     (0.156),
@@ -87,19 +84,19 @@ PhotonIDMod::PhotonIDMod(const char *name, const char *title) :
   fIdMVATypeName     ("2011IdMVA"),
   fIdMVAType         (MVATools::k2011IdMVA),
 
-  //   fDoMCR9Scaling         (kFALSE),
+  //   fDoMCR9Scaling         (false),
   //   fMCR9ScaleEB           (1.0),
   //   fMCR9ScaleEE           (1.0),
-  //   fDoMCSigIEtaIEtaScaling(kFALSE),
-  //   fDoMCWidthScaling      (kFALSE),
+  //   fDoMCSigIEtaIEtaScaling(false),
+  //   fDoMCWidthScaling      (false),
   
-  fDoMCErrScaling        (kFALSE),
+  fDoMCErrScaling        (false),
   fMCErrScaleEB          (1.0),
   fMCErrScaleEE          (1.0),
   
   fPhotonsFromBranch(true),
   fPVFromBranch      (true),
-  fGoodElectronsFromBranch (kTRUE),
+  fGoodElectronsFromBranch (true),
   fIsData(false),
 
   // ------------------------------------------------
@@ -207,13 +204,13 @@ void PhotonIDMod::Process()
 
   PhotonOArr *GoodPhotons = new PhotonOArr;
   GoodPhotons->SetName(fGoodPhotonsName);
-  GoodPhotons->SetOwner(kTRUE);
+  GoodPhotons->SetOwner(true);
 
   for (UInt_t i=0; i<fPhotons->GetEntries(); ++i) {    
     // need to cpoy the photon in order to be able to scale R9 etc.
     Photon *ph = new Photon(*fPhotons->At(i));        
     
-    if (fFiduciality == kTRUE &&
+    if (fFiduciality == true &&
         (ph->SCluster()->AbsEta()>=2.5 || (ph->SCluster()->AbsEta()>=1.4442 && ph->SCluster()->AbsEta()<=1.566) ) ) 
       continue;
     
@@ -390,13 +387,13 @@ void PhotonIDMod::Process()
     if (ph->Pt() <= fPhotonPtMin) 
       continue;    // add good electron
     
-    Bool_t passSpikeRemovalFilter = kTRUE;
+    Bool_t passSpikeRemovalFilter = true;
     
     if (ph->SCluster() && ph->SCluster()->Seed()) {
       if(ph->SCluster()->Seed()->Energy() > 5.0 && 
          ph->SCluster()->Seed()->EMax() / ph->SCluster()->Seed()->E3x3() > 0.95
 	 ) {
-        passSpikeRemovalFilter = kFALSE;
+        passSpikeRemovalFilter = false;
       }
     }
     
@@ -404,7 +401,7 @@ void PhotonIDMod::Process()
     //if(ph->SCluster()->Seed()->Energy() > 5.0 && 
     //   (1 - (ph->SCluster()->Seed()->E1x3() + ph->SCluster()->Seed()->E3x1() - 2*ph->SCluster()->Seed()->EMax())) > 0.95
     //  ) {
-    //  passSpikeRemovalFilter = kFALSE;
+    //  passSpikeRemovalFilter = false;
     //}
 
     if (fApplySpikeRemoval && !passSpikeRemovalFilter) continue;
@@ -412,8 +409,8 @@ void PhotonIDMod::Process()
     if (ph->HadOverEm() >= fHadOverEmMax) 
       continue;
 
-    if (fApplyPixelSeed == kTRUE &&
-        ph->HasPixelSeed() == kTRUE) 
+    if (fApplyPixelSeed == true &&
+        ph->HasPixelSeed() == true) 
       continue;
 
     if (fApplyElectronVeto && !PhotonTools::PassElectronVeto(ph,fElectrons) ) continue;
@@ -424,7 +421,7 @@ void PhotonIDMod::Process()
 
     if (fApplyTriggerMatching && !PhotonTools::PassTriggerMatching(ph,trigObjs)) continue;
 
-    Bool_t idcut = kFALSE;
+    Bool_t idcut = false;
     switch (fPhIdType) {
       case kTight:
         idcut = ph->IsTightPhoton();
@@ -432,11 +429,8 @@ void PhotonIDMod::Process()
       case kLoose:
         idcut = ph->IsLoosePhoton();
        break;
-      case kLooseEM:
-        idcut = ph->IsLooseEM();
-        break;
       case kCustomId:
-        idcut = kTRUE;
+        idcut = true;
       default:
         break;
     }
@@ -444,10 +438,10 @@ void PhotonIDMod::Process()
     if (!idcut) 
       continue;
 
-    Bool_t isocut = kFALSE;
+    Bool_t isocut = false;
     switch (fPhIsoType) {      
       case kNoIso:
-        isocut = kTRUE;
+        isocut = true;
         break;
       case kCombinedIso:
         {
@@ -455,13 +449,13 @@ void PhotonIDMod::Process()
                               ph->EcalRecHitIsoDr04() +
                               ph->HcalTowerSumEtDr04();
           if (totalIso/ph->Pt() < 0.25)
-            isocut = kTRUE;
+            isocut = true;
         }
         break;
       case kCustomIso:
         {
           if ( ph->HollowConeTrkIsoDr04() < (1.5 + 0.001*ph->Pt()) && ph->EcalRecHitIsoDr04()<(2.0+0.006*ph->Pt()) && ph->HcalTowerSumEtDr04()<(2.0+0.0025*ph->Pt()) )
-            isocut = kTRUE;
+            isocut = true;
         }
 	break;
 	
@@ -469,7 +463,7 @@ void PhotonIDMod::Process()
       {
 	// compute the PU corrections only if Rho is available
 	// ... otherwise (_tRho = 0.0) it's the std isolation
-	isocut = kTRUE;
+	isocut = true;
 	Double_t fEffAreaEcal = fEffAreaEcalEB;
 	Double_t fEffAreaHcal = fEffAreaHcalEB;
 	Double_t fEffAreaTrack = fEffAreaTrackEB;
@@ -482,17 +476,17 @@ void PhotonIDMod::Process()
 
 	Double_t EcalCorrISO =   ph->EcalRecHitIsoDr04();
 	if(_tRho > -0.5 ) EcalCorrISO -= _tRho * fEffAreaEcal;
-	if ( EcalCorrISO > (2.0+0.006*ph->Pt()) ) isocut = kFALSE; 
+	if ( EcalCorrISO > (2.0+0.006*ph->Pt()) ) isocut = false; 
 	if ( isocut || true ) {
 	  Double_t HcalCorrISO = ph->HcalTowerSumEtDr04(); 
 	  if(_tRho > -0.5 ) HcalCorrISO -= _tRho * fEffAreaHcal;
-	  if ( HcalCorrISO > (2.0+0.0025*ph->Pt()) ) isocut = kFALSE;
+	  if ( HcalCorrISO > (2.0+0.0025*ph->Pt()) ) isocut = false;
 	}
 	if ( isocut || true ) {
 	  Double_t TrackCorrISO = IsolationTools::TrackIsolationNoPV(ph, bsp, 0.4, 0.04, 0.0, 0.015, 0.1, TrackQuality::highPurity, fTracks);
 	  if(_tRho > -0.5 )
 	    TrackCorrISO -= _tRho * fEffAreaTrack;
-	  if ( TrackCorrISO > (1.5 + 0.001*ph->Pt()) ) isocut = kFALSE;
+	  if ( TrackCorrISO > (1.5 + 0.001*ph->Pt()) ) isocut = false;
 	}
 	break;
       }
@@ -534,14 +528,14 @@ void PhotonIDMod::SlaveBegin()
   // we just request the photon collection branch.
 
   ReqEventObject(fPhotonBranchName,   fPhotons,     fPhotonsFromBranch);
-  ReqEventObject(fTrackBranchName,    fTracks,      kTRUE);
-  ReqEventObject(fBeamspotBranchName, fBeamspots,   kTRUE);
+  ReqEventObject(fTrackBranchName,    fTracks,      true);
+  ReqEventObject(fBeamspotBranchName, fBeamspots,   true);
   ReqEventObject(fConversionName,     fConversions,  true);
-  ReqEventObject(fElectronName,       fElectrons,   kTRUE);
+  ReqEventObject(fElectronName,       fElectrons,   true);
   ReqEventObject(fGoodElectronName,       fGoodElectrons,   fGoodElectronsFromBranch);  
   ReqEventObject(fPVName, fPV, fPVFromBranch);
-  ReqEventObject(fPileUpDenName,      fPileUpDen, kTRUE);
-  ReqEventObject(fPFCandsName,      fPFCands, kTRUE);
+  ReqEventObject(fPileUpDenName,      fPileUpDen, true);
+  ReqEventObject(fPFCandsName,      fPFCands, true);
 
   if (!fIsData) {
     ReqBranch(fPileUpName,            fPileUp);
@@ -573,8 +567,9 @@ void PhotonIDMod::SlaveBegin()
     fPhIdType = kTight;
   else if (fPhotonIDType.CompareTo("Loose") == 0) 
     fPhIdType = kLoose;
-  else if (fPhotonIDType.CompareTo("LooseEM") == 0) 
-    fPhIdType = kLooseEM;
+  else if (fPhotonIDType.CompareTo("LooseEM") == 0) {
+    throw std::runtime_error("Invalid congiruation LooseEM for PhotonIDMod::PhotonIDType");
+  }
   else if (fPhotonIDType.CompareTo("Custom") == 0)
     fPhIdType = kCustomId;
   else if (fPhotonIDType.CompareTo("BaseLineCiC") == 0) {
