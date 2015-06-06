@@ -1,6 +1,12 @@
 #ifndef RHO_UTILITIES_H
 #define RHO_UTILITIES_H
 
+/*
+DEPRECATION WARNING
+This class is deprecated and will be removed in a future BAMBU release.
+Use enum PileupEnergyDensity::Algo instead.
+*/
+
 namespace mithep{
 
   struct RhoUtilities {
