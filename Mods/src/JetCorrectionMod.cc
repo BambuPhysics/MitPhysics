@@ -1,5 +1,3 @@
-// $Id: JetCorrectionMod.cc,v 1.15 2012/05/03 12:03:09 fabstoec Exp $
-
 #include "MitPhysics/Mods/interface/JetCorrectionMod.h"
 #include "FWCore/ParameterSet/interface/FileInPath.h"
 #include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
@@ -25,7 +23,7 @@ JetCorrectionMod::JetCorrectionMod(const char *name, const char *title) :
   fJetCorrector(0),
   fEvtHdrName(Names::gkEvtHeaderBrn),
   fEventHeader(0),
-  fTheRhoType(RhoUtilities::DEFAULT)
+  fRhoAlgo(mithep::PileupEnergyDensity::kHighEta)
 {
   // Constructor.
 }
@@ -37,7 +35,35 @@ JetCorrectionMod::~JetCorrectionMod()
     delete fJetCorrector;
     fJetCorrector = 0;
   }
-} 
+}
+
+void
+mithep::JetCorrectionMod::SetRhoType(RhoUtilities::RhoType type)
+{
+  // DEPRECATED FUNCTION
+  // Use SetRhoAlgo instead
+
+  switch(type) {
+  case RhoUtilities::MIT_RHO_VORONOI_LOW_ETA:
+    fRhoAlgo = mithep::PileupEnergyDensity::kLowEta;
+    break;
+  case RhoUtilities::MIT_RHO_VORONOI_HIGH_ETA:
+    fRhoAlgo = mithep::PileupEnergyDensity::kHighEta;
+    break;
+  case RhoUtilities::MIT_RHO_RANDOM_LOW_ETA:
+    fRhoAlgo = mithep::PileupEnergyDensity::kRandomLowEta;
+    break;
+  case RhoUtilities::MIT_RHO_RANDOM_HIGH_ETA:
+    fRhoAlgo = mithep::PileupEnergyDensity::kRandom;
+    break;
+  case RhoUtilities::CMS_RHO_RHOKT6PFJETS:
+    fRhoAlgo = mithep::PileupEnergyDensity::kKt6PFJets;
+    break;
+  default:
+    fRhoAlgo = mithep::PileupEnergyDensity::kHighEta;
+    break;
+  }
+}   
 
 //--------------------------------------------------------------------------------------------------
 void JetCorrectionMod::SlaveBegin()
@@ -126,26 +152,7 @@ void JetCorrectionMod::Process()
     fJetCorrector->setJetE(rawMom.E());
     const PileupEnergyDensity *fR = fRho->At(0);
 
-    Double_t theRho = 0.;
-    switch (fTheRhoType) {
-    case RhoUtilities::MIT_RHO_VORONOI_LOW_ETA:
-      theRho = fR->RhoLowEta();
-      break;
-    case RhoUtilities::MIT_RHO_VORONOI_HIGH_ETA:
-      theRho = fR->Rho();
-      break;
-    case RhoUtilities::MIT_RHO_RANDOM_LOW_ETA:
-      theRho = fR->RhoRandomLowEta();
-      break;
-    case RhoUtilities::MIT_RHO_RANDOM_HIGH_ETA:
-      theRho = fR->RhoRandom();
-      break;
-    case RhoUtilities::CMS_RHO_RHOKT6PFJETS:
-      theRho = fR->RhoKt6PFJets();
-      break;
-    default:      
-      theRho = fR->RhoHighEta();
-    };
+    Double_t theRho = fR->Rho(fRhoAlgo);
 
     fJetCorrector->setRho(theRho);
     fJetCorrector->setJetA(jet->JetArea());
@@ -265,25 +272,8 @@ void JetCorrectionMod::ApplyL1FastJetCorrection(Jet *jet)
     
   } else {
     const PileupEnergyDensity *fR = fRho->At(0);
-    
-    switch (fTheRhoType) {
-    case RhoUtilities::MIT_RHO_VORONOI_LOW_ETA:
-      rho = fR->RhoLowEta();
-      break;
-    case RhoUtilities::MIT_RHO_VORONOI_HIGH_ETA:
-      rho = fR->Rho();
-      break;
-    case RhoUtilities::MIT_RHO_RANDOM_LOW_ETA:
-      rho = fR->RhoRandomLowEta();
-      break;
-    case RhoUtilities::MIT_RHO_RANDOM_HIGH_ETA:
-      rho = fR->RhoRandom();
-      break;
-    default:      
-      if (rhoEtaMax > 2.5) rho = fR->RhoHighEta();
-      else rho = fR->Rho();
-    };
 
+    rho = fR->Rho(fRhoAlgo);
   }
   
   Double_t l1Scale = (jet->Pt() - rho*jet->JetArea())/jet->Pt();

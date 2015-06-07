@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: JetCorrectionMod.h,v 1.9 2012/05/02 16:33:50 fabstoec Exp $
-//
 // JetCorrectionMod
 //
 // This module applies jet energy corrections on the fly at analysis level, using directly the
@@ -43,7 +41,8 @@ namespace mithep
       void              SetCorrectedJetsName(const char *name)    { fCorrectedJetsName = name;      }     
       void              SetCorrectedName(const char *name)        { SetCorrectedJetsName(name);     }    
       void              SetInputName(const char *name)            { fJetsName = name;               }
-      void              SetRhoType(RhoUtilities::RhoType type) { fTheRhoType = type; };
+      void              SetRhoType(RhoUtilities::RhoType); /*DEPRECATED*/
+      void              SetRhoAlgo(mithep::PileupEnergyDensity::Algo algo) { fRhoAlgo = algo; }
 
     protected:
       void              SlaveBegin();
@@ -68,7 +67,7 @@ namespace mithep
 
       bool              fUseFixedGrid;             // flag to use fixed grid method to compute energy density 
 
-      RhoUtilities::RhoType   fTheRhoType;
+      mithep::PileupEnergyDensity::Algo fRhoAlgo;
 
       ClassDef(JetCorrectionMod, 2) // Jet identification module
   };

@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: JetIDMod.h,v 1.16 2012/04/05 12:25:09 pharris Exp $
-//
 // JetIDMod
 //
 // This module applies jet identification criteria and exports a pointer to a collection

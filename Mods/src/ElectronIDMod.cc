@@ -84,9 +84,36 @@ ElectronIDMod::ElectronIDMod(const char *name, const char *title) :
   fElectronMVAWeights_Subdet1Pt20ToInf(""),
   fElectronMVAWeights_Subdet2Pt20ToInf(""),
   fPVName(Names::gkPVBeamSpotBrn),
-  fTheRhoType(RhoUtilities::DEFAULT)
+  fRhoAlgo(mithep::PileupEnergyDensity::kHighEta)
 {
   // Constructor.
+}
+
+void
+mithep::ElectronIDMod::SetRhoType(RhoUtilities::RhoType type)
+{
+  // DEPRECATED FUNCTION
+  // Use SetRhoAlgo instead
+
+  switch (type) {
+  case RhoUtilities::MIT_RHO_VORONOI_LOW_ETA:       
+    fRhoAlgo = mithep::PileupEnergyDensity::kLowEta;
+    break;
+  case RhoUtilities::MIT_RHO_VORONOI_HIGH_ETA:
+    fRhoAlgo = mithep::PileupEnergyDensity::kHighEta;
+    break;    
+  case RhoUtilities::MIT_RHO_RANDOM_LOW_ETA:
+    fRhoAlgo = mithep::PileupEnergyDensity::kRandomLowEta;
+    break;    
+  case RhoUtilities::MIT_RHO_RANDOM_HIGH_ETA:       
+    fRhoAlgo = mithep::PileupEnergyDensity::kRandom;
+    break;
+  case RhoUtilities::CMS_RHO_RHOKT6PFJETS:
+    fRhoAlgo = mithep::PileupEnergyDensity::kKt6PFJets;
+    break;
+  default:
+    fRhoAlgo = mithep::PileupEnergyDensity::kHighEta;
+  }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -678,32 +705,10 @@ void ElectronIDMod::Process()
 
     //apply Isolation Cut
     Double_t Rho = 0.0;
-    if (fElIsoType == ElectronTools::kTrackJuraSliding
-        || fElIsoType == ElectronTools::kCombinedRelativeConeAreaCorrected 
-        || fElIsoType == ElectronTools::kMVAIso_BDTG_IDIsoCombined 
-     ) {      
-      switch(fTheRhoType) {
-      case RhoUtilities::MIT_RHO_VORONOI_HIGH_ETA:
-	Rho = fPileupEnergyDensity->At(0)->Rho();
-	break;
-      case RhoUtilities::MIT_RHO_VORONOI_LOW_ETA:
-	Rho = fPileupEnergyDensity->At(0)->RhoLowEta();
-	break;
-      case RhoUtilities::MIT_RHO_RANDOM_HIGH_ETA:
-	Rho = fPileupEnergyDensity->At(0)->RhoRandom();
-	break;
-      case RhoUtilities::MIT_RHO_RANDOM_LOW_ETA:
-	Rho = fPileupEnergyDensity->At(0)->RhoRandomLowEta();
-	break;
-      case RhoUtilities::CMS_RHO_RHOKT6PFJETS:
-	Rho = fPileupEnergyDensity->At(0)->RhoKt6PFJets();
-	break;
-      default:
-	// use the old default
-	Rho = fPileupEnergyDensity->At(0)->Rho();
-	break;
-      }
-    }
+    if (fElIsoType == ElectronTools::kTrackJuraSliding ||
+        fElIsoType == ElectronTools::kCombinedRelativeConeAreaCorrected ||
+        fElIsoType == ElectronTools::kMVAIso_BDTG_IDIsoCombined)
+      Rho = fPileupEnergyDensity->At(0)->Rho(fRhoAlgo);
     
     Bool_t isocut = kFALSE;
     Double_t distVtx = 999.0;
@@ -1006,7 +1011,7 @@ void ElectronIDMod::Setup()
                                fElectronMVAWeights_Subdet1Pt20ToInf,
                                fElectronMVAWeights_Subdet2Pt20ToInf,
                                ElectronIDMVA::kNoIPInfo,
-			       fTheRhoType);
+			       fRhoAlgo);
   }
   if (fElIdType == ElectronTools::kMVAID_BDTG_WithIPInfo) {
     fElectronIDMVA = new ElectronIDMVA();
@@ -1018,7 +1023,7 @@ void ElectronIDMod::Setup()
                                fElectronMVAWeights_Subdet1Pt20ToInf,
                                fElectronMVAWeights_Subdet2Pt20ToInf,
                                ElectronIDMVA::kWithIPInfo,
-			       fTheRhoType);
+			       fRhoAlgo);
   }
   if (fElIdType == ElectronTools::kMVAID_BDTG_IDIsoCombined || fElIsoType == ElectronTools::kMVAIso_BDTG_IDIsoCombined) {
     fElectronIDMVA = new ElectronIDMVA();
@@ -1030,7 +1035,7 @@ void ElectronIDMod::Setup()
                                fElectronMVAWeights_Subdet1Pt20ToInf,
                                fElectronMVAWeights_Subdet2Pt20ToInf,
                                ElectronIDMVA::kIDIsoCombined,
-			       fTheRhoType);
+			       fRhoAlgo);
   }
 
   if (fElIdType == ElectronTools::kMVAID_BDTG_IDHWW2012TrigV0) {
@@ -1043,7 +1048,7 @@ void ElectronIDMod::Setup()
                                fElectronMVAWeights_Subdet1Pt20ToInf,
                                fElectronMVAWeights_Subdet2Pt20ToInf,
                                ElectronIDMVA::kIDHWW2012TrigV0,
-			       fTheRhoType);
+			       fRhoAlgo);
   }
 
   if (fElIdType == ElectronTools::kMVAID_BDTG_IDIsoCombinedHWW2012TrigV4
@@ -1057,7 +1062,7 @@ void ElectronIDMod::Setup()
                                fElectronMVAWeights_Subdet1Pt20ToInf,
                                fElectronMVAWeights_Subdet2Pt20ToInf,
                                ElectronIDMVA::kIDIsoCombinedHWW2012TrigV4,
-			       fTheRhoType);
+			       fRhoAlgo);
   }
 
   if (fElIdType == ElectronTools::kHggLeptonTagId2012HCP) {
@@ -1070,7 +1075,7 @@ void ElectronIDMod::Setup()
                                fElectronMVAWeights_Subdet1Pt20ToInf,
                                fElectronMVAWeights_Subdet2Pt20ToInf,
                                ElectronIDMVA::kIDEGamma2012NonTrigV1,
-			       fTheRhoType);
+			       fRhoAlgo);
   }
   
 }

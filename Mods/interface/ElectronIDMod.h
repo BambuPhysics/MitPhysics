@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: ElectronIDMod.h,v 1.61 2012/10/08 17:18:09 mingyang Exp $
-//
 // ElectronIDMod
 //
 // This module applies electron identification criteria and exports a pointer to a collection
@@ -142,7 +140,8 @@ namespace mithep
       void                SetElectronMVAWeightsSubdet2Pt20ToInf(TString s) 
                           { fElectronMVAWeights_Subdet2Pt20ToInf = s; }
 
-      void                SetRhoType(RhoUtilities::RhoType type) { fTheRhoType = type; };
+      void                SetRhoType(RhoUtilities::RhoType); /* DEPRECATED */
+      void                SetRhoAlgo(mithep::PileupEnergyDensity::Algo algo) { fRhoAlgo = algo; }
 
 
     protected:
@@ -219,7 +218,7 @@ namespace mithep
       TString                   fElectronMVAWeights_Subdet2Pt20ToInf;
       TString                   fPVName;
 
-      RhoUtilities::RhoType    fTheRhoType;
+      mithep::PileupEnergyDensity::Algo fRhoAlgo;
 
 
     ClassDef(ElectronIDMod, 1) // Electron identification module

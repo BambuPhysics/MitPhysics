@@ -19,7 +19,7 @@ fIsInitialized(kFALSE),
 fMVAType(ElectronIDMVA::kUninitialized),
 fUseBinnedVersion(kTRUE),
 fNMVABins(0),
-fTheRhoType(RhoUtilities::DEFAULT)
+fRhoAlgo(mithep::PileupEnergyDensity::kHighEta)
 {
   // Constructor.
 }
@@ -34,28 +34,28 @@ ElectronIDMVA::~ElectronIDMVA()
 }
 
 //--------------------------------------------------------------------------------------------------
-void ElectronIDMVA::Initialize( std::string methodName,
-                                std::string weightsfile,
-                                ElectronIDMVA::MVAType type,
-			        RhoUtilities::RhoType theRhoType)
+void ElectronIDMVA::Initialize(std::string const& methodName,
+                               std::string const& weightsfile,
+                               ElectronIDMVA::MVAType type,
+			       mithep::PileupEnergyDensity::Algo algo/* = kHighEta*/)
 {
   
   std::vector<std::string> tempWeightFileVector;
   tempWeightFileVector.push_back(weightsfile);
-  Initialize(methodName,type,kFALSE,tempWeightFileVector,theRhoType);
+  Initialize(methodName,type,kFALSE,tempWeightFileVector,algo);
 }
 
 //--------------------------------------------------------------------------------------------------
-void ElectronIDMVA::Initialize( TString methodName,
-                                TString Subdet0Pt10To20Weights , 
-                                TString Subdet1Pt10To20Weights , 
-                                TString Subdet2Pt10To20Weights,
-                                TString Subdet0Pt20ToInfWeights,
-                                TString Subdet1Pt20ToInfWeights, 
-                                TString Subdet2Pt20ToInfWeights,
-                                ElectronIDMVA::MVAType type,
-			        RhoUtilities::RhoType theRhoType) {
-
+void ElectronIDMVA::Initialize(TString const& methodName,
+                               TString const& Subdet0Pt10To20Weights , 
+                               TString const& Subdet1Pt10To20Weights , 
+                               TString const& Subdet2Pt10To20Weights,
+                               TString const& Subdet0Pt20ToInfWeights,
+                               TString const& Subdet1Pt20ToInfWeights, 
+                               TString const& Subdet2Pt20ToInfWeights,
+                               ElectronIDMVA::MVAType type,
+			       mithep::PileupEnergyDensity::Algo algo/* = kHighEta*/)
+{
   std::vector<std::string> tempWeightFileVector;
   tempWeightFileVector.push_back(std::string(Subdet0Pt10To20Weights.Data()));
   tempWeightFileVector.push_back(std::string(Subdet1Pt10To20Weights.Data()));
@@ -63,19 +63,17 @@ void ElectronIDMVA::Initialize( TString methodName,
   tempWeightFileVector.push_back(std::string(Subdet0Pt20ToInfWeights.Data()));
   tempWeightFileVector.push_back(std::string(Subdet1Pt20ToInfWeights.Data()));
   tempWeightFileVector.push_back(std::string(Subdet2Pt20ToInfWeights.Data()));
-  Initialize(std::string(methodName.Data()),type,kTRUE,tempWeightFileVector,theRhoType);
-
+  Initialize(std::string(methodName.Data()),type,kTRUE,tempWeightFileVector,algo);
 }
 
 
 //--------------------------------------------------------------------------------------------------
-void ElectronIDMVA::Initialize( std::string methodName,
-                                ElectronIDMVA::MVAType type,
-                                Bool_t useBinnedVersion,
-                                std::vector<std::string> weightsfiles,
-			        RhoUtilities::RhoType theRhoType
-                                 
-) {
+void ElectronIDMVA::Initialize(std::string const& methodName,
+                               ElectronIDMVA::MVAType type,
+                               Bool_t useBinnedVersion,
+                               std::vector<std::string> const& weightsfiles,
+			       mithep::PileupEnergyDensity::Algo algo/* = kHighEta*/)
+{
 
   //clean up first
   for (uint i=0;i<fTMVAReader.size(); ++i) {
@@ -88,7 +86,7 @@ void ElectronIDMVA::Initialize( std::string methodName,
   fMethodname = methodName;
   fMVAType = type;
   fUseBinnedVersion = useBinnedVersion;
-  fTheRhoType = theRhoType;
+  fRhoAlgo = algo;
 
   //Define expected number of bins
   UInt_t ExpectedNBins = 0;
@@ -789,28 +787,7 @@ Double_t ElectronIDMVA::MVAValue(const Electron *ele, const Vertex *vertex,
     return -9999;
   }
 
-  Double_t Rho = 0;
-  switch(fTheRhoType) {
-   case RhoUtilities::MIT_RHO_VORONOI_HIGH_ETA:
-     Rho = PileupEnergyDensity->At(0)->Rho();
-     break;
-   case RhoUtilities::MIT_RHO_VORONOI_LOW_ETA:
-     Rho = PileupEnergyDensity->At(0)->RhoLowEta();
-     break;
-   case RhoUtilities::MIT_RHO_RANDOM_HIGH_ETA:
-     Rho = PileupEnergyDensity->At(0)->RhoRandom();
-     break;
-   case RhoUtilities::MIT_RHO_RANDOM_LOW_ETA:
-     Rho = PileupEnergyDensity->At(0)->RhoRandomLowEta();
-     break;
-   case RhoUtilities::CMS_RHO_RHOKT6PFJETS:
-     Rho = PileupEnergyDensity->At(0)->RhoKt6PFJets();
-     break;
-   default:
-     // use the old default
-     Rho = PileupEnergyDensity->At(0)->Rho();
-     break;
- }
+  Double_t Rho = PileupEnergyDensity->At(0)->Rho(fRhoAlgo);
 
   //set all input variables
   fMVAVar_EleSigmaIEtaIEta = ele->CoviEtaiEta() ; 
@@ -1153,28 +1130,7 @@ Double_t ElectronIDMVA::MVAValue(const Electron *ele, const Vertex *vertex,
     return -9999;
   }
 
-  Double_t Rho = 0;
- switch(fTheRhoType) {
-   case RhoUtilities::MIT_RHO_VORONOI_HIGH_ETA:
-     Rho = PileupEnergyDensity->At(0)->Rho();
-     break;
-   case RhoUtilities::MIT_RHO_VORONOI_LOW_ETA:
-     Rho = PileupEnergyDensity->At(0)->RhoLowEta();
-     break;
-   case RhoUtilities::MIT_RHO_RANDOM_HIGH_ETA:
-     Rho = PileupEnergyDensity->At(0)->RhoRandom();
-     break;
-   case RhoUtilities::MIT_RHO_RANDOM_LOW_ETA:
-     Rho = PileupEnergyDensity->At(0)->RhoRandomLowEta();
-     break;
-   case RhoUtilities::CMS_RHO_RHOKT6PFJETS:
-     Rho = PileupEnergyDensity->At(0)->RhoKt6PFJets();
-     break;
-   default:
-     // use the old default
-     Rho = PileupEnergyDensity->At(0)->Rho();
-     break;
- }
+  Double_t Rho = PileupEnergyDensity->At(0)->Rho(fRhoAlgo);
 
   //set all input variables
   fMVAVar_ElePt = ele->Pt();
@@ -1471,28 +1427,7 @@ Double_t ElectronIDMVA::MVAValue(const Electron *ele, const Vertex *vertex,
     return -9999;
   }
 
-  Double_t Rho = 0;
-  switch(fTheRhoType) {
-    case RhoUtilities::MIT_RHO_VORONOI_HIGH_ETA:
-      Rho = PileupEnergyDensity->At(0)->Rho();
-      break;
-    case RhoUtilities::MIT_RHO_VORONOI_LOW_ETA:
-      Rho = PileupEnergyDensity->At(0)->RhoLowEta();
-      break;
-    case RhoUtilities::MIT_RHO_RANDOM_HIGH_ETA:
-      Rho = PileupEnergyDensity->At(0)->RhoRandom();
-      break;
-    case RhoUtilities::MIT_RHO_RANDOM_LOW_ETA:
-      Rho = PileupEnergyDensity->At(0)->RhoRandomLowEta();
-      break;
-    case RhoUtilities::CMS_RHO_RHOKT6PFJETS:
-      Rho = PileupEnergyDensity->At(0)->RhoKt6PFJets();
-      break;
-    default:
-      // use the old default
-      Rho = PileupEnergyDensity->At(0)->Rho();
-      break;
-  }
+  Double_t Rho = PileupEnergyDensity->At(0)->Rho(fRhoAlgo);
 
   //set all input variables
   fMVAVar_ElePt = ele->Pt();

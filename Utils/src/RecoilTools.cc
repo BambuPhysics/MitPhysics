@@ -106,7 +106,7 @@ void RecoilTools::addType1(FourVectorM &iVec,Double_t &iSumEt,
       continue;
     if (fJetIDMVA->correctedPt(pJet,iJetCorrector,iPUEnergyDensity) < 10)
       continue;
-    double lPt = fJetIDMVA->correctedPt(pJet,iJetCorrector,iPUEnergyDensity,RhoUtilities::DEFAULT,100);
+    double lPt = fJetIDMVA->correctedPt(pJet,iJetCorrector,iPUEnergyDensity,mithep::PileupEnergyDensity::nAlgos,100);
     FourVectorM pVec(0,0,0,0);
     pVec.SetPt(lPt);
     pVec.SetEta(pJet->Eta());
@@ -230,7 +230,7 @@ void RecoilTools::addNeut(const PFJet *iJet,FourVectorM &iVec,Double_t &iSumEt,
   FourVectorM lVec(0,0,0,0);
   double      lPt = fJetIDMVA->correctedPt(iJet,iJetCorrector,iPUEnergyDensity);
   if (!fUseRho)
-    lPt = iJet->Pt()+fJetIDMVA->correctedPt(iJet,iJetCorrector,iPUEnergyDensity,RhoUtilities::DEFAULT,100);
+    lPt = iJet->Pt()+fJetIDMVA->correctedPt(iJet,iJetCorrector,iPUEnergyDensity,mithep::PileupEnergyDensity::nAlgos,100);
   double lFrac  = (iJet->NeutralEmEnergy()/iJet->RawMom().E() + iJet->NeutralHadronEnergy()/iJet->RawMom().E());
   if (fabs(iJet->Eta()) > 2.5 && !f42)
     lFrac = 1.;

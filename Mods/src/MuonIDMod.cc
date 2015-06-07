@@ -1,5 +1,3 @@
-// $Id: MuonIDMod.cc,v 1.92 2013/10/18 14:09:34 ceballos Exp $
-
 #include "MitPhysics/Mods/interface/MuonIDMod.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitAna/DataTree/interface/MuonFwd.h"
@@ -12,8 +10,8 @@ using namespace mithep;
 ClassImp(mithep::MuonIDMod)
 
 //--------------------------------------------------------------------------------------------------
-  MuonIDMod::MuonIDMod(const char *name, const char *title) :
-  BaseMod(name,title),
+MuonIDMod::MuonIDMod(const char *name, const char *title) :
+BaseMod(name,title),
   fPrintMVADebugInfo(kFALSE),
   fMuonBranchName(Names::gkMuonBrn),
   fCleanMuonsName(ModNames::gkCleanMuonsName),
@@ -58,9 +56,38 @@ ClassImp(mithep::MuonIDMod)
   fMuonTools(0),
   fMuonIDMVA(0),
   fPVName(Names::gkPVBeamSpotBrn),
-  fTheRhoType(RhoUtilities::DEFAULT)
+  fRhoAlgo(mithep::PileupEnergyDensity::kHighEta)
 {
   // Constructor.
+}
+
+void
+mithep::MuonIDMod::SetRhoType(RhoUtilities::RhoType type)
+{
+  /*DEPRECATED FUNCTION*/
+  // use SetRhoAlgo instead
+  // here converting to PileupEnergyDensity::Algo
+
+  switch (type) {
+  case RhoUtilities::MIT_RHO_VORONOI_LOW_ETA:
+    fRhoAlgo = mithep::PileupEnergyDensity::kLowEta;
+    break;
+  case RhoUtilities::MIT_RHO_VORONOI_HIGH_ETA:
+    fRhoAlgo = mithep::PileupEnergyDensity::kHighEta;
+    break;
+  case RhoUtilities::MIT_RHO_RANDOM_LOW_ETA:
+    fRhoAlgo = mithep::PileupEnergyDensity::kRandomLowEta;
+    break;
+  case RhoUtilities::MIT_RHO_RANDOM_HIGH_ETA:
+    fRhoAlgo = mithep::PileupEnergyDensity::kRandom;
+    break;
+  case RhoUtilities::CMS_RHO_RHOKT6PFJETS:
+    fRhoAlgo = mithep::PileupEnergyDensity::kKt6PFJets;
+    break;
+  default:
+    fRhoAlgo = mithep::PileupEnergyDensity::kHighEta;
+    break;
+  }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -218,99 +245,99 @@ void MuonIDMod::Process()
 
     case kWMuId:
       idpass = mu->BestTrk() != 0 &&
-                 mu->BestTrk()->NHits() > 10 &&
-                 RChi2 < 10.0 &&
-                (mu->NSegments() > 1 || mu->NMatches() > 1) &&
-                 mu->BestTrk()->NPixelHits() > 0 &&
-                 mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
+        mu->BestTrk()->NHits() > 10 &&
+        RChi2 < 10.0 &&
+        (mu->NSegments() > 1 || mu->NMatches() > 1) &&
+        mu->BestTrk()->NPixelHits() > 0 &&
+        mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
       break;
-    case kZMuId:
-      idpass = mu->BestTrk() != 0 &&
-               mu->BestTrk()->NHits() > 10 &&
-              (mu->NSegments() > 1 || mu->NMatches() > 1) &&
-               mu->BestTrk()->NPixelHits() > 0 &&
-               mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
-      break;
-    case kLoose:
-      idpass = mu->BestTrk() != 0 &&
-               mu->Quality().Quality(MuonQuality::TMOneStationLoose) &&
-               mu->Quality().Quality(MuonQuality::TM2DCompatibilityLoose) &&
-               mu->BestTrk()->NHits() > 10 &&
-               RChi2 < 10.0 &&
-               mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
-      break;
-    case kTight:
-      idpass = mu->BestTrk() != 0 &&
-               mu->NTrkLayersHit() > 5 &&
-               mu->IsPFMuon() == kTRUE &&
-               mu->BestTrk()->NPixelHits() > 0 &&
-               RChi2 < 10.0;
-      break;
-    case kmuonPOG2012CutBasedIDTight:
-      idpass = mu->IsGlobalMuon() &&
-               mu->IsPFMuon() &&
-               mu->GlobalTrk()->RChi2() < 10 &&
-               mu->NValidHits() != 0 &&
-               mu->NMatches() > 1    &&
-               mu->BestTrk()->NPixelHits() != 0 &&
-               mu->NTrkLayersHit() > 5;
-     break;
+  case kZMuId:
+    idpass = mu->BestTrk() != 0 &&
+      mu->BestTrk()->NHits() > 10 &&
+      (mu->NSegments() > 1 || mu->NMatches() > 1) &&
+      mu->BestTrk()->NPixelHits() > 0 &&
+      mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
+    break;
+  case kLoose:
+    idpass = mu->BestTrk() != 0 &&
+      mu->Quality().Quality(MuonQuality::TMOneStationLoose) &&
+      mu->Quality().Quality(MuonQuality::TM2DCompatibilityLoose) &&
+      mu->BestTrk()->NHits() > 10 &&
+      RChi2 < 10.0 &&
+      mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
+    break;
+  case kTight:
+    idpass = mu->BestTrk() != 0 &&
+      mu->NTrkLayersHit() > 5 &&
+      mu->IsPFMuon() == kTRUE &&
+      mu->BestTrk()->NPixelHits() > 0 &&
+      RChi2 < 10.0;
+    break;
+  case kmuonPOG2012CutBasedIDTight:
+    idpass = mu->IsGlobalMuon() &&
+      mu->IsPFMuon() &&
+      mu->GlobalTrk()->RChi2() < 10 &&
+      mu->NValidHits() != 0 &&
+      mu->NMatches() > 1    &&
+      mu->BestTrk()->NPixelHits() != 0 &&
+      mu->NTrkLayersHit() > 5;
+    break;
     // 2012 WW analysis for 42x (there is no PFMuon link)
-    case kWWMuIdV1:
-      idpass = mu->BestTrk() != 0 &&
-               mu->NTrkLayersHit() > 5 &&
-               mu->BestTrk()->NPixelHits() > 0 &&
-               mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
-               mu->TrkKink() < 20.0;
-      break;
+  case kWWMuIdV1:
+    idpass = mu->BestTrk() != 0 &&
+      mu->NTrkLayersHit() > 5 &&
+      mu->BestTrk()->NPixelHits() > 0 &&
+      mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
+      mu->TrkKink() < 20.0;
+    break;
     // 2010 WW analysis
-    case kWWMuIdV2:
-      idpass = mu->BestTrk() != 0 &&
-               mu->BestTrk()->NHits() > 10 &&
-               mu->BestTrk()->NPixelHits() > 0 &&
-               mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1;
-      break;
+  case kWWMuIdV2:
+    idpass = mu->BestTrk() != 0 &&
+      mu->BestTrk()->NHits() > 10 &&
+      mu->BestTrk()->NPixelHits() > 0 &&
+      mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1;
+    break;
     // 2011 WW analysis
-    case kWWMuIdV3:
-      idpass = mu->BestTrk() != 0 &&
-               mu->BestTrk()->NHits() > 10 &&
-               mu->BestTrk()->NPixelHits() > 0 &&
-               mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
-               mu->TrkKink() < 20.0;
-      break;
+  case kWWMuIdV3:
+    idpass = mu->BestTrk() != 0 &&
+      mu->BestTrk()->NHits() > 10 &&
+      mu->BestTrk()->NPixelHits() > 0 &&
+      mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
+      mu->TrkKink() < 20.0;
+    break;
     // 2012 WW analysis
-    case kWWMuIdV4:
-      idpass = mu->BestTrk() != 0 &&
-               mu->NTrkLayersHit() > 5 &&
-               mu->IsPFMuon() == kTRUE &&
-               mu->BestTrk()->NPixelHits() > 0 &&
-               mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
-               mu->TrkKink() < 20.0;
-      break;
-    case kMVAID_BDTG_IDIso:
-      {
-        Bool_t passDenominatorM2 = (mu->BestTrk() != 0 &&
-                                    mu->BestTrk()->NHits() > 10 &&
-                                    mu->BestTrk()->NPixelHits() > 0 &&
-                                    mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
-                                    MuonTools::PassD0Cut(mu, fVertices, 0.20, 0) &&
-                                    MuonTools::PassDZCut(mu, fVertices, 0.10, 0) &&
-                                    mu->TrkKink() < 20.0
-          );
-        idpass =  passDenominatorM2;
-        //only evaluate MVA if muon passes M2 denominator to save time
-        if (idpass)
-	  idpass = PassMuonMVA_BDTG_IdIso(mu, fVertices->At(0), fPileupEnergyDensity);
-      }
-      break;
-    case kNoId:
-      {
-	idpass = kTRUE;
-      }
-      break;
-    default:
-      break;
+  case kWWMuIdV4:
+    idpass = mu->BestTrk() != 0 &&
+      mu->NTrkLayersHit() > 5 &&
+      mu->IsPFMuon() == kTRUE &&
+      mu->BestTrk()->NPixelHits() > 0 &&
+      mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
+      mu->TrkKink() < 20.0;
+    break;
+  case kMVAID_BDTG_IDIso:
+    {
+      Bool_t passDenominatorM2 = (mu->BestTrk() != 0 &&
+                                  mu->BestTrk()->NHits() > 10 &&
+                                  mu->BestTrk()->NPixelHits() > 0 &&
+                                  mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
+                                  MuonTools::PassD0Cut(mu, fVertices, 0.20, 0) &&
+                                  MuonTools::PassDZCut(mu, fVertices, 0.10, 0) &&
+                                  mu->TrkKink() < 20.0
+                                  );
+      idpass =  passDenominatorM2;
+      //only evaluate MVA if muon passes M2 denominator to save time
+      if (idpass)
+        idpass = PassMuonMVA_BDTG_IdIso(mu, fVertices->At(0), fPileupEnergyDensity);
     }
+    break;
+  case kNoId:
+    {
+      idpass = kTRUE;
+    }
+    break;
+  default:
+    break;
+  }
 
     if (!idpass)
       continue;
@@ -318,97 +345,77 @@ void MuonIDMod::Process()
     Double_t Rho = 0.;
     if (fPileupEnergyDensity) {
       const PileupEnergyDensity *rho =  fPileupEnergyDensity->At(0);
-      
-      switch (fTheRhoType) {
-      case RhoUtilities::MIT_RHO_VORONOI_LOW_ETA:
-        Rho = rho->RhoLowEta();
-        break;
-      case RhoUtilities::MIT_RHO_VORONOI_HIGH_ETA:
-        Rho = rho->Rho();
-        break;
-      case RhoUtilities::MIT_RHO_RANDOM_LOW_ETA:
-        Rho = rho->RhoRandomLowEta();
-        break;
-      case RhoUtilities::MIT_RHO_RANDOM_HIGH_ETA:
-        Rho = rho->RhoRandom();
-        break;
-      case RhoUtilities::CMS_RHO_RHOKT6PFJETS:
-        Rho = rho->RhoKt6PFJets();
-        break;
-      default:
-        Rho = rho->Rho();
-      }
-      
-      if ((TMath::IsNaN(fPileupEnergyDensity->At(0)->Rho()) ||
-	   std::isinf(fPileupEnergyDensity->At(0)->Rho()))    )
-	Rho = 0.;
+      if (TMath::IsNaN(rho->Rho()) || std::isinf(rho->Rho()))
+        Rho = 0.;
+      else
+        Rho = rho->Rho(fRhoAlgo);
     }
     
     Bool_t isocut = kFALSE;
     switch (fMuIsoType) {
     case kTrackCalo:
       isocut = (mu->IsoR03SumPt() < fTrackIsolationCut) &&
-	(mu->IsoR03EmEt() + mu->IsoR03HadEt() < fCaloIsolationCut);
+        (mu->IsoR03EmEt() + mu->IsoR03HadEt() < fCaloIsolationCut);
       break;
     case kTrackCaloCombined:
       isocut = (1.0 * mu->IsoR03SumPt() +
-		1.0 * mu->IsoR03EmEt()  +
-		1.0 * mu->IsoR03HadEt() < fCombIsolationCut);
+                1.0 * mu->IsoR03EmEt()  +
+                1.0 * mu->IsoR03HadEt() < fCombIsolationCut);
       break;
     case kTrackCaloSliding:
       {
-	Double_t totalIso =  mu->IsoR03SumPt() + TMath::Max(mu->IsoR03EmEt() + mu->IsoR03HadEt()
-							    - Rho * TMath::Pi() * 0.3 * 0.3, 0.0);
-	// trick to change the signal region cut
-	double theIsoCut = fCombIsolationCut;
-	if (theIsoCut < 0.20) {
-	  if (mu->Pt() >  20.0)
-	    theIsoCut = 0.15;
-	  else
-	    theIsoCut = 0.10;
-	}
-	if (totalIso < (mu->Pt()*theIsoCut))
-	  isocut = kTRUE;
+        Double_t totalIso =  mu->IsoR03SumPt() + TMath::Max(mu->IsoR03EmEt() + mu->IsoR03HadEt()
+                                                            - Rho * TMath::Pi() * 0.3 * 0.3, 0.0);
+        // trick to change the signal region cut
+        double theIsoCut = fCombIsolationCut;
+        if (theIsoCut < 0.20) {
+          if (mu->Pt() >  20.0)
+            theIsoCut = 0.15;
+          else
+            theIsoCut = 0.10;
+        }
+        if (totalIso < (mu->Pt()*theIsoCut))
+          isocut = kTRUE;
       }
       break;
     case kTrackCaloSlidingNoCorrection:
       {
-	Double_t totalIso =  1.0 * mu->IsoR03SumPt() +
-	  1.0 * mu->IsoR03EmEt()  +
-	  1.0 * mu->IsoR03HadEt();
-	// trick to change the signal region cut
-	double theIsoCut = fCombIsolationCut;
-	if (theIsoCut < 0.20) {
-	  if (mu->Pt() > 20.0)
-	    theIsoCut = 0.15;
-	  else
-	    theIsoCut = 0.10;
-	}
-	if (totalIso < (mu->Pt()*theIsoCut))
-	  isocut = kTRUE;
+        Double_t totalIso =  1.0 * mu->IsoR03SumPt() +
+          1.0 * mu->IsoR03EmEt()  +
+          1.0 * mu->IsoR03HadEt();
+        // trick to change the signal region cut
+        double theIsoCut = fCombIsolationCut;
+        if (theIsoCut < 0.20) {
+          if (mu->Pt() > 20.0)
+            theIsoCut = 0.15;
+          else
+            theIsoCut = 0.10;
+        }
+        if (totalIso < (mu->Pt()*theIsoCut))
+          isocut = kTRUE;
       }
       break;
     case kCombinedRelativeConeAreaCorrected:
       {
         //const PileupEnergyDensity *rho =  fPileupEnergyDensity->At(0); // Fabian: made Rho customable
         Double_t totalIso =  mu->IsoR03SumPt() + TMath::Max(mu->IsoR03EmEt() + mu->IsoR03HadEt()
-							    - Rho * TMath::Pi() * 0.3 * 0.3, 0.0);
+                                                            - Rho * TMath::Pi() * 0.3 * 0.3, 0.0);
         double theIsoCut = fCombRelativeIsolationCut;
         if (totalIso < (mu->Pt()*theIsoCut))
-	  isocut = kTRUE;
+          isocut = kTRUE;
       }
       break;
     case kCombinedRelativeEffectiveAreaCorrected:
       {
         Double_t tmpRho = Rho;   // Fabian: made the Rho type customable.
         //if (!(TMath::IsNaN(fPileupEnergyDensity->At(0)->Rho()) ||
-	//      std::isinf(fPileupEnergyDensity->At(0)->Rho()))    )
+        //      std::isinf(fPileupEnergyDensity->At(0)->Rho()))    )
         //  tmpRho = fPileupEnergyDensity->At(0)->Rho();
-	
+        
         isocut = (mu->IsoR03SumPt() + mu->IsoR03EmEt() + mu->IsoR03HadEt()
                   -  tmpRho*MuonTools::MuonEffectiveArea(MuonTools::kMuEMIso03, mu->Eta())
                   -  tmpRho*MuonTools::MuonEffectiveArea(MuonTools::kMuHadIso03, mu->Eta())
-		  ) < (mu->Pt()* 0.40);
+                  ) < (mu->Pt()* 0.40);
       }
       break;
     case kPFIso:
@@ -421,21 +428,21 @@ void MuonIDMod::Process()
             if (mu->Pt() > 20) {
               pfIsoCutValue = 0.13;
             }
-	    else {
+            else {
               pfIsoCutValue = 0.06;
             }
           }
-	  else {
+          else {
             if (mu->Pt() > 20) {
               pfIsoCutValue = 0.09;
             }
-	    else {
+            else {
               pfIsoCutValue = 0.05;
             }
           }
         }
         Double_t totalIso =  IsolationTools::PFMuonIsolation(mu, fPFCandidates, fVertices->At(0),
-							     0.1, 1.0, 0.3, 0.0, fIntRadius);
+                                                             0.1, 1.0, 0.3, 0.0, fIntRadius);
         if (totalIso < (mu->Pt()*pfIsoCutValue) )
           isocut = kTRUE;
       }
@@ -449,12 +456,12 @@ void MuonIDMod::Process()
           if (mu->Pt() > 20) {
             pfIsoCutValue = 0.10;
           } else {
-              pfIsoCutValue = 0.05;
-            }
+            pfIsoCutValue = 0.05;
           }
-          Double_t totalIso =  IsolationTools::PFRadialMuonIsolation(mu, fPFNoPileUpCands, 1.0, 0.3);
-          if (totalIso < (mu->Pt()*pfIsoCutValue) )
-            isocut = kTRUE;
+        }
+        Double_t totalIso =  IsolationTools::PFRadialMuonIsolation(mu, fPFNoPileUpCands, 1.0, 0.3);
+        if (totalIso < (mu->Pt()*pfIsoCutValue) )
+          isocut = kTRUE;
       }
       break;
     case kPFIsoBetaPUCorrected:
@@ -484,48 +491,48 @@ void MuonIDMod::Process()
           pfIsoCutValue = fPFIsolationCut; //leave it like this for now
         }
         Double_t EffectiveAreaCorrectedPFIso =
-	  IsolationTools::PFMuonIsolation(mu,fPFCandidates,fVertices->At(0),.1,1.,.3,0.,fIntRadius)
+          IsolationTools::PFMuonIsolation(mu,fPFCandidates,fVertices->At(0),.1,1.,.3,0.,fIntRadius)
           - Rho * MuonTools::MuonEffectiveArea(MuonTools::kMuNeutralIso03, mu->Eta());
         //- fPileupEnergyDensity->At(0)->Rho() * 
-	//  MuonTools::MuonEffectiveArea(MuonTools::kMuNeutralIso03, mu->Eta());
+        //  MuonTools::MuonEffectiveArea(MuonTools::kMuNeutralIso03, mu->Eta());
         isocut = EffectiveAreaCorrectedPFIso < (mu->Pt() * pfIsoCutValue);
         break;
       }
     case kPFIsoNoL:
       {
-	fNonIsolatedMuons     = GetObjThisEvt<MuonCol>(fNonIsolatedMuonsName);
-	fNonIsolatedElectrons = GetObjThisEvt<ElectronCol>(fNonIsolatedElectronsName);
-	
-	Double_t pfIsoCutValue = 9999;
-	if (fPFIsolationCut > 0) {
-	  pfIsoCutValue = fPFIsolationCut;
-	} else {
-	  if (mu->AbsEta() < 1.479) {
-	    if (mu->Pt() > 20) {
-	      pfIsoCutValue = 0.13;
-	    } else {
-	      pfIsoCutValue = 0.06;
-	    }
-	  } else {
-	    if (mu->Pt() > 20) {
-	      pfIsoCutValue = 0.09;
-	    } else {
-	      pfIsoCutValue = 0.05;
-	    }
-	  }
-	}
-	Double_t totalIso = IsolationTools::PFMuonIsolation(mu, fPFCandidates, fNonIsolatedMuons,
-							    fNonIsolatedElectrons,
-							    fVertices->At(0), 0.1, 1.0, 0.3, 0.0,
-							    fIntRadius);
-	if (totalIso < (mu->Pt()*pfIsoCutValue))
-	  isocut = kTRUE;
+        fNonIsolatedMuons     = GetObjThisEvt<MuonCol>(fNonIsolatedMuonsName);
+        fNonIsolatedElectrons = GetObjThisEvt<ElectronCol>(fNonIsolatedElectronsName);
+        
+        Double_t pfIsoCutValue = 9999;
+        if (fPFIsolationCut > 0) {
+          pfIsoCutValue = fPFIsolationCut;
+        } else {
+          if (mu->AbsEta() < 1.479) {
+            if (mu->Pt() > 20) {
+              pfIsoCutValue = 0.13;
+            } else {
+              pfIsoCutValue = 0.06;
+            }
+          } else {
+            if (mu->Pt() > 20) {
+              pfIsoCutValue = 0.09;
+            } else {
+              pfIsoCutValue = 0.05;
+            }
+          }
+        }
+        Double_t totalIso = IsolationTools::PFMuonIsolation(mu, fPFCandidates, fNonIsolatedMuons,
+                                                            fNonIsolatedElectrons,
+                                                            fVertices->At(0), 0.1, 1.0, 0.3, 0.0,
+                                                            fIntRadius);
+        if (totalIso < (mu->Pt()*pfIsoCutValue))
+          isocut = kTRUE;
       }
       break;
     case kMVAIso_BDTG_IDIso:
       {
         Double_t totalIso = IsolationTools::PFMuonIsolation(mu, fPFCandidates, fVertices->At(0),
-							    0.1, 1.0, 0.3, 0.0, fIntRadius);
+                                                            0.1, 1.0, 0.3, 0.0, fIntRadius);
         isocut = (totalIso < (mu->Pt()*0.4));
       }
       break;
@@ -577,13 +584,13 @@ void MuonIDMod::Process()
     // mark good muon and add it
     mu->Mark();
     CleanMuons->Add(mu);
-  }
+}
 
   // sort according to pt
   CleanMuons->Sort();
 
-  // add objects for other modules to use
-  AddObjThisEvt(CleanMuons);
+// add objects for other modules to use
+AddObjThisEvt(CleanMuons);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -598,7 +605,7 @@ void MuonIDMod::SlaveBegin()
     ReqEventObject(fPVName,fVertices,true);
   }
 
-   // In this case we cannot have a branch
+  // In this case we cannot have a branch
   if (fMuonIsoType.CompareTo("PFIsoNoL") != 0) {
     ReqEventObject(fMuonBranchName, fMuons, kTRUE);
   }
@@ -725,7 +732,7 @@ void MuonIDMod::SlaveBegin()
                            string((getenv("MIT_DATA")+string("/MuonMVAWeights/BarrelPtBin2_IDIsoCombined_BDTG.weights.xml"))),
                            string((getenv("MIT_DATA")+string("/MuonMVAWeights/EndcapPtBin2_IDIsoCombined_BDTG.weights.xml"))),
                            MuonIDMVA::kIDIsoCombinedDetIso,
-                           fTheRhoType);
+                           fRhoAlgo);
   }
   else if (fMuIsoType == kIsoRingsV0_BDTG_Iso) {
     std::vector<std::string> muonidiso_weightfiles;
@@ -738,10 +745,10 @@ void MuonIDMod::SlaveBegin()
     fMuonTools = new MuonTools();
     fMuonIDMVA = new MuonIDMVA();
     fMuonIDMVA->Initialize("MuonIso_BDTG_IsoRings",
-			   MuonIDMVA::kIsoRingsV0,
-			   kTRUE,
-			   muonidiso_weightfiles,
-			   fTheRhoType);
+                           MuonIDMVA::kIsoRingsV0,
+                           kTRUE,
+                           muonidiso_weightfiles,
+                           fRhoAlgo);
   }
   else if (fMuIsoType == kIsoDeltaR) {
     std::vector<std::string> muonidiso_weightfiles;
@@ -752,10 +759,10 @@ void MuonIDMod::SlaveBegin()
     fMuonTools = new MuonTools();
     fMuonIDMVA = new MuonIDMVA();
     fMuonIDMVA->Initialize("muonHZZ2012IsoDRMVA",
-			   MuonIDMVA::kIsoDeltaR,
-			   kTRUE,
-			   muonidiso_weightfiles,
-			   fTheRhoType);
+                           MuonIDMVA::kIsoDeltaR,
+                           kTRUE,
+                           muonidiso_weightfiles,
+                           fRhoAlgo);
   }
 }
 
@@ -834,12 +841,12 @@ Bool_t MuonIDMod::PassMuonIsoRingsV0_BDTG_Iso(const Muon *mu, const Vertex *vert
   ElectronOArr *tempElectrons = new  ElectronOArr;
   MuonOArr     *tempMuons     = new  MuonOArr;
   Double_t MVAValue = fMuonIDMVA->MVAValue(mu,vertex,fMuonTools,fPFCandidates,
-                      PileupEnergyDensity,MuonTools::kMuEAFall11MC,tempElectrons,tempMuons,isDebug);
+                                           PileupEnergyDensity,MuonTools::kMuEAFall11MC,tempElectrons,tempMuons,isDebug);
   delete tempElectrons;
   delete tempMuons;
 
   Int_t MVABin = fMuonIDMVA->GetMVABin(muTrk->Eta(), muTrk->Pt(), mu->IsGlobalMuon(),
-				       mu->IsTrackerMuon());
+                                       mu->IsTrackerMuon());
 
   Double_t MVACut = -1.0;
   Double_t eta = mu->AbsEta();
@@ -860,7 +867,7 @@ Bool_t MuonIDMod::PassMuonIsoRingsV0_BDTG_Iso(const Muon *mu, const Vertex *vert
     printf("PassMuonIsoRingsV0_BDTG_Iso: %d, pt,eta= %f,%f, rho= %f(%f): RingsMVA= %f, bin: %d\n",
            GetEventHeader()->EvtNum(),mu->Pt(), mu->Eta(),
            fPileupEnergyDensity->At(0)->Rho(),fPileupEnergyDensity->At(0)->RhoKt6PFJets(),
-	   MVAValue,MVABin);
+           MVAValue,MVABin);
   }
 
   if (MVAValue > MVACut)
@@ -882,12 +889,12 @@ Bool_t MuonIDMod::PassMuonIsoDeltaR(const Muon *mu, const Vertex *vertex,
   ElectronOArr *tempElectrons = new  ElectronOArr;
   MuonOArr     *tempMuons     = new  MuonOArr;
   Double_t MVAValue = fMuonIDMVA->MVAValue(mu,vertex,fMuonTools,fPFNoPileUpCands,
-                      PileupEnergyDensity,MuonTools::kMuEAFall11MC,tempElectrons,tempMuons,kFALSE);
+                                           PileupEnergyDensity,MuonTools::kMuEAFall11MC,tempElectrons,tempMuons,kFALSE);
   delete tempElectrons;
   delete tempMuons;
 
   Int_t MVABin = fMuonIDMVA->GetMVABin(muTrk->Eta(), muTrk->Pt(), mu->IsGlobalMuon(),
-				       mu->IsTrackerMuon());
+                                       mu->IsTrackerMuon());
 
   Double_t MVACut = -999;
   if      (MVABin == 0)

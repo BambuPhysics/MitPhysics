@@ -139,7 +139,7 @@ PhotonTreeWriter::PhotonTreeWriter(const char *name, const char *title) :
   fp0e                           (0.),
   fp1e                           (1.),
 
-  fTheRhoType(RhoUtilities::DEFAULT),
+  fRhoAlgo(mithep::PileupEnergyDensity::kHighEta),
 
   fProcessedEvents(0)
 
@@ -1248,7 +1248,7 @@ void PhotonTreeWriter::SlaveBegin()
                                fElectronMVAWeights_Subdet1Pt20ToInf,
                                fElectronMVAWeights_Subdet2Pt20ToInf,
                                ElectronIDMVA::kIDEGamma2012NonTrigV1,
-			       fTheRhoType);
+			       fRhoAlgo);
   }
 
 
