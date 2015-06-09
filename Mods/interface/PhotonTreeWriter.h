@@ -1079,7 +1079,7 @@ namespace mithep
     double                fp0e;                          
     double                fp1e;     
 
-    mithep::PileupEnergyDensity::Algo fRhoAlgo;
+    UInt_t                fRhoAlgo;
     UInt_t                         fProcessedEvents;
 
     ClassDef(PhotonTreeWriter, 1) // Photon identification module

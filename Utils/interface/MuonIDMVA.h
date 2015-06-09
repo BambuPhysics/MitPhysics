@@ -47,12 +47,12 @@ namespace mithep {
     void     Initialize(std::string const& methodName,
                         std::string const& weightsFile,
                         MuonIDMVA::MVAType,
-                        mithep::PileupEnergyDensity::Algo = mithep::PileupEnergyDensity::kHighEta);
+                        UInt_t = mithep::PileupEnergyDensity::kHighEta);
     void     Initialize(std::string const& methodName,
                         MuonIDMVA::MVAType,
                         Bool_t useBinnedVersion,
                         std::vector<std::string> const& weightsfiles,
-                        mithep::PileupEnergyDensity::Algo = mithep::PileupEnergyDensity::kHighEta);
+                        UInt_t = mithep::PileupEnergyDensity::kHighEta);
     void     Initialize(TString const& methodName,
                         TString const& Subdet0Pt10To14p5Weights , 
                         TString const& Subdet1Pt10To14p5Weights , 
@@ -61,7 +61,7 @@ namespace mithep {
                         TString const& Subdet0Pt20ToInfWeights, 
                         TString const& Subdet1Pt20ToInfWeights,
                         MuonIDMVA::MVAType,
-                        mithep::PileupEnergyDensity::Algo = mithep::PileupEnergyDensity::kHighEta);
+                        UInt_t = mithep::PileupEnergyDensity::kHighEta);
 
     Bool_t   IsInitialized() const { return fIsInitialized; }
     UInt_t   GetMVABin(double eta,double pt,
@@ -175,7 +175,7 @@ namespace mithep {
     MVAType                   fMVAType;
     Bool_t                    fUseBinnedVersion;
     UInt_t                    fNMVABins;
-    mithep::PileupEnergyDensity::Algo fTheRhoAlgo;
+    UInt_t                    fRhoAlgo;
 
     Float_t                   fMVAVar_MuPt; 
     Float_t                   fMVAVar_MuEta; 

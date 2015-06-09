@@ -303,7 +303,7 @@ Double_t JetIDMVA::MVAValue(
 //--------------------------------------------------------------------------------------------------
 Bool_t JetIDMVA::passPt(const PFJet *iJet, FactorizedJetCorrector *iJetCorrector,
 			const PileupEnergyDensityCol *iPileupEnergyDensity,
-			mithep::PileupEnergyDensity::Algo algo) { 
+			UInt_t algo) { 
   if(iJetCorrector == 0) return (iJet->Pt() > fJetPtMin);
   double lPt  = correctedPt(iJet,                  iJetCorrector,iPileupEnergyDensity,algo);
   if(lPt < fJetPtMin)                         return false; 
@@ -313,7 +313,7 @@ Bool_t JetIDMVA::passPt(const PFJet *iJet, FactorizedJetCorrector *iJetCorrector
 Bool_t JetIDMVA::pass(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices,
 		      FactorizedJetCorrector *iJetCorrector,
 		      const PileupEnergyDensityCol *iPileupEnergyDensity,
-		      mithep::PileupEnergyDensity::Algo algo) { 
+		      UInt_t algo) { 
   
   if(!JetTools::passPFLooseId(iJet))                 return false;
   if(fabs(iJet->Eta()) > 4.99)                       return false;
@@ -582,9 +582,9 @@ Double_t* JetIDMVA::QGValue(const PFJet *iJet,const Vertex *iVertex,const Vertex
 }
 Double_t JetIDMVA::correctedPt(const PFJet *iJet, FactorizedJetCorrector *iJetCorrector,
                                const PileupEnergyDensityCol *iPUEnergyDensity,
-			       mithep::PileupEnergyDensity::Algo algo,
+			       UInt_t algo,
                                int iId) { 
-  if (algo == mithep::PileupEnergyDensity::nAlgos) {
+  if (algo == mithep::PileupEnergyDensity::nAllAlgos) {
     if (f42)
       algo = mithep::PileupEnergyDensity::kRandom;
     else

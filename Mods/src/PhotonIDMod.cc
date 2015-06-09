@@ -172,7 +172,7 @@ void PhotonIDMod::Process()
   }
 
   Float_t theRho = _tRho;
-  if (fRhoAlgo != mithep::PileupEnergyDensity::nAlgos) {
+  if (fRhoAlgo != mithep::PileupEnergyDensity::nAllAlgos) {
     if (fRhoAlgo == mithep::PileupEnergyDensity::kKt6PFJets)
       theRho = rho2012;
     else if(fPileUpDen->GetEntries() != 0)

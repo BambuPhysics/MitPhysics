@@ -76,7 +76,7 @@ namespace mithep
     void               SetPFNoPileUpName(const char *n)     { fPFNoPileUpName  = n;       } 
     void               SetPFPileUpName(const char *n)       { fPFPileUpName  = n;         }
     void               SetRhoType(RhoUtilities::RhoType);
-    void               SetRhoAlgo(mithep::PileupEnergyDensity::Algo algo) { fRhoAlgo = algo; }
+    void               SetRhoAlgo(UInt_t algo)              { fRhoAlgo = algo;            }
 
     void               SetVertexName(const char* name) { fVertexName = name; }
     void               SetPVName(const char *n)             { fPVName = n;                }
@@ -178,7 +178,7 @@ namespace mithep
     MuonIDMVA          *fMuonIDMVA;           // helper class for MuonMVA
     TString             fPVName;
 
-    mithep::PileupEnergyDensity::Algo fRhoAlgo;
+    UInt_t              fRhoAlgo;
       
     ClassDef(MuonIDMod, 1) // Muon identification module
       };

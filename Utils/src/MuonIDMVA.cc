@@ -18,7 +18,7 @@ MuonIDMVA::MuonIDMVA() :
   fMVAType(MuonIDMVA::kUninitialized),
   fUseBinnedVersion(kTRUE),
   fNMVABins(0),
-  fTheRhoAlgo(mithep::PileupEnergyDensity::kHighEta)
+  fRhoAlgo(mithep::PileupEnergyDensity::kHighEta)
 {
 }
 
@@ -36,7 +36,7 @@ MuonIDMVA::~MuonIDMVA()
 void MuonIDMVA::Initialize(std::string const& methodName,
                            std::string const& weightsfile,
                            MuonIDMVA::MVAType type,
-			   mithep::PileupEnergyDensity::Algo algo)
+			   UInt_t algo)
 {
   
   std::vector<std::string> tempWeightFileVector;
@@ -53,7 +53,7 @@ void MuonIDMVA::Initialize(TString const& methodName,
                            TString const& Subdet1Pt20ToInfWeights, 
                            TString const& Subdet2Pt20ToInfWeights,
                            MuonIDMVA::MVAType type,
-			   mithep::PileupEnergyDensity::Algo algo) {
+			   UInt_t algo) {
 
   std::vector<std::string> tempWeightFileVector;
   tempWeightFileVector.push_back(std::string(Subdet0Pt10To20Weights.Data()));
@@ -72,7 +72,7 @@ void MuonIDMVA::Initialize(std::string const& methodName,
                            MuonIDMVA::MVAType type,
                            Bool_t useBinnedVersion,
                            std::vector<std::string> const& weightsfiles,
-			   mithep::PileupEnergyDensity::Algo algo) {
+			   UInt_t algo) {
   
   //clean up first
   for (uint i=0;i<fTMVAReader.size(); ++i) {
@@ -86,7 +86,7 @@ void MuonIDMVA::Initialize(std::string const& methodName,
   fMethodname = methodName;
   fMVAType = type;
   fUseBinnedVersion = useBinnedVersion;
-  fTheRhoAlgo = algo;
+  fRhoAlgo = algo;
 
   //Define expected number of bins
   UInt_t ExpectedNBins = 0;
@@ -693,7 +693,7 @@ Double_t MuonIDMVA::MVAValue(const Muon *mu, const Vertex *vertex, MuonTools *fM
   ChargedIso04 = IsolationTools::PFMuonIsolation(mu, PFCands, vertex, 0.1, 99999, 0.4, 0.0, 0.0);
   NeutralIso04_05Threshold = IsolationTools::PFMuonIsolation(mu, PFCands, vertex, 0.0, 0.5, 0.4, 0.0, 0.0);
   
-  Double_t Rho = PileupEnergyDensity->At(0)->Rho(fTheRhoAlgo);
+  Double_t Rho = PileupEnergyDensity->At(0)->Rho(fRhoAlgo);
  
   //set all input variables
   fMVAVar_MuTkNchi2              = muTrk->RChi2();
@@ -804,7 +804,7 @@ Double_t MuonIDMVA::MVAValue(const Muon *mu, const Vertex *vertex, MuonTools *fM
   ChargedIso04 = IsolationTools::PFMuonIsolation(mu, PFCands, vertex, 0.1, 99999, 0.4, 0.0, 0.0);
   NeutralIso04_05Threshold = IsolationTools::PFMuonIsolation(mu, PFCands, vertex, 0.0, 0.5, 0.4, 0.0, 0.0);
   
-  Double_t Rho = PileupEnergyDensity->At(0)->Rho(fTheRhoAlgo);
+  Double_t Rho = PileupEnergyDensity->At(0)->Rho(fRhoAlgo);
 
   //set all input variables
   fMVAVar_MuPt                   = muTrk->Pt();

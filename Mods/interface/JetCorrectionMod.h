@@ -42,7 +42,7 @@ namespace mithep
       void              SetCorrectedName(const char *name)        { SetCorrectedJetsName(name);     }    
       void              SetInputName(const char *name)            { fJetsName = name;               }
       void              SetRhoType(RhoUtilities::RhoType); /*DEPRECATED*/
-      void              SetRhoAlgo(mithep::PileupEnergyDensity::Algo algo) { fRhoAlgo = algo; }
+      void              SetRhoAlgo(unsigned algo)                 { fRhoAlgo = algo;                }
 
     protected:
       void              SlaveBegin();
@@ -67,7 +67,7 @@ namespace mithep
 
       bool              fUseFixedGrid;             // flag to use fixed grid method to compute energy density 
 
-      mithep::PileupEnergyDensity::Algo fRhoAlgo;
+      unsigned          fRhoAlgo;
 
       ClassDef(JetCorrectionMod, 2) // Jet identification module
   };

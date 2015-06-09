@@ -37,7 +37,7 @@ ElectronIDMVA::~ElectronIDMVA()
 void ElectronIDMVA::Initialize(std::string const& methodName,
                                std::string const& weightsfile,
                                ElectronIDMVA::MVAType type,
-			       mithep::PileupEnergyDensity::Algo algo/* = kHighEta*/)
+			       UInt_t algo/* = kHighEta*/)
 {
   
   std::vector<std::string> tempWeightFileVector;
@@ -54,7 +54,7 @@ void ElectronIDMVA::Initialize(TString const& methodName,
                                TString const& Subdet1Pt20ToInfWeights, 
                                TString const& Subdet2Pt20ToInfWeights,
                                ElectronIDMVA::MVAType type,
-			       mithep::PileupEnergyDensity::Algo algo/* = kHighEta*/)
+			       UInt_t algo/* = kHighEta*/)
 {
   std::vector<std::string> tempWeightFileVector;
   tempWeightFileVector.push_back(std::string(Subdet0Pt10To20Weights.Data()));
@@ -72,7 +72,7 @@ void ElectronIDMVA::Initialize(std::string const& methodName,
                                ElectronIDMVA::MVAType type,
                                Bool_t useBinnedVersion,
                                std::vector<std::string> const& weightsfiles,
-			       mithep::PileupEnergyDensity::Algo algo/* = kHighEta*/)
+			       UInt_t algo/* = kHighEta*/)
 {
 
   //clean up first

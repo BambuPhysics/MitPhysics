@@ -80,12 +80,12 @@ namespace mithep {
 
     Bool_t passPt(const PFJet *iJet, FactorizedJetCorrector *iJetCorrector=0,
                   const PileupEnergyDensityCol *iPileupEnergyDensity=0,
-                  mithep::PileupEnergyDensity::Algo = mithep::PileupEnergyDensity::nAlgos);
+                  UInt_t = mithep::PileupEnergyDensity::nAllAlgos);
     //UNcorrected Jets
     Bool_t   pass(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices,
                   FactorizedJetCorrector *iJetCorrector,
                   const PileupEnergyDensityCol *iPileupEnergyDensity,
-                  mithep::PileupEnergyDensity::Algo = mithep::PileupEnergyDensity::nAlgos);
+                  UInt_t = mithep::PileupEnergyDensity::nAllAlgos);
 
     //Corrected Jets
     Bool_t   pass(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices);
@@ -108,7 +108,7 @@ namespace mithep {
 
     double  correctedPt(const PFJet *iJet, FactorizedJetCorrector *iJetCorrector,
                         const PileupEnergyDensityCol *iPUEnergyDensity,
-                        mithep::PileupEnergyDensity::Algo = mithep::PileupEnergyDensity::nAlgos,
+                        UInt_t = mithep::PileupEnergyDensity::nAllAlgos,
                         int iId=-1);
 
     Float_t                  fJetPtMin;

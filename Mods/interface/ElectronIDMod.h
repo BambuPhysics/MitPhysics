@@ -141,8 +141,7 @@ namespace mithep
                           { fElectronMVAWeights_Subdet2Pt20ToInf = s; }
 
       void                SetRhoType(RhoUtilities::RhoType); /* DEPRECATED */
-      void                SetRhoAlgo(mithep::PileupEnergyDensity::Algo algo) { fRhoAlgo = algo; }
-
+      void                SetRhoAlgo(UInt_t algo)                { fRhoAlgo = algo;            }
 
     protected:
       void                Process();
@@ -218,7 +217,7 @@ namespace mithep
       TString                   fElectronMVAWeights_Subdet2Pt20ToInf;
       TString                   fPVName;
 
-      mithep::PileupEnergyDensity::Algo fRhoAlgo;
+      UInt_t                    fRhoAlgo;
 
 
     ClassDef(ElectronIDMod, 1) // Electron identification module

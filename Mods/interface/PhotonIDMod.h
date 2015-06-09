@@ -161,7 +161,7 @@ namespace mithep
     void                SetIdMVAType(const char *type)    { fIdMVATypeName        = type;    } 
 
     void                SetRhoType(RhoUtilities::RhoType); /*DEPRECATED*/
-    void                SetRhoAlgo(mithep::PileupEnergyDensity::Algo algo) { fRhoAlgo = algo; }
+    void                SetRhoAlgo(UInt_t algo) { fRhoAlgo = algo; }
     
     enum EPhIdType {
       kIdUndef = 0,       //not defined
@@ -312,7 +312,7 @@ namespace mithep
       
     TRandom3* fRng;
 
-    mithep::PileupEnergyDensity::Algo fRhoAlgo;
+    UInt_t    fRhoAlgo;
 
     ClassDef(PhotonIDMod, 1) // Photon identification module
   };
