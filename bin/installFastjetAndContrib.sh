@@ -8,13 +8,13 @@
 #                                                                   Apr 26, 2015 - V1 Yutaro Iiyama
 #---------------------------------------------------------------------------------------------------
 function configureScram {
-  local EXTERNAL=$1
+  local BASE=$1
   local VERSION=$2
 
   if ! [ $VERSION ]
   then
     echo " Could not determine fastjet version. Please check installation at"
-    echo " $EXTERNAL"
+    echo " $BASE"
     exit 1
   fi
 
@@ -32,7 +32,7 @@ function configureScram {
     <lib name="fastjet"/>
     <lib name="fastjetcontrib"/>
     <client>
-      <environment name="FASTJET_BASE" default="'$EXTERNAL'"/>
+      <environment name="FASTJET_BASE" default="'$BASE'"/>
       <environment name="LIBDIR" default="$FASTJET_BASE/lib"/>
       <environment name="INCLUDE" default="$FASTJET_BASE/include"/>
     </client>
@@ -79,14 +79,14 @@ FASTJET_VERSION=`echo $FASTJET | cut -d '-' -f2`
 EXTERNAL=/cvmfs/cvmfs.cmsaf.mit.edu/hidsk0001/cmsprod/cms/external
 if [ -d $EXTERNAL/$FASTJET ]
 then
-  configureScram $EXTERNAL $FASTJET_VERSION
+  configureScram $EXTERNAL/$FASTJET $FASTJET_VERSION
   exit 0
 fi
 
 EXTERNAL=/home/cmsprod/cms/external
 if [ -d $EXTERNAL/$FASTJET ]
 then
-  configureScram $EXTERNAL $FASTJET_VERSION
+  configureScram $EXTERNAL/$FASTJET $FASTJET_VERSION
   exit 0
 fi
 
@@ -179,6 +179,6 @@ make install
 g++ -shared -fPIC -o $EXTERNAL/lib/libfastjetcontrib.so -Wl,-soname,libfastjetcontrib.so $EXTERNAL/$FJCONTRIB/*/[A-Z]*.o 
 
 # final adjustment to scram configuration
-configureScram $EXTERNAL $FASTJET_VERSION
+configureScram $EXTERNAL/$FASTJET $FASTJET_VERSION
 
 exit 0
