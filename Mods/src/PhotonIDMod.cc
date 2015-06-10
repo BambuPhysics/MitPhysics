@@ -142,10 +142,8 @@ PhotonIDMod::PhotonIDMod(const char *name, const char *title) :
 
 PhotonIDMod::~PhotonIDMod()
 {
-  std::cout << "delete" << std::endl;
   delete fTool;
   delete fRng;
-  std::cout << "deleted" << std::endl;
 }
 
 //--------------------------------------------------------------------------------------------------
