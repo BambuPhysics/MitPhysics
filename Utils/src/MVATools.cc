@@ -1,5 +1,3 @@
-// $Id: MVATools.cc,v 1.21 2013/07/30 21:08:50 mingyang Exp $
-
 #include "MitPhysics/Utils/interface/PhotonTools.h"
 #include "MitPhysics/Utils/interface/MVATools.h"
 #include "MitPhysics/Utils/interface/ElectronTools.h"
@@ -13,11 +11,7 @@
 #include "TMVA/Tools.h"//MVA
 #include "TMVA/Reader.h"//MVA
 
-
-ClassImp(mithep::MVATools)
-
 using namespace mithep;
-
 
 //--------------------------------------------------------------------------------------------------
 MVATools::MVATools():

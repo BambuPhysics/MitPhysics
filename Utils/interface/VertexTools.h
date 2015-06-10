@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id $
-//
 // VertexTools
 //
 // Helper Class for photon Identification decisions.
@@ -118,9 +116,7 @@ namespace mithep {
     mutable Float_t fMvaPEvtVars[8];
     
     TString fVtxProbMvaName;
-    
-    ClassDef(VertexTools, 0) // Muon tools
-      };
+  };
 }
 
 #endif

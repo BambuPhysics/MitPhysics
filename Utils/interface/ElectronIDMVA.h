@@ -242,7 +242,7 @@ namespace mithep {
 
       Float_t                   fMVAVar_Rho;
 
-    ClassDef(ElectronIDMVA, 0) // Muon tools
+    ClassDef(ElectronIDMVA, 1) // Muon tools
       };
 }
 

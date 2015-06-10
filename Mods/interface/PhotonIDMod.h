@@ -36,6 +36,7 @@ namespace mithep
   public:
     PhotonIDMod(const char *name="PhotonIDMod", 
                 const char *title="Photon identification module");
+    ~PhotonIDMod();
 
     Bool_t              GetApplySpikeRemoval()      const { return fApplySpikeRemoval;   }
     Bool_t              GetApplyPixelSeed()         const { return fApplyPixelSeed;      }
@@ -258,9 +259,8 @@ namespace mithep
     TString                     fEndcapWeights;
     TString                     fBarrelWeights;
     // ----------------------------------------------------------------
-    MVATools                    fTool;
+    MVATools*                   fTool;         //!
     TString                     fIdMVATypeName;
-    MVATools::IdMVAType         fIdMVAType;
     // ----------------------------------------------------------------
 
     Bool_t fDoMCR9Scaling;
@@ -310,7 +310,7 @@ namespace mithep
     Double_t              fMCSmear_EEhighEta_hR9;
     Double_t              fMCSmear_EEhighEta_lR9;    
       
-    TRandom3* fRng;
+    TRandom3* fRng;       //!
 
     UInt_t    fRhoAlgo;
 

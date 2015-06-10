@@ -240,7 +240,7 @@ namespace mithep {
     Float_t                   fMVAVar_MuDensity;
 
 
-    ClassDef(MuonIDMVA, 0) // Muon MVA
+    ClassDef(MuonIDMVA, 1) // Muon MVA
   };
 }
 

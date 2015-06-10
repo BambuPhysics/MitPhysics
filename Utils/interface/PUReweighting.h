@@ -28,7 +28,7 @@ namespace mithep {
     TH1F * referenceHisto;
 
 
-    ClassDef(PUReweighting, 0) // PUReweighting
+    ClassDef(PUReweighting, 1) // PUReweighting
       };
 
 

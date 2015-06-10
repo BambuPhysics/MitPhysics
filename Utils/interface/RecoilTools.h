@@ -177,7 +177,7 @@ namespace mithep {
     
     bool f42;
     bool fUseRho;
-    ClassDef(RecoilTools, 0) // Recoil tools
+    ClassDef(RecoilTools, 1) // Recoil tools
   };
 }
 #endif

@@ -30,7 +30,7 @@ namespace mithep {
       Double_t GetProb(const Vertex *v) const;
       
 
-    ClassDef(VertexMVA, 0) // Vertex tools
+    ClassDef(VertexMVA, 1) // Vertex tools
   };
 }
 

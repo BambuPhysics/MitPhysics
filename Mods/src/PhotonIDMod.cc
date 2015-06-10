@@ -81,8 +81,8 @@ BaseMod(name,title),
   fBarrelWeights      (gSystem->Getenv("CMSSW_BASE")+TString("/src/MitPhysics/data/TMVAClassificationPhotonID_Barrel_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml")),
 // ------------------------------------------------------------------------------  
 
+  fTool              (new MVATools),
   fIdMVATypeName     ("2011IdMVA"),
-  fIdMVAType         (MVATools::k2011IdMVA),
 
 //   fDoMCR9Scaling         (false),
 //   fMCR9ScaleEB           (1.0),
@@ -131,6 +131,12 @@ BaseMod(name,title),
   fRhoAlgo                       (mithep::PileupEnergyDensity::kKt6PFJets)
 {
   // Constructor.
+}
+
+PhotonIDMod::~PhotonIDMod()
+{
+  delete fTool;
+  delete fRng;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -267,7 +273,7 @@ void PhotonIDMod::Process()
     
     // ---------------------------------------------------------------------
     // set the photonIdMVA value of requested...
-    double idMvaVal = fTool.GetMVAbdtValue(ph,fPV->At(0),fTracks, fPV, theRho, fPFCands, fElectrons, fApplyElectronVeto);
+    double idMvaVal = fTool->GetMVAbdtValue(ph,fPV->At(0),fTracks, fPV, theRho, fPFCands, fElectrons, fApplyElectronVeto);
 
     ph->SetIdMva(idMvaVal);
 
@@ -527,26 +533,28 @@ void PhotonIDMod::SlaveBegin()
     ReqBranch(fMCParticleName,        fMCParticles);
   }   
 
+  MVATools::IdMVAType idMVAType;
+
   if(fIdMVATypeName.CompareTo("2011IdMVA") == 0)
-    fIdMVAType =       MVATools::k2011IdMVA;
+    idMVAType =       MVATools::k2011IdMVA;
   else if (fIdMVATypeName.CompareTo("2012IdMVA_globe") == 0)
-    fIdMVAType =       MVATools::k2012IdMVA_globe;
+    idMVAType =       MVATools::k2012IdMVA_globe;
   else if (fIdMVATypeName.CompareTo("2012IdMVA") == 0)
-    fIdMVAType =       MVATools::k2012IdMVA;
+    idMVAType =       MVATools::k2012IdMVA;
   else if (fIdMVATypeName.CompareTo("2013FinalIdMVA_8TeV") == 0)
-    fIdMVAType =       MVATools::k2013FinalIdMVA_8TeV;
+    idMVAType =       MVATools::k2013FinalIdMVA_8TeV;
   else if (fIdMVATypeName.CompareTo("2013FinalIdMVA_7TeV") == 0)
-    fIdMVAType =       MVATools::k2013FinalIdMVA_7TeV;
+    idMVAType =       MVATools::k2013FinalIdMVA_7TeV;
   else if (fIdMVATypeName.CompareTo("2011IdMVA_HZg") == 0)
-    fIdMVAType =       MVATools::k2011IdMVA_HZg;
+    idMVAType =       MVATools::k2011IdMVA_HZg;
   else if (fIdMVATypeName.CompareTo("None") == 0)
-    fIdMVAType =       MVATools::kNone;
+    idMVAType =       MVATools::kNone;
   else {
     std::cerr<<" Id MVA "<<fIdMVATypeName<<" not implemented."<<std::endl;
     return;
   }
 
-  fTool.InitializeMVA(fIdMVAType);
+  fTool->InitializeMVA(idMVAType);
   
   if (fPhotonIDType.CompareTo("Tight") == 0) 
     fPhIdType = kTight;

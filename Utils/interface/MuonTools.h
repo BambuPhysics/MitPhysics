@@ -141,7 +141,7 @@ namespace mithep {
 
       TH2D       *LoadHisto(const char *fname, TFile *file)                      const;
 
-    ClassDef(MuonTools, 0) // Muon tools
+    ClassDef(MuonTools, 1) // Muon tools
   };
 }
 

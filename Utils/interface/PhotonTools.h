@@ -177,7 +177,7 @@ namespace mithep {
     static bool PassVgamma2011Selection(const Photon* ph, double rho);
 
     static const MCParticle *MatchMC(const Particle *ph, const MCParticleCol *c, Bool_t matchElectrons = kFALSE);
-    ClassDef(PhotonTools, 0) // Muon tools
+    ClassDef(PhotonTools, 1) // Muon tools
       };
 }
 

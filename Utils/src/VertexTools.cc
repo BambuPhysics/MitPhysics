@@ -1,5 +1,3 @@
-// $Id: VertexTools.cc,v 1.14 2012/10/26 19:23:04 fabstoec Exp $
-
 #include "MitPhysics/Utils/interface/VertexTools.h"
 #include "MitPhysics/Utils/interface/ElectronTools.h"
 #include "MitPhysics/Utils/interface/PhotonTools.h"
@@ -7,8 +5,6 @@
 #include <TFile.h>
 #include <TVector3.h>
 #include <TSystem.h>
-
-ClassImp(mithep::VertexTools)
 
 using namespace mithep;
 
