@@ -25,9 +25,9 @@ class TRandom3;
 namespace mithep {
   class RecoilTools {
     public:
-    RecoilTools(TString iJetLowPtMVAFile ="$MIT_DATA/src/MitPhysics/data/mva_JetID_lowpt.weights.xml",
-		TString iJetHighPtMVAFile="$MIT_DATA/src/MitPhysics/data/mva_JetID_highpt.weights.xml",
-		TString iCutFile         ="$CMSSW_BASE/src/MitPhysics/Utils/python/JetIdParams_cfi.py",
+    RecoilTools(TString iJetLowPtMVAFile = "",
+		TString iJetHighPtMVAFile = "",
+		TString iCutFile = "",
 		bool i42=false,JetIDMVA::MVAType iType=JetIDMVA::kBaseline,bool iUseRho=true);
     virtual ~RecoilTools();
     JetIDMVA *fJetIDMVA;

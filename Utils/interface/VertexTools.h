@@ -98,9 +98,6 @@ namespace mithep {
     
     static VertexTools *meobject;
     
-
-    TString relname;
-
     TrackArray excluded;
     
     Bool_t fIsInitMvaM;

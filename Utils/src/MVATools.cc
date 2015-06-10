@@ -80,24 +80,21 @@ void MVATools::InitializeMVA(MVATools::IdMVAType type) {
   fReaderEndcap = new TMVA::Reader( "!Color:!Silent:Error" );       
   fReaderBarrel = new TMVA::Reader( "!Color:!Silent:Error" );   
 
+  TString dataDir(gSystem->Getenv("MIT_DATA"));
+  if (dataDir.Length() == 0)
+    throw std::runtime_error("MIT_DATA environment is not set.");
+
   TString BarrelWeights;
   TString EndcapWeights;
 
   varNames.resize(0);
-  
+ 
   switch (type) {
     
   case k2011IdMVA_HZg:
 
-    EndcapWeights =  (gSystem->Getenv("CMSSW_BASE")+
-		      TString("/src/MitPhysics/data/")+
-		      TString("PhotonId_lowPt_EE_BDTG.")+
-		      TString("weights.xml"));
-    BarrelWeights =  (gSystem->Getenv("CMSSW_BASE")+
-		      TString("/src/MitPhysics/data/")+
-		      TString("PhotonId_lowPt_EB_BDTG.")+
-		      TString("weights.xml"));
-
+    EndcapWeights = dataDir + "/PhotonId_lowPt_EE_BDTG.weights.xml";
+    BarrelWeights = dataDir + "/PhotonId_lowPt_EB_BDTG.weights.xml";
 
     varNames.push_back("sigieie");
     varNames.push_back("covieip");
@@ -126,14 +123,8 @@ void MVATools::InitializeMVA(MVATools::IdMVAType type) {
 
   case k2011IdMVA:
 
-    EndcapWeights =  (gSystem->Getenv("CMSSW_BASE")+
-		      TString("/src/MitPhysics/data/TMVAClassificationPhotonID_")+
-		      TString("Endcap_PassPreSel_Variable_10_BDTnCuts2000_BDT.")+
-		      TString("weights.xml"));
-    BarrelWeights =  (gSystem->Getenv("CMSSW_BASE")+
-		      TString("/src/MitPhysics/data/TMVAClassificationPhotonID_")+
-		      TString("Barrel_PassPreSel_Variable_10_BDTnCuts2000_BDT.")+
-		      TString("weights.xml"));
+    EndcapWeights = dataDir + "/TMVAClassificationPhotonID_Endcap_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml";
+    BarrelWeights = dataDir + "/TMVAClassificationPhotonID_Barrel_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml";
 
     // set up the variable names
     mvaVars.resize(12);
@@ -160,14 +151,8 @@ void MVATools::InitializeMVA(MVATools::IdMVAType type) {
   case k2012IdMVA:
   case k2012IdMVA_globe:
     
-    EndcapWeights =      (gSystem->Getenv("CMSSW_BASE")+
-			  TString("/src/MitPhysics/data/")+
-			  TString("2012ICHEP_PhotonID_Endcap_BDT.")+
-			  TString("weights_PSCorr.xml"));
-    BarrelWeights =      (gSystem->Getenv("CMSSW_BASE")+
-			  TString("/src/MitPhysics/data/")+
-			  TString("2012ICHEP_PhotonID_Barrel_BDT.")+
-			  TString("weights.xml"));
+    EndcapWeights = dataDir + "/2012ICHEP_PhotonID_Endcap_BDT.weights_PSCorr.xml";
+    BarrelWeights = dataDir + "/2012ICHEP_PhotonID_Barrel_BDT.weights.xml";
 
     mvaVars.resize(12);
     varNames.push_back("ph.r9"			      );
@@ -195,14 +180,8 @@ void MVATools::InitializeMVA(MVATools::IdMVAType type) {
 
   case k2013FinalIdMVA_8TeV:
     
-    EndcapWeights =      (gSystem->Getenv("CMSSW_BASE")+
-			  TString("/src/MitPhysics/data/2013FinalPaper_PhotonID_Weight/8TeV/")+
-			  TString("2013FinalPaper_PhotonID_Endcap_BDT_TrainRangePT15_8TeV.")+
-			  TString("weights.xml"));
-    BarrelWeights =      (gSystem->Getenv("CMSSW_BASE")+
-			  TString("/src/MitPhysics/data/2013FinalPaper_PhotonID_Weight/8TeV/")+
-			  TString("2013FinalPaper_PhotonID_Barrel_BDT_TrainRangePT15_8TeV.")+
-			  TString("weights.xml"));
+    EndcapWeights = dataDir + "/2013FinalPaper_PhotonID_Weight/8TeV/2013FinalPaper_PhotonID_Endcap_BDT_TrainRangePT15_8TeV.weights.xml";
+    BarrelWeights = dataDir + "/2013FinalPaper_PhotonID_Weight/8TeV/2013FinalPaper_PhotonID_Barrel_BDT_TrainRangePT15_8TeV.weights.xml";
 
     mvaVars.resize(13);
     varNames.push_back("ph.scrawe"		      );
@@ -231,14 +210,8 @@ void MVATools::InitializeMVA(MVATools::IdMVAType type) {
 
   case k2013FinalIdMVA_7TeV:
     
-    EndcapWeights =      (gSystem->Getenv("CMSSW_BASE")+
-			  TString("/src/MitPhysics/data/2013FinalPaper_PhotonID_Weight/7TeV/")+
-			  TString("2013FinalPaper_PhotonID_Endcap_BDT_TrainRangePT15_7TeV.")+
-			  TString("weights.xml"));
-    BarrelWeights =      (gSystem->Getenv("CMSSW_BASE")+
-			  TString("/src/MitPhysics/data/2013FinalPaper_PhotonID_Weight/7TeV/")+
-			  TString("2013FinalPaper_PhotonID_Barrel_BDT_TrainRangePT15_7TeV.")+
-			  TString("weights.xml"));
+    EndcapWeights = dataDir + "/2013FinalPaper_PhotonID_Weight/7TeV/2013FinalPaper_PhotonID_Endcap_BDT_TrainRangePT15_7TeV.weights.xml";
+    BarrelWeights = dataDir + "/2013FinalPaper_PhotonID_Weight/7TeV/2013FinalPaper_PhotonID_Barrel_BDT_TrainRangePT15_7TeV.weights.xml";
 
     mvaVars.resize(13);
     varNames.push_back("ph.scrawe"		      );

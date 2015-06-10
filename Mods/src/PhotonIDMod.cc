@@ -8,6 +8,7 @@
 #include "MitPhysics/Utils/interface/PhotonTools.h"
 
 #include <TSystem.h>
+#include "TFormula.h"
 
 using namespace mithep;
 
@@ -48,6 +49,7 @@ BaseMod(name,title),
   fEtaWidthEB        (0.01),
   fEtaWidthEE        (0.028),
   fAbsEtaMax         (999.99),
+  fAbsEtaMin         (0.),
   fApplyR9Min        (false),
   
   fEffAreaEcalEE     (0.089),
@@ -57,6 +59,13 @@ BaseMod(name,title),
   fEffAreaEcalEB     (0.183),
   fEffAreaHcalEB     (0.062),
   fEffAreaTrackEB    (0.306),
+
+  fIsoCalcCHEB(),
+  fIsoCalcCHEE(),
+  fIsoCalcNHEB(),
+  fIsoCalcNHEE(),
+  fIsoCalcPhEB(),
+  fIsoCalcPhEE(),
   
   fPhotons(0),
   fTracks(0),
@@ -77,19 +86,13 @@ BaseMod(name,title),
 // ------------------------------------------------------------------------------
 // this stuff should go away ..... (fab)
   fVariableType       (10), //please use 4 which is the correct type
-  fEndcapWeights      (gSystem->Getenv("CMSSW_BASE")+TString("/src/MitPhysics/data/TMVAClassificationPhotonID_Endcap_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml")),
-  fBarrelWeights      (gSystem->Getenv("CMSSW_BASE")+TString("/src/MitPhysics/data/TMVAClassificationPhotonID_Barrel_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml")),
+  fEndcapWeights      (),
+  fBarrelWeights      (),
 // ------------------------------------------------------------------------------  
 
   fTool              (new MVATools),
   fIdMVATypeName     ("2011IdMVA"),
 
-//   fDoMCR9Scaling         (false),
-//   fMCR9ScaleEB           (1.0),
-//   fMCR9ScaleEE           (1.0),
-//   fDoMCSigIEtaIEtaScaling(false),
-//   fDoMCWidthScaling      (false),
-  
   fDoMCErrScaling        (false),
   fMCErrScaleEB          (1.0),
   fMCErrScaleEE          (1.0),
@@ -131,6 +134,14 @@ BaseMod(name,title),
   fRhoAlgo                       (mithep::PileupEnergyDensity::kKt6PFJets)
 {
   // Constructor.
+  TString dataDir(gSystem->Getenv("MIT_DATA"));
+  if (dataDir.Length() == 0) {
+    SendError(kAbortModule, "Constructor", "MIT_DATA environment is not set.");
+    return;
+  }
+
+  fEndcapWeights = dataDir + "/TMVAClassificationPhotonID_Endcap_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml";
+  fBarrelWeights = dataDir + "/TMVAClassificationPhotonID_Barrel_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml";
 }
 
 PhotonIDMod::~PhotonIDMod()
@@ -280,7 +291,7 @@ void PhotonIDMod::Process()
     // ---------------------------------------------------------------------
     // check if we use the Vgamma2011 Selection. If yes, bypass all the below...
     if( fPhIdType == kTrivialSelection ) {
-      if( ph->Pt() > fPhotonPtMin && ph->SCluster()->AbsEta() <= fAbsEtaMax )
+      if( ph->Pt() > fPhotonPtMin && ph->SCluster()->AbsEta() <= fAbsEtaMax && ph->SCluster()->AbsEta() >= fAbsEtaMin )
         GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
     }
@@ -288,7 +299,8 @@ void PhotonIDMod::Process()
     // ---------------------------------------------------------------------
     // check if we use the Vgamma2011 Selection. If yes, bypass all the below...
     if( fPhIdType == kVgamma2011Selection ) {
-      if( ph->Pt() > fPhotonPtMin && ph->SCluster()->AbsEta() <= fAbsEtaMax && PhotonTools::PassVgamma2011Selection(ph, _tRho) )
+      if( ph->Pt() > fPhotonPtMin && ph->SCluster()->AbsEta() <= fAbsEtaMax && ph->SCluster()->AbsEta() >= fAbsEtaMin &&
+          PhotonTools::PassVgamma2011Selection(ph, _tRho) )
         GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
     }
@@ -317,7 +329,7 @@ void PhotonIDMod::Process()
 
     //add for mono photon: egamma medium working point
     if(fPhIdType == kEgammaMedium) {
-      if(PhotonTools::PassEgammaMediumSelectionWithEleVeto(ph, fElectrons,fConversions,bsp,fPV->At(0), fPFCands, fPV, rho2012, fPhotonPtMin,fApplyElectronVeto,fInvertElectronVeto) )
+      if(PhotonTools::PassEgammaMediumSelectionWithEleVeto(ph, fElectrons,fConversions,bsp,fPV->At(0), fPFCands, fPV, theRho, fPhotonPtMin,fApplyElectronVeto,fInvertElectronVeto) )
         GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
     } 
@@ -332,7 +344,7 @@ void PhotonIDMod::Process()
 
     //loose photon preselection for subsequent mva
     if(fPhIdType == kMITPFPhSelection ) {
-      if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISO(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),rho2012,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
+      if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISO(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),theRho,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
         GoodPhotons->AddOwned(ph);
       }
       continue;
@@ -340,7 +352,7 @@ void PhotonIDMod::Process()
     
     //loose photon preselection for subsequent mva
     if(fPhIdType == kMITPFPhSelectionNoEcal) {
-      if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISONoEcal(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),rho2012,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
+      if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISONoEcal(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),theRho,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
         GoodPhotons->AddOwned(ph);
       }
       continue;
@@ -348,7 +360,7 @@ void PhotonIDMod::Process()
     
     //loose photon preselection for subsequent mva
     if(fPhIdType == kMITPFPhSelection_NoTrigger ) {
-      if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISO_NoTrigger(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),rho2012,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
+      if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISO_NoTrigger(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),theRho,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
         GoodPhotons->AddOwned(ph);
       }
       continue;
@@ -420,6 +432,9 @@ void PhotonIDMod::Process()
     case kLoose:
       idcut = ph->IsLoosePhoton();
       break;
+    case kLooseEM:
+      idcut = ph->IsLooseEM();
+      break;
     case kCustomId:
       idcut = true;
     default:
@@ -481,6 +496,79 @@ void PhotonIDMod::Process()
         }
         break;
       }
+
+    case kPFPUCorrected:
+      {
+        isocut = kFALSE;
+
+        double effACH(0.);
+        double effANH(0.);
+        double effAPh(0.);
+
+        double scEta(ph->SCluster()->AbsEta());
+        if (scEta < 1.0) {
+          effACH = 0.0234;
+          effANH = 0.0053;
+          effAPh = 0.078;
+        }
+        else if (scEta < 1.479) {
+          effACH = 0.0189;
+          effANH = 0.0103;
+          effAPh = 0.0629;
+        }
+        else if (scEta < 2.) {
+          effACH = 0.0171;
+          effANH = 0.0057;
+          effAPh = 0.0264;
+        }
+        else if (scEta < 2.2) {
+          effACH = 0.0129;
+          effANH = 0.0070;
+          effAPh = 0.0462;
+        }
+        else if (scEta < 2.3) {
+          effACH = 0.0110;
+          effANH = 0.0152;
+          effAPh = 0.0740;
+        }
+        else if (scEta < 2.4) {
+          effACH = 0.0074;
+          effANH = 0.0232;
+          effAPh = 0.0924;
+        }
+        else {
+          effACH = 0.0035;
+          effANH = 0.1709;
+          effAPh = 0.1484;
+        }
+
+        TFormula* chCalc(0);
+        TFormula* nhCalc(0);
+        TFormula* phCalc(0);
+
+        if (scEta < 1.479) {
+          chCalc = &fIsoCalcCHEB;
+          nhCalc = &fIsoCalcNHEB;
+          phCalc = &fIsoCalcPhEB;
+        }
+        else {
+          chCalc = &fIsoCalcCHEE;
+          nhCalc = &fIsoCalcNHEE;
+          phCalc = &fIsoCalcPhEE;
+        }
+
+        double corrCHIso(ph->PFChargedHadronIso() - effACH * theRho);
+        if (corrCHIso < chCalc->Eval(ph->Pt())) {
+          double corrNHIso(ph->PFNeutralHadronIso() - effANH * theRho);
+          if (corrNHIso < nhCalc->Eval(ph->Pt())) {
+            double corrPhIso(ph->PFPhotonIso() - effAPh * theRho);
+            if (corrPhIso < phCalc->Eval(ph->Pt()))
+              isocut = kTRUE;
+          }
+        }
+        break;
+      }
+
     default:
       break;
     }
@@ -495,7 +583,7 @@ void PhotonIDMod::Process()
         (!isbarrel && ph->CoviEtaiEta() >= fEtaWidthEE))
       continue;
 
-    if (ph->AbsEta() >= fAbsEtaMax) 
+    if (ph->SCluster()->AbsEta() > fAbsEtaMax && ph->SCluster()->AbsEta() < fAbsEtaMin)
       continue;
     
     // add good electron
@@ -643,7 +731,13 @@ void PhotonIDMod::SlaveBegin()
     std::cerr<<"shower shape scale "<<fShowerShapeType<<" not implemented."<<std::endl;
     return;
   }
-  
+
+  fIsoCalcCHEB.Compile();
+  fIsoCalcCHEE.Compile();
+  fIsoCalcNHEB.Compile();
+  fIsoCalcNHEE.Compile();
+  fIsoCalcPhEB.Compile();
+  fIsoCalcPhEE.Compile();
 }
 
 

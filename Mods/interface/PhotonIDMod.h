@@ -27,6 +27,8 @@
 #include "MitPhysics/Utils/interface/PhotonTools.h"
 #include "MitPhysics/Utils/interface/RhoUtilities.h"
 
+#include "TFormula.h"
+
 class TRandom3;
 
 namespace mithep 
@@ -73,6 +75,7 @@ namespace mithep
     void                SetEtaWidthEB(Double_t x)	    { fEtaWidthEB      = x;	   }
     void                SetEtaWidthEE(Double_t x)         { fEtaWidthEE      = x;	   }
     void                SetAbsEtaMax(Double_t x)          { fAbsEtaMax       = x;	   }
+    void                SetAbsEtaMin(Double_t x)          { fAbsEtaMin       = x;	   }
     void                SetApplyR9Min(Bool_t b)           { fApplyR9Min      = b;        }
     void                SetApplyFiduciality(Bool_t b)     { fFiduciality = b;            }      
     void                SetEffAreas(Double_t ecal, Double_t hcal, Double_t track) { 
@@ -84,6 +87,13 @@ namespace mithep
       fEffAreaEcalEE = ecalEE; fEffAreaHcalEE = hcalEE; fEffAreaTrackEE = trackEE;
       fEffAreaEcalEB = ecalEB; fEffAreaHcalEB = hcalEB; fEffAreaTrackEB = trackEB;
     }
+    void                SetChargedHadronIsoMaxEB(const char* expr) { fIsoCalcCHEB.SetTitle(expr); }
+    void                SetChargedHadronIsoMaxEE(const char* expr) { fIsoCalcCHEE.SetTitle(expr); }
+    void                SetNeutralHadronIsoMaxEB(const char* expr) { fIsoCalcNHEB.SetTitle(expr); }
+    void                SetNeutralHadronIsoMaxEE(const char* expr) { fIsoCalcNHEE.SetTitle(expr); }
+    void                SetPhotonIsoMaxEB(const char* expr) { fIsoCalcPhEB.SetTitle(expr); }
+    void                SetPhotonIsoMaxEE(const char* expr) { fIsoCalcPhEE.SetTitle(expr); }
+
     void                SetTriggerObjectsName(const char *n)   { fTrigObjectsName = n;       }
     
 
@@ -97,12 +107,12 @@ namespace mithep
 
     // methods to set the MC smearing/energy correction values
     void                AddEnCorrPerRun( UInt_t sRun, UInt_t eRun,
-					 Double_t corr_EBlowEta_hR9,
-					 Double_t corr_EBlowEta_lR9,
+                                         Double_t corr_EBlowEta_hR9,
+                                         Double_t corr_EBlowEta_lR9,
                                          Double_t corr_EBhighEta_hR9,
                                          Double_t corr_EBhighEta_lR9,                                         
-					 Double_t corr_EElowEta_hR9,
-					 Double_t corr_EElowEta_lR9,
+                                         Double_t corr_EElowEta_hR9,
+                                         Double_t corr_EElowEta_lR9,
                                          Double_t corr_EEhighEta_hR9,
                                          Double_t corr_EEhighEta_lR9) {
 
@@ -119,11 +129,11 @@ namespace mithep
     };
 
     void                SetMCSmearFactors(Double_t _EBlowEta_hR9,
-					  Double_t _EBlowEta_lR9,
+                                          Double_t _EBlowEta_lR9,
                                           Double_t _EBhighEta_hR9, 
                                           Double_t _EBhighEta_lR9,
-					  Double_t _EElowEta_hR9, 
-					  Double_t _EElowEta_lR9,
+                                          Double_t _EElowEta_hR9, 
+                                          Double_t _EElowEta_lR9,
                                           Double_t _EEhighEta_hR9,
                                           Double_t _EEhighEta_lR9) {
       fMCSmear_EBlowEta_hR9 = _EBlowEta_hR9;
@@ -188,7 +198,8 @@ namespace mithep
       kNoIso,             //"NoIso"
       kCombinedIso,       //"CombinedIso"
       kCustomIso,         //"Custom"
-      kMITPUCorrected     //PileUp Corrected Hgg Isolation
+      kMITPUCorrected,     //PileUp Corrected Hgg Isolation
+      kPFPUCorrected
     };
 
   protected:
@@ -231,6 +242,7 @@ namespace mithep
     Double_t            fEtaWidthEB;  	 //max Eta Width in ECAL Barrel
     Double_t            fEtaWidthEE;  	 //max Eta Width in ECAL End Cap
     Double_t            fAbsEtaMax;  	         //max Abs Eta
+    Double_t            fAbsEtaMin;  	         //min Abs Eta
     Bool_t              fApplyR9Min;           //apply R9 min
     Double_t            fEffAreaEcalEE;
     Double_t            fEffAreaHcalEE;
@@ -238,6 +250,14 @@ namespace mithep
     Double_t            fEffAreaEcalEB;
     Double_t            fEffAreaHcalEB;
     Double_t            fEffAreaTrackEB;
+
+    TFormula            fIsoCalcCHEB;
+    TFormula            fIsoCalcCHEE;
+    TFormula            fIsoCalcNHEB;
+    TFormula            fIsoCalcNHEE;
+    TFormula            fIsoCalcPhEB;
+    TFormula            fIsoCalcPhEE;
+
     const PhotonCol    *fPhotons;              //!photon branch
     const TrackCol     *fTracks;               //!track branch
     const BeamSpotCol  *fBeamspots;            //!beamspot branch    
@@ -261,6 +281,7 @@ namespace mithep
     // ----------------------------------------------------------------
     MVATools*                   fTool;         //!
     TString                     fIdMVATypeName;
+
     // ----------------------------------------------------------------
 
     Bool_t fDoMCR9Scaling;

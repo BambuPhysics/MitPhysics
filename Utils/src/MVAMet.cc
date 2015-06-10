@@ -7,6 +7,7 @@
 #include "MitPhysics/Utils/interface/MetLeptonTools.h"
 #include <TFile.h>
 #include <TRandom3.h>
+#include <TSystem.h>
 #include "CondFormats/EgammaObjects/interface/GBRForest.h"
 // #include "Cintex/Cintex.h"
 #include <utility>
@@ -62,14 +63,41 @@ MVAMet::~MVAMet()
 }
 //--------------------------------------------------------------------------------------------------
 void MVAMet::Initialize(TString iJetLowPtFile, 
-			TString iJetHighPtFile,
-			TString iJetCutFile,
-			TString iU1Weights, 
-			TString iPhiWeights, 
-			TString iCovU1Weights,
+                        TString iJetHighPtFile,
+                        TString iJetCutFile,
+                        TString iU1Weights, 
+                        TString iPhiWeights, 
+                        TString iCovU1Weights,
                         TString iCovU2Weights,
-			JetIDMVA::MVAType     iType,MVAMetType iMETType) { 
-  
+                        JetIDMVA::MVAType     iType,MVAMetType iMETType) { 
+
+  if (iJetLowPtFile.Length() == 0 ||
+      iJetHighPtFile.Length() == 0 ||
+      iJetCutFile.Length() == 0 ||
+      iU1Weights.Length() == 0 || 
+      iPhiWeights.Length() == 0 || 
+      iCovU1Weights.Length() == 0 ||
+      iCovU2Weights.Length() == 0) {
+    TString dataDir(gSystem->Getenv("MIT_DATA"));
+    if (dataDir.Length() == 0)
+      throw std::runtime_error("MIT_DATA environment is not set.");
+
+    if (iJetLowPtFile.Length() == 0)
+      iJetLowPtFile = dataDir + "/mva_RecoilPhiRegress_baseline.weights.xml";
+    if (iJetHighPtFile.Length() == 0)
+      iJetHighPtFile = dataDir + "/mva_RecoilPhiRegress_baseline.weights.xml";
+    if (iJetCutFile.Length() == 0)
+      iJetCutFile = dataDir + "/mva_RecoilPhiRegress_baseline.weights.xml";
+    if (iU1Weights.Length() == 0)
+      iU1Weights = dataDir + "/gbrmet.root";
+    if (iPhiWeights.Length() == 0)
+      iPhiWeights = dataDir + "/gbrmetphi.root";
+    if (iCovU1Weights.Length() == 0)
+      iCovU1Weights = dataDir + "/gbrcovu1_52.root";
+    if (iCovU2Weights.Length() == 0)
+      iCovU2Weights = dataDir + "/gbrcovu2_52.root";
+  }
+
   fIsInitialized = kTRUE;
   fType          = iType;
   f42            = iU1Weights.Contains("42");

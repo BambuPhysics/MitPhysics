@@ -145,35 +145,14 @@ PhotonPairSelector::PhotonPairSelector(const char *name, const char *title) :
   // this block should eventually be deleted... 
   fVariableType_2011             (10), 
   
-  fEndcapWeights_2011            (gSystem->Getenv("CMSSW_BASE")+
-				  TString("/src/MitPhysics/data/TMVAClassificationPhotonID_")+
-				  TString("Endcap_PassPreSel_Variable_10_BDTnCuts2000_BDT.")+
-				  TString("weights.xml")),
-  fBarrelWeights_2011            (gSystem->Getenv("CMSSW_BASE")+
-				  TString("/src/MitPhysics/data/TMVAClassificationPhotonID_")+
-				  TString("Barrel_PassPreSel_Variable_10_BDTnCuts2000_BDT.")+
-				  TString("weights.xml")),
+  fEndcapWeights_2011            (),
+  fBarrelWeights_2011            (),
   fVariableType_2012_globe       (1201),
-  //fEndcapWeights_2012_globe      (gSystem->Getenv("CMSSW_BASE")+
-  //TString("/src/MitPhysics/data/")+
-  //				  TString("TMVA_EEpf_BDT_globe.")+
-  //				  TString("weights.xml")),
-  //fBarrelWeights_2012_globe      (gSystem->Getenv("CMSSW_BASE")+
-  //				  TString("/src/MitPhysics/data/")+
-  //				  TString("TMVA_EBpf_BDT_globe.")+
-  //				  TString("weights.xml")),
-  //fEndcapWeights_2012_globe      (gSystem->Getenv("CMSSW_BASE")+
-  //				  TString("/src/MitPhysics/data/")+
-  //				  TString("2012ICHEP_PhotonID_Endcap_BDT.")+
-  //				  TString("weights.xml")),
-  fEndcapWeights_2012_globe      (gSystem->Getenv("CMSSW_BASE")+
-  				  TString("/src/MitPhysics/data/")+
-  				  TString("2012ICHEP_PhotonID_Endcap_BDT.")+
-  				  TString("weights_PSCorr.xml")),
-  fBarrelWeights_2012_globe      (gSystem->Getenv("CMSSW_BASE")+
-				  TString("/src/MitPhysics/data/")+
-				  TString("2012ICHEP_PhotonID_Barrel_BDT.")+
-				  TString("weights.xml")),
+  //fEndcapWeights_2012_globe      (),
+  //fBarrelWeights_2012_globe      (),
+  //fEndcapWeights_2012_globe      (),
+  fEndcapWeights_2012_globe      (),
+  fBarrelWeights_2012_globe      (),
   // --------------------------------------------------------------------------
   
   fbdtCutBarrel                  (0.0744), //cuts give same eff (relative to presel) with cic
@@ -197,6 +176,20 @@ PhotonPairSelector::PhotonPairSelector(const char *name, const char *title) :
 
   fRhoType                       (RhoUtilities::CMS_RHO_RHOKT6PFJETS)
 {
+  TString dataDir(gSystem->Getenv("MIT_DATA"));
+  if (dataDir.Length() == 0) {
+    SendError(kAbortModule, "Constructor", "MIT_DATA environment is not set.");
+    return;
+  }
+
+  fEndcapWeights_2011 = dataDir + "/TMVAClassificationPhotonID_Endcap_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml";
+  fBarrelWeights_2011 = dataDir + "/TMVAClassificationPhotonID_Barrel_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml";
+  //fEndcapWeights_2012_globe = dataDir + "/TMVA_EEpf_BDT_globe.weights.xml";
+  //fBarrelWeights_2012_globe = dataDir + "/TMVA_EBpf_BDT_globe.weights.xml";
+  //fEndcapWeights_2012_globe = dataDir + "/2012ICHEP_PhotonID_Endcap_BDT.weights.xml";
+  fEndcapWeights_2012_globe = dataDir + "/2012ICHEP_PhotonID_Endcap_BDT.weights_PSCorr.xml";
+  fBarrelWeights_2012_globe = dataDir + "/2012ICHEP_PhotonID_Barrel_BDT.weights.xml";
+
   // Constructor.
 }
 
@@ -1064,6 +1057,12 @@ void PhotonPairSelector::SlaveBegin()
 
   using std::string;
 
+  TString dataDir(gSystem->Getenv("MIT_DATA"));
+  if (dataDir.Length() == 0) {
+    SendError(kAbortModule, "SlaveBegin", "MIT_DATA environment is not set.");
+    return;
+  }
+
   if( fApplyLeptonTag ) {
     ReqEventObject(fLeptonTagElectronsName,    fLeptonTagElectrons,    false);  
     ReqEventObject(fLeptonTagMuonsName,        fLeptonTagMuons,        false);  
@@ -1167,9 +1166,9 @@ void PhotonPairSelector::SlaveBegin()
   }
   
   if (fIsData)
-    fPhFixFile = gSystem->Getenv("CMSSW_BASE") + TString("/src/MitPhysics/data/PhotonFixGRPV22.dat");
+    fPhFixFile = dataDir + "/PhotonFixGRPV22.dat";
   else
-    fPhFixFile = gSystem->Getenv("CMSSW_BASE") + TString("/src/MitPhysics/data/PhotonFixSTART42V13.dat");
+    fPhFixFile = dataDir + "/PhotonFixSTART42V13.dat";
 
   printf("initialize photon pair selector\n");
 
@@ -1191,23 +1190,23 @@ void PhotonPairSelector::SlaveBegin()
   
   if (fVtxSelType==kMetSigVtxSelection) {
     //fMVAMet.Initialize();
-//     fMVAMet.Initialize(TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/mva_JetID_lowpt.weights.xml"))),
-//                         TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/mva_JetID_highpt.weights.xml"))),
-//                         TString(getenv("CMSSW_BASE")+string("/src/MitPhysics/Utils/python/JetIdParams_cfi.py")),
-//                         TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmet_42.root"))),
-//                         TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmetphi_42.root"))),
-//                         TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmetu1_42.root"))),
-//                         TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmetu2_42.root")))
+//     fMVAMet.Initialize(dataDir + "/mva_JetID_lowpt.weights.xml",
+//                         dataDir + "/mva_JetID_highpt.weights.xml",
+//                         dataDir + "/JetIDMVA_JetIdParams.py",
+//                         dataDir + "/gbrmet_42.root",
+//                         dataDir + "/gbrmetphi_42.root",
+//                         dataDir + "/gbrmetu1_42.root",
+//                         dataDir + "/gbrmetu2_42.root"
 //                        );
 
-    fMVAMet.Initialize(TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/mva_JetID_lowpt.weights.xml"))),
-                        TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/mva_JetID_highpt.weights.xml"))),
-                        TString(getenv("CMSSW_BASE")+string("/src/MitPhysics/Utils/python/JetIdParams_cfi.py")),
-                        TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmet_52.root"))),
-                        TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmetphi_52.root"))),
-                        TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmetu1cov_52.root"))),
-                        TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmetu2cov_52.root")))
-                        );
+    fMVAMet.Initialize(dataDir + "/mva_JetID_lowpt.weights.xml",
+                       dataDir + "/mva_JetID_highpt.weights.xml",
+                       dataDir + "/JetIDMVA_JetIdParams.py",
+                       dataDir + "/gbrmet_52.root",
+                       dataDir + "/gbrmetphi_52.root",
+                       dataDir + "/gbrmetu1cov_52.root",
+                       dataDir + "/gbrmetu2cov_52.root"
+                       );
 
   }
 
