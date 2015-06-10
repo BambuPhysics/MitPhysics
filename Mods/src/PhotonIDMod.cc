@@ -1,6 +1,3 @@
-#include "TDataMember.h"
-#include "TTree.h"
-#include "TRandom3.h"
 #include "MitPhysics/Mods/interface/PhotonIDMod.h"
 #include "MitAna/DataTree/interface/PhotonCol.h"
 #include "MitPhysics/Init/interface/ModNames.h"
@@ -8,7 +5,6 @@
 #include "MitPhysics/Utils/interface/PhotonTools.h"
 
 #include <TSystem.h>
-#include "TFormula.h"
 
 using namespace mithep;
 
@@ -16,7 +12,7 @@ ClassImp(mithep::PhotonIDMod)
   
 //--------------------------------------------------------------------------------------------------
 PhotonIDMod::PhotonIDMod(const char *name, const char *title) : 
-BaseMod(name,title),
+  BaseMod(name,title),
   fPhotonBranchName  (Names::gkPhotonBrn),
   fGoodPhotonsName   (ModNames::gkGoodPhotonsName),
   fTrackBranchName   (Names::gkTrackBrn),
@@ -130,7 +126,7 @@ BaseMod(name,title),
   fMCSmear_EEhighEta_hR9         (0.),
   fMCSmear_EEhighEta_lR9         (0.),
  
-  fRng                           (new TRandom3()),
+  fRng                           (new TRandom3),
   fRhoAlgo                       (mithep::PileupEnergyDensity::kKt6PFJets)
 {
   // Constructor.
@@ -146,8 +142,10 @@ BaseMod(name,title),
 
 PhotonIDMod::~PhotonIDMod()
 {
+  std::cout << "delete" << std::endl;
   delete fTool;
   delete fRng;
+  std::cout << "deleted" << std::endl;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -431,9 +429,6 @@ void PhotonIDMod::Process()
       break;
     case kLoose:
       idcut = ph->IsLoosePhoton();
-      break;
-    case kLooseEM:
-      idcut = ph->IsLooseEM();
       break;
     case kCustomId:
       idcut = true;

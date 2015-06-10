@@ -28,8 +28,7 @@
 #include "MitPhysics/Utils/interface/RhoUtilities.h"
 
 #include "TFormula.h"
-
-class TRandom3;
+#include "TRandom3.h"
 
 namespace mithep 
 {
