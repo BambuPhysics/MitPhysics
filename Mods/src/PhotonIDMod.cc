@@ -572,8 +572,8 @@ void PhotonIDMod::Process()
     if ( fApplyR9Min && ph->R9() <= fPhotonR9Min) 
       continue;
 
-    if ((isbarrel && ph->CoviEtaiEta() >= fEtaWidthEB) ||
-        (!isbarrel && ph->CoviEtaiEta() >= fEtaWidthEE))
+    if ((isbarrel && ph->CoviEtaiEta5x5() >= fEtaWidthEB) ||
+        (!isbarrel && ph->CoviEtaiEta5x5() >= fEtaWidthEE))
       continue;
 
     if (ph->SCluster()->AbsEta() > fAbsEtaMax && ph->SCluster()->AbsEta() < fAbsEtaMin)
