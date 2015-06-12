@@ -48,7 +48,7 @@ namespace mithep {
 
     TMVA::Reader *reader;    
 
-    ClassDef(MVAVBF, 0) 
+    ClassDef(MVAVBF, 1) 
       };
 }
 

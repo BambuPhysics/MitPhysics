@@ -1,5 +1,3 @@
-// $Id: VertexTools.cc,v 1.14 2012/10/26 19:23:04 fabstoec Exp $
-
 #include "MitPhysics/Utils/interface/VertexTools.h"
 #include "MitPhysics/Utils/interface/ElectronTools.h"
 #include "MitPhysics/Utils/interface/PhotonTools.h"
@@ -7,8 +5,6 @@
 #include <TFile.h>
 #include <TVector3.h>
 #include <TSystem.h>
-
-ClassImp(mithep::VertexTools)
 
 using namespace mithep;
 
@@ -26,10 +22,12 @@ VertexTools::VertexTools() :
 }
 
 //--------------------------------------------------------------------------------------------------
-void VertexTools::InitM(const char* str)  
+void VertexTools::InitM(const char*) // argument for backward compat
 {
+  TString dataDir(gSystem->Getenv("MIT_DATA"));
+  if (dataDir.Length() == 0)
+    throw std::runtime_error("MIT_DATA environment is not set.");
  
-  relname = str;
   reader = new TMVA::Reader( "!Color:!Silent" );    
   reader->AddVariable( "var1", &tmvar1 );
   reader->AddVariable( "var2", &tmvar2 );
@@ -37,19 +35,21 @@ void VertexTools::InitM(const char* str)
   reader->AddVariable( "var4", &tmvar4 );
   reader->AddVariable( "var5", &tmvar5 );
   reader->AddVariable( "var6", &tmvar6 ); 
-  reader->BookMVA( "BDTG method",relname + TString("/src/MitPhysics/data/TMVAClassification_BDTG.weights.xml").Data());
-  reader->BookMVA( "BDTD method",relname + TString("/src/MitPhysics/data/TMVAClassification_BDTD.weights.xml" ).Data());
+  reader->BookMVA( "BDTG method",dataDir + "/TMVAClassification_BDTG.weights.xml");
+  reader->BookMVA( "BDTD method",dataDir + "/TMVAClassification_BDTD.weights.xml" );
   //reader->BookMVA( "CFMlpANN method", "/home/maxi/cms/root/TMVAClassification_CFMlpANN.weights.xml" );
-  reader->BookMVA( "MLP method", relname + TString("/src/MitPhysics/data/TMVAClassification_MLP.weights.xml").Data());
-  reader->BookMVA( "MLPBFGS method",relname + TString("/src/MitPhysics/data/TMVAClassification_MLPBFGS.weights.xml" ).Data());
+  reader->BookMVA( "MLP method", dataDir + "/TMVAClassification_MLP.weights.xml");
+  reader->BookMVA( "MLPBFGS method",dataDir + "/TMVAClassification_MLPBFGS.weights.xml");
   
   fIsInitMvaM = kTRUE;
-  
 }
 
 //--------------------------------------------------------------------------------------------------
 void VertexTools::InitP(int version)
 {
+  TString dataDir(gSystem->Getenv("MIT_DATA"));
+  if (dataDir.Length() == 0)
+    throw std::runtime_error("MIT_DATA environment is not set.");
 
   readervtx = new TMVA::Reader( "!Color:!Silent" );
   readerevt = new TMVA::Reader( "!Color:!Silent" );
@@ -59,7 +59,7 @@ void VertexTools::InitP(int version)
   readervtx->AddVariable( "logsumpt2", &fMvaPVars[2] );
   readervtx->AddVariable( "limPullToConv", &fMvaPVars[3] );
   readervtx->AddVariable( "nConv", &fMvaPVars[4] );
-  readervtx->BookMVA( "BDTCat", gSystem->Getenv("CMSSW_BASE") + TString("/src/MitPhysics/data/TMVAClassification_BDTCat_conversions_tmva_407.weights.xml") );
+  readervtx->BookMVA( "BDTCat", dataDir + "/TMVAClassification_BDTCat_conversions_tmva_407.weights.xml");
 
   readerevt->AddVariable( "diphoPt0", &fMvaPEvtVars[0] );
   readerevt->AddVariable( "nVert", &fMvaPEvtVars[1] );
@@ -70,10 +70,10 @@ void VertexTools::InitP(int version)
   readerevt->AddVariable( "dZ2", &fMvaPEvtVars[6] );
   readerevt->AddVariable( "nConv", &fMvaPEvtVars[7] );
   if (version==1) {
-    readerevt->BookMVA( "BDTEvt", gSystem->Getenv("CMSSW_BASE") + TString("/src/MitPhysics/data/TMVAClassification_evtBDTG_conversions_tmva_407.weights.xml") );  
+    readerevt->BookMVA( "BDTEvt", dataDir + "/TMVAClassification_evtBDTG_conversions_tmva_407.weights.xml");
   }
   else if (version==2) {
-    readerevt->BookMVA( "BDTEvt", gSystem->Getenv("CMSSW_BASE") + TString("/src/MitPhysics/data/TMVAClassification_BDTvtxprob2012.weights.xml") );  
+    readerevt->BookMVA( "BDTEvt", dataDir + "/TMVAClassification_BDTvtxprob2012.weights.xml");
   }
   else assert(0);
   

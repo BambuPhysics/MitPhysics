@@ -142,7 +142,7 @@ namespace mithep {
       static Bool_t       PassHggLeptonTagID(const Electron *el);
       static Bool_t       PassHggLeptonTagID2012(const Electron *el);
     
-    ClassDef(ElectronTools, 0) // Muon tools
+    ClassDef(ElectronTools, 1) // Muon tools
   };
 }
 

@@ -87,7 +87,7 @@ namespace mithep {
     FourVectorM fRecoil;
     FourVectorM fChargedRecoil;
     
-    ClassDef(MetTools, 0) // Met tools
+    ClassDef(MetTools, 1) // Met tools
       };
 
   template<class V>

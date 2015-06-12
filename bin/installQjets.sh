@@ -9,22 +9,26 @@
 #                                                              Apr 26, 2015 - V1 Yutaro Iiyama
 #---------------------------------------------------------------------------------------------------
 function configureScram {
-  local EXTERNAL=$1
+  local BASE=$1
+  local VERSION=$2
 
-  echo ""
-  echo " INFO - configuring SCRAM to use Qjets at: $EXTERNAL/Qjets"
-  echo ""    
+  if ! [ $VERSION ]
+  then
+    echo " Could not determine fastjet version being linked to Qjets. Please check installation at"
+    echo " $BASE"
+    exit 1
+  fi
 
   # add local fastjet external to scarm config
   mv $CMSSW_BASE/config/toolbox/$SCRAM_ARCH/tools/selected/qjets.xml \
      $CMSSW_BASE/config/toolbox/$SCRAM_ARCH/tools/selected/qjets.xml-last.$(date +%s)
 
   echo \
-'  <tool name="qjets" version="2">
+'  <tool name="qjets" version="'$VERSION'">
     <info url="http://jets.physics.harvard.edu/Qjets/html/Welcome.html"/>
     <lib name="qjets"/>
     <client>
-      <environment name="QJETS_BASE" default="'$EXTERNAL'/Qjets"/>
+      <environment name="QJETS_BASE" default="'$BASE'"/>
       <environment name="LIBDIR" default="$QJETS_BASE/lib"/>
       <environment name="INCLUDE" default="$QJETS_BASE"/>
     </client>
@@ -34,6 +38,14 @@ function configureScram {
   cd $CMSSW_BASE/src
   scram setup qjets
 }
+
+####################################################
+### EDIT THE LINES BELOW TO SPECIFY THE VERSIONS ###
+####################################################
+
+FJVERSION="3.1.0-odfocd"
+
+####################################################
 
 # test whether environment is clean and we can start
 if [ -z "$CMSSW_BASE" ]
@@ -57,16 +69,18 @@ fi
 
 # the default location
 EXTERNAL=/cvmfs/cvmfs.cmsaf.mit.edu/hidsk0001/cmsprod/cms/external
-if [ -d $EXTERNAL/Qjets ]
+QJETS=$EXTERNAL/Qjets/$FJVERSION
+if [ -d $QJETS ]
 then
-  configureScram $EXTERNAL
+  configureScram $QJETS $FJVERSION
   exit 0
 fi
 
 EXTERNAL=/home/cmsprod/cms/external
-if [ -d $EXTERNAL/Qjets ]
+QJETS=$EXTERNAL/Qjets/$FJVERSION
+if [ -d $QJETS ]
 then
-  configureScram $EXTERNAL
+  configureScram $QJETS $FJVERSION
   exit 0
 fi
 
@@ -76,7 +90,8 @@ echo ""
 
 # Here the real work starts (qjets plugin and tweaks)
 
-mkdir -p $EXTERNAL
+QJETS=$EXTERNAL/Qjets/$FJVERSION
+mkdir -p $QJETS
 
 # install best qjets plugin version
 #-----------------------------
@@ -87,7 +102,7 @@ QJETS_TGZ="Qjets.tar.gz"
 QJETS_DIR=`echo $EXTERNAL/$QJETS_TGZ | sed 's/.tar.gz//'`
 
 # in the right location
-cd $EXTERNAL
+cd $QJETS
 
 # now do the download
 echo " INFO - download starting"
@@ -108,12 +123,9 @@ rm -rf $QJETS_TGZ
 echo " INFO - installing"
 echo ""
 cd `echo $QJETS_TGZ | sed 's/.tar.gz//'`
-make
-
-# make shared libraries for the plugin
-g++ -shared -fPIC -o $QJETS_DIR/lib/libqjets.so -Wl,-soname,libqjets.so $QJETS_DIR/[A-Z]*.o 
+make lib/libQjets.so
 
 # final adjustment to scram configuration
-configureScram $EXTERNAL
+configureScram $QJETS $FJVERSION
 
 exit 0

@@ -175,8 +175,7 @@ namespace mithep {
 
 
     TMVA::Reader *reader;    
-    ClassDef(MVATools, 0) 
-      };
+  };
 }
 
 #endif

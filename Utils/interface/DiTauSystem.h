@@ -57,7 +57,7 @@ namespace mithep
 
 
 
-    ClassDef(DiTauSystem, 0) // DiTauSystem ala CMS note 2006/082
+    ClassDef(DiTauSystem, 1) // DiTauSystem ala CMS note 2006/082
   };
 }
 #endif

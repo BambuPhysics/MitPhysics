@@ -8,7 +8,7 @@ ClassImp(mithep::PFTauIDMod)
 
 //--------------------------------------------------------------------------------------------------
 PFTauIDMod::PFTauIDMod(const char *name, const char *title) : 
-  BaseMod(name,title),
+BaseMod(name,title),
   fPFTausName(Names::gkPFTauBrn),
   fGoodPFTausName(ModNames::gkGoodPFTausName),
   fPtMin(15.0),
@@ -46,12 +46,12 @@ void PFTauIDMod::Process()
       CompositeParticle tauChargedSystem;
       UInt_t nTrk = 0;
       for (UInt_t j=0; j<tau->NSignalPFCands(); ++j) {
-	tauSystem.AddDaughter(tau->SignalPFCand(j));
-	if (tau->SignalPFCand(j) != 0 &&
-	   tau->SignalPFCand(j)->Charge() != 0){
-	  nTrk++;
-	  tauChargedSystem.AddDaughter(tau->SignalPFCand(j));
-	}
+        tauSystem.AddDaughter(tau->SignalPFCand(j));
+        if (tau->SignalPFCand(j) != 0 &&
+            tau->SignalPFCand(j)->Charge() != 0){
+          nTrk++;
+          tauChargedSystem.AddDaughter(tau->SignalPFCand(j));
+        }
       }
       if (nTrk != 1 && nTrk != 3) continue;
       if (TMath::Abs(tau->Charge()) - 1.0 > 0.0001) continue;
@@ -72,26 +72,26 @@ void PFTauIDMod::Process()
 
       // default HPS
       if (!fIsLooseId) { 
-	// reject leptons 
-	if (tau->DiscriminationByLooseElectronRejection() < 0.5) continue;
-	if (tau->DiscriminationByLooseMuonRejection() < 0.5) continue;
-	// default isolation working points
-	if (fHPSIso.Contains("loose",TString::kIgnoreCase)) {
-	  if (!tau->LooseCombinedIsolationDBSumPtCorr3Hits()) continue;
-	}
-	else if (fHPSIso.Contains("med",TString::kIgnoreCase)) {
-	  if (!tau->MediumCombinedIsolationDBSumPtCorr3Hits()) continue;
-	}
-	else if (fHPSIso.Contains("tight",TString::kIgnoreCase)) {
-	  if (!tau->TightCombinedIsolationDBSumPtCorr3Hits()) continue;
-	}
-	else {
-	  SendError(kWarning,"Process","ERROR: HPS Isolation not properly defined!");
-	}
+        // reject leptons 
+        if (tau->DiscriminationByLooseElectronRejection() < 0.5) continue;
+        if (tau->DiscriminationByLooseMuonRejection() < 0.5) continue;
+        // default isolation working points
+        if (fHPSIso.Contains("loose",TString::kIgnoreCase)) {
+          if (!tau->LooseCombinedIsolationDBSumPtCorr3Hits()) continue;
+        }
+        else if (fHPSIso.Contains("med",TString::kIgnoreCase)) {
+          if (!tau->MediumCombinedIsolationDBSumPtCorr3Hits()) continue;
+        }
+        else if (fHPSIso.Contains("tight",TString::kIgnoreCase)) {
+          if (!tau->TightCombinedIsolationDBSumPtCorr3Hits()) continue;
+        }
+        else {
+          SendError(kWarning,"Process","ERROR: HPS Isolation not properly defined!");
+        }
       }
       // loose Id
       else {
-	if (tau->RawCombinedIsolationDBSumPtCorr3Hits() >5) continue;
+        if (tau->RawCombinedIsolationDBSumPtCorr3Hits() >5) continue;
       }
     }
 

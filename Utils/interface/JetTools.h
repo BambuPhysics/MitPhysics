@@ -58,7 +58,7 @@ namespace mithep {
 				       Double_t iDZCut=0.2);
     static Bool_t             passPFLooseId(const PFJet *iJet);
     static double             W(const PFJet *iJet,int iPFType,int iType);
-    ClassDef(JetTools, 0)
+    ClassDef(JetTools, 1)
   };
 
 }

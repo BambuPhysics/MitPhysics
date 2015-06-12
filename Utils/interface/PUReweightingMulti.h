@@ -37,14 +37,14 @@ namespace mithep {
     int fMaxN;
     double fMinProb;
     int fNCacheBins;
-    Double_t *fWeights;
-    UShort_t *fIndices;
-    Double_t *fCache;
-    Int_t    *fOffsets;
-    Int_t    *fIndOffsets;
-    Double_t *fFactors;
+    Double_t *fWeights;    //[fNsBins]
+    UShort_t *fIndices;    //[fNDim*fNsBins]
+    Double_t *fCache;      //[fMaxN*fNCacheBins]
+    Int_t    *fOffsets;    //[fNDim]
+    Int_t    *fIndOffsets; //[fNDim]
+    Double_t *fFactors;    //[fNDim]
 
-    ClassDef(PUReweightingMulti, 0) // PUReweighting
+    ClassDef(PUReweightingMulti, 1) // PUReweighting
       };
 
 

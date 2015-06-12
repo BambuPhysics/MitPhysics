@@ -1,14 +1,19 @@
 #include "MitPhysics/Utils/interface/QGTagger.h"
 
+#include "TSystem.h"
+
 ClassImp(mithep::QGTagger)
 
 using namespace mithep;
-
  
 QGTagger::QGTagger(bool useCHS)
 {
+  TString dataDir(gSystem->Getenv("MIT_DATA"));
+  if (dataDir.Length() == 0)
+    throw std::runtime_error("MIT_DATA environment is not set.");
+
   // Constructor
-  qgLikelihood = new QGLikelihoodCalculator("MitPhysics/data/", useCHS);
+  qgLikelihood = new QGLikelihoodCalculator(dataDir, useCHS);
 }
 
 QGTagger::~QGTagger() 

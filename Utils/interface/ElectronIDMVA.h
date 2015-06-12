@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id $
-//
 // ElectronIDMVA
 //
 // Helper Class for Electron Identification MVA
@@ -21,9 +19,6 @@
 #include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitPhysics/Utils/interface/ElectronTools.h"
-
-// for Rho definitons
-#include "MitPhysics/Utils/interface/RhoUtilities.h"
 
 class TRandom3;
 namespace TMVA {
@@ -51,24 +46,24 @@ namespace mithep {
       };
 
 
-      void     Initialize( std::string methodName,
-                           std::string weightsfile,
-                           ElectronIDMVA::MVAType type,
-			   RhoUtilities::RhoType theRhoType = RhoUtilities::DEFAULT);
-      void     Initialize( std::string methodName,
-                           ElectronIDMVA::MVAType type,
-                           Bool_t useBinnedVersion,
-                           std::vector<std::string> weightsfiles,
-			   RhoUtilities::RhoType theRhoType = RhoUtilities::DEFAULT);
-      void     Initialize(TString methodName,
-                          TString Subdet0Pt10To20Weights , 
-                          TString Subdet1Pt10To20Weights , 
-                          TString Subdet2Pt10To20Weights,
-                          TString Subdet0Pt20ToInfWeights, 
-                          TString Subdet1Pt20ToInfWeights, 
-                          TString Subdet2Pt20ToInfWeights,
-                          ElectronIDMVA::MVAType type,
-			  RhoUtilities::RhoType theRhoType = RhoUtilities::DEFAULT);
+      void     Initialize(std::string const& methodName,
+                          std::string const& weightsfile,
+                          ElectronIDMVA::MVAType,
+			  UInt_t = mithep::PileupEnergyDensity::kHighEta);
+      void     Initialize(std::string const& methodName,
+                          ElectronIDMVA::MVAType,
+                          Bool_t useBinnedVersion,
+                          std::vector<std::string> const& weightsfiles,
+			  UInt_t = mithep::PileupEnergyDensity::kHighEta);
+      void     Initialize(TString const& methodName,
+                          TString const& Subdet0Pt10To20Weights , 
+                          TString const& Subdet1Pt10To20Weights , 
+                          TString const& Subdet2Pt10To20Weights,
+                          TString const& Subdet0Pt20ToInfWeights, 
+                          TString const& Subdet1Pt20ToInfWeights, 
+                          TString const& Subdet2Pt20ToInfWeights,
+                          ElectronIDMVA::MVAType,
+			  UInt_t = mithep::PileupEnergyDensity::kHighEta);
       
       Bool_t   IsInitialized() const { return fIsInitialized; }
       void     bindVariables();
@@ -188,7 +183,7 @@ namespace mithep {
       MVAType                   fMVAType;
       Bool_t                    fUseBinnedVersion;
       UInt_t                    fNMVABins;
-      RhoUtilities::RhoType     fTheRhoType;
+      UInt_t                    fRhoAlgo;
 
       Float_t                   fMVAVar_ElePt; 
       Float_t                   fMVAVar_EleEta; 
@@ -247,7 +242,7 @@ namespace mithep {
 
       Float_t                   fMVAVar_Rho;
 
-    ClassDef(ElectronIDMVA, 0) // Muon tools
+    ClassDef(ElectronIDMVA, 1) // Muon tools
       };
 }
 

@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id $
-//
 // VertexTools
 //
 // Helper Class for photon Identification decisions.
@@ -100,9 +98,6 @@ namespace mithep {
     
     static VertexTools *meobject;
     
-
-    TString relname;
-
     TrackArray excluded;
     
     Bool_t fIsInitMvaM;
@@ -118,9 +113,7 @@ namespace mithep {
     mutable Float_t fMvaPEvtVars[8];
     
     TString fVtxProbMvaName;
-    
-    ClassDef(VertexTools, 0) // Muon tools
-      };
+  };
 }
 
 #endif

@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: PhotonTreeWriter.h,v 1.51 2013/12/12 17:14:08 veverka Exp $
-//
 // PhotonTreeWriter
 //
 // Authors: J. Bendavid, J. Veverka
@@ -1081,7 +1079,7 @@ namespace mithep
     double                fp0e;                          
     double                fp1e;     
 
-    RhoUtilities::RhoType    fTheRhoType;
+    UInt_t                fRhoAlgo;
     UInt_t                         fProcessedEvents;
 
     ClassDef(PhotonTreeWriter, 1) // Photon identification module

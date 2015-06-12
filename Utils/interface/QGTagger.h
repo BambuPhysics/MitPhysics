@@ -31,7 +31,7 @@ namespace mithep {
     QGLikelihoodCalculator     *qgLikelihood;
     std::map<TString, Float_t>  variables;
 
-    ClassDef(QGTagger, 0)
+    ClassDef(QGTagger, 1)
   };
 }
 #endif

@@ -117,8 +117,7 @@ PhotonTreeWriter::PhotonTreeWriter(const char *name, const char *title) :
   fFillVertexTree         (kFALSE),
   fDo2012LepTag           (kFALSE),
   fVerbosityLevel         (0),
-  fPhFixDataFile          (gSystem->Getenv("CMSSW_BASE") +
-		           TString("/src/MitPhysics/data/PhotonFixSTART42V13.dat")),
+  fPhFixDataFile          (""),
   fBeamspotWidth          (5.8),
   fTmpFile                (0),
   
@@ -139,7 +138,7 @@ PhotonTreeWriter::PhotonTreeWriter(const char *name, const char *title) :
   fp0e                           (0.),
   fp1e                           (1.),
 
-  fTheRhoType(RhoUtilities::DEFAULT),
+  fRhoAlgo(mithep::PileupEnergyDensity::kHighEta),
 
   fProcessedEvents(0)
 
@@ -1159,6 +1158,12 @@ void PhotonTreeWriter::SlaveBegin()
 
   using std::string;
 
+  TString dataDir(gSystem->Getenv("MIT_DATA"));
+  if (dataDir.Length() == 0) {
+    SendError(kAbortModule, "SlaveBegin", "MIT_DATA environment is not set.");
+    return;
+  }
+
   if( fApplyLeptonTag || fApplyVHLepTag ) {
     ReqEventObject(fLeptonTagElectronsName,    fLeptonTagElectrons,    false);  
     ReqEventObject(fLeptonTagMuonsName,        fLeptonTagMuons,        false);  
@@ -1196,46 +1201,40 @@ void PhotonTreeWriter::SlaveBegin()
     ReqBranch(fMCEventInfoName,    fMCEventInfo);
     if (fEnableGenJets) ReqEventObject(fGenJetName, fGenJets, true);
   }
-  if (fIsData) {
-    fPhFixDataFile = gSystem->Getenv("CMSSW_BASE") +
-      TString("/src/MitPhysics/data/PhotonFixGRPV22.dat");
-  }
-  else {
-    fPhFixDataFile = gSystem->Getenv("CMSSW_BASE") +
-      TString("/src/MitPhysics/data/PhotonFixSTART42V13.dat");
-  }
+  if (fIsData)
+    fPhFixDataFile = dataDir + "/PhotonFixGRPV22.dat";
+  else
+    fPhFixDataFile = dataDir + "/PhotonFixSTART42V13.dat";
 
   fPhfixph.initialise("4_2",string(fPhFixDataFile));
   fPhfixele.initialise("4_2e",string(fPhFixDataFile));
-  
-//   fMVAMet.Initialize(TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/mva_JetID_lowpt.weights.xml"))),
-//                       TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/mva_JetID_highpt.weights.xml"))),
-//                       TString(getenv("CMSSW_BASE")+string("/src/MitPhysics/Utils/python/JetIdParams_cfi.py")),
-//                       TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmet_42.root"))),
-//                       TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmetphi_42.root"))),
-//                       TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmetu1_42.root"))),
-//                       TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmetu2_42.root")))
+
+//   fMVAMet.Initialize(dataDir + "/mva_JetID_lowpt.weights.xml",
+//                       dataDir + "/mva_JetID_highpt.weights.xml",
+//                       dataDir + "/JetIDMVA_JetIdParams.py",
+//                       dataDir + "/gbrmet_42.root",
+//                       dataDir + "/gbrmetphi_42.root",
+//                       dataDir + "/gbrmetu1_42.root",
+//                       dataDir + "/gbrmetu2_42.root"
 //                       );  
   
-  fMVAMet.Initialize(TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/mva_JetID_lowpt.weights.xml"))),
-                      TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/mva_JetID_highpt.weights.xml"))),
-                      TString(getenv("CMSSW_BASE")+string("/src/MitPhysics/Utils/python/JetIdParams_cfi.py")),
-                      TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmet_52.root"))),
-                      TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmetphi_52.root"))),
-                      TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmetu1cov_52.root"))),
-                      TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/gbrmetu2cov_52.root")))
-                      );                      
+  fMVAMet.Initialize(dataDir + "/mva_JetID_lowpt.weights.xml",
+                     dataDir + "/mva_JetID_highpt.weights.xml",
+                     dataDir + "/JetIdParams_cfi.py",
+                     dataDir + "/gbrmet_52.root",
+                     dataDir + "/gbrmetphi_52.root",
+                     dataDir + "/gbrmetu1cov_52.root",
+                     dataDir + "/gbrmetu2cov_52.root"
+                     );
                  
   fJetId.Initialize(JetIDMVA::kMedium,
-                          TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/mva_JetID_lowpt.weights.xml"))),
-                          TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/data/mva_JetID_highpt.weights.xml"))),
-                          JetIDMVA::kCut,
-                          TString((getenv("CMSSW_BASE")+string("/src/MitPhysics/Utils/python/JetIdParams_cfi.py")))
-
-                          );
+                    dataDir + "/mva_JetID_lowpt.weights.xml",
+                    dataDir + "/mva_JetID_highpt.weights.xml",
+                    JetIDMVA::kCut,
+                    dataDir + "/JetIDMVA_JetIdParams.py"
+                    );
 
   fMVAVBF.InitializeMVA();
-                      
 
   if( fDoSynching ) {
     fVtxTools.InitP(2);
@@ -1248,7 +1247,7 @@ void PhotonTreeWriter::SlaveBegin()
                                fElectronMVAWeights_Subdet1Pt20ToInf,
                                fElectronMVAWeights_Subdet2Pt20ToInf,
                                ElectronIDMVA::kIDEGamma2012NonTrigV1,
-			       fTheRhoType);
+			       fRhoAlgo);
   }
 
 
@@ -2016,7 +2015,7 @@ PhotonTreeWriterPhoton<NClus>::SetVars(const Photon *p,
 
   //initialize photon energy corrections if needed
   /*if (!PhotonFix::initialised()) {
-    PhotonFix::initialise("4_2",std::string((gSystem->Getenv("CMSSW_BASE") + TString("/src/MitPhysics/data/PhotonFix.dat")).Data()));  
+    PhotonFix::initialise("4_2", std::string(gSystem->Getenv("MIT_DATA")) + "/PhotonFix.dat");
   }*/ 
 
   phfixph.setup(e,sceta,scphi,r9);

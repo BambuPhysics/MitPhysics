@@ -91,7 +91,7 @@ TauIsoMVA::IsoRings TauIsoMVA::computeIsoRings(const PFTau *iTau) {
   std::vector<std::vector<float> > shapes  (3, std::vector<float>(5));
   std::vector<float>               isoptsum(3);
 
-  for(UInt_t i0 = 0; i0 < iTau->NIsoPFCandS(); i0++) {
+  for(UInt_t i0 = 0; i0 < iTau->NIsoPFCands(); i0++) {
     const PFCandidate *pCand = iTau->IsoPFCand(i0);
     float deta = iTau->Eta() - pCand->Eta();
     float dphi =      MathUtils::DeltaPhi((double)iTau ->Phi(), (double)pCand->Phi());

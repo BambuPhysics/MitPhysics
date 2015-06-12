@@ -6,6 +6,7 @@
 #include "MitAna/DataTree/interface/StableData.h"
 #include <TFile.h>
 #include <TRandom3.h>
+#include <TSystem.h>
 #include "TMVA/Tools.h"
 #include "TMVA/Reader.h"
 
@@ -56,6 +57,19 @@ void JetIDMVA::Initialize( JetIDMVA::CutType iCutType,
 			   JetIDMVA::MVAType iType,
 			   TString iCutFileName,bool i42) 
 { 
+  if (iLowPtWeights.Length() == 0 || iHighPtWeights.Length() == 0 || iCutFileName.Length() == 0) {
+    // default
+    TString dataDir(gSystem->Getenv("MIT_DATA"));
+    if (dataDir.Length() == 0)
+      throw std::runtime_error("MIT_DATA environment is not set.");
+
+    if (iLowPtWeights.Length() == 0)
+      iLowPtWeights = dataDir + "/mva_JetID_lowpt.weights.xml";
+    if (iHighPtWeights.Length() == 0)
+      iHighPtWeights = dataDir + "/mva_JetID_highpt.weights.xml";
+    if (iCutFileName.Length() == 0)
+      iCutFileName = dataDir + "/JetIDMVA_JetIdParams.py";
+  }
   
   fIsInitialized = kTRUE;
   fType          = iType;
@@ -303,9 +317,9 @@ Double_t JetIDMVA::MVAValue(
 //--------------------------------------------------------------------------------------------------
 Bool_t JetIDMVA::passPt(const PFJet *iJet, FactorizedJetCorrector *iJetCorrector,
 			const PileupEnergyDensityCol *iPileupEnergyDensity,
-			RhoUtilities::RhoType type) { 
+			UInt_t algo) { 
   if(iJetCorrector == 0) return (iJet->Pt() > fJetPtMin);
-  double lPt  = correctedPt(iJet,                  iJetCorrector,iPileupEnergyDensity,type);
+  double lPt  = correctedPt(iJet,                  iJetCorrector,iPileupEnergyDensity,algo);
   if(lPt < fJetPtMin)                         return false; 
   return true;
 }
@@ -313,13 +327,13 @@ Bool_t JetIDMVA::passPt(const PFJet *iJet, FactorizedJetCorrector *iJetCorrector
 Bool_t JetIDMVA::pass(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices,
 		      FactorizedJetCorrector *iJetCorrector,
 		      const PileupEnergyDensityCol *iPileupEnergyDensity,
-		      RhoUtilities::RhoType type) { 
+		      UInt_t algo) { 
   
   if(!JetTools::passPFLooseId(iJet))                 return false;
   if(fabs(iJet->Eta()) > 4.99)                       return false;
   
   double lMVA = MVAValue   (iJet,iVertex,iVertices,iJetCorrector,iPileupEnergyDensity);
-  double lPt  = correctedPt(iJet,                  iJetCorrector,iPileupEnergyDensity,type);
+  double lPt  = correctedPt(iJet,                  iJetCorrector,iPileupEnergyDensity,algo);
   if(lPt < fJetPtMin)                         return false; 
   
   int lPtId = 0; 
@@ -582,29 +596,16 @@ Double_t* JetIDMVA::QGValue(const PFJet *iJet,const Vertex *iVertex,const Vertex
 }
 Double_t JetIDMVA::correctedPt(const PFJet *iJet, FactorizedJetCorrector *iJetCorrector,
                                const PileupEnergyDensityCol *iPUEnergyDensity,
-			       RhoUtilities::RhoType type,int iId) { 
-  Double_t Rho = 0.0;
-  switch(type) {
-  case RhoUtilities::MIT_RHO_VORONOI_HIGH_ETA:
-    Rho = iPUEnergyDensity->At(0)->Rho();
-    break;
-  case RhoUtilities::MIT_RHO_VORONOI_LOW_ETA:
-    Rho = iPUEnergyDensity->At(0)->RhoLowEta();
-    break;
-  case RhoUtilities::MIT_RHO_RANDOM_HIGH_ETA:
-    Rho = iPUEnergyDensity->At(0)->RhoRandom();
-    break;
-  case RhoUtilities::MIT_RHO_RANDOM_LOW_ETA:
-    Rho = iPUEnergyDensity->At(0)->RhoRandomLowEta();
-    break;
-  case RhoUtilities::CMS_RHO_RHOKT6PFJETS:
-    Rho = iPUEnergyDensity->At(0)->RhoKt6PFJets();
-    break;
-  default:
-    // use the old default
-    f42 ? Rho = iPUEnergyDensity->At(0)->RhoRandom() : Rho = iPUEnergyDensity->At(0)->Rho();
-    break;
+			       UInt_t algo,
+                               int iId) { 
+  if (algo == mithep::PileupEnergyDensity::nAllAlgos) {
+    if (f42)
+      algo = mithep::PileupEnergyDensity::kRandom;
+    else
+      algo = mithep::PileupEnergyDensity::kHighEta;
   }
+
+  Double_t Rho = iPUEnergyDensity->At(0)->Rho(algo);
     
   const FourVectorM rawMom = iJet->RawMom();
   iJetCorrector->setJetEta(rawMom.Eta());
