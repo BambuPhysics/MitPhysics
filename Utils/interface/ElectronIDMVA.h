@@ -79,8 +79,8 @@ namespace mithep {
                         const PFCandidateCol *PFCands, 
                         const PileupEnergyDensityCol *PileupEnergyDensity,
                         ElectronTools::EElectronEffectiveAreaTarget EffectiveAreaTarget,
-                        const ElectronCol *goodElectrons,
-                        const MuonCol *goodMuons,                       
+                        const ElectronCol *goodElectrons = 0,
+                        const MuonCol *goodMuons = 0,
                         Bool_t printDebug = kFALSE);
       Double_t MVAValue(const Electron *ele, const Vertex *vertex,
                         const VertexCol *primaryVertices,

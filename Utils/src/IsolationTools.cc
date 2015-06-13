@@ -27,7 +27,7 @@ Double_t IsolationTools::TrackIsolation(const Track *p, Double_t extRadius, Doub
     Double_t dr = MathUtils::DeltaR(p->Phi(),p->Eta(),tracks->At(i)->Phi(), tracks->At(i)->Eta());
     //add the track pt if it is inside the annulus
     if ( dr < extRadius && 
-	 dr >= intRadius ) {
+         dr >= intRadius ) {
       ptSum += tmpPt;
     }
   }
@@ -50,21 +50,21 @@ Double_t IsolationTools::EcalIsolation(const SuperCluster *sc, Double_t coneSize
     Double_t basicClusterEt   = basicClusterEnergy*sin(2*atan(exp(basicClusterEta)));           
 
     if (basicClusterEt > etLow) {            
-      bool inSuperCluster = false;	  
+      bool inSuperCluster = false;        
       
       // loop over the basic clusters of the supercluster
       // to make sure that the basic cluster is not inside
       // the super cluster. We exclude those.
       for (UInt_t j=0; j<sc->ClusterSize(); j++) {
-        const BasicCluster *tempBasicClusterInSuperCluster = sc->Cluster(j);	
+        const BasicCluster *tempBasicClusterInSuperCluster = sc->Cluster(j);    
         if (tempBasicClusterInSuperCluster == basicCluster) {
-          inSuperCluster = true;	    
+          inSuperCluster = true;            
         }
       }
       
-      if (!inSuperCluster) {	    
+      if (!inSuperCluster) {        
         Double_t dr = MathUtils::DeltaR(sc->Phi(), sc->Eta(),
-                                      basicCluster->Phi(),basicCluster->Eta());
+                                        basicCluster->Phi(),basicCluster->Eta());
         if (dr < coneSize) {
           ecalIsol += basicClusterEt;
         }
@@ -86,7 +86,7 @@ Double_t IsolationTools::CaloTowerHadIsolation(const ThreeVector *p, Double_t ex
   for (UInt_t i=0; i<caloTowers->GetEntries();i++) {    
     Double_t caloTowerEt = caloTowers->At(i)->HadEt();
     Double_t dr = MathUtils::DeltaR(caloTowers->At(i)->Phi(), caloTowers->At(i)->Eta(),
-                                  p->Phi(), p->Eta());
+                                    p->Phi(), p->Eta());
     if (dr < extRadius && dr > intRadius && caloTowerEt > etLow) {
       sumEt += caloTowerEt;
     }
@@ -106,7 +106,7 @@ Double_t IsolationTools::CaloTowerEmIsolation(const ThreeVector *p, Double_t ext
   for (UInt_t i=0; i<caloTowers->GetEntries();i++) {    
     Double_t caloTowerEt = caloTowers->At(i)->EmEt();
     Double_t dr = MathUtils::DeltaR(caloTowers->At(i)->Phi(), caloTowers->At(i)->Eta(),
-                                   p->Phi(), p->Eta());
+                                    p->Phi(), p->Eta());
     if (dr < extRadius && dr > intRadius && caloTowerEt > etLow) {
       sumEt += caloTowerEt;
     }
@@ -127,7 +127,7 @@ Double_t IsolationTools::PFRadialMuonIsolation(const Muon *p, const PFCandidateC
 
     // exclude muon
     if (pf->TrackerTrk() && p->TrackerTrk() &&
-       pf->TrackerTrk() == p->TrackerTrk()) continue;
+        pf->TrackerTrk() == p->TrackerTrk()) continue;
 
     Double_t dr = MathUtils::DeltaR(p->Mom(), pf->Mom());
     
@@ -139,8 +139,8 @@ Double_t IsolationTools::PFRadialMuonIsolation(const Muon *p, const PFCandidateC
 
     // exclude PFMuons and PFElectrons within the cone
     if (pf->HasTrk() &&
-       (pf->PFType() == PFCandidate::eElectron || 
-        pf->PFType() == PFCandidate::eMuon)) continue;
+        (pf->PFType() == PFCandidate::eElectron || 
+         pf->PFType() == PFCandidate::eMuon)) continue;
 
     // add the pf pt if it is inside the extRadius 
     if (dr < extRadius) RadialIso += pf->Pt() * (1.0 - 3.0*dr);
@@ -150,9 +150,9 @@ Double_t IsolationTools::PFRadialMuonIsolation(const Muon *p, const PFCandidateC
 
 //--------------------------------------------------------------------------------------------------
 Double_t IsolationTools::PFMuonIsolation(const Muon *p, const PFCandidateCol *PFCands, 
-                                      	 const Vertex *vertex, Double_t  delta_z, Double_t ptMin,
-				     	 Double_t extRadius, Double_t intRadiusGamma,
-					 Double_t intRadius)
+                                         const Vertex *vertex, Double_t  delta_z, Double_t ptMin,
+                                         Double_t extRadius, Double_t intRadiusGamma,
+                                         Double_t intRadius)
 {
   // Computes the PF Isolation: Summed Transverse Momentum of all PF candidates inside an annulus
   // around the particle seed track.
@@ -166,7 +166,7 @@ Double_t IsolationTools::PFMuonIsolation(const Muon *p, const PFCandidateCol *PF
 
     // exclude muon
     if (pf->TrackerTrk() && p->TrackerTrk() &&
-       pf->TrackerTrk() == p->TrackerTrk()) continue;
+        pf->TrackerTrk() == p->TrackerTrk()) continue;
 
     Double_t dr = MathUtils::DeltaR(p->Mom(), pf->Mom());
     
@@ -194,10 +194,10 @@ Double_t IsolationTools::PFMuonIsolation(const Muon *p, const PFCandidateCol *PF
 
 //--------------------------------------------------------------------------------------------------
 Double_t IsolationTools::PFMuonIsolation(const Muon *p, const PFCandidateCol *PFCands,
-                                      	 const MuonCol *goodMuons, const ElectronCol *goodElectrons, 
-                                      	 const Vertex *vertex, Double_t  delta_z, Double_t ptMin,
-				      	 Double_t extRadius, Double_t intRadiusGamma,
-					 Double_t intRadius)
+                                         const MuonCol *goodMuons, const ElectronCol *goodElectrons, 
+                                         const Vertex *vertex, Double_t  delta_z, Double_t ptMin,
+                                         Double_t extRadius, Double_t intRadiusGamma,
+                                         Double_t intRadius)
 {
   // Computes the PF Isolation: Summed Transverse Momentum of all PF candidates inside an annulus
   // around the particle seed track.
@@ -211,7 +211,7 @@ Double_t IsolationTools::PFMuonIsolation(const Muon *p, const PFCandidateCol *PF
 
     // exclude muon
     if (pf->TrackerTrk() && p->TrackerTrk() &&
-       pf->TrackerTrk() == p->TrackerTrk()) continue;
+        pf->TrackerTrk() == p->TrackerTrk()) continue;
 
     Double_t dr = MathUtils::DeltaR(p->Mom(), pf->Mom());
     
@@ -235,28 +235,28 @@ Double_t IsolationTools::PFMuonIsolation(const Muon *p, const PFCandidateCol *PF
       Bool_t isLepton = kFALSE;
       if (goodMuons){
         for (UInt_t nl=0; nl<goodMuons->GetEntries();nl++) {
-	  const Muon *m = goodMuons->At(nl);
+          const Muon *m = goodMuons->At(nl);
           if (pf->TrackerTrk() && m->TrackerTrk() &&
-	     pf->TrackerTrk() == m->TrackerTrk()) {
-	    isLepton = kTRUE;
-	    break;
-	  }
-	}
+              pf->TrackerTrk() == m->TrackerTrk()) {
+            isLepton = kTRUE;
+            break;
+          }
+        }
       }
       if (goodElectrons && isLepton == kFALSE){
         for (UInt_t nl=0; nl<goodElectrons->GetEntries();nl++) {
-	  const Electron *e = goodElectrons->At(nl);
+          const Electron *e = goodElectrons->At(nl);
           if (pf->TrackerTrk() && e->TrackerTrk() &&
-	     pf->TrackerTrk() == e->TrackerTrk()) {
-	    isLepton = kTRUE;
-	    break;
-	  }
+              pf->TrackerTrk() == e->TrackerTrk()) {
+            isLepton = kTRUE;
+            break;
+          }
           if (pf->GsfTrk() && e->GsfTrk() &&
-	     pf->GsfTrk() == e->GsfTrk()) {
-	    isLepton = kTRUE;
-	    break;
-	  }
-	}
+              pf->GsfTrk() == e->GsfTrk()) {
+            isLepton = kTRUE;
+            break;
+          }
+        }
       }
       if (isLepton == kTRUE) continue;
       ptSum += pf->Pt();            
@@ -267,9 +267,9 @@ Double_t IsolationTools::PFMuonIsolation(const Muon *p, const PFCandidateCol *PF
 
 //--------------------------------------------------------------------------------------------------
 Double_t IsolationTools::PFElectronIsolation(const Electron *p, const PFCandidateCol *PFCands, 
-                                      	     const Vertex *vertex, Double_t delta_z, Double_t ptMin,
-				     	     Double_t extRadius, Double_t intRadius,
-					     Int_t PFCandidateType) 
+                                             const Vertex *vertex, Double_t delta_z, Double_t ptMin,
+                                             Double_t extRadius, Double_t intRadius,
+                                             Int_t PFCandidateType) 
 {
   // Computes the PF Isolation: Summed Transverse Momentum of all PF candidates inside an annulus
   // around the particle seed track.
@@ -290,10 +290,10 @@ Double_t IsolationTools::PFElectronIsolation(const Electron *p, const PFCandidat
     if (!pf->HasTrk() && pf->Pt() <= ptMin) continue;
 
     if (pf->TrackerTrk() && p->TrackerTrk() &&
-       pf->TrackerTrk() == p->TrackerTrk()) continue;
+        pf->TrackerTrk() == p->TrackerTrk()) continue;
 
     if (pf->GsfTrk() && p->GsfTrk() &&
-       pf->GsfTrk() == p->GsfTrk()) continue;
+        pf->GsfTrk() == p->GsfTrk()) continue;
 
     // ignore the pf candidate if it is too far away in Z
     if (pf->BestTrk()) {
@@ -305,7 +305,7 @@ Double_t IsolationTools::PFElectronIsolation(const Electron *p, const PFCandidat
     Double_t dr = MathUtils::DeltaR(p->Mom(), pf->Mom());
     // add the pf pt if it is inside the extRadius and outside the intRadius
     if ( dr < extRadius && 
-	 dr >= intRadius ) {
+         dr >= intRadius ) {
 
       //EtaStrip Veto for Gamma 
       if (pf->PFType() == PFCandidate::eGamma && fabs(p->Eta() - pf->Eta()) < 0.025) continue;
@@ -324,11 +324,11 @@ Double_t IsolationTools::PFElectronIsolation(const Electron *p, const PFCandidat
 
 //--------------------------------------------------------------------------------------------------
 Double_t IsolationTools::PFElectronIsolation(const Electron *p, const PFCandidateCol *PFCands, 
-                      	     		     const MuonCol *goodMuons,
-					     const ElectronCol *goodElectrons,
-					     const Vertex *vertex, Double_t  delta_z,Double_t ptMin,
-			     		     Double_t extRadius, Double_t intRadius,
-					     Int_t PFCandidateType)
+                                             const MuonCol *goodMuons,
+                                             const ElectronCol *goodElectrons,
+                                             const Vertex *vertex, Double_t  delta_z,Double_t ptMin,
+                                             Double_t extRadius, Double_t intRadius,
+                                             Int_t PFCandidateType)
 {
   // Computes the PF Isolation: Summed Transverse Momentum of all PF candidates inside an annulus
   // around the particle seed track.
@@ -349,10 +349,10 @@ Double_t IsolationTools::PFElectronIsolation(const Electron *p, const PFCandidat
     if (!pf->HasTrk() && pf->Pt() <= ptMin) continue;
 
     if (pf->TrackerTrk() && p->TrackerTrk() &&
-       pf->TrackerTrk() == p->TrackerTrk()) continue;
+        pf->TrackerTrk() == p->TrackerTrk()) continue;
 
     if (pf->GsfTrk() && p->GsfTrk() &&
-       pf->GsfTrk() == p->GsfTrk()) continue;
+        pf->GsfTrk() == p->GsfTrk()) continue;
 
     // ignore the pf candidate if it is too far away in Z
     if (pf->BestTrk()) {
@@ -363,7 +363,7 @@ Double_t IsolationTools::PFElectronIsolation(const Electron *p, const PFCandidat
     Double_t dr = MathUtils::DeltaR(p->Mom(), pf->Mom());
     // add the pf pt if it is inside the extRadius and outside the intRadius
     if ( dr < extRadius && 
-	 dr >= intRadius ) {
+         dr >= intRadius ) {
 
       // EtaStrip Veto for Gamma 
       if (pf->PFType() == PFCandidate::eGamma && fabs(p->Eta() - pf->Eta()) < 0.025) continue;
@@ -375,28 +375,28 @@ Double_t IsolationTools::PFElectronIsolation(const Electron *p, const PFCandidat
       Bool_t isLepton = kFALSE;
       if (goodMuons){
         for (UInt_t nl=0; nl<goodMuons->GetEntries();nl++) {
-	  const Muon *m = goodMuons->At(nl);
+          const Muon *m = goodMuons->At(nl);
           if (pf->TrackerTrk() && m->TrackerTrk() &&
-	     pf->TrackerTrk() == m->TrackerTrk()) {
-	    isLepton = kTRUE;
-	    break;
-	  }
-	}
+              pf->TrackerTrk() == m->TrackerTrk()) {
+            isLepton = kTRUE;
+            break;
+          }
+        }
       }
       if (goodElectrons && isLepton == kFALSE){
         for (UInt_t nl=0; nl<goodElectrons->GetEntries();nl++) {
-	  const Electron *e = goodElectrons->At(nl);
+          const Electron *e = goodElectrons->At(nl);
           if (pf->TrackerTrk() && e->TrackerTrk() &&
-	     pf->TrackerTrk() == e->TrackerTrk()) {
-	    isLepton = kTRUE;
-	    break;
-	  }
+              pf->TrackerTrk() == e->TrackerTrk()) {
+            isLepton = kTRUE;
+            break;
+          }
           if (pf->GsfTrk() && e->GsfTrk() &&
-	     pf->GsfTrk() == e->GsfTrk()) {
-	    isLepton = kTRUE;
-	    break;
-	  }
-	}
+              pf->GsfTrk() == e->GsfTrk()) {
+            isLepton = kTRUE;
+            break;
+          }
+        }
       }
 
       if (isLepton == kTRUE) continue;
@@ -409,11 +409,11 @@ Double_t IsolationTools::PFElectronIsolation(const Electron *p, const PFCandidat
 //--------------------------------------------------------------------------------------------------
 Double_t IsolationTools::PFElectronIsolation2012(const Electron *ele, const Vertex *vertex, 
                                                  const PFCandidateCol *PFCands, 
-                                                 const PileupEnergyDensityCol *PileupEnergyDensity,
+                                                 Double_t rho,
                                                  ElectronTools::EElectronEffectiveAreaTarget EffectiveAreaTarget,
-                                                 const ElectronCol *goodElectrons,
-                                                 const MuonCol *goodMuons, Double_t dRMax,
-						 Bool_t isDebug)
+                                                 const ElectronCol *goodElectrons/* = 0*/,
+                                                 const MuonCol *goodMuons/* = 0*/,
+                                                 Double_t dRMax/* = 0.4*/, Bool_t isDebug/* = false*/)
 {
   Double_t tmpChargedIso_DR       = 0;
   Double_t tmpGammaIso_DR         = 0;
@@ -437,68 +437,71 @@ Double_t IsolationTools::PFElectronIsolation2012(const Electron *ele, const Vert
       Bool_t IsLeptonFootprint = kFALSE;
       //************************************************************
       // Lepton Footprint Removal
-      //************************************************************            
-      for (UInt_t q=0; q < goodElectrons->GetEntries() ; ++q) {
-	//if pf candidate matches an electron passing ID cuts, then veto it
-	if (pf->GsfTrk() && goodElectrons->At(q)->GsfTrk() &&
-	   pf->GsfTrk() == goodElectrons->At(q)->GsfTrk()) IsLeptonFootprint = kTRUE;
-	if (pf->TrackerTrk() && goodElectrons->At(q)->TrackerTrk() &&
-	   pf->TrackerTrk() == goodElectrons->At(q)->TrackerTrk()) IsLeptonFootprint = kTRUE;
-	//if pf candidate lies in veto regions of electron passing ID cuts, then veto it
-	if (pf->BestTrk() && fabs(goodElectrons->At(q)->SCluster()->Eta()) >= 1.479 
-           && MathUtils::DeltaR(goodElectrons->At(q)->Mom(), pf->Mom()) < 0.015) IsLeptonFootprint = kTRUE;
-	if (pf->PFType() == PFCandidate::eGamma && fabs(goodElectrons->At(q)->SCluster()->Eta()) >= 1.479 &&
-	   MathUtils::DeltaR(goodElectrons->At(q)->Mom(), pf->Mom()) < 0.08) IsLeptonFootprint = kTRUE;
+      //************************************************************
+      if (goodElectrons) {
+        for (UInt_t q=0; q < goodElectrons->GetEntries() ; ++q) {
+          //if pf candidate matches an electron passing ID cuts, then veto it
+          if (pf->GsfTrk() && goodElectrons->At(q)->GsfTrk() &&
+              pf->GsfTrk() == goodElectrons->At(q)->GsfTrk()) IsLeptonFootprint = kTRUE;
+          if (pf->TrackerTrk() && goodElectrons->At(q)->TrackerTrk() &&
+              pf->TrackerTrk() == goodElectrons->At(q)->TrackerTrk()) IsLeptonFootprint = kTRUE;
+          //if pf candidate lies in veto regions of electron passing ID cuts, then veto it
+          if (pf->BestTrk() && fabs(goodElectrons->At(q)->SCluster()->Eta()) >= 1.479 
+              && MathUtils::DeltaR(goodElectrons->At(q)->Mom(), pf->Mom()) < 0.015) IsLeptonFootprint = kTRUE;
+          if (pf->PFType() == PFCandidate::eGamma && fabs(goodElectrons->At(q)->SCluster()->Eta()) >= 1.479 &&
+              MathUtils::DeltaR(goodElectrons->At(q)->Mom(), pf->Mom()) < 0.08) IsLeptonFootprint = kTRUE;
+        }
       }
-      for (UInt_t q=0; q < goodMuons->GetEntries() ; ++q) {
-	//if pf candidate matches an muon passing ID cuts, then veto it
-	if (pf->TrackerTrk() && goodMuons->At(q)->TrackerTrk() &&
-	   pf->TrackerTrk() == goodMuons->At(q)->TrackerTrk()) IsLeptonFootprint = kTRUE;
-	//if pf candidate lies in veto regions of muon passing ID cuts, then veto it
-	if (pf->BestTrk() && MathUtils::DeltaR(goodMuons->At(q)->Mom(), pf->Mom()) < 0.01) IsLeptonFootprint = kTRUE;
+
+      if (goodMuons) {
+        for (UInt_t q=0; q < goodMuons->GetEntries() ; ++q) {
+          //if pf candidate matches an muon passing ID cuts, then veto it
+          if (pf->TrackerTrk() && goodMuons->At(q)->TrackerTrk() &&
+              pf->TrackerTrk() == goodMuons->At(q)->TrackerTrk()) IsLeptonFootprint = kTRUE;
+          //if pf candidate lies in veto regions of muon passing ID cuts, then veto it
+          if (pf->BestTrk() && MathUtils::DeltaR(goodMuons->At(q)->Mom(), pf->Mom()) < 0.01) IsLeptonFootprint = kTRUE;
+        }
       }
 
       if (!IsLeptonFootprint) {
-	Bool_t passVeto = kTRUE;
-	//Charged
-	 if (pf->BestTrk()) {	  	   
-	   // CMS DOESN"T WANT THIS
-	   //if (!(fabs(pf->BestTrk()->DzCorrected(*vertex) - ele->BestTrk()->DzCorrected(*vertex)) < 0.2)) passVeto = kFALSE;
-	   //************************************************************
-	   // Veto any PFmuon, or PFEle
-	   if (pf->PFType() == PFCandidate::eElectron || pf->PFType() == PFCandidate::eMuon) passVeto = kFALSE;
-	   //************************************************************
-	   //************************************************************
-	   // Footprint Veto
-	   if (fabs(ele->SCluster()->Eta()) >= 1.479 && dr < 0.015) passVeto = kFALSE;
-	   //************************************************************
-	   if (passVeto) {
-	     if (dr < dRMax) tmpChargedIso_DR += pf->Pt();
-	   } //pass veto	  
-	 }
-	 //Gamma
-	 else if (pf->PFType() == PFCandidate::eGamma) {
-	   //************************************************************
-	   // Footprint Veto
-	   if (fabs(ele->SCluster()->Eta()) >= 1.479) {
-             if (dr < 0.08) passVeto = kFALSE;
-	   }
-	   //************************************************************
-	   
-	   if (passVeto) {
-	     if (dr < dRMax) tmpGammaIso_DR += pf->Pt();
-	   }
-	 }
-	 //NeutralHadron
-	 else {
-           if (dr < dRMax) tmpNeutralHadronIso_DR += pf->Pt();
-	 }
+        Bool_t passVeto = kTRUE;
+        //Charged
+        if (pf->BestTrk()) {              
+          // CMS DOESN"T WANT THIS
+          //if (!(fabs(pf->BestTrk()->DzCorrected(*vertex) - ele->BestTrk()->DzCorrected(*vertex)) < 0.2)) passVeto = kFALSE;
+          //************************************************************
+          // Veto any PFmuon, or PFEle
+          if (pf->PFType() == PFCandidate::eElectron || pf->PFType() == PFCandidate::eMuon) passVeto = kFALSE;
+          //************************************************************
+          //************************************************************
+          // Footprint Veto
+          if (fabs(ele->SCluster()->Eta()) >= 1.479 && dr < 0.015) passVeto = kFALSE;
+          //************************************************************
+          if (passVeto) {
+            if (dr < dRMax) tmpChargedIso_DR += pf->Pt();
+          } //pass veto          
+        }
+        //Gamma
+        else if (pf->PFType() == PFCandidate::eGamma) {
+          //************************************************************
+          // Footprint Veto
+          if (fabs(ele->SCluster()->Eta()) >= 1.479) {
+            if (dr < 0.08) passVeto = kFALSE;
+          }
+          //************************************************************
+           
+          if (passVeto) {
+            if (dr < dRMax) tmpGammaIso_DR += pf->Pt();
+          }
+        }
+        //NeutralHadron
+        else {
+          if (dr < dRMax) tmpNeutralHadronIso_DR += pf->Pt();
+        }
       } //not lepton footprint
     } //in 1.0 dr cone
   } //loop over PF candidates
 
-  Double_t Rho = 0;
-  if (!(TMath::IsNaN(PileupEnergyDensity->At(0)->Rho()) || isinf(PileupEnergyDensity->At(0)->Rho()))) Rho = PileupEnergyDensity->At(0)->Rho();
   
   Double_t IsoVar_ChargedIso_DR = tmpChargedIso_DR/ele->Pt();
   Double_t IsoVar_NeutralIso_DR = tmpGammaIso_DR + tmpNeutralHadronIso_DR;
@@ -506,7 +509,7 @@ Double_t IsolationTools::PFElectronIsolation2012(const Electron *ele, const Vert
   if (dRMax != 0.4) assert(0);
   double EA = ElectronTools::ElectronEffectiveArea(ElectronTools::kEleNeutralIso04, ele->SCluster()->Eta(), EffectiveAreaTarget);
 
-  IsoVar_NeutralIso_DR = TMath::Max((IsoVar_NeutralIso_DR - Rho*EA)/ele->Pt(), 0.0);
+  IsoVar_NeutralIso_DR = TMath::Max((IsoVar_NeutralIso_DR - rho * EA)/ele->Pt(), 0.0);
   
   if (isDebug == kTRUE){
     printf("Iso(ch, em, nh), EA, RelIso = (%f, %f, %f), %f, %f\n",tmpChargedIso_DR,tmpGammaIso_DR,tmpNeutralHadronIso_DR,
@@ -519,11 +522,12 @@ Double_t IsolationTools::PFElectronIsolation2012(const Electron *ele, const Vert
 //--------------------------------------------------------------------------------------------------
 
 Double_t IsolationTools::PFElectronIsolation2012LepTag(const Electron *ele, const Vertex *vertex, 
-						       const PFCandidateCol *PFCands, 
-						       const PileupEnergyDensityCol *PileupEnergyDensity,
-						       ElectronTools::EElectronEffectiveAreaTarget EffectiveAreaTarget,
-						       const ElectronCol *goodElectrons,
-						       const MuonCol *goodMuons, Double_t dRMax, Bool_t isDebug)
+                                                       const PFCandidateCol *PFCands, 
+                                                       Double_t rho,
+                                                       ElectronTools::EElectronEffectiveAreaTarget EffectiveAreaTarget,
+                                                       const ElectronCol *goodElectrons/* = 0*/,
+                                                       const MuonCol *goodMuons/* = 0*/,
+                                                       Double_t dRMax/* = 0.4*/, Bool_t isDebug/* = false*/)
 {
   Double_t tmpChargedIso_DR       = 0;
   Double_t tmpGammaIso_DR         = 0;
@@ -542,94 +546,90 @@ Double_t IsolationTools::PFElectronIsolation2012LepTag(const Electron *ele, cons
       // Lepton Footprint Removal
       //************************************************************   
       if (pf->PFType() == PFCandidate::eGamma){
-	for (UInt_t i=0; i<PFCands->GetEntries();i++) { 
-	  const PFCandidate *pf2 = PFCands->At(i);
-	  if (pf2->PFType()==PFCandidate::eElectron && pf->SCluster() == pf2->SCluster())IsLeptonFootprint = kTRUE;
-	}
+        for (UInt_t i=0; i<PFCands->GetEntries();i++) { 
+          const PFCandidate *pf2 = PFCands->At(i);
+          if (pf2->PFType()==PFCandidate::eElectron && pf->SCluster() == pf2->SCluster())IsLeptonFootprint = kTRUE;
+        }
       }
          
-      for (UInt_t q=0; q < goodElectrons->GetEntries() ; ++q) {
-	//if pf candidate matches an electron passing ID cuts, then veto it
-	if (pf->GsfTrk() && goodElectrons->At(q)->GsfTrk() &&
-	   pf->GsfTrk() == goodElectrons->At(q)->GsfTrk()) IsLeptonFootprint = kTRUE;
-	if (pf->TrackerTrk() && goodElectrons->At(q)->TrackerTrk() &&
-	   pf->TrackerTrk() == goodElectrons->At(q)->TrackerTrk()) IsLeptonFootprint = kTRUE;
-	//if pf candidate lies in veto regions of electron passing ID cuts, then veto it
-	if (pf->BestTrk() && fabs(goodElectrons->At(q)->SCluster()->Eta()) >= 1.479 
-           && MathUtils::DeltaR(goodElectrons->At(q)->Mom(), pf->Mom()) < 0.015) IsLeptonFootprint = kTRUE;
-	if (pf->PFType() == PFCandidate::eGamma && fabs(goodElectrons->At(q)->SCluster()->Eta()) >= 1.479 &&
-	   MathUtils::DeltaR(goodElectrons->At(q)->Mom(), pf->Mom()) < 0.08) IsLeptonFootprint = kTRUE;
+      if (goodElectrons) {
+        for (UInt_t q=0; q < goodElectrons->GetEntries() ; ++q) {
+          //if pf candidate matches an electron passing ID cuts, then veto it
+          if (pf->GsfTrk() && goodElectrons->At(q)->GsfTrk() &&
+              pf->GsfTrk() == goodElectrons->At(q)->GsfTrk()) IsLeptonFootprint = kTRUE;
+          if (pf->TrackerTrk() && goodElectrons->At(q)->TrackerTrk() &&
+              pf->TrackerTrk() == goodElectrons->At(q)->TrackerTrk()) IsLeptonFootprint = kTRUE;
+          //if pf candidate lies in veto regions of electron passing ID cuts, then veto it
+          if (pf->BestTrk() && fabs(goodElectrons->At(q)->SCluster()->Eta()) >= 1.479 
+              && MathUtils::DeltaR(goodElectrons->At(q)->Mom(), pf->Mom()) < 0.015) IsLeptonFootprint = kTRUE;
+          if (pf->PFType() == PFCandidate::eGamma && fabs(goodElectrons->At(q)->SCluster()->Eta()) >= 1.479 &&
+              MathUtils::DeltaR(goodElectrons->At(q)->Mom(), pf->Mom()) < 0.08) IsLeptonFootprint = kTRUE;
+        }
       }
-      for (UInt_t q=0; q < goodMuons->GetEntries() ; ++q) {
-	//if pf candidate matches an muon passing ID cuts, then veto it
-	if (pf->TrackerTrk() && goodMuons->At(q)->TrackerTrk() &&
-	   pf->TrackerTrk() == goodMuons->At(q)->TrackerTrk()) IsLeptonFootprint = kTRUE;
-	//if pf candidate lies in veto regions of muon passing ID cuts, then veto it
-	if (pf->BestTrk() && MathUtils::DeltaR(goodMuons->At(q)->Mom(), pf->Mom()) < 0.01) IsLeptonFootprint = kTRUE;
+      if (goodMuons) {
+        for (UInt_t q=0; q < goodMuons->GetEntries() ; ++q) {
+          //if pf candidate matches an muon passing ID cuts, then veto it
+          if (pf->TrackerTrk() && goodMuons->At(q)->TrackerTrk() &&
+              pf->TrackerTrk() == goodMuons->At(q)->TrackerTrk()) IsLeptonFootprint = kTRUE;
+          //if pf candidate lies in veto regions of muon passing ID cuts, then veto it
+          if (pf->BestTrk() && MathUtils::DeltaR(goodMuons->At(q)->Mom(), pf->Mom()) < 0.01) IsLeptonFootprint = kTRUE;
+        }
       }
 
       if (!IsLeptonFootprint) {
-	Bool_t passVeto = kTRUE;
-	//Charged
-	 if (pf->BestTrk()) {	  	   
-	   // CMS DOESN"T WANT THIS
-	   //if (!(fabs(pf->BestTrk()->DzCorrected(*vertex) - ele->BestTrk()->DzCorrected(*vertex)) < 0.2)) passVeto = kFALSE;
-	   //************************************************************
-	   // Veto any PFmuon, or PFEle
-	   if (pf->PFType() == PFCandidate::eElectron || pf->PFType() == PFCandidate::eMuon) passVeto = kFALSE;
-	   //************************************************************
-	   //************************************************************
-	   // Footprint Veto
-	   if (fabs(ele->SCluster()->Eta()) >= 1.479 && dr < 0.015) passVeto = kFALSE;
-	   //************************************************************
-	   if (passVeto) {
-	     if (dr < dRMax) {
-	       if ( false ) printf("Charged PFCand Pt = %f    eta= %f       phi= %f     , dr= %f    charge=%f   \n",pf->Pt(),pf->Eta(),pf->Phi(),dr, pf->Charge());
-	       tmpChargedIso_DR += pf->Pt();
-	     } //pass dr
-	   } //pass veto	  
-	 }
-	 //Gamma
-	 else if (pf->PFType() == PFCandidate::eGamma) {
-	   //************************************************************
-	   // Footprint Veto
-	   if (fabs(ele->SCluster()->Eta()) >= 1.479) {
-             if (dr < 0.08) passVeto = kFALSE;
-	   }
-	   //************************************************************
-	   
-	   if (passVeto) {
-	     if (pf->HasSCluster()){
-	       if ( false ) printf("Gamma PFCand Pt = %f    eta= %f       phi= %f     , dr= %f   \n",pf->Pt(),pf->SCluster()->Eta(),pf->Phi(),dr);//ming
-	     }
-	     //if (dr < dRMax ) tmpGammaIso_DR += pf->Pt();
-	     //if (dr < dRMax && ((pf->HasSCluster() && pf->SCluster()!=ele->SCluster()) || !pf->HasSCluster())) tmpGammaIso_DR += pf->Pt();//ming
-	     if (dr < dRMax && !(ele->GsfTrk()->NExpectedHitsInner()>0 && pf->MvaGamma() > 0.99 && pf->HasSCluster() && ele->SCluster() == pf->SCluster())) tmpGammaIso_DR += pf->Pt();//ming:HZZ
-	   }
-	 }
-	 //NeutralHadron
-	 else {
-	   if ( false ) printf("NeutralHadron PFCand Pt = %f    eta= %f       phi= %f     , dr= %f   \n",pf->Pt(),pf->Eta(),pf->Phi(),dr);
-           if (dr < dRMax) tmpNeutralHadronIso_DR += pf->Pt();
-	 }
+        Bool_t passVeto = kTRUE;
+        //Charged
+        if (pf->BestTrk()) {              
+          // CMS DOESN"T WANT THIS
+          //if (!(fabs(pf->BestTrk()->DzCorrected(*vertex) - ele->BestTrk()->DzCorrected(*vertex)) < 0.2)) passVeto = kFALSE;
+          //************************************************************
+          // Veto any PFmuon, or PFEle
+          if (pf->PFType() == PFCandidate::eElectron || pf->PFType() == PFCandidate::eMuon) passVeto = kFALSE;
+          //************************************************************
+          //************************************************************
+          // Footprint Veto
+          if (fabs(ele->SCluster()->Eta()) >= 1.479 && dr < 0.015) passVeto = kFALSE;
+          //************************************************************
+          if (passVeto) {
+            if (dr < dRMax) {
+              if ( false ) printf("Charged PFCand Pt = %f    eta= %f       phi= %f     , dr= %f    charge=%f   \n",pf->Pt(),pf->Eta(),pf->Phi(),dr, pf->Charge());
+              tmpChargedIso_DR += pf->Pt();
+            } //pass dr
+          } //pass veto          
+        }
+        //Gamma
+        else if (pf->PFType() == PFCandidate::eGamma) {
+          //************************************************************
+          // Footprint Veto
+          if (fabs(ele->SCluster()->Eta()) >= 1.479) {
+            if (dr < 0.08) passVeto = kFALSE;
+          }
+          //************************************************************
+           
+          if (passVeto) {
+            if (pf->HasSCluster()){
+              if ( false ) printf("Gamma PFCand Pt = %f    eta= %f       phi= %f     , dr= %f   \n",pf->Pt(),pf->SCluster()->Eta(),pf->Phi(),dr);//ming
+            }
+            //if (dr < dRMax ) tmpGammaIso_DR += pf->Pt();
+            //if (dr < dRMax && ((pf->HasSCluster() && pf->SCluster()!=ele->SCluster()) || !pf->HasSCluster())) tmpGammaIso_DR += pf->Pt();//ming
+            if (dr < dRMax && !(ele->GsfTrk()->NExpectedHitsInner()>0 && pf->MvaGamma() > 0.99 && pf->HasSCluster() && ele->SCluster() == pf->SCluster())) tmpGammaIso_DR += pf->Pt();//ming:HZZ
+          }
+        }
+        //NeutralHadron
+        else {
+          if ( false ) printf("NeutralHadron PFCand Pt = %f    eta= %f       phi= %f     , dr= %f   \n",pf->Pt(),pf->Eta(),pf->Phi(),dr);
+          if (dr < dRMax) tmpNeutralHadronIso_DR += pf->Pt();
+        }
       } //not lepton footprint
     } //in 1.0 dr cone
   } //loop over PF candidates
-
-  Double_t Rho = 0;
-  assert(PileupEnergyDensity);
-
-  //if (!(TMath::IsNaN(PileupEnergyDensity->At(0)->Rho()) || isinf(PileupEnergyDensity->At(0)->Rho())))
-  //  Rho = PileupEnergyDensity->At(0)->Rho();//ming
-
-  Rho = PileupEnergyDensity->At(0)->RhoKt6PFJets();//ming
 
   Double_t IsoVar_ChargedIso_DR = tmpChargedIso_DR/ele->Pt();
   Double_t IsoVar_NeutralIso_DR = tmpGammaIso_DR + tmpNeutralHadronIso_DR;
   // Careful here, we have kEleNeutralIso04 only for now            ****added kEleGammaIso03 and kEleNeutralHadronIso03 --heng june 16th 2012
   double EA = ElectronTools::ElectronEffectiveArea(ElectronTools::kEleGammaIso03, ele->SCluster()->Eta(), EffectiveAreaTarget)
     + ElectronTools::ElectronEffectiveArea(ElectronTools::kEleNeutralHadronIso03, ele->SCluster()->Eta(), EffectiveAreaTarget) ;
-  IsoVar_NeutralIso_DR = TMath::Max((IsoVar_NeutralIso_DR - Rho*EA)/ele->Pt(), 0.0);
+  IsoVar_NeutralIso_DR = TMath::Max((IsoVar_NeutralIso_DR - rho * EA)/ele->Pt(), 0.0);
   
   if (isDebug == kTRUE){
     printf("Iso(ch, em, nh), EA, RelIso = (%f, %f, %f), %f, %f\n",tmpChargedIso_DR,tmpGammaIso_DR,tmpNeutralHadronIso_DR,
@@ -639,10 +639,23 @@ Double_t IsolationTools::PFElectronIsolation2012LepTag(const Electron *ele, cons
   return (IsoVar_ChargedIso_DR + IsoVar_NeutralIso_DR);
 }
 
+Double_t
+mithep::IsolationTools::PFElectronIsolationRhoCorr(mithep::Electron const* ele, Double_t rho, ElectronTools::EElectronEffectiveAreaTarget eaDef)
+{
+  double effArea = ElectronTools::ElectronEffectiveArea(ElectronTools::kEleNeutralIso03, ele->SCluster()->Eta(), ElectronTools::kEleEAPhys14);
+
+  double isolation = ele->PFNeutralHadronIso() + ele->PFPhotonIso() - effArea * rho;
+  if (isolation < 0.) isolation = 0.;
+  isolation += ele->PFChargedHadronIso();
+
+  // this function is expected to return the absolute iso
+  return isolation;
+}
+
 //--------------------------------------------------------------------------------------------------
 Double_t IsolationTools::BetaM(const TrackCol *tracks, const Muon *p, const Vertex *vertex, 
                                Double_t ptMin, Double_t  delta_z, Double_t extRadius,
-			       Double_t intRadius){
+                               Double_t intRadius){
 
   if (!tracks) return 1.0;
   if (tracks->GetEntries() <= 0) return 1.0;
@@ -656,7 +669,7 @@ Double_t IsolationTools::BetaM(const TrackCol *tracks, const Muon *p, const Vert
     const Track *pTrack = tracks->At(i);
 
     if (pTrack && p->TrackerTrk() &&
-       pTrack == p->TrackerTrk()) continue;
+        pTrack == p->TrackerTrk()) continue;
 
     if (pTrack->Pt() <= ptMin) continue;
 
@@ -695,16 +708,16 @@ Double_t IsolationTools::BetaMwithPUCorrection(const PFCandidateCol *PFNoPileUp,
     const PFCandidate *pf = PFNoPileUp->At(i);
     // exclude muon
     if (pf->TrackerTrk() && p->TrackerTrk() &&
-       pf->TrackerTrk() == p->TrackerTrk()) continue;
+        pf->TrackerTrk() == p->TrackerTrk()) continue;
 
     //exclude PFCands outside of cone 0.4
     Double_t dr1 = MathUtils::DeltaR(p->Mom(), pf->Mom());
     if (dr1 > extRadius) continue;
     /* bambu default */
-//     if (pf->PFType() == PFCandidate::eHadron)  {
-//       if (pf->HasTrk())   ptSumChHadnoPU += pf->Pt();
-//       else etsumNeuHad += pf->Et();
-//     }
+    //     if (pf->PFType() == PFCandidate::eHadron)  {
+    //       if (pf->HasTrk())   ptSumChHadnoPU += pf->Pt();
+    //       else etsumNeuHad += pf->Et();
+    //     }
     /* ************ */
     /* Josh's fix */
     if (pf->PFType() == PFCandidate::eHadron) ptSumChHadnoPU += pf->Pt();
@@ -721,14 +734,14 @@ Double_t IsolationTools::BetaMwithPUCorrection(const PFCandidateCol *PFNoPileUp,
     const PFCandidate *pf = PFPileUp->At(i);
     // exclude muon
     if (pf->TrackerTrk() && p->TrackerTrk() &&
-       pf->TrackerTrk() == p->TrackerTrk()) continue;
+        pf->TrackerTrk() == p->TrackerTrk()) continue;
     //exclude PFCands outside of cone 0.4
     Double_t dr2 = MathUtils::DeltaR(p->Mom(), pf->Mom());
     if (dr2 > extRadius) continue;
     /* bambu default */
-//     if (pf->HasTrk()) ptsumPU += pf->Pt();
-//     if (pf->PFType() == PFCandidate::eHadron && !pf->HasTrk())  etsumNeuHad += pf->Et();
-//     else if (pf->PFType() == PFCandidate::eGamma) ptsumGamma += pf->Pt(); 
+    //     if (pf->HasTrk()) ptsumPU += pf->Pt();
+    //     if (pf->PFType() == PFCandidate::eHadron && !pf->HasTrk())  etsumNeuHad += pf->Et();
+    //     else if (pf->PFType() == PFCandidate::eGamma) ptsumGamma += pf->Pt(); 
     /* ************ */
     /* Josh's fix */
     //inner veto for neutrals
@@ -759,7 +772,7 @@ Double_t IsolationTools::BetaMwithPUCorrection(const PFCandidateCol *PFNoPileUp,
 //--------------------------------------------------------------------------------------------------
 Double_t IsolationTools::BetaE(const TrackCol *tracks, const Electron *p, const Vertex *vertex, 
                                Double_t ptMin, Double_t  delta_z, Double_t extRadius,
-			       Double_t intRadius)
+                               Double_t intRadius)
 {
   if (!tracks)
     return 1.0;
@@ -797,7 +810,7 @@ Double_t IsolationTools::BetaE(const TrackCol *tracks, const Electron *p, const 
 
   if (sqrt(Pt_jets_X_tot*Pt_jets_X_tot + Pt_jets_Y_tot*Pt_jets_Y_tot) > 0)
     return sqrt(Pt_jets_X*Pt_jets_X + Pt_jets_Y*Pt_jets_Y) / 
-           sqrt(Pt_jets_X_tot*Pt_jets_X_tot + Pt_jets_Y_tot*Pt_jets_Y_tot);
+      sqrt(Pt_jets_X_tot*Pt_jets_X_tot + Pt_jets_Y_tot*Pt_jets_Y_tot);
 
   return 1.0;
 }
@@ -805,13 +818,13 @@ Double_t IsolationTools::BetaE(const TrackCol *tracks, const Electron *p, const 
 
 // method added by F.Stoeckli: computes the track isolation with NO constrint on the OV-track compatibility
 Double_t IsolationTools::TrackIsolationNoPV(const Particle* p, const BaseVertex* bsp, 
-					    Double_t extRadius, 
-					    Double_t intRadius, 
-					    Double_t ptLow, 
-					    Double_t etaStrip,
-					    Double_t maxD0,
-					    TrackQuality::EQuality quality,
-					    const Collection<Track> *tracks,
+                                            Double_t extRadius, 
+                                            Double_t intRadius, 
+                                            Double_t ptLow, 
+                                            Double_t etaStrip,
+                                            Double_t maxD0,
+                                            TrackQuality::EQuality quality,
+                                            const Collection<Track> *tracks,
                                             UInt_t maxNExpectedHitsInner,
                                             const DecayParticleCol *conversions)
 {
@@ -848,19 +861,19 @@ Double_t IsolationTools::TrackIsolationNoPV(const Particle* p, const BaseVertex*
 
 
 Double_t IsolationTools::CiCTrackIsolation(const Photon* p, 
-					   const BaseVertex* theVtx, 
-					   Double_t extRadius, 
-					   Double_t intRadius, 
-					   Double_t ptLow, 
-					   Double_t etaStrip,
-					   Double_t maxD0,
-					   Double_t maxDZ,
-					   const Collection<Track> *tracks,
-					   unsigned int* worstVtxIndex,
-					   const Collection<Vertex> *vtxs,
-					   const Collection<Electron> *eles,
-					   bool print,
-					   double* ptmax, double* dRmax) {
+                                           const BaseVertex* theVtx, 
+                                           Double_t extRadius, 
+                                           Double_t intRadius, 
+                                           Double_t ptLow, 
+                                           Double_t etaStrip,
+                                           Double_t maxD0,
+                                           Double_t maxDZ,
+                                           const Collection<Track> *tracks,
+                                           unsigned int* worstVtxIndex,
+                                           const Collection<Vertex> *vtxs,
+                                           const Collection<Electron> *eles,
+                                           bool print,
+                                           double* ptmax, double* dRmax) {
   
   UInt_t numVtx = 1;
   const BaseVertex* iVtx = theVtx;
@@ -878,9 +891,9 @@ Double_t IsolationTools::CiCTrackIsolation(const Photon* p,
     // find the electron that matches the Photon SC
     for (UInt_t j=0; j<eles->GetEntries(); ++j) {
       if ( eles->At(j)->SCluster() == p->SCluster() ) {
-	if ( eles->At(j)->HasTrackerTrk() )
-	  theGsfTrack = eles->At(j)->TrackerTrk();
-	break;
+        if ( eles->At(j)->HasTrackerTrk() )
+          theGsfTrack = eles->At(j)->TrackerTrk();
+        break;
       }
     }
   }
@@ -943,17 +956,17 @@ Double_t IsolationTools::CiCTrackIsolation(const Photon* p,
       Double_t dEta = TMath::Abs(t->Eta()-phMom.Eta());
 
       if (print && t->Pt()>1. && false) {
-	  std::cout<<"              passing track #"<<j<<std::endl;
-	  std::cout<<"                          pt = "<<t->Pt()<<std::endl;
-	  std::cout<<"                         eta = "<<t->Eta()<<std::endl;
-	  std::cout<<"                         phi = "<<t->Phi()<<std::endl;
-	  std::cout<<"                          d0 = "<<fabs(t->D0Corrected( *iVtx ))<<std::endl;
-	  std::cout<<"                          dZ = "<<fabs(t->DzCorrected( *iVtx ))<<std::endl;
-	  std::cout<<"                          dR = "<<dR<<std::endl;
-	  std::cout<<"                        dEta = "<<dEta<<std::endl;
-	  std::cout<<"                          vx = "<<t->X0()<<std::endl;
-	  std::cout<<"                          vy = "<<t->Y0()<<std::endl;
-	  std::cout<<"                          vz = "<<t->Z0()<<std::endl;
+        std::cout<<"              passing track #"<<j<<std::endl;
+        std::cout<<"                          pt = "<<t->Pt()<<std::endl;
+        std::cout<<"                         eta = "<<t->Eta()<<std::endl;
+        std::cout<<"                         phi = "<<t->Phi()<<std::endl;
+        std::cout<<"                          d0 = "<<fabs(t->D0Corrected( *iVtx ))<<std::endl;
+        std::cout<<"                          dZ = "<<fabs(t->DzCorrected( *iVtx ))<<std::endl;
+        std::cout<<"                          dR = "<<dR<<std::endl;
+        std::cout<<"                        dEta = "<<dEta<<std::endl;
+        std::cout<<"                          vx = "<<t->X0()<<std::endl;
+        std::cout<<"                          vy = "<<t->Y0()<<std::endl;
+        std::cout<<"                          vz = "<<t->Z0()<<std::endl;
       }
 
       if ( t->Pt() < ptLow ) continue;
@@ -963,33 +976,33 @@ Double_t IsolationTools::CiCTrackIsolation(const Photon* p,
 
 
       if (dR < extRadius && dR > intRadius && dEta > etaStrip) {
-	iIso += t->Pt();
+        iIso += t->Pt();
 
-	if (t->Pt() > t_ptmax) {
-	  t_ptmax=t->Pt();
-	  t_dRmax=dR;
-	}
+        if (t->Pt() > t_ptmax) {
+          t_ptmax=t->Pt();
+          t_dRmax=dR;
+        }
 
-	if (print && t->Pt()>1.) {
-	  std::cout<<"              passing track #"<<j<<std::endl;
-	  std::cout<<"                          pt = "<<t->Pt()<<std::endl;
-	  std::cout<<"                         eta = "<<t->Eta()<<std::endl;
-	  std::cout<<"                         phi = "<<t->Phi()<<std::endl;
-	  std::cout<<"                          d0 = "<<fabs(t->D0Corrected( *iVtx ))<<std::endl;
-	  std::cout<<"                          dZ = "<<fabs(t->DzCorrected( *iVtx ))<<std::endl;
-	  std::cout<<"                          dR = "<<dR<<std::endl;
-	  std::cout<<"                        dEta = "<<dEta<<std::endl;
-	  std::cout<<"                          vx = "<<t->X0()<<std::endl;
-	  std::cout<<"                          vy = "<<t->Y0()<<std::endl;
-	  std::cout<<"                          vz = "<<t->Z0()<<std::endl;
-	  std::cout<<"                             new  tIso = "<<iIso<<std::endl;
-	}
+        if (print && t->Pt()>1.) {
+          std::cout<<"              passing track #"<<j<<std::endl;
+          std::cout<<"                          pt = "<<t->Pt()<<std::endl;
+          std::cout<<"                         eta = "<<t->Eta()<<std::endl;
+          std::cout<<"                         phi = "<<t->Phi()<<std::endl;
+          std::cout<<"                          d0 = "<<fabs(t->D0Corrected( *iVtx ))<<std::endl;
+          std::cout<<"                          dZ = "<<fabs(t->DzCorrected( *iVtx ))<<std::endl;
+          std::cout<<"                          dR = "<<dR<<std::endl;
+          std::cout<<"                        dEta = "<<dEta<<std::endl;
+          std::cout<<"                          vx = "<<t->X0()<<std::endl;
+          std::cout<<"                          vy = "<<t->Y0()<<std::endl;
+          std::cout<<"                          vz = "<<t->Z0()<<std::endl;
+          std::cout<<"                             new  tIso = "<<iIso<<std::endl;
+        }
       }
     }
     if ( iIso > maxIso ) {
       maxIso = iIso;
       if (worstVtxIndex)
-	*worstVtxIndex=i;
+        *worstVtxIndex=i;
     }
   }
 
@@ -1008,13 +1021,13 @@ Double_t IsolationTools::CiCTrackIsolation(const Photon* p,
 //ChargedIso_selvtx_DR0To0p001=IsolationTools::PFChargedIsolation(p, SelVtx, 0.01, 0, 0.0, 0.0, 0.1, 0.2,fPFCands);
 
 Double_t IsolationTools::PFChargedIsolation(const Photon *p, 
-                                         const BaseVertex *theVtx, 
-                                         Double_t extRadius,
-                                         Double_t intRadius,
-                                         const PFCandidateCol *PFCands,
-                                         unsigned int* worstVtxIndex,
-                                         const Collection<Vertex> *vtxs,
-                                         bool print)
+                                            const BaseVertex *theVtx, 
+                                            Double_t extRadius,
+                                            Double_t intRadius,
+                                            const PFCandidateCol *PFCands,
+                                            unsigned int* worstVtxIndex,
+                                            const Collection<Vertex> *vtxs,
+                                            bool print)
 {
   
   UInt_t numVtx = 1;
@@ -1062,43 +1075,43 @@ Double_t IsolationTools::PFChargedIsolation(const Photon *p,
       const PFCandidate *pf= PFCands->At(j);
 
       if ( pf->HasTrackerTrk() && pf->PFType()==PFCandidate::eHadron ) {
-	const Track* t = pf->TrackerTrk();
+        const Track* t = pf->TrackerTrk();
         
-	Double_t dR   = MathUtils::DeltaR(*pf,photondir);
-	//Double_t dEta = TMath::Abs(pf->Eta()-photondir.Eta());
-	
+        Double_t dR   = MathUtils::DeltaR(*pf,photondir);
+        //Double_t dEta = TMath::Abs(pf->Eta()-photondir.Eta());
+        
         if (dR<0.02) continue;
         if (dR<intRadius) continue;
         if (dR>extRadius) continue;
         
-	if (print && pf->Pt()>1. && false) {
-	  std::cout<<"              passing track #"<<j<<std::endl;
-	  std::cout<<"                          pt = "<<pf->Pt()<<std::endl;
-	  std::cout<<"                         eta = "<<pf->Eta()<<std::endl;
-	  std::cout<<"                         phi = "<<pf->Phi()<<std::endl;
-	  std::cout<<"                          d0 = "<<fabs(t->D0Corrected( *iVtx ))<<std::endl;
-	  std::cout<<"                          dZ = "<<fabs(t->DzCorrected( *iVtx ))<<std::endl;
-	  std::cout<<"                          dR = "<<dR<<std::endl;
-	  //std::cout<<"                        dEta = "<<dEta<<std::endl;
-	  std::cout<<"                          vx = "<<t->X0()<<std::endl;
-	  std::cout<<"                          vy = "<<t->Y0()<<std::endl;
-	  std::cout<<"                          vz = "<<t->Z0()<<std::endl;
-	}
-	
-	
-	// only check for beamspot if available, otherwise ignore cut
-	if ( fabs(t->D0Corrected( *iVtx )) > 0.1) continue;
-	if ( fabs(t->DzCorrected( *iVtx )) > 0.2) continue;
-	
-	iIso += pf->Pt();
-	
+        if (print && pf->Pt()>1. && false) {
+          std::cout<<"              passing track #"<<j<<std::endl;
+          std::cout<<"                          pt = "<<pf->Pt()<<std::endl;
+          std::cout<<"                         eta = "<<pf->Eta()<<std::endl;
+          std::cout<<"                         phi = "<<pf->Phi()<<std::endl;
+          std::cout<<"                          d0 = "<<fabs(t->D0Corrected( *iVtx ))<<std::endl;
+          std::cout<<"                          dZ = "<<fabs(t->DzCorrected( *iVtx ))<<std::endl;
+          std::cout<<"                          dR = "<<dR<<std::endl;
+          //std::cout<<"                        dEta = "<<dEta<<std::endl;
+          std::cout<<"                          vx = "<<t->X0()<<std::endl;
+          std::cout<<"                          vy = "<<t->Y0()<<std::endl;
+          std::cout<<"                          vz = "<<t->Z0()<<std::endl;
+        }
+        
+        
+        // only check for beamspot if available, otherwise ignore cut
+        if ( fabs(t->D0Corrected( *iVtx )) > 0.1) continue;
+        if ( fabs(t->DzCorrected( *iVtx )) > 0.2) continue;
+        
+        iIso += pf->Pt();
+        
       }
     }
     
     if ( iIso > maxIso ) {
       maxIso = iIso;
       if (worstVtxIndex)
-	*worstVtxIndex=i;
+        *worstVtxIndex=i;
     }
   }
   
@@ -1114,20 +1127,20 @@ Double_t IsolationTools::PFChargedIsolation(const Photon *p,
 
 //
 Float_t IsolationTools::PFChargedCount(const Photon* p, 
-				       const BaseVertex* theVtx, 
-				       Double_t extRadius, 
-				       Double_t intRadius, 
-				       Double_t ptLow, 
-				       Double_t etaStrip,
-				       Double_t maxD0,
-				       Double_t maxDZ,
-				       const PFCandidateCol *PFCands,
-				       unsigned int* worstVtxIndex,
-				       const Collection<Vertex> *vtxs,
-				       const Collection<Electron> *eles,
-				       bool print,
-				       double* ptmax,
-				       double* dRmax) {
+                                       const BaseVertex* theVtx, 
+                                       Double_t extRadius, 
+                                       Double_t intRadius, 
+                                       Double_t ptLow, 
+                                       Double_t etaStrip,
+                                       Double_t maxD0,
+                                       Double_t maxDZ,
+                                       const PFCandidateCol *PFCands,
+                                       unsigned int* worstVtxIndex,
+                                       const Collection<Vertex> *vtxs,
+                                       const Collection<Electron> *eles,
+                                       bool print,
+                                       double* ptmax,
+                                       double* dRmax) {
   
   UInt_t numVtx = 1;
   
@@ -1147,9 +1160,9 @@ Float_t IsolationTools::PFChargedCount(const Photon* p,
     // find the electron that matches the Photon SC
     for (UInt_t j=0; j<eles->GetEntries(); ++j) {
       if ( eles->At(j)->SCluster() == p->SCluster() ) {
-	if ( eles->At(j)->HasTrackerTrk() )
-	  theGsfTrack = eles->At(j)->TrackerTrk();
-	break;
+        if ( eles->At(j)->HasTrackerTrk() )
+          theGsfTrack = eles->At(j)->TrackerTrk();
+        break;
       }
     }
   }
@@ -1208,64 +1221,64 @@ Float_t IsolationTools::PFChargedCount(const Photon* p,
     for (UInt_t j=0; j<PFCands->GetEntries(); ++j) {
       const PFCandidate *pf= PFCands->At(j);
       if (pf->HasTrk() && (pf->PFType()==PFCandidate::eHadron ||
-			   pf->PFType()==PFCandidate::eElectron ||
-			   pf->PFType()==PFCandidate::eMuon)){
-	const Track* t = pf->BestTrk();
+                           pf->PFType()==PFCandidate::eElectron ||
+                           pf->PFType()==PFCandidate::eMuon)){
+        const Track* t = pf->BestTrk();
         if (pf->PFType()==PFCandidate::eElectron && pf->HasGsfTrk()){t = pf->GsfTrk();}
-	if (!(pf->PFType()==PFCandidate::eElectron) && pf->HasTrackerTrk()){t = pf->TrackerTrk();}
-	
-	if ( theGsfTrack && t == theGsfTrack ) continue;
-	
-	Double_t dR   = MathUtils::DeltaR(pf->Mom(),phMom);
-	Double_t dEta = TMath::Abs(pf->Eta()-phMom.Eta());
-	
-	if (print && pf->Pt()>1. && false) {
-	  std::cout<<"              passing track #"<<j<<std::endl;
-	  std::cout<<"                          pt = "<<pf->Pt()<<std::endl;
-	  std::cout<<"                         eta = "<<pf->Eta()<<std::endl;
-	  std::cout<<"                         phi = "<<pf->Phi()<<std::endl;
-	  std::cout<<"                          d0 = "<<fabs(t->D0Corrected( *iVtx ))<<std::endl;
-	  std::cout<<"                          dZ = "<<fabs(t->DzCorrected( *iVtx ))<<std::endl;
-	  std::cout<<"                          dR = "<<dR<<std::endl;
-	  std::cout<<"                        dEta = "<<dEta<<std::endl;
-	  std::cout<<"                          vx = "<<t->X0()<<std::endl;
-	  std::cout<<"                          vy = "<<t->Y0()<<std::endl;
-	  std::cout<<"                          vz = "<<t->Z0()<<std::endl;
-	}
-	
-	if ( pf->Pt() < ptLow ) continue;
-	
-	// only check for beamspot if available, otherwise ignore cut
-	if ( fabs(t->D0Corrected( *iVtx )) > maxD0)
-	  continue;
-	if ( fabs(t->DzCorrected( *iVtx )) > maxDZ)
-	  continue;
-	
-	
-	if (dR < extRadius && dR > intRadius && dEta > etaStrip) {
-	  iIso += pf->Pt();
-	  iNumParticles += 1;
+        if (!(pf->PFType()==PFCandidate::eElectron) && pf->HasTrackerTrk()){t = pf->TrackerTrk();}
+        
+        if ( theGsfTrack && t == theGsfTrack ) continue;
+        
+        Double_t dR   = MathUtils::DeltaR(pf->Mom(),phMom);
+        Double_t dEta = TMath::Abs(pf->Eta()-phMom.Eta());
+        
+        if (print && pf->Pt()>1. && false) {
+          std::cout<<"              passing track #"<<j<<std::endl;
+          std::cout<<"                          pt = "<<pf->Pt()<<std::endl;
+          std::cout<<"                         eta = "<<pf->Eta()<<std::endl;
+          std::cout<<"                         phi = "<<pf->Phi()<<std::endl;
+          std::cout<<"                          d0 = "<<fabs(t->D0Corrected( *iVtx ))<<std::endl;
+          std::cout<<"                          dZ = "<<fabs(t->DzCorrected( *iVtx ))<<std::endl;
+          std::cout<<"                          dR = "<<dR<<std::endl;
+          std::cout<<"                        dEta = "<<dEta<<std::endl;
+          std::cout<<"                          vx = "<<t->X0()<<std::endl;
+          std::cout<<"                          vy = "<<t->Y0()<<std::endl;
+          std::cout<<"                          vz = "<<t->Z0()<<std::endl;
+        }
+        
+        if ( pf->Pt() < ptLow ) continue;
+        
+        // only check for beamspot if available, otherwise ignore cut
+        if ( fabs(t->D0Corrected( *iVtx )) > maxD0)
+          continue;
+        if ( fabs(t->DzCorrected( *iVtx )) > maxDZ)
+          continue;
+        
+        
+        if (dR < extRadius && dR > intRadius && dEta > etaStrip) {
+          iIso += pf->Pt();
+          iNumParticles += 1;
 
-	  if (pf->Pt() > t_ptmax) {
-	    t_ptmax=pf->Pt();
-	    t_dRmax=dR;
-	  }
-	  
-	  if (print && pf->Pt()>1.) {
-	    std::cout<<"              passing track #"<<j<<std::endl;
-	    std::cout<<"                          pt = "<<pf->Pt()<<std::endl;
-	    std::cout<<"                         eta = "<<pf->Eta()<<std::endl;
-	    std::cout<<"                         phi = "<<pf->Phi()<<std::endl;
-	    std::cout<<"                          d0 = "<<fabs(t->D0Corrected(*iVtx))<<std::endl;
-	    std::cout<<"                          dZ = "<<fabs(t->DzCorrected(*iVtx))<<std::endl;
-	    std::cout<<"                          dR = "<<dR<<std::endl;
-	    std::cout<<"                        dEta = "<<dEta<<std::endl;
-	    std::cout<<"                          vx = "<<t->X0()<<std::endl;
-	    std::cout<<"                          vy = "<<t->Y0()<<std::endl;
-	    std::cout<<"                          vz = "<<t->Z0()<<std::endl;
-	    std::cout<<"                             new  tIso = "<<iIso<<std::endl;
-	  }
-	}
+          if (pf->Pt() > t_ptmax) {
+            t_ptmax=pf->Pt();
+            t_dRmax=dR;
+          }
+          
+          if (print && pf->Pt()>1.) {
+            std::cout<<"              passing track #"<<j<<std::endl;
+            std::cout<<"                          pt = "<<pf->Pt()<<std::endl;
+            std::cout<<"                         eta = "<<pf->Eta()<<std::endl;
+            std::cout<<"                         phi = "<<pf->Phi()<<std::endl;
+            std::cout<<"                          d0 = "<<fabs(t->D0Corrected(*iVtx))<<std::endl;
+            std::cout<<"                          dZ = "<<fabs(t->DzCorrected(*iVtx))<<std::endl;
+            std::cout<<"                          dR = "<<dR<<std::endl;
+            std::cout<<"                        dEta = "<<dEta<<std::endl;
+            std::cout<<"                          vx = "<<t->X0()<<std::endl;
+            std::cout<<"                          vy = "<<t->Y0()<<std::endl;
+            std::cout<<"                          vz = "<<t->Z0()<<std::endl;
+            std::cout<<"                             new  tIso = "<<iIso<<std::endl;
+          }
+        }
       }
     }
     
@@ -1274,7 +1287,7 @@ Float_t IsolationTools::PFChargedCount(const Photon* p,
       maxNumParticles = iNumParticles;
       
       if (worstVtxIndex)
-	*worstVtxIndex=i;
+        *worstVtxIndex=i;
     }
   }
   
@@ -1286,7 +1299,7 @@ Float_t IsolationTools::PFChargedCount(const Photon* p,
   if (print) {
     if (worstVtxIndex)
       std::cout<<"   max TrkIso is given by Vtx #"<<*worstVtxIndex<<" with an amount of tIso = "
-	       <<maxIso<<std::endl;
+               <<maxIso<<std::endl;
     else
       std::cout<<"   max TrkIso is given by Vtx #0 with an amount of tIso = "<<maxIso<<std::endl;
   }
@@ -1294,7 +1307,7 @@ Float_t IsolationTools::PFChargedCount(const Photon* p,
 }
 
 Double_t IsolationTools::PFGammaIsolation(const Photon *p, Double_t extRadius, Double_t intRadius,
-					  const PFCandidateCol *PFCands)
+                                          const PFCandidateCol *PFCands)
 {
   Double_t    iso = 0.;
   ThreeVector photondir;
@@ -1329,7 +1342,7 @@ Double_t IsolationTools::PFGammaIsolation(const Photon *p, Double_t extRadius, D
 }
 
 Double_t IsolationTools::PFNeutralHadronIsolation(const Photon *p, Double_t extRadius,
-						  Double_t intRadius, const PFCandidateCol *PFCands)
+                                                  Double_t intRadius, const PFCandidateCol *PFCands)
 {
   Double_t iso = 0.;
   

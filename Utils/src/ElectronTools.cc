@@ -1,25 +1,27 @@
-// $Id: ElectronTools.cc,v 1.55 2013/04/05 13:13:31 arapyan Exp $
-
 #include "MitPhysics/Utils/interface/ElectronTools.h"
+#include "MitPhysics/Utils/interface/IsolationTools.h"
 #include "MitAna/DataTree/interface/StableData.h"
-#include <TFile.h>
 #include "MitPhysics/ElectronLikelihood/interface/ElectronLikelihood.h"
 #include "MitPhysics/ElectronLikelihood/interface/LikelihoodSwitches.h"
 #include "MitPhysics/ElectronLikelihood/interface/LikelihoodMeasurements.h"
+#include "MitPhysics/Init/interface/Constants.h"
+
+#include <limits>
 
 ClassImp(mithep::ElectronTools)
 
 using namespace mithep;
 
 //--------------------------------------------------------------------------------------------------
-ElectronTools::ElectronTools()  
+ElectronTools::ElectronTools()
 {
   // Constructor.
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
-
+Bool_t
+mithep::ElectronTools::PassCustomID(const Electron *ele, EElIdType idType)
+{
   Double_t  fCuts[6][8];             //!custom id cuts
 
   Double_t tightcuts[6][8]={
@@ -28,16 +30,16 @@ Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
     {0.038, 0.024, 0.045, 0.0, 0.034, 0.017, 0.026, 0.0},   //deltaphiin
     {0.0081, 0.0029, 0.0051, 0.0, 0.0070, 0.0062, 0.0088, 0.0}, //deltaetain
     {0.0,    0.9,    0.0,    0.0, 0.0,    0.78,   0.0,    0.0},             //eoverp
-    {0.8,0.2,0.9,0,0,0,0,0}};                              //extra cuts fbrem and E_Over_P 
+    {0.8,0.2,0.9,0,0,0,0,0}};                              //extra cuts fbrem and E_Over_P
 
   Double_t loosecuts[6][8]={
     {0.12,  0.12,  0.12,  0.12,  0.10,   0.10,   0.10,   0.10 }, //hovere
     {0.01,  0.01,  0.01,  0.01,  0.03,   0.03,   0.03,   0.03 }, //sigmaetaeta
     {0.06,  0.06,  0.06,  0.06,  0.03,   0.03,   0.03,   0.03 }, //deltaphiin
     {0.004, 0.004, 0.004, 0.004, 0.007,  0.007,  0.007,  0.007}, //deltaetain
-    {0.0,   0.0,   0.0,   0.0,   0.0,	 0.0,	 0.0,	 0.0  }, //eoverp
-    {0.0,   0.0,   0,	  0,	 0,	 0,	 0,	 0    }  //extra cuts fbrem and E_Over_P 
-  };            
+    {0.0,   0.0,   0.0,   0.0,   0.0,    0.0,    0.0,    0.0  }, //eoverp
+    {0.0,   0.0,   0,     0,     0,      0,      0,      0    }  //extra cuts fbrem and E_Over_P
+  };
 
   Double_t VBTFWorkingPointFakeable[6][8] = {
     {0.12,  0.12,  0.12,  0.12,  0.10,   0.10,   0.10,   0.10  }, //hovere
@@ -45,8 +47,8 @@ Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
     {0.15,  0.15,  0.15,  0.15,  0.10,   0.10,   0.10,   0.10  }, //deltaphiin
     {0.007, 0.007, 0.007, 0.007, 0.009,  0.009,  0.009,  0.009 }, //deltaetain
     {0.0,   0.0,   0.0,   0.0,   0.0,    0.0,    0.0,    0.0   }, //eoverp
-    {0.0,   0.0,   0,     0,     0,      0,      0,      0     }  //extra cuts fbrem and E_Over_P 
-  };            
+    {0.0,   0.0,   0,     0,     0,      0,      0,      0     }  //extra cuts fbrem and E_Over_P
+  };
 
   Double_t VBTFWorkingPoint95[6][8] = {
     {0.15,  0.15,  0.15,  0.15,  0.07,   0.07,   0.07,   0.07  }, //hovere
@@ -54,8 +56,8 @@ Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
     {0.8,   0.8,   0.8,   0.8,   0.7,    0.7,    0.7,    0.7   }, //deltaphiin
     {0.007, 0.007, 0.007, 0.007, 0.010,  0.010,  0.010,  0.010 }, //deltaetain
     {0.0,   0.0,   0.0,   0.0,   0.0,    0.0,    0.0,    0.0   }, //eoverp
-    {0.0,   0.0,   0,     0,     0,      0,      0,      0     }  //extra cuts fbrem and E_Over_P 
-  };            
+    {0.0,   0.0,   0,     0,     0,      0,      0,      0     }  //extra cuts fbrem and E_Over_P
+  };
 
   Double_t VBTFWorkingPoint90[6][8] = {
     {0.12,  0.12,  0.12,  0.12,  0.05,   0.05,   0.05,   0.05  }, //hovere
@@ -63,8 +65,8 @@ Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
     {0.8,   0.8,   0.8,   0.8,   0.7,    0.7,    0.7,    0.7   }, //deltaphiin
     {0.007, 0.007, 0.007, 0.007, 0.009,  0.009,  0.009,  0.009 }, //deltaetain
     {0.0,   0.0,   0.0,   0.0,   0.0,    0.0,    0.0,    0.0   }, //eoverp
-    {0.0,   0.0,   0,     0,     0,      0,      0,      0     }  //extra cuts fbrem and E_Over_P 
-  };            
+    {0.0,   0.0,   0,     0,     0,      0,      0,      0     }  //extra cuts fbrem and E_Over_P
+  };
 
   Double_t VBTFWorkingPoint85[6][8] = {
     {0.04,  0.04,  0.04,  0.04,  0.025,  0.025,  0.025,  0.025 }, //hovere
@@ -72,8 +74,8 @@ Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
     {0.06,  0.06,  0.06,  0.06,  0.04,   0.04,   0.04,   0.04  }, //deltaphiin
     {0.006, 0.006, 0.006, 0.006, 0.007,  0.007,  0.007,  0.007 }, //deltaetain
     {0.0,   0.0,   0.0,   0.0,   0.0,    0.0,    0.0,    0.0   }, //eoverp
-    {0.0,   0.0,   0,     0,     0,      0,      0,      0     }  //extra cuts fbrem and E_Over_P 
-  };            
+    {0.0,   0.0,   0,     0,     0,      0,      0,      0     }  //extra cuts fbrem and E_Over_P
+  };
 
   Double_t VBTFWorkingPoint80[6][8] = {
     {0.04,  0.04,  0.04,  0.04,  0.10,   0.10,   0.10,   0.10 }, //hovere
@@ -81,8 +83,8 @@ Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
     {0.06,  0.06,  0.06,  0.06,  0.03,   0.03,   0.03,   0.03 }, //deltaphiin
     {0.004, 0.004, 0.004, 0.004, 0.007,  0.007,  0.007,  0.007}, //deltaetain
     {0.0,   0.0,   0.0,   0.0,   0.0,    0.0,    0.0,    0.0  }, //eoverp
-    {0.0,   0.0,   0,     0,     0,      0,      0,      0    }  //extra cuts fbrem and E_Over_P 
-  };            
+    {0.0,   0.0,   0,     0,     0,      0,      0,      0    }  //extra cuts fbrem and E_Over_P
+  };
 
   Double_t VBTFWorkingPoint70[6][8] = {
     {0.025, 0.025, 0.025, 0.025, 0.012,  0.012,  0.012,  0.012}, //hovere
@@ -90,8 +92,8 @@ Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
     {0.03,  0.03,  0.03,  0.03,  0.02,   0.02,   0.02,   0.02 }, //deltaphiin
     {0.004, 0.004, 0.004, 0.004, 0.005,  0.005,  0.005,  0.005}, //deltaetain
     {0.0,   0.0,   0.0,   0.0,   0.0,    0.0,    0.0,    0.0  }, //eoverp
-    {0.0,   0.0,   0,     0,     0,      0,      0,      0    }  //extra cuts fbrem and E_Over_P 
-  };            
+    {0.0,   0.0,   0,     0,     0,      0,      0,      0    }  //extra cuts fbrem and E_Over_P
+  };
 
   Double_t VBTFWorkingPoint80NoHOverEE[6][8] = {
     {0.04,  0.04,  0.04,  0.04,  0.10,   0.10,   0.10,   0.10 }, //hovere
@@ -99,8 +101,8 @@ Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
     {0.06,  0.06,  0.06,  0.06,  0.03,   0.03,   0.03,   0.03 }, //deltaphiin
     {0.004, 0.004, 0.004, 0.004, 0.007,  0.007,  0.007,  0.007}, //deltaetain
     {0.0,   0.0,   0.0,   0.0,   0.0,    0.0,    0.0,    0.0  }, //eoverp
-    {0.0,   0.0,   0,     0,     0,      0,      0,      0    }  //extra cuts fbrem and E_Over_P 
-  };            
+    {0.0,   0.0,   0,     0,     0,      0,      0,      0    }  //extra cuts fbrem and E_Over_P
+  };
 
   Double_t VBTFWorkingPoint70NoHOverEE[6][8] = {
     {0.025, 0.025, 0.025, 0.025, 0.10,   0.10,   0.10,   0.10 }, //hovere
@@ -108,11 +110,11 @@ Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
     {0.03,  0.03,  0.03,  0.03,  0.02,   0.02,   0.02,   0.02 }, //deltaphiin
     {0.004, 0.004, 0.004, 0.004, 0.005,  0.005,  0.005,  0.005}, //deltaetain
     {0.0,   0.0,   0.0,   0.0,   0.0,    0.0,    0.0,    0.0  }, //eoverp
-    {0.0,   0.0,   0,     0,     0,      0,      0,      0    }  //extra cuts fbrem and E_Over_P 
-  };            
+    {0.0,   0.0,   0,     0,     0,      0,      0,      0    }  //extra cuts fbrem and E_Over_P
+  };
 
   switch (idType) {
-    case kCustomIdTight:    
+    case kCustomIdTight:
       memcpy(fCuts,tightcuts,sizeof(fCuts));
       break;
     case kCustomIdLoose:
@@ -158,11 +160,11 @@ Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
     return kFALSE;
 
   Int_t cat = 2;
-  if ((ele->IsEB() && fBrem<0.06) || (ele->IsEE() && fBrem<0.1)) 
+  if ((ele->IsEB() && fBrem<0.06) || (ele->IsEE() && fBrem<0.1))
     cat=1;
-  else if (eOverP < 1.2 && eOverP > 0.8) 
+  else if (eOverP < 1.2 && eOverP > 0.8)
     cat=0;
-  
+
   if(idType == kCustomIdLoose){
     double eleOneOverEMinusOneOverP = TMath::Abs((1.0/(ele->EcalEnergy())) - (1.0 / ele->P()));
     if(eleOneOverEMinusOneOverP >= 0.05) return kFALSE;
@@ -177,7 +179,7 @@ Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
   Double_t deltaEtaIn   = TMath::Abs(ele->DeltaEtaSuperClusterTrackAtVtx());
 
   Int_t eb = 1;
-  if (ele->IsEB()) 
+  if (ele->IsEB())
     eb = 0;
 
   if (hOverE>fCuts[0][cat+4*eb])
@@ -187,10 +189,10 @@ Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
     return kFALSE;
 
   if (deltaPhiIn>fCuts[2][cat+4*eb])
-    return kFALSE; 
+    return kFALSE;
 
   if(deltaEtaIn>fCuts[3][cat+4*eb])
-    return kFALSE; 
+    return kFALSE;
 
   if(eSeedOverPin<fCuts[4][cat+4*eb])
     return kFALSE;
@@ -201,8 +203,8 @@ Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
     double isoEcal = ele->EcalRecHitIsoDr03();
     if(ele->IsEB()) isoEcal = isoEcal - 1.0;
     isoCut = (ele->TrackIsolationDr03() < ele->Pt()*0.2) &&
-   	     (isoEcal                   < ele->Pt()*0.2) &&
-   	     (ele->HcalTowerSumEtDr03() < ele->Pt()*0.2);
+             (isoEcal                   < ele->Pt()*0.2) &&
+             (ele->HcalTowerSumEtDr03() < ele->Pt()*0.2);
   }
   if(isoCut == kFALSE) return kFALSE;
 
@@ -212,110 +214,238 @@ Bool_t ElectronTools::PassCustomID(const Electron *ele, EElIdType idType) {
                           (ele->SCluster()->AbsEta() < 1.0 && eOverP > 0.95);
     if(!isGoodLowPtEl) return kFALSE;
   }
-  
+
   return kTRUE;
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t ElectronTools::PassCustomIso(const Electron *ele, EElIsoType isoType,
-                                    Bool_t useCombineIso) 
+Bool_t ElectronTools::PassCustomIso(const Electron *ele, EElIsoType isoType)
 {
-  Bool_t pass = kTRUE;
-  Double_t fIsoCuts[4][2];          //!custom isolation cuts
   Double_t VBTFWorkingPoint95[4][2] = {
     {0.15 , 0.08   },   //TrkIso
     {2.00 , 0.06   },   //ECALIso
     {0.12 , 0.05   },   //HCALIso
-    {0.15,  0.10   }   //Combined    
-  };            
+    {0.15,  0.10   }   //Combined
+  };
 
   Double_t VBTFWorkingPoint90[4][2] = {
     {0.12 , 0.05   },   //TrkIso
     {0.09 , 0.06   },   //ECALIso
     {0.10 , 0.03   },   //HCALIso
-    {0.10,  0.07   }   //Combined    
-  };            
+    {0.10,  0.07   }   //Combined
+  };
 
   Double_t VBTFWorkingPoint85[4][2] = {
     {0.09 , 0.05   },   //TrkIso
     {0.08 , 0.05   },   //ECALIso
     {0.10 , 0.025  },   //HCALIso
-    {0.09,  0.06   }   //Combined    
-  };            
+    {0.09,  0.06   }   //Combined
+  };
 
   Double_t VBTFWorkingPoint80[4][2] = {
     {0.09 , 0.04   },   //TrkIso
     {0.07 , 0.05   },   //ECALIso
     {0.10 , 0.025  },   //HCALIso
-    {0.07,  0.06   }   //Combined    
-  };            
+    {0.07,  0.06   }   //Combined
+  };
 
   Double_t VBTFWorkingPoint70[4][2] = {
     {0.05 , 0.025  },   //TrkIso
     {0.06 , 0.025  },   //ECALIso
     {0.03 , 0.020  },   //HCALIso
     {0.04,  0.030  }   //Combined
-  };            
+  };
+
+  Double_t isoVal[4] = {
+    ele->TrackIsolationDr03() / ele->Pt(),
+    ele->EcalRecHitIsoDr03() / ele->Pt(),
+    ele->HcalTowerSumEtDr03() / ele->Pt(),
+    0.
+  };
+
+  if (ele->IsEB())
+    isoVal[3] = (ele->TrackIsolationDr03() + TMath::Max(ele->EcalRecHitIsoDr03() - 1.0, 0.0) + ele->HcalTowerSumEtDr03()) / ele->Pt();
+  else
+    isoVal[3] = (ele->TrackIsolationDr03() + ele->EcalRecHitIsoDr03() + ele->HcalTowerSumEtDr03()) / ele->Pt();
+
+  unsigned fidId = ele->IsEB() ? 0 : 1;
 
   switch (isoType) {
-    case kVBTFWorkingPoint95Iso:
-      memcpy(fIsoCuts,VBTFWorkingPoint95,sizeof(fIsoCuts));
-      break;
-    case kVBTFWorkingPoint90Iso:
-      memcpy(fIsoCuts,VBTFWorkingPoint90,sizeof(fIsoCuts));
-      break;
-    case kVBTFWorkingPoint85Iso:
-      memcpy(fIsoCuts,VBTFWorkingPoint85,sizeof(fIsoCuts));
-      break;
-    case kVBTFWorkingPoint80Iso:
-      memcpy(fIsoCuts,VBTFWorkingPoint80,sizeof(fIsoCuts));
-      break;
-    case kVBTFWorkingPoint70Iso:
-      memcpy(fIsoCuts,VBTFWorkingPoint70,sizeof(fIsoCuts));
-      break;
+    case kVBTFWorkingPoint95IndividualIso:
+      for (unsigned iDet = 0; iDet != 3; ++iDet) {
+        if (isoVal[iDet] > VBTFWorkingPoint95[iDet][fidId])
+          return false;
+      }
+      return true;
+
+    case kVBTFWorkingPoint95CombinedIso:
+      return isoVal[3] < VBTFWorkingPoint95[3][fidId];
+
+    case kVBTFWorkingPoint90IndividualIso:
+      for (unsigned iDet = 0; iDet != 3; ++iDet) {
+        if (isoVal[iDet] > VBTFWorkingPoint90[iDet][fidId])
+          return false;
+      }
+      return true;
+
+    case kVBTFWorkingPoint90CombinedIso:
+      return isoVal[3] < VBTFWorkingPoint90[3][fidId];
+
+    case kVBTFWorkingPoint85IndividualIso:
+      for (unsigned iDet = 0; iDet != 3; ++iDet) {
+        if (isoVal[iDet] > VBTFWorkingPoint85[iDet][fidId])
+          return false;
+      }
+      return true;
+
+    case kVBTFWorkingPoint85CombinedIso:
+      return isoVal[3] < VBTFWorkingPoint85[3][fidId];
+
+    case kVBTFWorkingPoint80IndividualIso:
+      for (unsigned iDet = 0; iDet != 3; ++iDet) {
+        if (isoVal[iDet] > VBTFWorkingPoint80[iDet][fidId])
+          return false;
+      }
+      return true;
+
+    case kVBTFWorkingPoint80CombinedIso:
+      return isoVal[3] < VBTFWorkingPoint80[3][fidId];
+
+    case kVBTFWorkingPoint70IndividualIso:
+      for (unsigned iDet = 0; iDet != 3; ++iDet) {
+        if (isoVal[iDet] > VBTFWorkingPoint70[iDet][fidId])
+          return false;
+      }
+      return true;
+
+    case kVBTFWorkingPoint70CombinedIso:
+      return isoVal[3] < VBTFWorkingPoint70[3][fidId];
+
     default:
-      memset(fIsoCuts,0,sizeof(fIsoCuts));
-      break;
+      return false;
   }
-
-  Double_t trkIso  = ele->TrackIsolationDr03() / ele->Pt();
-  Double_t ecalIso = ele->EcalRecHitIsoDr03() / ele->Pt();
-  Double_t hcalIso = ele->HcalTowerSumEtDr03() / ele->Pt();
-  Double_t combinedIso = ele->TrackIsolationDr03() + ele->EcalRecHitIsoDr03() + ele->HcalTowerSumEtDr03();
-  if(ele->IsEB()) combinedIso = ele->TrackIsolationDr03() + TMath::Max(ele->EcalRecHitIsoDr03() - 1.0, 0.0) + ele->HcalTowerSumEtDr03();
-  combinedIso = combinedIso / ele->Pt();
-
-  Int_t eb = 1;
-  if (ele->IsEB()) 
-    eb = 0;
- 
-  if(useCombineIso == kFALSE){
-    if (trkIso>fIsoCuts[0][eb])
-      pass = kFALSE;
-    if (ecalIso>fIsoCuts[1][eb])
-      pass = kFALSE;
-    if (hcalIso>fIsoCuts[2][eb])
-      pass = kFALSE;
-  }
-  else {
-    if (combinedIso>fIsoCuts[3][eb])
-      pass = kFALSE;
-  }
-
-  return pass;
 }
 
+Bool_t
+mithep::ElectronTools::PassID(Electron const* ele, EElIdType type)
+{
+  if (type == ElectronTools::kPhys14Veto) {
+    if (ele->SCluster()->AbsEta() < gkEleEBEtaMax) {
+      if (std::abs(ele->DeltaEtaSuperClusterTrackAtVtx()) > 0.013625)
+        return false;
+      if (std::abs(ele->DeltaPhiSuperClusterTrackAtVtx()) > 0.230374)
+        return false;
+      if (ele->CoviEtaiEta5x5() > 0.011586)
+        return false;
+      if (ele->HadOverEmTow() > 0.181130)
+        return false;
+      if (std::abs(1. / ele->SCluster()->Energy() - 1. / ele->GsfTrk()->P()) > 0.295751)
+        return false;
+    }
+    else {
+      if (std::abs(ele->DeltaEtaSuperClusterTrackAtVtx()) > 0.011932)
+        return false;
+      if (std::abs(ele->DeltaPhiSuperClusterTrackAtVtx()) > 0.255450)
+        return false;
+      if (ele->CoviEtaiEta5x5() > 0.031849)
+        return false;
+      if (ele->HadOverEmTow() > 0.223870)
+        return false;
+      if (std::abs(1. / ele->SCluster()->Energy() - 1. / ele->GsfTrk()->P()) > 0.155501)
+        return false;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+Bool_t
+mithep::ElectronTools::PassIso(Electron const* ele, EElIsoType isoType)
+{
+  switch (isoType) {
+    case ElectronTools::kMVAIso_BDTG_IDIsoCombined:
+      return (ele->TrackIsolationDr03() < ele->Pt() * 0.2) &&
+        (ele->EcalRecHitIsoDr03() < ele->Pt() * 0.2) &&
+        (ele->HcalTowerSumEtDr03() < ele->Pt() * 0.2);
+
+    case ElectronTools::kMVAIso_BDTG_IDIsoCombinedHWW2012TrigV4:
+      if (ele->SCluster()->AbsEta() < gkEleEBEtaMax)
+        return ((ele->TrackIsolationDr03() - 1.0) < ele->Pt() * 0.2) &&
+          (ele->EcalRecHitIsoDr03()  < ele->Pt() * 0.2) &&
+          (ele->HcalTowerSumEtDr03() < ele->Pt() * 0.2);
+      else
+        return (ele->TrackIsolationDr03() < ele->Pt() * 0.2) &&
+          (ele->EcalRecHitIsoDr03() < ele->Pt() * 0.2) &&
+          (ele->HcalTowerSumEtDr03() < ele->Pt() * 0.2);
+  default:
+    return false;
+  }
+
+}
+
+Bool_t
+mithep::ElectronTools::PassPFIso(Electron const* ele, EElIsoType isoType,
+                                 PFCandidateCol const* pfCandidates, Vertex const* vertex,
+                                 MuonCol const* nonisolatedMuons/* = 0*/, ElectronCol const* nonisolatedElectrons/* = 0*/)
+{
+  double cutvalue;
+
+  if (ele->SCluster()->AbsEta() < gkEleEBEtaMax)
+    cutvalue = 0.13 * ele->Pt();
+  else
+    cutvalue = 0.09 * ele->Pt();
+
+  switch (isoType) {
+  case kPFIso:
+    return IsolationTools::PFElectronIsolation(ele, pfCandidates, vertex, 0.1, 1.0, 0.4, 0.3) * ele->Pt() < cutvalue;
+
+  case kPFIsoNoL:
+    return IsolationTools::PFElectronIsolation(ele, pfCandidates, nonisolatedMuons, nonisolatedElectrons, vertex, 0.1, 1.0, 0.4, 0.3) < cutvalue;
+
+  default:
+    return false;
+  }
+}
+
+Bool_t
+mithep::ElectronTools::PassIsoRhoCorr(Electron const* ele, EElIsoType isoType, Double_t rho,
+                                      PFCandidateCol const* pfCandidates/* = 0*/, Vertex const* vertex/* = 0*/)
+{
+  switch (isoType) {
+  case ElectronTools::kPFIso_HWW2012TrigV0:
+    return IsolationTools::PFElectronIsolation2012(ele, vertex, pfCandidates, rho, ElectronTools::kEleEANoCorr) < 0.15;
+
+  case ElectronTools::kPFIso_HggLeptonTag2012:
+    if (ele->Pt() < 20. && ele->SCluster()->AbsEta() > gkEleEBEtaMax)
+      return IsolationTools::PFElectronIsolation2012LepTag(ele, vertex, pfCandidates, rho, ElectronTools::kEleEAData2012, 0, 0, 0.3) < 0.1;
+    //fallthrough
+  case ElectronTools::kPFIso_HggLeptonTag2012HCP:
+    return IsolationTools::PFElectronIsolation2012LepTag(ele, vertex, pfCandidates, rho, ElectronTools::kEleEAData2012, 0, 0, 0.3) < 0.15;
+
+  case ElectronTools::kPhys14VetoIso:
+    if (ele->SCluster()->AbsEta() < gkEleEBEtaMax)
+      return IsolationTools::PFElectronIsolationRhoCorr(ele, rho, ElectronTools::kEleEAPhys14) < 0.158721 * ele->Pt();
+    else
+      return IsolationTools::PFElectronIsolationRhoCorr(ele, rho, ElectronTools::kEleEAPhys14) < 0.177032 * ele->Pt();
+
+  default:
+    return false;
+  }
+}
 
 //--------------------------------------------------------------------------------------------------
-Bool_t ElectronTools::PassConversionFilter(const Electron *ele, 
-                                           const DecayParticleCol *conversions,
-                                           const BaseVertex *vtx,
-                                           UInt_t nWrongHitsMax,
-                                           Double_t probMin,
-                                           Double_t lxyMin,
-                                           Bool_t matchCkf,
-                                           Bool_t requireArbitratedMerged,
-                                           Double_t trkptMin) 
+Bool_t
+mithep::ElectronTools::PassConversionFilter(const Electron *ele,
+                                            const DecayParticleCol *conversions,
+                                            const BaseVertex *vtx,
+                                            UInt_t nWrongHitsMax,
+                                            Double_t probMin,
+                                            Double_t lxyMin,
+                                            Bool_t matchCkf,
+                                            Bool_t requireArbitratedMerged,
+                                            Double_t trkptMin)
 {
   Bool_t isGoodConversion = kFALSE;
 
@@ -354,14 +484,14 @@ Bool_t ElectronTools::PassConversionFilter(const Electron *ele,
     }
 
     if (isGoodConversion == kTRUE) break;
-    
-  } // loop over all conversions 
+
+  } // loop over all conversions
 
   return !isGoodConversion;
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t ElectronTools::PassConversionFilterPFAOD(const Electron *ele, 
+Bool_t ElectronTools::PassConversionFilterPFAOD(const Electron *ele,
                                            const DecayParticleCol *conversions,
                                            const BaseVertex *vtx,
                                            UInt_t nWrongHitsMax,
@@ -369,7 +499,7 @@ Bool_t ElectronTools::PassConversionFilterPFAOD(const Electron *ele,
                                            Double_t lxyMin,
                                            Bool_t matchCkf,
                                            Bool_t requireArbitratedMerged,
-                                           Double_t trkptMin) 
+                                           Double_t trkptMin)
 {
 
   Bool_t isGoodConversion = kFALSE;
@@ -398,12 +528,12 @@ Bool_t ElectronTools::PassConversionFilterPFAOD(const Electron *ele,
 
       if (isGoodConversion == kTRUE) {
         for (UInt_t d=0; d<conversions->At(ifc)->NDaughters(); d++) {
-	  const ChargedParticle *pParticle = 0;
-	  pParticle = dynamic_cast<const ChargedParticle*>(conversions->At(ifc)->Daughter(d));
-	  if(pParticle == 0) continue;
-	  const Track* trk = 0;
-	  trk = pParticle->Trk();
-	  if(trk == 0) continue;
+          const ChargedParticle *pParticle = 0;
+          pParticle = dynamic_cast<const ChargedParticle*>(conversions->At(ifc)->Daughter(d));
+          if(pParticle == 0) continue;
+          const Track* trk = 0;
+          trk = pParticle->Trk();
+          if(trk == 0) continue;
           if (trk) {
             if (trk->Pt()<trkptMin) isGoodConversion = kFALSE;
             const StableData *sd = dynamic_cast<const StableData*>
@@ -416,88 +546,131 @@ Bool_t ElectronTools::PassConversionFilterPFAOD(const Electron *ele,
         }
       }
     }
-    
+
     if (isGoodConversion == kTRUE) break;
-    
-  } // loop over all conversions 
-  
+
+  } // loop over all conversions
+
   return !isGoodConversion;
 }
-//--------------------------------------------------------------------------------------------------
-Bool_t ElectronTools::PassD0Cut(const Electron *ele, const VertexCol *vertices, Double_t fD0Cut, Int_t nVertex) 
-{
-  Bool_t d0cut = kFALSE;
-  
-  Double_t d0_real = 1e30;
-  Int_t closestVtx = 0;
 
-  if( nVertex >= (int) vertices->GetEntries() )
-    nVertex = vertices->GetEntries() - 1;
-  
-  if(nVertex >= 0) d0_real = TMath::Abs(ele->GsfTrk()->D0Corrected(*vertices->At(nVertex)));
-  else            {
-    Double_t distVtx = 999.0;
-    for(UInt_t nv=0; nv<vertices->GetEntries(); nv++){
-      double dz = TMath::Abs(ele->GsfTrk()->DzCorrected(*vertices->At(nv)));
-      if(dz < distVtx) {
-	distVtx    = dz;
-        closestVtx = nv;
-      }
-      d0_real = TMath::Abs(ele->GsfTrk()->D0Corrected(*vertices->At(nv)));
-      //printf("ming sync check nv:%d dz:%f d0:%f\n",nv,dz,d0_real);
-    }
-    d0_real = TMath::Abs(ele->GsfTrk()->D0Corrected(*vertices->At(closestVtx)));
+Bool_t
+mithep::ElectronTools::PassNExpectedHits(Electron const* ele, EElIdType idType, Bool_t invert/* = false*/)
+{
+  int maxMissing = 0;
+
+  switch (idType) {
+  case kPhys14Veto:
+    if (ele->SCluster()->AbsEta() < gkEleEBEtaMax)
+      maxMissing = 2;
+    else
+      maxMissing = 3;
+    break;
+  default:
+    maxMissing = 1;
+    break;
   }
-  
-  //printf("ming sync check electonidmod vtxind:%d vtx_x:%f vtx_y:%f vtx_z:%f dz:%f d0:%f\n",closestVtx,vertices->At(closestVtx)->X(),vertices->At(closestVtx)->Y(),vertices->At(closestVtx)->Z(),dz_real,d0_real);
-  
-  if(d0_real < fD0Cut) d0cut = kTRUE;
-  
-  return d0cut;
+
+  bool res = ele->CorrectedNExpectedHitsInner() <= maxMissing;
+  return invert ? !res : res;
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t ElectronTools::PassD0Cut(const Electron *ele, const BeamSpotCol *beamspots, Double_t fD0Cut) 
+Bool_t
+mithep::ElectronTools::PassD0Cut(const Electron *ele, const VertexCol *vertices, EElIdType idType, Int_t iVertex)
 {
-  Bool_t d0cut = kFALSE;
-  // d0 cut
-  Double_t d0_real = 99999;
-  for(UInt_t i0 = 0; i0 < beamspots->GetEntries(); i0++) {
-    Double_t pD0 = ele->GsfTrk()->D0Corrected(*beamspots->At(i0));
-    if(TMath::Abs(pD0) < TMath::Abs(d0_real)) d0_real = TMath::Abs(pD0);
-  }
-  if(d0_real < fD0Cut) d0cut = kTRUE;
-  
-  return d0cut;
-}
+  if( iVertex >= (int) vertices->GetEntries() )
+    iVertex = vertices->GetEntries() - 1;
 
-//--------------------------------------------------------------------------------------------------
-Bool_t ElectronTools::PassDZCut(const Electron *ele, const VertexCol *vertices, Double_t fDZCut, Int_t nVertex) 
-{
-  Bool_t dzcut = kFALSE;
-
-  Double_t distVtx = 999.0;
-
-  if( nVertex >= (int) vertices->GetEntries() )
-    nVertex = vertices->GetEntries()-1;
-  
-  if(nVertex >= 0) distVtx = TMath::Abs(ele->GsfTrk()->DzCorrected(*vertices->At(nVertex)));
+  Double_t d0 = 0.;
+  if(iVertex >= 0)
+    d0 = TMath::Abs(ele->GsfTrk()->D0Corrected(*vertices->At(iVertex)));
   else {
-    for(UInt_t nv=0; nv<vertices->GetEntries(); nv++){
+    Double_t distVtx = std::numeric_limits<double>::max();
+    for(UInt_t nv = 0; nv != vertices->GetEntries(); ++nv){
       double dz = TMath::Abs(ele->GsfTrk()->DzCorrected(*vertices->At(nv)));
       if(dz < distVtx) {
-        distVtx	 = dz;
+        distVtx = dz;
+        d0 = TMath::Abs(ele->GsfTrk()->D0Corrected(*vertices->At(nv)));
       }
+
     }
   }
-  
-  if(distVtx < fDZCut) dzcut = kTRUE;
-  
-  return dzcut;
+
+  return PassD0Cut(ele, d0, idType);
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t ElectronTools::PassChargeFilter(const Electron *ele) 
+Bool_t
+mithep::ElectronTools::PassD0Cut(const Electron *ele, const BeamSpotCol *beamspots, EElIdType idType)
+{
+  // d0 cut
+  Double_t d0 = std::numeric_limits<double>::max();
+  for (UInt_t i0 = 0; i0 < beamspots->GetEntries(); ++i0) {
+    Double_t pD0 = ele->GsfTrk()->D0Corrected(*beamspots->At(i0));
+    if(TMath::Abs(pD0) < d0)
+      d0 = TMath::Abs(pD0);
+  }
+
+  return PassD0Cut(ele, d0, idType);
+}
+
+Bool_t
+mithep::ElectronTools::PassD0Cut(const Electron *ele, Double_t d0, EElIdType idType)
+{
+  switch (idType) {
+  case kPhys14Veto:
+    if (ele->SCluster()->AbsEta() < gkEleEBEtaMax)
+      return d0 < 0.094095;
+    else
+      return d0 < 0.342293;
+    break;
+  default:
+    return d0 < 0.02;
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+Bool_t
+mithep::ElectronTools::PassDZCut(const Electron *ele, const VertexCol *vertices, EElIdType idType, Int_t iVertex)
+{
+  if( iVertex >= (int) vertices->GetEntries() )
+    iVertex = vertices->GetEntries()-1;
+
+  Double_t dz;
+
+  if(iVertex >= 0)
+    dz = TMath::Abs(ele->GsfTrk()->DzCorrected(*vertices->At(iVertex)));
+  else {
+    dz = std::numeric_limits<double>::max();
+    for(UInt_t nv = 0; nv != vertices->GetEntries(); ++nv) {
+      double test = TMath::Abs(ele->GsfTrk()->DzCorrected(*vertices->At(nv)));
+      if(test < dz)
+        dz = test;
+    }
+  }
+
+  return PassDZCut(ele, dz, idType);
+}
+
+Bool_t
+mithep::ElectronTools::PassDZCut(const Electron *ele, Double_t dz, EElIdType idType)
+{
+  switch (idType) {
+  case kPhys14Veto:
+    if (ele->SCluster()->AbsEta() < gkEleEBEtaMax)
+      return dz < 0.713070;
+    else
+      return dz < 0.953461;
+    break;
+  default:
+    return dz < 0.1;
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+Bool_t
+mithep::ElectronTools::PassChargeFilter(const Electron *ele)
 {
   Bool_t passChargeFilter = kTRUE;
   if(ele->TrackerTrk() &&
@@ -507,29 +680,31 @@ Bool_t ElectronTools::PassChargeFilter(const Electron *ele)
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t ElectronTools::PassSpikeRemovalFilter(const Electron *ele) 
+Bool_t
+mithep::ElectronTools::PassSpikeRemovalFilter(const Electron *ele)
 {
   Bool_t passSpikeRemovalFilter = kTRUE;
   if(ele->SCluster() &&
-     ele->SCluster()->Seed()->Energy() > 5.0 && 
+     ele->SCluster()->Seed()->Energy() > 5.0 &&
      ele->SCluster()->Seed()->EMax() / ele->SCluster()->Seed()->E3x3() > 0.95
     ) {
     passSpikeRemovalFilter = kFALSE;
   }
 
   // For Now Only use the EMax/E3x3 prescription.
-  //   if(ele->SCluster()->Seed()->Energy() > 5.0 && 
+  //   if(ele->SCluster()->Seed()->Energy() > 5.0 &&
   //      (1 - (ele->SCluster()->Seed()->E1x3() + ele->SCluster()->Seed()->E3x1() - 2*ele->SCluster()->Seed()->EMax())) > 0.95
   //     ) {
   //     passSpikeRemovalFilter = kFALSE;
   //   }
-    
+
   return passSpikeRemovalFilter;
 }
 
-Bool_t ElectronTools::PassTriggerMatching(const Electron *ele, const TriggerObjectCol *trigobjs)
+Bool_t
+mithep::ElectronTools::PassTriggerMatching(const Electron *ele, const TriggerObjectCol *trigobjs)
 {
-  
+
   for (UInt_t i=0; i<trigobjs->GetEntries(); ++i) {
     const TriggerObject *trigobj = trigobjs->At(i);
     if (trigobj->TriggerType()==TriggerObject::TriggerCluster || trigobj->TriggerType()==TriggerObject::TriggerElectron || trigobj->TriggerType()==TriggerObject::TriggerPhoton) {
@@ -538,15 +713,17 @@ Bool_t ElectronTools::PassTriggerMatching(const Electron *ele, const TriggerObje
       }
     }
   }
-  
+
   return kFALSE;
-  
-  
+
+
 }
 
 //--------------------------------------------------------------------------------------------------
-Int_t ElectronTools::Classify(const Electron *ele) {
-  
+Int_t
+mithep::ElectronTools::Classify(const Electron *ele)
+{
+
   double eta    = ele->AbsEta();
   double eOverP = ele->ESuperClusterOverP();
   double fBrem  = ele->FBrem();
@@ -556,9 +733,9 @@ Int_t ElectronTools::Classify(const Electron *ele) {
     if ((fBrem >= 0.12) and (eOverP > 0.9) and (eOverP < 1.2))
       cat = 0;
     else if (((eta >  .445   and eta <  .45  ) or
-  	      (eta >  .79    and eta <  .81  ) or
-  	      (eta > 1.137   and eta < 1.157 ) or
-  	      (eta > 1.47285 and eta < 1.4744)))
+              (eta >  .79    and eta <  .81  ) or
+              (eta > 1.137   and eta < 1.157 ) or
+              (eta > 1.47285 and eta < 1.4744)))
       cat = 6;
     else if (ele->IsTrackerDriven() and !ele->IsEcalDriven())
       cat = 8;
@@ -583,9 +760,11 @@ Int_t ElectronTools::Classify(const Electron *ele) {
 }
 
 //--------------------------------------------------------------------------------------------------
-Int_t ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices, 
-                                 const DecayParticleCol *conversions, const Int_t typeCuts,
-				 Double_t beta){
+Int_t
+mithep::ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices,
+                                   const DecayParticleCol *conversions, const Int_t typeCuts,
+                                   Double_t beta)
+{
 
 // original code on
 // http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/CMSSW/RecoEgamma/ElectronIdentification/src/CutBasedElectronID.cc
@@ -599,7 +778,7 @@ Int_t ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices,
   Double_t sigmaee = ele->CoviEtaiEta();
   Double_t deltaPhiIn = TMath::Abs(ele->DeltaPhiSuperClusterTrackAtVtx());
   Double_t deltaEtaIn = TMath::Abs(ele->DeltaEtaSuperClusterTrackAtVtx());
-  Double_t eSeedOverPin = ele->ESeedClusterOverPIn(); 
+  Double_t eSeedOverPin = ele->ESeedClusterOverPIn();
 
   Int_t mishits = ele->BestTrk()->NExpectedHitsInner();
   Double_t tkIso   = ele->TrackIsolationDr03();
@@ -675,7 +854,7 @@ Int_t ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices,
   1.16e-02, 1.07e-02, 1.08e-02, 3.49e-02, 2.89e-02, 3.08e-02, 9.87e-03, 3.37e-02, 4.40e-02};
   Double_t cutseelTight[9] = {
   1.27e-02, 1.08e-02, 1.13e-02, 4.19e-02, 2.81e-02, 3.02e-02, 9.76e-03, 4.28e-02, 2.98e-02};
-  
+
   // SuperTight cuts
   Double_t cutdcotdistSuperTight[9] = {
   2.11e-02, 1.86e-02, 1.55e-02, 3.40e-02, 2.85e-02, 3.32e-02, 1.64e-02, 3.75e-02, 1.30e-04};
@@ -862,7 +1041,7 @@ Int_t ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices,
   Double_t cutiso_sumoetl[9];
   Double_t cutsee[9];
   Double_t cutseel[9];
-  if	 (typeCuts == 0) {
+  if     (typeCuts == 0) {
     memcpy(cutdcotdist   ,cutdcotdistMedium   ,sizeof(cutdcotdistMedium));
     memcpy(cutdetain     ,cutdetainMedium     ,sizeof(cutdetainMedium));
     memcpy(cutdetainl    ,cutdetainlMedium    ,sizeof(cutdetainlMedium));
@@ -870,15 +1049,15 @@ Int_t ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices,
     memcpy(cutdphiinl    ,cutdphiinlMedium    ,sizeof(cutdphiinlMedium));
     memcpy(cuteseedopcor ,cuteseedopcorMedium ,sizeof(cuteseedopcorMedium));
     memcpy(cutfmishits   ,cutfmishitsMedium   ,sizeof(cutfmishitsMedium));
-    memcpy(cuthoe        ,cuthoeMedium	      ,sizeof(cuthoeMedium));
-    memcpy(cuthoel       ,cuthoelMedium	      ,sizeof(cuthoelMedium));
+    memcpy(cuthoe        ,cuthoeMedium        ,sizeof(cuthoeMedium));
+    memcpy(cuthoel       ,cuthoelMedium       ,sizeof(cuthoelMedium));
     memcpy(cutip_gsf     ,cutip_gsfMedium     ,sizeof(cutip_gsfMedium));
     memcpy(cutip_gsfl    ,cutip_gsflMedium    ,sizeof(cutip_gsflMedium));
     memcpy(cutiso_sum    ,cutiso_sumMedium    ,sizeof(cutiso_sumMedium));
     memcpy(cutiso_sumoet ,cutiso_sumoetMedium ,sizeof(cutiso_sumoetMedium));
     memcpy(cutiso_sumoetl,cutiso_sumoetlMedium,sizeof(cutiso_sumoetlMedium));
-    memcpy(cutsee        ,cutseeMedium	      ,sizeof(cutseeMedium));
-    memcpy(cutseel       ,cutseelMedium	      ,sizeof(cutseelMedium));
+    memcpy(cutsee        ,cutseeMedium        ,sizeof(cutseeMedium));
+    memcpy(cutseel       ,cutseelMedium       ,sizeof(cutseelMedium));
   }
   else if(typeCuts == 1) {
     memcpy(cutdcotdist   ,cutdcotdistTight   ,sizeof(cutdcotdistTight));
@@ -888,15 +1067,15 @@ Int_t ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices,
     memcpy(cutdphiinl    ,cutdphiinlTight    ,sizeof(cutdphiinlTight));
     memcpy(cuteseedopcor ,cuteseedopcorTight ,sizeof(cuteseedopcorTight));
     memcpy(cutfmishits   ,cutfmishitsTight   ,sizeof(cutfmishitsTight));
-    memcpy(cuthoe        ,cuthoeTight	     ,sizeof(cuthoeTight));
-    memcpy(cuthoel       ,cuthoelTight	     ,sizeof(cuthoelTight));
+    memcpy(cuthoe        ,cuthoeTight        ,sizeof(cuthoeTight));
+    memcpy(cuthoel       ,cuthoelTight       ,sizeof(cuthoelTight));
     memcpy(cutip_gsf     ,cutip_gsfTight     ,sizeof(cutip_gsfTight));
     memcpy(cutip_gsfl    ,cutip_gsflTight    ,sizeof(cutip_gsflTight));
     memcpy(cutiso_sum    ,cutiso_sumTight    ,sizeof(cutiso_sumTight));
     memcpy(cutiso_sumoet ,cutiso_sumoetTight ,sizeof(cutiso_sumoetTight));
     memcpy(cutiso_sumoetl,cutiso_sumoetlTight,sizeof(cutiso_sumoetlTight));
-    memcpy(cutsee        ,cutseeTight	     ,sizeof(cutseeTight));
-    memcpy(cutseel       ,cutseelTight	     ,sizeof(cutseelTight));
+    memcpy(cutsee        ,cutseeTight        ,sizeof(cutseeTight));
+    memcpy(cutseel       ,cutseelTight       ,sizeof(cutseelTight));
   }
   else if(typeCuts == 2) {
     memcpy(cutdcotdist   ,cutdcotdistSuperTight   ,sizeof(cutdcotdistSuperTight));
@@ -906,15 +1085,15 @@ Int_t ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices,
     memcpy(cutdphiinl    ,cutdphiinlSuperTight    ,sizeof(cutdphiinlSuperTight));
     memcpy(cuteseedopcor ,cuteseedopcorSuperTight ,sizeof(cuteseedopcorSuperTight));
     memcpy(cutfmishits   ,cutfmishitsSuperTight   ,sizeof(cutfmishitsSuperTight));
-    memcpy(cuthoe        ,cuthoeSuperTight	  ,sizeof(cuthoeSuperTight));
-    memcpy(cuthoel       ,cuthoelSuperTight	  ,sizeof(cuthoelSuperTight));
+    memcpy(cuthoe        ,cuthoeSuperTight        ,sizeof(cuthoeSuperTight));
+    memcpy(cuthoel       ,cuthoelSuperTight       ,sizeof(cuthoelSuperTight));
     memcpy(cutip_gsf     ,cutip_gsfSuperTight     ,sizeof(cutip_gsfSuperTight));
     memcpy(cutip_gsfl    ,cutip_gsflSuperTight    ,sizeof(cutip_gsflSuperTight));
     memcpy(cutiso_sum    ,cutiso_sumSuperTight    ,sizeof(cutiso_sumSuperTight));
     memcpy(cutiso_sumoet ,cutiso_sumoetSuperTight ,sizeof(cutiso_sumoetSuperTight));
     memcpy(cutiso_sumoetl,cutiso_sumoetlSuperTight,sizeof(cutiso_sumoetlSuperTight));
-    memcpy(cutsee        ,cutseeSuperTight	  ,sizeof(cutseeSuperTight));
-    memcpy(cutseel       ,cutseelSuperTight	  ,sizeof(cutseelSuperTight));
+    memcpy(cutsee        ,cutseeSuperTight        ,sizeof(cutseeSuperTight));
+    memcpy(cutseel       ,cutseelSuperTight       ,sizeof(cutseelSuperTight));
   }
   else if(typeCuts == 3) {
     memcpy(cutdcotdist   ,cutdcotdistHyperTight1   ,sizeof(cutdcotdistHyperTight1));
@@ -924,15 +1103,15 @@ Int_t ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices,
     memcpy(cutdphiinl    ,cutdphiinlHyperTight1    ,sizeof(cutdphiinlHyperTight1));
     memcpy(cuteseedopcor ,cuteseedopcorHyperTight1 ,sizeof(cuteseedopcorHyperTight1));
     memcpy(cutfmishits   ,cutfmishitsHyperTight1   ,sizeof(cutfmishitsHyperTight1));
-    memcpy(cuthoe        ,cuthoeHyperTight1	  ,sizeof(cuthoeHyperTight1));
-    memcpy(cuthoel       ,cuthoelHyperTight1	  ,sizeof(cuthoelHyperTight1));
+    memcpy(cuthoe        ,cuthoeHyperTight1       ,sizeof(cuthoeHyperTight1));
+    memcpy(cuthoel       ,cuthoelHyperTight1      ,sizeof(cuthoelHyperTight1));
     memcpy(cutip_gsf     ,cutip_gsfHyperTight1     ,sizeof(cutip_gsfHyperTight1));
     memcpy(cutip_gsfl    ,cutip_gsflHyperTight1    ,sizeof(cutip_gsflHyperTight1));
     memcpy(cutiso_sum    ,cutiso_sumHyperTight1    ,sizeof(cutiso_sumHyperTight1));
     memcpy(cutiso_sumoet ,cutiso_sumoetHyperTight1 ,sizeof(cutiso_sumoetHyperTight1));
     memcpy(cutiso_sumoetl,cutiso_sumoetlHyperTight1,sizeof(cutiso_sumoetlHyperTight1));
-    memcpy(cutsee        ,cutseeHyperTight1	  ,sizeof(cutseeHyperTight1));
-    memcpy(cutseel       ,cutseelHyperTight1	  ,sizeof(cutseelHyperTight1));
+    memcpy(cutsee        ,cutseeHyperTight1       ,sizeof(cutseeHyperTight1));
+    memcpy(cutseel       ,cutseelHyperTight1      ,sizeof(cutseelHyperTight1));
   }
   else if(typeCuts == 4) {
     memcpy(cutdcotdist   ,cutdcotdistHyperTight2   ,sizeof(cutdcotdistHyperTight2));
@@ -942,15 +1121,15 @@ Int_t ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices,
     memcpy(cutdphiinl    ,cutdphiinlHyperTight2    ,sizeof(cutdphiinlHyperTight2));
     memcpy(cuteseedopcor ,cuteseedopcorHyperTight2 ,sizeof(cuteseedopcorHyperTight2));
     memcpy(cutfmishits   ,cutfmishitsHyperTight2   ,sizeof(cutfmishitsHyperTight2));
-    memcpy(cuthoe        ,cuthoeHyperTight2	  ,sizeof(cuthoeHyperTight2));
-    memcpy(cuthoel       ,cuthoelHyperTight2	  ,sizeof(cuthoelHyperTight2));
+    memcpy(cuthoe        ,cuthoeHyperTight2       ,sizeof(cuthoeHyperTight2));
+    memcpy(cuthoel       ,cuthoelHyperTight2      ,sizeof(cuthoelHyperTight2));
     memcpy(cutip_gsf     ,cutip_gsfHyperTight2     ,sizeof(cutip_gsfHyperTight2));
     memcpy(cutip_gsfl    ,cutip_gsflHyperTight2    ,sizeof(cutip_gsflHyperTight2));
     memcpy(cutiso_sum    ,cutiso_sumHyperTight2    ,sizeof(cutiso_sumHyperTight2));
     memcpy(cutiso_sumoet ,cutiso_sumoetHyperTight2 ,sizeof(cutiso_sumoetHyperTight2));
     memcpy(cutiso_sumoetl,cutiso_sumoetlHyperTight2,sizeof(cutiso_sumoetlHyperTight2));
-    memcpy(cutsee        ,cutseeHyperTight2	  ,sizeof(cutseeHyperTight2));
-    memcpy(cutseel       ,cutseelHyperTight2	  ,sizeof(cutseelHyperTight2));
+    memcpy(cutsee        ,cutseeHyperTight2       ,sizeof(cutseeHyperTight2));
+    memcpy(cutseel       ,cutseelHyperTight2      ,sizeof(cutseelHyperTight2));
   }
   else if(typeCuts == 5) {
     memcpy(cutdcotdist   ,cutdcotdistHyperTight3   ,sizeof(cutdcotdistHyperTight3));
@@ -960,15 +1139,15 @@ Int_t ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices,
     memcpy(cutdphiinl    ,cutdphiinlHyperTight3    ,sizeof(cutdphiinlHyperTight3));
     memcpy(cuteseedopcor ,cuteseedopcorHyperTight3 ,sizeof(cuteseedopcorHyperTight3));
     memcpy(cutfmishits   ,cutfmishitsHyperTight3   ,sizeof(cutfmishitsHyperTight3));
-    memcpy(cuthoe        ,cuthoeHyperTight3	  ,sizeof(cuthoeHyperTight3));
-    memcpy(cuthoel       ,cuthoelHyperTight3	  ,sizeof(cuthoelHyperTight3));
+    memcpy(cuthoe        ,cuthoeHyperTight3       ,sizeof(cuthoeHyperTight3));
+    memcpy(cuthoel       ,cuthoelHyperTight3      ,sizeof(cuthoelHyperTight3));
     memcpy(cutip_gsf     ,cutip_gsfHyperTight3     ,sizeof(cutip_gsfHyperTight3));
     memcpy(cutip_gsfl    ,cutip_gsflHyperTight3    ,sizeof(cutip_gsflHyperTight3));
     memcpy(cutiso_sum    ,cutiso_sumHyperTight3    ,sizeof(cutiso_sumHyperTight3));
     memcpy(cutiso_sumoet ,cutiso_sumoetHyperTight3 ,sizeof(cutiso_sumoetHyperTight3));
     memcpy(cutiso_sumoetl,cutiso_sumoetlHyperTight3,sizeof(cutiso_sumoetlHyperTight3));
-    memcpy(cutsee        ,cutseeHyperTight3	  ,sizeof(cutseeHyperTight3));
-    memcpy(cutseel       ,cutseelHyperTight3	  ,sizeof(cutseelHyperTight3));
+    memcpy(cutsee        ,cutseeHyperTight3       ,sizeof(cutseeHyperTight3));
+    memcpy(cutseel       ,cutseelHyperTight3      ,sizeof(cutseelHyperTight3));
   }
   else if(typeCuts == 6) {
     memcpy(cutdcotdist   ,cutdcotdistHyperTight4   ,sizeof(cutdcotdistHyperTight4));
@@ -978,30 +1157,30 @@ Int_t ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices,
     memcpy(cutdphiinl    ,cutdphiinlHyperTight4    ,sizeof(cutdphiinlHyperTight4));
     memcpy(cuteseedopcor ,cuteseedopcorHyperTight4 ,sizeof(cuteseedopcorHyperTight4));
     memcpy(cutfmishits   ,cutfmishitsHyperTight4   ,sizeof(cutfmishitsHyperTight4));
-    memcpy(cuthoe        ,cuthoeHyperTight4	  ,sizeof(cuthoeHyperTight4));
-    memcpy(cuthoel       ,cuthoelHyperTight4	  ,sizeof(cuthoelHyperTight4));
+    memcpy(cuthoe        ,cuthoeHyperTight4       ,sizeof(cuthoeHyperTight4));
+    memcpy(cuthoel       ,cuthoelHyperTight4      ,sizeof(cuthoelHyperTight4));
     memcpy(cutip_gsf     ,cutip_gsfHyperTight4     ,sizeof(cutip_gsfHyperTight4));
     memcpy(cutip_gsfl    ,cutip_gsflHyperTight4    ,sizeof(cutip_gsflHyperTight4));
     memcpy(cutiso_sum    ,cutiso_sumHyperTight4    ,sizeof(cutiso_sumHyperTight4));
     memcpy(cutiso_sumoet ,cutiso_sumoetHyperTight4 ,sizeof(cutiso_sumoetHyperTight4));
     memcpy(cutiso_sumoetl,cutiso_sumoetlHyperTight4,sizeof(cutiso_sumoetlHyperTight4));
-    memcpy(cutsee        ,cutseeHyperTight4	  ,sizeof(cutseeHyperTight4));
-    memcpy(cutseel       ,cutseelHyperTight4	  ,sizeof(cutseelHyperTight4));
+    memcpy(cutsee        ,cutseeHyperTight4       ,sizeof(cutseeHyperTight4));
+    memcpy(cutseel       ,cutseelHyperTight4      ,sizeof(cutseelHyperTight4));
   }
   else {
     return 0;
   }
   int result = 0;
-  
+
   const int ncuts = 10;
   std::vector<bool> cut_results(ncuts, false);
-  
+
   float iso_sum = tkIso + ecalIso + hcalIso;
-  if(fabs(scEta)>1.5) 
+  if(fabs(scEta)>1.5)
     iso_sum += (fabs(scEta)-1.5)*1.09;
-  
+
   float iso_sumoet = iso_sum*(40./scEt);
-  
+
   float eseedopincor = eSeedOverPin + fBrem;
   if(fBrem < 0)
     eseedopincor = eSeedOverPin;
@@ -1054,29 +1233,30 @@ Int_t ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices,
       break;
     }
   }
-  
+
   // ID part
   if (cut_results[0] & cut_results[1] & cut_results[2] & cut_results[3] & cut_results[4])
     result = result + 1;
-  
+
   // ISO part
   if (cut_results[5] & cut_results[6])
     result = result + 2;
-  
+
   // IP part
   if (cut_results[7])
     result = result + 8;
-  
+
   // Conversion part
   if (cut_results[8] and cut_results[9])
     result = result + 4;
-  
+
   return result;
 }
 
 //--------------------------------------------------------------------------------------------------
-bool ElectronTools::compute_cut(double x, double et, double cut_min, double cut_max, bool gtn) {
-
+bool
+mithep::ElectronTools::compute_cut(double x, double et, double cut_min, double cut_max, bool gtn)
+{
   float et_min = 10;
   float et_max = 40;
 
@@ -1085,15 +1265,15 @@ bool ElectronTools::compute_cut(double x, double et, double cut_min, double cut_
 
   if(et < et_max) {
     cut = cut_min + (1/et_min - 1/et)*(cut_max - cut_min)/(1/et_min - 1/et_max);
-  } 
-  
+  }
+
   if(et < et_min) {
     cut = cut_min;
-  } 
+  }
 
   if(gtn) {   // useful for e/p cut which is gt
     accept = (x >= cut);
-  } 
+  }
   else {
     accept = (x <= cut);
   }
@@ -1102,10 +1282,11 @@ bool ElectronTools::compute_cut(double x, double et, double cut_min, double cut_
 }
 
 //--------------------------------------------------------------------------------------------------
-Double_t ElectronTools::Likelihood(ElectronLikelihood *LH, const Electron *ele) 
+Double_t
+mithep::ElectronTools::Likelihood(ElectronLikelihood *LH, const Electron *ele)
 {
   if (!LH) {
-    std::cout << "Error: Likelihood not properly initialized\n"; 
+    std::cout << "Error: Likelihood not properly initialized\n";
     return -9999;
   }
 
@@ -1146,542 +1327,269 @@ Double_t ElectronTools::Likelihood(ElectronLikelihood *LH, const Electron *ele)
 
 }
 
-Double_t ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Double_t SCEta, EElectronEffectiveAreaTarget EffectiveAreaTarget) {
-
-  Double_t EffectiveArea = 0;
-  
-  if(type == ElectronTools::kEleNeutralIso04){
-    if     (fabs(SCEta) < 1.0                           ) EffectiveArea = 0.208;
-    else if(fabs(SCEta) >= 1.0   && fabs(SCEta) < 1.479 ) EffectiveArea = 0.209;
-    else if(fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.000 ) EffectiveArea = 0.115;
-    else if(fabs(SCEta) >= 2.000 && fabs(SCEta) < 2.200 ) EffectiveArea = 0.143;
-    else if(fabs(SCEta) >= 2.200 && fabs(SCEta) < 2.300 ) EffectiveArea = 0.183;
-    else if(fabs(SCEta) >= 2.300 && fabs(SCEta) < 2.400 ) EffectiveArea = 0.194;
-    else                                                  EffectiveArea = 0.261;
-    return EffectiveArea;
-  }
-
-  if (fabs(SCEta) < 1.0) {
-    if (type == ElectronTools::kEleChargedIso03) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleNeutralHadronIso03) EffectiveArea = 0.017;
-    if (type == ElectronTools::kEleGammaIso03) EffectiveArea = 0.045;
-    if (type == ElectronTools::kEleGammaIsoVetoEtaStrip03) EffectiveArea = 0.014;
-    if (type == ElectronTools::kEleChargedIso04) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleNeutralHadronIso04) EffectiveArea = 0.034;
-    if (type == ElectronTools::kEleGammaIso04) EffectiveArea = 0.079;
-    if (type == ElectronTools::kEleGammaIsoVetoEtaStrip04) EffectiveArea = 0.014;
-    if (type == ElectronTools::kEleNeutralHadronIso007) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleHoverE) EffectiveArea = 0.00016;
-    if (type == ElectronTools::kEleHcalDepth1OverEcal) EffectiveArea = 0.00016;
-    if (type == ElectronTools::kEleHcalDepth2OverEcal) EffectiveArea = 0.00000;    
-  } else if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) {
-    if (type == ElectronTools::kEleChargedIso03) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleNeutralHadronIso03) EffectiveArea = 0.025;
-    if (type == ElectronTools::kEleGammaIso03) EffectiveArea = 0.052;
-    if (type == ElectronTools::kEleGammaIsoVetoEtaStrip03) EffectiveArea = 0.030;
-    if (type == ElectronTools::kEleChargedIso04) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleNeutralHadronIso04) EffectiveArea = 0.050;
-    if (type == ElectronTools::kEleGammaIso04) EffectiveArea = 0.073;
-    if (type == ElectronTools::kEleGammaIsoVetoEtaStrip04) EffectiveArea = 0.030;
-    if (type == ElectronTools::kEleNeutralHadronIso007) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleHoverE) EffectiveArea = 0.00022;
-    if (type == ElectronTools::kEleHcalDepth1OverEcal) EffectiveArea = 0.00022;
-    if (type == ElectronTools::kEleHcalDepth2OverEcal) EffectiveArea = 0.00000;    
-  } else if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) {
-    if (type == ElectronTools::kEleChargedIso03) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleNeutralHadronIso03) EffectiveArea = 0.030;
-    if (type == ElectronTools::kEleGammaIso03) EffectiveArea = 0.170;
-    if (type == ElectronTools::kEleGammaIsoVetoEtaStrip03) EffectiveArea = 0.134;
-    if (type == ElectronTools::kEleChargedIso04) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleNeutralHadronIso04) EffectiveArea = 0.060;
-    if (type == ElectronTools::kEleGammaIso04) EffectiveArea = 0.187;
-    if (type == ElectronTools::kEleGammaIsoVetoEtaStrip04) EffectiveArea = 0.134;
-    if (type == ElectronTools::kEleNeutralHadronIso007) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleHoverE) EffectiveArea = 0.00030;
-    if (type == ElectronTools::kEleHcalDepth1OverEcal) EffectiveArea = 0.00026;
-    if (type == ElectronTools::kEleHcalDepth2OverEcal) EffectiveArea = 0.00002;        
-  } else if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.25 ) {
-    if (type == ElectronTools::kEleChargedIso03) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleNeutralHadronIso03) EffectiveArea = 0.022;
-    if (type == ElectronTools::kEleGammaIso03) EffectiveArea = 0.623;
-    if (type == ElectronTools::kEleGammaIsoVetoEtaStrip03) EffectiveArea = 0.516;
-    if (type == ElectronTools::kEleChargedIso04) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleNeutralHadronIso04) EffectiveArea = 0.055;
-    if (type == ElectronTools::kEleGammaIso04) EffectiveArea = 0.659;
-    if (type == ElectronTools::kEleGammaIsoVetoEtaStrip04) EffectiveArea = 0.517;
-    if (type == ElectronTools::kEleNeutralHadronIso007) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleHoverE) EffectiveArea = 0.00054;
-    if (type == ElectronTools::kEleHcalDepth1OverEcal) EffectiveArea = 0.00045;
-    if (type == ElectronTools::kEleHcalDepth2OverEcal) EffectiveArea = 0.00003;
-  } else if (fabs(SCEta) >= 2.25 && fabs(SCEta) < 2.5 ) {
-    if (type == ElectronTools::kEleChargedIso03) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleNeutralHadronIso03) EffectiveArea = 0.018;
-    if (type == ElectronTools::kEleGammaIso03) EffectiveArea = 1.198;
-    if (type == ElectronTools::kEleGammaIsoVetoEtaStrip03) EffectiveArea = 1.049;
-    if (type == ElectronTools::kEleChargedIso04) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleNeutralHadronIso04) EffectiveArea = 0.073;
-    if (type == ElectronTools::kEleGammaIso04) EffectiveArea = 1.258;
-    if (type == ElectronTools::kEleGammaIsoVetoEtaStrip04) EffectiveArea = 1.051;
-    if (type == ElectronTools::kEleNeutralHadronIso007) EffectiveArea = 0.000;
-    if (type == ElectronTools::kEleHoverE) EffectiveArea = 0.00082;
-    if (type == ElectronTools::kEleHcalDepth1OverEcal) EffectiveArea = 0.00066;
-    if (type == ElectronTools::kEleHcalDepth2OverEcal) EffectiveArea = 0.00004;
-  }
-    
-  //NoCorrections
-  if (EffectiveAreaTarget == kEleEANoCorr) {
+Double_t
+mithep::ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Double_t SCEta, EElectronEffectiveAreaTarget target)
+{
+  if (target == kEleEANoCorr)
     return 0.0;
-  }
-  else if (EffectiveAreaTarget == kEleEAData2012) {
-    if (type == kEleGammaIso03) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.122;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.147;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.055;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.106;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.138;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.221;
-      if (fabs(SCEta) >= 2.4 ) EffectiveArea = 0.211;
-    }
-    if (type == kEleGammaIso04) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.176;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.206;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.094;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.172;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.244;
-      if (fabs(SCEta) >= 2.4 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.333;
-      if (fabs(SCEta) >= 2.4 ) EffectiveArea = 0.348;
-    }
-    if (type == kEleNeutralHadronIso03) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.013;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.021;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.013;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.010;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.024;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.020;
-      if (fabs(SCEta) >= 2.4 ) EffectiveArea = 0.019;
-    }
-    if (type == kEleNeutralHadronIso04) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.022;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.036;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.027;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.028;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.052;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.063;
-      if (fabs(SCEta) >= 2.4 ) EffectiveArea = 0.028;
-    }
-    if (type == kEleGammaAndNeutralHadronIso04) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.208;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.209;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.115;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.143;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.183;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.194;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.261;
-    }				
-    if (type == kEleGammaIsoDR0p0To0p1) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.051;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.032;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.006;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.007;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.024;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.013;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.013;
-    }
-    if (type == kEleGammaIsoDR0p1To0p2) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.013;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.013;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.021;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.052;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.066;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.043;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.102;
-    }
-    if (type == kEleGammaIsoDR0p2To0p3) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.026;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.017;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.012;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.028;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.041;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.034;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.042;
-    }
-    if (type == kEleGammaIsoDR0p3To0p4) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.039;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.032;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.017;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.024;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.053;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.059;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.069;
-    }
-    if (type == kEleGammaIsoDR0p4To0p5) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.059;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.045;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.033;
-     if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.043;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.056;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.065;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.074;
-    }
-    if (type == kEleNeutralHadronIsoDR0p0To0p1) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.001;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.006;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.001;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.001;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.003;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.008;
-    }
-    if (type == kEleNeutralHadronIsoDR0p1To0p2) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.002;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.001;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.004;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.003;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.005;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.006;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.010;
-    }
-    if (type == kEleNeutralHadronIsoDR0p2To0p3) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.007;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.010;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.009;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.009;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.007;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.018;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.028;
-    }
-    if (type == kEleNeutralHadronIsoDR0p3To0p4) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.010;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.011;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.012;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.008;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.018;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.026;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.063;
-    }
-    if (type == kEleNeutralHadronIsoDR0p4To0p5) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.011;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.012;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.016;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.023;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.038;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.051;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.143;
-    }
-  } 
 
-  //2011 Data Effective Areas
-  else if (EffectiveAreaTarget == kEleEAData2011) {
-    if (type == kEleGammaAndNeutralHadronIso03) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.100;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.120;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.085;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.110;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.120;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.120;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.130;
-    }
-    if (type == kEleGammaAndNeutralHadronIso04) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.180;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.200;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.150;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.190;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.210;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.220;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.290;
-    }
-    if (type == kEleGammaIsoDR0p0To0p1) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.017;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.033;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.005;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.007;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.004;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.000;
-    }
-    if (type == kEleGammaIsoDR0p1To0p2) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.010;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.010;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.019;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.042;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.041;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.035;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.041;
-    }
-    if (type == kEleGammaIsoDR0p2To0p3) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.020;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.017;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.014;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.029;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.039;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.042;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.048;
-    }
-    if (type == kEleGammaIsoDR0p3To0p4) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.036;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.029;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.020;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.029;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.042;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.047;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.054;
-    }
-    if (type == kEleGammaIsoDR0p4To0p5) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.051;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.038;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.028;
-     if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.036;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.047;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.057;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.059;
-    }
-    if (type == kEleNeutralHadronIsoDR0p0To0p1) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.001;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.002;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.002;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.000;
-    }
-    if (type == kEleNeutralHadronIsoDR0p1To0p2) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.005;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.008;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.008;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.006;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.003;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.001;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.003;
-    }
-    if (type == kEleNeutralHadronIsoDR0p2To0p3) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.010;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.014;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.017;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.016;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.016;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.016;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.019;
-    }
-    if (type == kEleNeutralHadronIsoDR0p3To0p4) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.015;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.021;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.025;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.030;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.036;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.038;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.084;
-    }
-    if (type == kEleNeutralHadronIsoDR0p4To0p5) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.020;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.027;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.035;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.045;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.051;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.107;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.228;
-    }
-  } 
+  std::vector<double> etaBinning1{0., 1., gkEleEBEtaMax, 2., 2.2, 2.3, 2.4, std::numeric_limits<double>::max()};
+  std::vector<double> etaBinning2{0., 1., gkEleEBEtaMax, 2., 2.2, 2.25, 2.5, std::numeric_limits<double>::max()};
+  std::vector<double> etaBinning3{0., 0.8, 1.3, 2., 2.2, 2.5, std::numeric_limits<double>::max()};
 
-  //Summer11 MC Effective Areas
-  else if (EffectiveAreaTarget == kEleEASummer11MC) {
-    if (type == kEleGammaIsoDR0p0To0p1) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.015;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.030;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.004;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.010;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.014;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.024;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.023;
+  std::vector<double>* etaBinning = 0;
+  std::vector<double> areas;
+
+  switch (target) {
+  case kEleEAData2012:
+    etaBinning = &etaBinning1;
+
+    switch(type) {
+    case kEleGammaIso03:
+      areas = {0.122, 0.147, 0.055, 0.106, 0.138, 0.221, 0.211};
+      break;
+    case kEleGammaIso04:
+      areas = {0.176, 0.206, 0.094, 0.172, 0.244, 0.333, 0.348};
+      break;
+    case kEleNeutralHadronIso03:
+      areas = {0.013, 0.021, 0.013, 0.010, 0.024, 0.020, 0.019};
+      break;
+    case kEleNeutralHadronIso04:
+      areas = {0.022, 0.036, 0.027, 0.028, 0.052, 0.063, 0.028};
+      break;
+    case kEleGammaAndNeutralHadronIso04:
+      areas = {0.208, 0.209, 0.115, 0.143, 0.183, 0.194, 0.261};
+      break;                            
+    case kEleGammaIsoDR0p0To0p1:
+      areas = {0.051, 0.032, 0.006, 0.007, 0.024, 0.013, 0.013};
+      break;
+    case kEleGammaIsoDR0p1To0p2:
+      areas = {0.013, 0.013, 0.021, 0.052, 0.066, 0.043, 0.102};
+      break;
+    case kEleGammaIsoDR0p2To0p3:
+      areas = {0.026, 0.017, 0.012, 0.028, 0.041, 0.034, 0.042};
+      break;
+    case kEleGammaIsoDR0p3To0p4:
+      areas = {0.039, 0.032, 0.017, 0.024, 0.053, 0.059, 0.069};
+      break;
+    case kEleGammaIsoDR0p4To0p5:
+      areas = {0.059, 0.045, 0.033, 0.043, 0.056, 0.065, 0.074};
+      break;
+    case kEleNeutralHadronIsoDR0p0To0p1:
+      areas = {0.001, 0.006, 0.001, 0.000, 0.001, 0.003, 0.008};
+      break;
+    case kEleNeutralHadronIsoDR0p1To0p2:
+      areas = {0.002, 0.001, 0.004, 0.003, 0.005, 0.006, 0.010};
+      break;
+    case kEleNeutralHadronIsoDR0p2To0p3:
+      areas = {0.007, 0.010, 0.009, 0.009, 0.007, 0.018, 0.028};
+      break;
+    case kEleNeutralHadronIsoDR0p3To0p4:
+      areas = {0.010, 0.011, 0.012, 0.008, 0.018, 0.026, 0.063};
+      break;
+    case kEleNeutralHadronIsoDR0p4To0p5:
+      areas = {0.011, 0.012, 0.016, 0.023, 0.038, 0.051, 0.143};
+      break;
+    default:
+      return 0.;
     }
-    if (type == kEleGammaIsoDR0p1To0p2) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.012;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.010;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.009;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.037;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.046;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.055;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.046;
+    break;
+
+  case kEleEAData2011:
+    etaBinning = &etaBinning1;
+
+    switch (type) {
+    case kEleGammaAndNeutralHadronIso03:
+      areas = {0.100, 0.120, 0.085, 0.110, 0.120, 0.120, 0.130};
+      break;
+    case kEleGammaAndNeutralHadronIso04:
+      areas = {0.180, 0.200, 0.150, 0.190, 0.210, 0.220, 0.290};
+      break;
+    case kEleGammaIsoDR0p0To0p1:
+      areas = {0.017, 0.033, 0.005, 0.007, 0.004, 0.000, 0.000};
+      break;
+    case kEleGammaIsoDR0p1To0p2:
+      areas = {0.010, 0.010, 0.019, 0.042, 0.041, 0.035, 0.041};
+      break;
+    case kEleGammaIsoDR0p2To0p3:
+      areas = {0.020, 0.017, 0.014, 0.029, 0.039, 0.042, 0.048};
+      break;
+    case kEleGammaIsoDR0p3To0p4:
+      areas = {0.036, 0.029, 0.020, 0.029, 0.042, 0.047, 0.054};
+      break;
+    case kEleGammaIsoDR0p4To0p5:
+      areas = {0.051, 0.038, 0.028, 0.036, 0.047, 0.057, 0.059};
+      break;
+    case kEleNeutralHadronIsoDR0p0To0p1:
+      areas = {0.001, 0.002, 0.002, 0.000, 0.000, 0.000, 0.000};
+      break;
+    case kEleNeutralHadronIsoDR0p1To0p2:
+      areas = {0.005, 0.008, 0.008, 0.006, 0.003, 0.001, 0.003};
+      break;
+    case kEleNeutralHadronIsoDR0p2To0p3:
+      areas = {0.010, 0.014, 0.017, 0.016, 0.016, 0.016, 0.019};
+      break;
+    case kEleNeutralHadronIsoDR0p3To0p4:
+      areas = {0.015, 0.021, 0.025, 0.030, 0.036, 0.038, 0.084};
+      break;
+    case kEleNeutralHadronIsoDR0p4To0p5:
+      areas = {0.020, 0.027, 0.035, 0.045, 0.051, 0.107, 0.228};
+      break;
+    default:
+      return 0.;
     }
-    if (type == kEleGammaIsoDR0p2To0p3) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.021;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.018;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.013;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.026;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.038;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.045;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.059;
+    break;
+
+  case kEleEASummer11MC:
+    etaBinning = &etaBinning1;
+
+    switch (type) {
+    case kEleGammaIsoDR0p0To0p1:
+      areas = {0.015, 0.030, 0.004, 0.010, 0.014, 0.024, 0.023};
+      break;
+    case kEleGammaIsoDR0p1To0p2:
+      areas = {0.012, 0.010, 0.009, 0.037, 0.046, 0.055, 0.046};
+      break;
+    case kEleGammaIsoDR0p2To0p3:
+      areas = {0.021, 0.018, 0.013, 0.026, 0.038, 0.045, 0.059};
+      break;
+    case kEleGammaIsoDR0p3To0p4:
+      areas = {0.036, 0.030, 0.017, 0.036, 0.058, 0.073, 0.083};
+      break;
+    case kEleGammaIsoDR0p4To0p5:
+      areas = {0.053, 0.037, 0.032, 0.048, 0.062, 0.085, 0.118};
+      break;
+    case kEleNeutralHadronIsoDR0p0To0p1:
+      areas = {0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000};
+      break;
+    case kEleNeutralHadronIsoDR0p1To0p2:
+      areas = {0.004, 0.007, 0.009, 0.004, 0.003, 0.000, 0.004};
+      break;
+    case kEleNeutralHadronIsoDR0p2To0p3:
+      areas = {0.008, 0.013, 0.016, 0.013, 0.014, 0.016, 0.021};
+      break;
+    case kEleNeutralHadronIsoDR0p3To0p4:
+      areas = {0.012, 0.017, 0.020, 0.024, 0.040, 0.036, 0.086};
+      break;
+    case kEleNeutralHadronIsoDR0p4To0p5:
+      areas = {0.016, 0.026, 0.030, 0.038, 0.051, 0.105, 0.169};
+      break;
+    default:
+      return 0.;
     }
-    if (type == kEleGammaIsoDR0p3To0p4) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.036;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.030;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.017;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.036;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.058;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.073;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.083;
+    break;
+
+  case kEleEAFall11MC:
+    etaBinning = &etaBinning1;
+
+    switch (type) {
+    case kEleGammaIsoDR0p0To0p1:
+      areas = {0.014, 0.020, 0.004, 0.012, 0.016, 0.021, 0.012};
+      break;
+    case kEleGammaIsoDR0p1To0p2:
+      areas = {0.012, 0.011, 0.015, 0.042, 0.055, 0.068, 0.067};
+      break;
+    case kEleGammaIsoDR0p2To0p3:
+      areas = {0.024, 0.020, 0.017, 0.038, 0.051, 0.066, 0.080};
+      break;
+    case kEleGammaIsoDR0p3To0p4:
+      areas = {0.040, 0.032, 0.021, 0.047, 0.066, 0.083, 0.123};
+      break;
+    case kEleGammaIsoDR0p4To0p5:
+      areas = {0.059, 0.041, 0.037, 0.057, 0.095, 0.123, 0.133};
+      break;
+    case kEleNeutralHadronIsoDR0p0To0p1:
+      areas = {0.002, 0.003, 0.000, 0.000, 0.000, 0.000, 0.000};
+      break;
+    case kEleNeutralHadronIsoDR0p1To0p2:
+      areas = {0.006, 0.008, 0.010, 0.006, 0.005, 0.002, 0.007};
+      break;
+    case kEleNeutralHadronIsoDR0p2To0p3:
+      areas = {0.009, 0.014, 0.018, 0.016, 0.017, 0.020, 0.021};
+      break;
+    case kEleNeutralHadronIsoDR0p3To0p4:
+      areas = {0.013, 0.019, 0.027, 0.035, 0.037, 0.043, 0.110};
+      break;
+    case kEleNeutralHadronIsoDR0p4To0p5:
+      areas = {0.017, 0.027, 0.036, 0.045, 0.057, 0.123, 0.220};
+      break;
+    default:
+      return 0.;
     }
-    if (type == kEleGammaIsoDR0p4To0p5) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.053;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.037;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.032;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.048;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.062;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.085;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.118;
+    break;
+
+  case kEleEAPhys14:
+    etaBinning = &etaBinning3;
+
+    switch (type) {
+    case kEleNeutralIso03:
+      areas = {0.1013, 0.0988, 0.0572, 0.0842, 0.1530, 0.};
+      break;
+    default:
+      return 0.;
     }
-    if (type == kEleNeutralHadronIsoDR0p0To0p1) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.000;
-    }
-    if (type == kEleNeutralHadronIsoDR0p1To0p2) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.004;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.007;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.009;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.004;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.003;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.004;
-    }
-    if (type == kEleNeutralHadronIsoDR0p2To0p3) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.008;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.013;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.016;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.013;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.014;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.016;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.021;
-    }
-    if (type == kEleNeutralHadronIsoDR0p3To0p4) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.012;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.017;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.020;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.024;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.040;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.036;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.086;
-    }
-    if (type == kEleNeutralHadronIsoDR0p4To0p5) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.016;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.026;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.030;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.038;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.051;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.105;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.169;
-    }
-  } 
-  
-  //Fall11 MC Effective Areas
-  else if (EffectiveAreaTarget == kEleEAFall11MC) {
-    if (type == kEleGammaIsoDR0p0To0p1) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.014;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.020;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.004;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.012;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.016;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.021;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.012;
-    }
-    if (type == kEleGammaIsoDR0p1To0p2) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.012;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.011;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.015;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.042;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.055;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.068;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.067;
-    }
-    if (type == kEleGammaIsoDR0p2To0p3) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.024;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.020;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.017;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.038;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.051;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.066;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.080;
-    }
-    if (type == kEleGammaIsoDR0p3To0p4) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.040;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.032;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.021;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.047;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.066;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.083;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.123;
-    }
-    if (type == kEleGammaIsoDR0p4To0p5) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.059;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.041;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.037;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.057;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.095;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.123;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.133;
-    }
-    if (type == kEleNeutralHadronIsoDR0p0To0p1) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.002;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.003;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.000;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.000;
-    }
-    if (type == kEleNeutralHadronIsoDR0p1To0p2) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.006;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.008;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.010;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.006;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.005;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.002;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.007;
-    }
-    if (type == kEleNeutralHadronIsoDR0p2To0p3) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.009;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.014;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.018;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.016;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.017;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.020;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.021;
-    }
-    if (type == kEleNeutralHadronIsoDR0p3To0p4) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.013;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.019;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.027;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.035;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.037;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.043;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.110;
-    }
-    if (type == kEleNeutralHadronIsoDR0p4To0p5) {
-      if (fabs(SCEta) >= 0.0 && fabs(SCEta) < 1.0 ) EffectiveArea = 0.017;
-      if (fabs(SCEta) >= 1.0 && fabs(SCEta) < 1.479 ) EffectiveArea = 0.027;
-      if (fabs(SCEta) >= 1.479 && fabs(SCEta) < 2.0 ) EffectiveArea = 0.036;
-      if (fabs(SCEta) >= 2.0 && fabs(SCEta) < 2.2 ) EffectiveArea = 0.045;
-      if (fabs(SCEta) >= 2.2 && fabs(SCEta) < 2.3 ) EffectiveArea = 0.057;
-      if (fabs(SCEta) >= 2.3 && fabs(SCEta) < 2.4 ) EffectiveArea = 0.123;
-      if (fabs(SCEta) >= 2.4) EffectiveArea = 0.220;
+    break;
+
+  default:
+    etaBinning = &etaBinning2;
+
+    switch (type) {
+    case kEleChargedIso03:
+    case kEleChargedIso04:
+    case kEleNeutralHadronIso007:
+      return 0.;
+    case kEleNeutralIso04:
+      etaBinning = &etaBinning1;
+      areas = {0.208, 0.209, 0.115, 0.143, 0.183, 0.194, 0.261};
+      break;
+    case kEleNeutralHadronIso03:
+      areas = {0.017, 0.025, 0.030, 0.022, 0.018, 0.};
+      break;
+    case kEleGammaIso03:
+      areas = {0.045, 0.052, 0.170, 0.623, 1.198, 0.};
+      break;
+    case kEleGammaIsoVetoEtaStrip03:
+      areas = {0.014, 0.030, 0.134, 0.516, 1.049, 0.};
+      break;
+    case kEleNeutralHadronIso04:
+      areas = {0.034, 0.050, 0.060, 0.055, 0.073, 0.};
+      break;
+    case kEleGammaIso04:
+      areas = {0.079, 0.073, 0.187, 0.659, 1.258, 0.};
+      break;
+    case kEleGammaIsoVetoEtaStrip04:
+      areas = {0.014, 0.030, 0.134, 0.517, 1.051, 0.};
+      break;
+    case kEleHoverE:
+      areas = {0.00016, 0.00022, 0.00030, 0.00054, 0.00082, 0.};
+      break;
+    case kEleHcalDepth1OverEcal:
+      areas = {0.00016, 0.00022, 0.00026, 0.00045, 0.00066, 0.};
+      break;
+    case kEleHcalDepth2OverEcal:
+      areas = {0.00000, 0.00000, 0.00002, 0.00003, 0.00004, 0.};
+      break;
+    default:
+      return 0.;
     }
   }
 
-  return EffectiveArea;  
+  double absEta = std::abs(SCEta);
+  unsigned etaBin = std::lower_bound(etaBinning->begin(), etaBinning->end(), absEta) - etaBinning->begin();
+  return areas[etaBin];
 }
 
 
-Bool_t ElectronTools::PassHggLeptonTagID(const Electron* ele) {
-  
+Bool_t
+mithep::ElectronTools::PassHggLeptonTagID(const Electron* ele)
+{
+
   float dist = ( ele->ConvPartnerDist()      == -9999.? 9999:TMath::Abs(ele->ConvPartnerDist()));
-  float dcot = ( ele->ConvPartnerDCotTheta() == -9999.? 9999:TMath::Abs(ele->ConvPartnerDCotTheta()));  
-  
+  float dcot = ( ele->ConvPartnerDCotTheta() == -9999.? 9999:TMath::Abs(ele->ConvPartnerDCotTheta()));
+
   if (dist < 0.02) return false;
   if (dcot < 0.02) return false;
-  
+
   int numInnerHits = ele->Trk()->NExpectedHitsInner();
   if( numInnerHits > 1 ) return false;
 
@@ -1698,8 +1606,10 @@ Bool_t ElectronTools::PassHggLeptonTagID(const Electron* ele) {
   return true;
 }
 
-Bool_t ElectronTools::PassHggLeptonTagID2012(const Electron* ele) {
-  
+Bool_t
+mithep::ElectronTools::PassHggLeptonTagID2012(const Electron* ele)
+{
+
   if (TMath::Abs(1./ele->E()-1./ele->Pt())>0.05) return false;
 
   int numInnerHits = ele->Trk()->NExpectedHitsInner();
@@ -1718,107 +1628,116 @@ Bool_t ElectronTools::PassHggLeptonTagID2012(const Electron* ele) {
   return true;
 }
 
-std::pair<Double_t,Double_t> ElectronTools::ComputeEPCombination( const Electron * ele, const float regression_energy, 
-						  const float regression_energy_error) {
+std::pair<Double_t,Double_t>
+mithep::ElectronTools::ComputeEPCombination(const Electron * ele, const float regression_energy,
+                                            const float regression_energy_error)
+{
 
-  enum Classification { GSF_ELECTRON_UNKNOWN=-1, 
-			GSF_ELECTRON_GOLDEN=0, 
-			GSF_ELECTRON_BIGBREM=1, 
-			GSF_ELECTRON_BADTRACK=2, 
-			GSF_ELECTRON_SHOWERING=3, 
-			GSF_ELECTRON_GAP=4 } ;
+  enum Classification { GSF_ELECTRON_UNKNOWN=-1,
+                        GSF_ELECTRON_GOLDEN=0,
+                        GSF_ELECTRON_BIGBREM=1,
+                        GSF_ELECTRON_BADTRACK=2,
+                        GSF_ELECTRON_SHOWERING=3,
+                        GSF_ELECTRON_GAP=4 } ;
 
   int elClass = ele->Classification();
 
   float trackMomentum  = ele->PIn() ;
-  float errorTrackMomentum_ = 999. ;
-  
+  float errorTrackMomentum = 999. ;
+
   // the electron's track momentum error was not available in bambu versions less than 029
   if(ele->TrackMomentumError() > 0)
-    errorTrackMomentum_ = ele->TrackMomentumError();
+    errorTrackMomentum = ele->TrackMomentumError();
   else if ( ele->GsfTrk()->PtErr() > 0)
-    errorTrackMomentum_ = ele->GsfTrk()->PtErr()*cosh(ele->GsfTrk()->Eta());
+    errorTrackMomentum = ele->GsfTrk()->PtErr()*cosh(ele->GsfTrk()->Eta());
   else
     assert(0);
 
   float finalMomentum = ele->E(); // initial
   float finalMomentumError = 999.;
-  
+
   // first check for large errors
 
-  if (errorTrackMomentum_/trackMomentum > 0.5 && regression_energy_error/regression_energy <= 0.5) {
-    finalMomentum = regression_energy;    finalMomentumError = regression_energy_error;
+  if (errorTrackMomentum/trackMomentum > 0.5 && regression_energy_error/regression_energy <= 0.5) {
+    finalMomentum = regression_energy;
+    finalMomentumError = regression_energy_error;
   }
-  else if (errorTrackMomentum_/trackMomentum <= 0.5 && regression_energy_error/regression_energy > 0.5){  
-    finalMomentum = trackMomentum;  finalMomentumError = errorTrackMomentum_;
+  else if (errorTrackMomentum/trackMomentum <= 0.5 && regression_energy_error/regression_energy > 0.5) {
+    finalMomentum = trackMomentum;
+    finalMomentumError = errorTrackMomentum;
   }
-  else if (errorTrackMomentum_/trackMomentum > 0.5 && regression_energy_error/regression_energy > 0.5){
-    if (errorTrackMomentum_/trackMomentum < regression_energy_error/regression_energy) {
-      finalMomentum = trackMomentum; finalMomentumError = errorTrackMomentum_;
+  else if (errorTrackMomentum/trackMomentum > 0.5 && regression_energy_error/regression_energy > 0.5) {
+    if (errorTrackMomentum/trackMomentum < regression_energy_error/regression_energy) {
+      finalMomentum = trackMomentum;
+      finalMomentumError = errorTrackMomentum;
     }
-    else{
-      finalMomentum = regression_energy; finalMomentumError = regression_energy_error;
+    else {
+      finalMomentum = regression_energy;
+      finalMomentumError = regression_energy_error;
     }
   }
   // then apply the combination algorithm
   else {
      // calculate E/p and corresponding error
     float eOverP = regression_energy / trackMomentum;
-    float errorEOverP = sqrt(
-			     (regression_energy_error/trackMomentum)*(regression_energy_error/trackMomentum) +
-			     (regression_energy*errorTrackMomentum_/trackMomentum/trackMomentum)*
-			     (regression_energy*errorTrackMomentum_/trackMomentum/trackMomentum));
+    float errorEOverP = sqrt((regression_energy_error/trackMomentum)*(regression_energy_error/trackMomentum) +
+                             (regression_energy*errorTrackMomentum/trackMomentum/trackMomentum)*
+                             (regression_energy*errorTrackMomentum/trackMomentum/trackMomentum));
 
+    if (((eOverP  > 1 + 2.5*errorEOverP) || (eOverP  < 1 - 2.5*errorEOverP) || (eOverP < 0.8) || (eOverP > 1.3))) {
+      if (eOverP > 1) {
+        finalMomentum = regression_energy;
+        finalMomentumError = regression_energy_error;
+      }
+      else {
+        if (elClass == GSF_ELECTRON_GOLDEN) {
+          finalMomentum = regression_energy;
+          finalMomentumError = regression_energy_error;
+        }
+        else if (elClass == GSF_ELECTRON_BIGBREM) {
+          if (regression_energy<36) {
+            finalMomentum = trackMomentum;
+            finalMomentumError = errorTrackMomentum;
+          }
+          else {
+            finalMomentum = regression_energy;
+            finalMomentumError = regression_energy_error;
+          }
+        }
+        else if (elClass == GSF_ELECTRON_BADTRACK) {
+          finalMomentum = regression_energy;
+          finalMomentumError = regression_energy_error;
+        }
+        else if (elClass == GSF_ELECTRON_SHOWERING) {
+          if (regression_energy < 30) {
+            finalMomentum = trackMomentum;
+            finalMomentumError = errorTrackMomentum;
+          }
+          else {
+            finalMomentum = regression_energy;
+            finalMomentumError = regression_energy_error;
+          }
+        }
+        else if (elClass == GSF_ELECTRON_GAP) {
+          if (regression_energy < 60) {
+            finalMomentum = trackMomentum;
+            finalMomentumError = errorTrackMomentum;
+          }
+          else {
+            finalMomentum = regression_energy;
+            finalMomentumError = regression_energy_error;
+          }
+        }
+      }
+    }
+    else {
+      // combination
+      finalMomentum = (regression_energy/regression_energy_error/regression_energy_error + trackMomentum/errorTrackMomentum/errorTrackMomentum) /
+        (1/regression_energy_error/regression_energy_error + 1/errorTrackMomentum/errorTrackMomentum);
+      float finalMomentumVariance = 1 / (1/regression_energy_error/regression_energy_error + 1/errorTrackMomentum/errorTrackMomentum);
+      finalMomentumError = sqrt(finalMomentumVariance);
+    }
+  }
 
-    bool eleIsNotInCombination = false ;
-    if ( (eOverP  > 1 + 2.5*errorEOverP) || (eOverP  < 1 - 2.5*errorEOverP) || (eOverP < 0.8) || (eOverP > 1.3) )
-      { eleIsNotInCombination = true ; }
-     if (eleIsNotInCombination)
-       {
-	 if (eOverP > 1)
-	   { finalMomentum = regression_energy ; finalMomentumError = regression_energy_error ; }
-	 else
-	   {
-	     if (elClass == GSF_ELECTRON_GOLDEN)
-	       { finalMomentum = regression_energy; finalMomentumError = regression_energy_error; }
-	     if (elClass == GSF_ELECTRON_BIGBREM)
-	       {
-		 if (regression_energy<36)
-		   { finalMomentum = trackMomentum ; finalMomentumError = errorTrackMomentum_ ; }
-		 else
-		   { finalMomentum = regression_energy ; finalMomentumError = regression_energy_error ; }
-	       }
-	     if (elClass == GSF_ELECTRON_BADTRACK)
-	       { finalMomentum = regression_energy; finalMomentumError = regression_energy_error ; }
-	     if (elClass == GSF_ELECTRON_SHOWERING)
-	       {
-		 if (regression_energy<30)
-		   { finalMomentum = trackMomentum ; finalMomentumError = errorTrackMomentum_; }
-		 else
-		   { finalMomentum = regression_energy; finalMomentumError = regression_energy_error;}
-	       }
-	     if (elClass == GSF_ELECTRON_GAP)
-	       {
-		 if (regression_energy<60)
-		   { finalMomentum = trackMomentum ; finalMomentumError = errorTrackMomentum_ ; }
-		 else
-		   { finalMomentum = regression_energy; finalMomentumError = regression_energy_error ; }
-	       }
-	   }
-       }     
-     else 
-       {
-	 // combination
-	 finalMomentum = (regression_energy/regression_energy_error/regression_energy_error + trackMomentum/errorTrackMomentum_/errorTrackMomentum_) /
-	   (1/regression_energy_error/regression_energy_error + 1/errorTrackMomentum_/errorTrackMomentum_);
-	 float finalMomentumVariance = 1 / (1/regression_energy_error/regression_energy_error + 1/errorTrackMomentum_/errorTrackMomentum_);
-	 finalMomentumError = sqrt(finalMomentumVariance);
-       }
-  }  
-
-  std::pair<Double_t,Double_t> value;
-  value.first = finalMomentum;
-  value.second = finalMomentumError;
-  return value;
-
+  return std::pair<Double_t,Double_t>(finalMomentum, finalMomentumError);
 }
