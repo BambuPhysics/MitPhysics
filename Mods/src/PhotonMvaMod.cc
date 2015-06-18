@@ -72,25 +72,27 @@ void PhotonMvaMod::Process()
 {
   // ------------------------------------------------------------
   // Process entries of the tree.
-  LoadEventObject(fPhotonBranchName,   fPhotons);
+  LoadEventObject(fPhotonBranchName,fPhotons);
 
   // -----------------------------------------------------------
   // Output Photon Collection. Will ALWAYS contain 0 or 2 Photons
   PhotonOArr *GoodPhotons = new PhotonOArr;
   GoodPhotons->SetName(fGoodPhotonsName);
   GoodPhotons->SetOwner(kTRUE);
+
   // add to event for other modules to us
   AddObjThisEvt(GoodPhotons);
 
   if (fPhotons->GetEntries() < fMinNumPhotons)
     return;
 
-  LoadEventObject(fPVName,       fPV);
+  LoadEventObject(fPVName,fPV);
   LoadEventObject(fPileUpDenName,fPileUpDen);
 
   // ------------------------------------------------------------
   // store preselected Photons (and which CiCCategory they are)
   PhotonOArr* preselPh  = new PhotonOArr;
+
   // 1. pre-selection; but keep non-passing photons in second container...
   for (UInt_t i=0; i<fPhotons->GetEntries(); ++i) {
     const Photon *ph = fPhotons->At(i);
@@ -102,7 +104,7 @@ void PhotonMvaMod::Process()
         continue;
       if (ph->HadOverEm()         >  0.15)
         continue;
-      if(ph->IsEB()) {
+      if (ph->IsEB()) {
         if (ph->CoviEtaiEta() > 0.015)
           continue;
       }
@@ -125,13 +127,14 @@ void PhotonMvaMod::Process()
     const Photon *ph = preselPh->At(iPh);
     Photon       *outph = new Photon(*ph);
     if (fDoRegression) {
+      
+      //if (!egcor.IsInitialized())
+      //  egcor.Initialize(fPhFixString,fPhFixFile,fRegWeights,fRegressionVersion);
+      //if (fRegressionVersion>0)
+      //  egcor.CorrectEnergyWithError(outph,fPV,fPileUpDen->At(0)->RhoKt6PFJets(),
+      //				     fRegressionVersion, fApplyShowerRescaling && !fIsData);
 
-    //if (!egcor.IsInitialized())
-    //  egcor.Initialize(fPhFixString,fPhFixFile,fRegWeights,fRegressionVersion);
-    //if (fRegressionVersion>0)
-    //  egcor.CorrectEnergyWithError(outph,fPV,fPileUpDen->At(0)->RhoKt6PFJets(),
-    //				     fRegressionVersion, fApplyShowerRescaling && !fIsData);
-          ThreeVectorC scpos = outph->SCluster()->Point();
+      ThreeVectorC scpos = outph->SCluster()->Point();
       outph->SetCaloPosXYZ(scpos.X(),scpos.Y(),scpos.Z());
     }
     GoodPhotons->AddOwned(outph);

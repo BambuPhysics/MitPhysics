@@ -41,11 +41,9 @@ namespace mithep
   {
   public:
     PhotonMvaMod(const char *name ="PhotonMvaMod", 
-		       const char *title="Selecting PhotonPairs");
+		 const char *title="Selecting PhotonPairs");
     
     ~PhotonMvaMod();
-
-
 
     // setting all the input Names
     void                SetInputPhotonsName(const char *n){ fPhotonBranchName= n;        }
@@ -92,33 +90,33 @@ namespace mithep
 
     // private auxiliary methods...
     // Names for the input Collections
-    TString             fPhotonBranchName;
-    TString             fElectronName;
-    TString             fGoodElectronName;
-    TString             fConversionName;
-    TString             fTrackBranchName;
-    TString             fPileUpDenName;    
-    TString             fPVName;
-    TString             fBeamspotName;
-    TString             fPFCandName;
-    TString             fMCParticleName;
-    TString             fPileUpName;
-    
-    TString             fGoodPhotonsName;      //name of exported "good photon" collection
+    TString                       fPhotonBranchName;
+    TString                       fElectronName;
+    TString                       fGoodElectronName;
+    TString                       fConversionName;
+    TString                       fTrackBranchName;
+    TString                       fPileUpDenName;    
+    TString                       fPVName;
+    TString                       fBeamspotName;
+    TString                       fPFCandName;
+    TString                       fMCParticleName;
+    TString                       fPileUpName;
+
+    TString                       fGoodPhotonsName;      // name of exported "good photon" collection
     
 
     // Basic Pre-Selection kinematics
-    Double_t            fPhotonPtMin;          // min pt cut fro PRE-SELECTION!
-    Double_t            fPhotonEtaMax;         // max eta cut for PRE-SELECTION!
+    Double_t                      fPhotonPtMin;          // min pt cut fro PRE-SELECTION!
+    Double_t                      fPhotonEtaMax;         // max eta cut for PRE-SELECTION!
     
     // is it Data or MC?
-    Bool_t              fIsData;
-    Bool_t              fApplyShowerRescaling;
+    Bool_t                        fIsData;
+    Bool_t                        fApplyShowerRescaling;
     
     // in case there's some PV pre-selection
-    Bool_t              fPhotonsFromBranch;
-    Bool_t              fPVFromBranch;
-    Bool_t              fGoodElectronsFromBranch;
+    Bool_t                        fPhotonsFromBranch;
+    Bool_t                        fPVFromBranch;
+    Bool_t                        fGoodElectronsFromBranch;
 
     const PhotonCol              *fPhotons;
     const ElectronCol            *fElectrons;
@@ -132,20 +130,19 @@ namespace mithep
     const MCParticleCol          *fMCParticles;
     const PileupInfoCol          *fPileUp;    
 
-    //    EGEnergyCorrector egcor;
-    Bool_t fDoRegression;
-    TString fPhFixString;
-    TString fPhFixFile;
-    TString fRegWeights; 
+    // EGEnergyCorrector egcor;
+    Bool_t                        fDoRegression;
+    TString                       fPhFixString;
+    TString                       fPhFixFile;
+    TString                       fRegWeights; 
   
-    const TH1D *fEtaCorrections;
+    const TH1D                   *fEtaCorrections;
     
     // --------------------------------
-    bool fApplyEleVeto;
-    UInt_t fRegressionVersion;
-
-    UInt_t fMinNumPhotons;
-    Bool_t fDoPreselection;
+    bool                          fApplyEleVeto;
+    UInt_t                        fRegressionVersion;
+    UInt_t                        fMinNumPhotons;
+    Bool_t                        fDoPreselection;
 
     ClassDef(PhotonMvaMod, 1) // Photon identification module
   };
