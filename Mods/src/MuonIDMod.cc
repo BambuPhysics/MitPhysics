@@ -10,8 +10,8 @@ using namespace mithep;
 ClassImp(mithep::MuonIDMod)
 
 //--------------------------------------------------------------------------------------------------
-MuonIDMod::MuonIDMod(const char *name, const char *title) :
-BaseMod(name,title),
+MuonIDMod::MuonIDMod(const char *name, const char *title)
+: BaseMod(name,title),
   fPrintMVADebugInfo(kFALSE),
   fMuonBranchName(Names::gkMuonBrn),
   fCleanMuonsName(ModNames::gkCleanMuonsName),
@@ -233,7 +233,6 @@ void MuonIDMod::Process()
       continue;
 
     Double_t RChi2 = 0.0;
-
     if     (mu->HasGlobalTrk())
       RChi2 = mu->GlobalTrk()->Chi2()/mu->GlobalTrk()->Ndof();
     else if (mu->BestTrk() != 0)
@@ -242,7 +241,6 @@ void MuonIDMod::Process()
     Bool_t idpass = kFALSE;
 
     switch (fMuIDType) {
-
     case kWMuId:
       idpass = mu->BestTrk() != 0 &&
         mu->BestTrk()->NHits() > 10 &&
@@ -251,94 +249,94 @@ void MuonIDMod::Process()
         mu->BestTrk()->NPixelHits() > 0 &&
         mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
       break;
-  case kZMuId:
-    idpass = mu->BestTrk() != 0 &&
-      mu->BestTrk()->NHits() > 10 &&
-      (mu->NSegments() > 1 || mu->NMatches() > 1) &&
-      mu->BestTrk()->NPixelHits() > 0 &&
-      mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
-    break;
-  case kLoose:
-    idpass = mu->BestTrk() != 0 &&
-      mu->Quality().Quality(MuonQuality::TMOneStationLoose) &&
-      mu->Quality().Quality(MuonQuality::TM2DCompatibilityLoose) &&
-      mu->BestTrk()->NHits() > 10 &&
-      RChi2 < 10.0 &&
-      mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
-    break;
-  case kTight:
-    idpass = mu->BestTrk() != 0 &&
-      mu->NTrkLayersHit() > 5 &&
-      mu->IsPFMuon() == kTRUE &&
-      mu->BestTrk()->NPixelHits() > 0 &&
-      RChi2 < 10.0;
-    break;
-  case kmuonPOG2012CutBasedIDTight:
-    idpass = mu->IsGlobalMuon() &&
-      mu->IsPFMuon() &&
-      mu->GlobalTrk()->RChi2() < 10 &&
-      mu->NValidHits() != 0 &&
-      mu->NMatches() > 1    &&
-      mu->BestTrk()->NPixelHits() != 0 &&
-      mu->NTrkLayersHit() > 5;
-    break;
-    // 2012 WW analysis for 42x (there is no PFMuon link)
-  case kWWMuIdV1:
-    idpass = mu->BestTrk() != 0 &&
-      mu->NTrkLayersHit() > 5 &&
-      mu->BestTrk()->NPixelHits() > 0 &&
-      mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
-      mu->TrkKink() < 20.0;
-    break;
-    // 2010 WW analysis
-  case kWWMuIdV2:
-    idpass = mu->BestTrk() != 0 &&
-      mu->BestTrk()->NHits() > 10 &&
-      mu->BestTrk()->NPixelHits() > 0 &&
-      mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1;
-    break;
-    // 2011 WW analysis
-  case kWWMuIdV3:
-    idpass = mu->BestTrk() != 0 &&
-      mu->BestTrk()->NHits() > 10 &&
-      mu->BestTrk()->NPixelHits() > 0 &&
-      mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
-      mu->TrkKink() < 20.0;
-    break;
-    // 2012 WW analysis
-  case kWWMuIdV4:
-    idpass = mu->BestTrk() != 0 &&
-      mu->NTrkLayersHit() > 5 &&
-      mu->IsPFMuon() == kTRUE &&
-      mu->BestTrk()->NPixelHits() > 0 &&
-      mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
-      mu->TrkKink() < 20.0;
-    break;
-  case kMVAID_BDTG_IDIso:
-    {
-      Bool_t passDenominatorM2 = (mu->BestTrk() != 0 &&
-                                  mu->BestTrk()->NHits() > 10 &&
-                                  mu->BestTrk()->NPixelHits() > 0 &&
-                                  mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
-                                  MuonTools::PassD0Cut(mu, fVertices, 0.20, 0) &&
-                                  MuonTools::PassDZCut(mu, fVertices, 0.10, 0) &&
-                                  mu->TrkKink() < 20.0
+    case kZMuId:
+      idpass = mu->BestTrk() != 0 &&
+	mu->BestTrk()->NHits() > 10 &&
+	(mu->NSegments() > 1 || mu->NMatches() > 1) &&
+	mu->BestTrk()->NPixelHits() > 0 &&
+	mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
+      break;
+    case kLoose:
+      idpass = mu->BestTrk() != 0 &&
+	mu->Quality().Quality(MuonQuality::TMOneStationLoose) &&
+	mu->Quality().Quality(MuonQuality::TM2DCompatibilityLoose) &&
+	mu->BestTrk()->NHits() > 10 &&
+	RChi2 < 10.0 &&
+	mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
+      break;
+    case kTight:
+      idpass = mu->BestTrk() != 0 &&
+	mu->NTrkLayersHit() > 5 &&
+	mu->IsPFMuon() == kTRUE &&
+	mu->BestTrk()->NPixelHits() > 0 &&
+	RChi2 < 10.0;
+      break;
+    case kmuonPOG2012CutBasedIDTight:
+      idpass = mu->IsGlobalMuon() &&
+	mu->IsPFMuon() &&
+	mu->GlobalTrk()->RChi2() < 10 &&
+	mu->NValidHits() != 0 &&
+	mu->NMatches() > 1    &&
+	mu->BestTrk()->NPixelHits() != 0 &&
+	mu->NTrkLayersHit() > 5;
+      break;
+      // 2012 WW analysis for 42x (there is no PFMuon link)
+    case kWWMuIdV1:
+      idpass = mu->BestTrk() != 0 &&
+	mu->NTrkLayersHit() > 5 &&
+	mu->BestTrk()->NPixelHits() > 0 &&
+	mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
+	mu->TrkKink() < 20.0;
+      break;
+      // 2010 WW analysis
+    case kWWMuIdV2:
+      idpass = mu->BestTrk() != 0 &&
+	mu->BestTrk()->NHits() > 10 &&
+	mu->BestTrk()->NPixelHits() > 0 &&
+	mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1;
+      break;
+      // 2011 WW analysis
+    case kWWMuIdV3:
+      idpass = mu->BestTrk() != 0 &&
+	mu->BestTrk()->NHits() > 10 &&
+	mu->BestTrk()->NPixelHits() > 0 &&
+	mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
+	mu->TrkKink() < 20.0;
+      break;
+      // 2012 WW analysis
+    case kWWMuIdV4:
+      idpass = mu->BestTrk() != 0 &&
+	mu->NTrkLayersHit() > 5 &&
+	mu->IsPFMuon() == kTRUE &&
+	mu->BestTrk()->NPixelHits() > 0 &&
+	mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
+	mu->TrkKink() < 20.0;
+      break;
+    case kMVAID_BDTG_IDIso:
+      {
+	Bool_t passDenominatorM2 = (mu->BestTrk() != 0 &&
+				    mu->BestTrk()->NHits() > 10 &&
+				    mu->BestTrk()->NPixelHits() > 0 &&
+				    mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
+				    MuonTools::PassD0Cut(mu, fVertices, 0.20, 0) &&
+				    MuonTools::PassDZCut(mu, fVertices, 0.10, 0) &&
+				    mu->TrkKink() < 20.0
                                   );
-      idpass =  passDenominatorM2;
-      //only evaluate MVA if muon passes M2 denominator to save time
-      if (idpass)
-        idpass = PassMuonMVA_BDTG_IdIso(mu, fVertices->At(0), fPileupEnergyDensity);
+	idpass =  passDenominatorM2;
+	// only evaluate MVA if muon passes M2 denominator to save time
+	if (idpass)
+	  idpass = PassMuonMVA_BDTG_IdIso(mu, fVertices->At(0), fPileupEnergyDensity);
+      }
+      break;
+    case kNoId:
+      {
+	idpass = kTRUE;
+      }
+      break;
+    default:
+      break;
     }
-    break;
-  case kNoId:
-    {
-      idpass = kTRUE;
-    }
-    break;
-  default:
-    break;
-  }
-
+    
     if (!idpass)
       continue;
 
@@ -913,9 +911,15 @@ Bool_t MuonIDMod::PassMuonIsoDeltaR(const Muon *mu, const Vertex *vertex,
 }
 
 //--------------------------------------------------------------------------------------------------
-void MuonIDMod::Terminate()
+void MuonIDMod::SlaveTerminate()
 {
+  printf(" MuonIDMod::SlaveTerminate -- enter\n");
+
   // Run finishing code on the computer (slave) that did the analysis
-  delete fMuonIDMVA;
-  delete fMuonTools;
+  if (fMuonIDMVA)
+    delete fMuonIDMVA;
+  if (fMuonTools)
+    delete fMuonTools;
+
+  printf(" MuonIDMod::SlaveTerminate -- exit\n");
 }
