@@ -23,16 +23,8 @@ ClassImp(mithep::PhotonMvaMod)
 PhotonMvaMod::PhotonMvaMod(const char *name, const char *title) :
   BaseMod                 (name,title),
   fPhotonBranchName       (Names::gkPhotonBrn),
-  fElectronName           (Names::gkElectronBrn),
-  fGoodElectronName       (Names::gkElectronBrn),
-  fConversionName         (Names::gkMvfConversionBrn),
-  fTrackBranchName        (Names::gkTrackBrn),
   fPileUpDenName          (Names::gkPileupEnergyDensityBrn),
   fPVName                 (Names::gkPVBeamSpotBrn),
-  fBeamspotName           (Names::gkBeamSpotBrn),
-  fPFCandName             (Names::gkPFCandidatesBrn),
-  fMCParticleName         (Names::gkMCPartBrn),
-  fPileUpName             (Names::gkPileupInfoBrn),
   fGoodPhotonsName        (ModNames::gkGoodPhotonsName),
   fPhotonPtMin            (20.0),
   fPhotonEtaMax           (2.5),
@@ -40,21 +32,12 @@ PhotonMvaMod::PhotonMvaMod(const char *name, const char *title) :
   fApplyShowerRescaling   (false),
   fPhotonsFromBranch      (true),
   fPVFromBranch           (true),
-  fGoodElectronsFromBranch(kTRUE),
   fPhotons                (0),
-  fElectrons              (0),
-  fConversions            (0),
-  fTracks                 (0),
   fPileUpDen              (0),
   fPV                     (0),
-  fBeamspot               (0),
-  fPFCands                (0),
-  fMCParticles            (0),
-  fPileUp                 (0),
   fDoRegression           (kTRUE),
   fPhFixString            ("4_2"),
-  fRegWeights             (gSystem->Getenv("MIT_DATA") + TString("gbrv2ph_52x.root")),
-  fApplyEleVeto           (true),
+  fRegWeights             (gSystem->Getenv("MIT_DATA") + TString("/gbrv2ph_52x.root")),
   fRegressionVersion      (2),
   fMinNumPhotons          (2),
   fDoPreselection         (kTRUE)
@@ -91,7 +74,7 @@ void PhotonMvaMod::Process()
 
   // ------------------------------------------------------------
   // store preselected Photons (and which CiCCategory they are)
-  PhotonOArr* preselPh  = new PhotonOArr;
+  PhotonOArr preselPh;
 
   // 1. pre-selection; but keep non-passing photons in second container...
   for (UInt_t i=0; i<fPhotons->GetEntries(); ++i) {
@@ -113,18 +96,15 @@ void PhotonMvaMod::Process()
           continue;
       }
     }
-    preselPh->Add(ph);
+    preselPh.Add(ph);
   }
-  assert(preselPh);
 
-  if (preselPh->GetEntries() < fMinNumPhotons) {
-    delete preselPh;
+  if (preselPh.GetEntries() < fMinNumPhotons)
     return;
-  }
 
   // second loop to sort & assign the right Categories..
-  for (unsigned int iPh = 0; iPh <preselPh->GetEntries(); ++iPh) {
-    const Photon *ph = preselPh->At(iPh);
+  for (unsigned int iPh = 0; iPh <preselPh.GetEntries(); ++iPh) {
+    const Photon *ph = preselPh.At(iPh);
     Photon       *outph = new Photon(*ph);
     if (fDoRegression) {
       
@@ -141,11 +121,6 @@ void PhotonMvaMod::Process()
   }
   // sort according to pt
   GoodPhotons->Sort();
-
-  // delete auxiliary photon collection...
-  delete preselPh;
-
-  return;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -155,18 +130,8 @@ void PhotonMvaMod::SlaveBegin()
   // photon collection branch.
 
   ReqEventObject(fPhotonBranchName,   fPhotons,      fPhotonsFromBranch);
-  ReqEventObject(fTrackBranchName,    fTracks,       true);
-  ReqEventObject(fElectronName,       fElectrons,    true);
-  ReqEventObject(fGoodElectronName,   fGoodElectrons,fGoodElectronsFromBranch);
   ReqEventObject(fPileUpDenName,      fPileUpDen,    true);
   ReqEventObject(fPVName,             fPV,           fPVFromBranch);
-  ReqEventObject(fConversionName,     fConversions,  true);
-  ReqEventObject(fBeamspotName,       fBeamspot,     true);
-  ReqEventObject(fPFCandName,         fPFCands,      true);
-  if (!fIsData) {
-    ReqBranch(fPileUpName,            fPileUp);
-    ReqBranch(fMCParticleName,        fMCParticles);
-  }
 
   if (fIsData)
     fPhFixFile = gSystem->Getenv("MIT_DATA") + TString("/PhotonFixGRPV22.dat");
