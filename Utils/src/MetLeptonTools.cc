@@ -1,4 +1,12 @@
 #include "MitPhysics/Utils/interface/MetLeptonTools.h"
+#include "MitAna/DataTree/interface/MuonCol.h"
+#include "MitAna/DataTree/interface/PFTauCol.h"
+#include "MitAna/DataTree/interface/ElectronCol.h"
+#include "MitAna/DataTree/interface/PhotonCol.h"
+#include "MitAna/DataTree/interface/PFMetCol.h"
+#include "MitAna/DataTree/interface/PFJetCol.h"
+#include "MitAna/DataTree/interface/PFCandidateCol.h"
+#include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
 #include <algorithm>
 #include <vector>
 #include "TString.h"

@@ -1,5 +1,12 @@
 #include "MitPhysics/Utils/interface/IsolationTools.h"
 #include "MitPhysics/Utils/interface/PhotonTools.h"
+#include "MitAna/DataTree/interface/VertexCol.h"
+#include "MitAna/DataTree/interface/MuonCol.h"
+#include "MitAna/DataTree/interface/ElectronCol.h"
+#include "MitAna/DataTree/interface/PFCandidateCol.h"
+#include "MitAna/DataTree/interface/TrackCol.h"
+#include "MitAna/DataTree/interface/DecayParticleCol.h"
+#include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 
 using namespace mithep;

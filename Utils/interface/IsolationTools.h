@@ -10,18 +10,18 @@
 #define MITPHYSICS_UTILS_ISOLATIONTOOLS_H
 
 #include <TMath.h>
-#include "MitAna/DataTree/interface/Track.h"
-#include "MitAna/DataTree/interface/Photon.h"
-#include "MitAna/DataTree/interface/BasicCluster.h"
-#include "MitAna/DataTree/interface/SuperCluster.h"
-#include "MitAna/DataTree/interface/CaloTower.h"
-#include "MitAna/DataTree/interface/VertexCol.h"
-#include "MitAna/DataTree/interface/MuonCol.h"
-#include "MitAna/DataTree/interface/ElectronCol.h"
-#include "MitAna/DataTree/interface/PFCandidateCol.h"
-#include "MitAna/DataTree/interface/TrackCol.h"
-#include "MitAna/DataTree/interface/DecayParticleCol.h"
-#include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
+#include "MitAna/DataTree/interface/TrackFwd.h"
+#include "MitAna/DataTree/interface/PhotonFwd.h"
+#include "MitAna/DataTree/interface/BasicClusterFwd.h"
+#include "MitAna/DataTree/interface/SuperClusterFwd.h"
+#include "MitAna/DataTree/interface/CaloTowerFwd.h"
+#include "MitAna/DataTree/interface/VertexFwd.h"
+#include "MitAna/DataTree/interface/MuonFwd.h"
+#include "MitAna/DataTree/interface/ElectronFwd.h"
+#include "MitAna/DataTree/interface/PFCandidateFwd.h"
+#include "MitAna/DataTree/interface/TrackFwd.h"
+#include "MitAna/DataTree/interface/DecayParticleFwd.h"
+#include "MitAna/DataTree/interface/PileupEnergyDensityFwd.h"
 #include "MitPhysics/Utils/interface/ElectronTools.h"
 
 namespace mithep
@@ -30,16 +30,16 @@ namespace mithep
   public:
     static Double_t TrackIsolation(const mithep::Track *p, Double_t extRadius, 
                                    Double_t intRadius, Double_t ptLow, Double_t maxVtxZDist, 
-                                   const mithep::Collection<mithep::Track> *tracks); 
+                                   const mithep::TrackCol *tracks); 
     static Double_t EcalIsolation(const SuperCluster *sc, Double_t coneSize, Double_t etLow, 
-                                  const mithep::Collection<mithep::BasicCluster> *basicClusters);
+                                  const mithep::BasicClusterCol *basicClusters);
     static Double_t CaloTowerHadIsolation(const ThreeVector *p,  Double_t extRadius, 
                                           Double_t intRadius, Double_t etLow, 
-                                          const mithep::Collection<mithep::CaloTower> 
+                                          const mithep::CaloTowerCol
                                           *caloTowers);
     static Double_t CaloTowerEmIsolation(const ThreeVector *p, Double_t extRadius, 
                                          Double_t intRadius, Double_t etLow, 
-                                         const mithep::Collection<mithep::CaloTower> *caloTowers);
+                                         const mithep::CaloTowerCol *caloTowers);
     static Double_t PFRadialMuonIsolation(const Muon *p, const PFCandidateCol *PFCands, 
                                           Double_t ptMin = 1.0, Double_t extRadius = 0.3);
     static Double_t PFMuonIsolation(const Muon *p, const PFCandidateCol *PFCands, const Vertex *vertex, 

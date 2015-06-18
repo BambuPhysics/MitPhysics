@@ -640,6 +640,8 @@ mithep::ElectronIDMod::SetRhoType(RhoUtilities::RhoType type)
   default:
     fRhoAlgo = mithep::PileupEnergyDensity::kHighEta;
   }
+
+  throw std::out_of_range("Rho type out of range");
 }
 
 void
