@@ -5,6 +5,7 @@
 #include "MitPhysics/Utils/interface/PhotonTools.h"
 
 #include <TSystem.h>
+#include <cstring>
 
 using namespace mithep;
 
@@ -725,12 +726,18 @@ void PhotonIDMod::SlaveBegin()
     return;
   }
 
-  fIsoCalcCHEB.Compile();
-  fIsoCalcCHEE.Compile();
-  fIsoCalcNHEB.Compile();
-  fIsoCalcNHEE.Compile();
-  fIsoCalcPhEB.Compile();
-  fIsoCalcPhEE.Compile();
+  if (std::strlen(fIsoCalcCHEB.GetName()) != 0)
+    fIsoCalcCHEB.Compile();
+  if (std::strlen(fIsoCalcCHEE.GetName()) != 0)
+    fIsoCalcCHEE.Compile();
+  if (std::strlen(fIsoCalcNHEB.GetName()) != 0)
+    fIsoCalcNHEB.Compile();
+  if (std::strlen(fIsoCalcNHEE.GetName()) != 0)
+    fIsoCalcNHEE.Compile();
+  if (std::strlen(fIsoCalcPhEB.GetName()) != 0)
+    fIsoCalcPhEB.Compile();
+  if (std::strlen(fIsoCalcPhEE.GetName()) != 0)
+    fIsoCalcPhEE.Compile();
 }
 
 

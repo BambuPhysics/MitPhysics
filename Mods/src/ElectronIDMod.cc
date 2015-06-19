@@ -109,7 +109,12 @@ void ElectronIDMod::SlaveBegin()
   if (fApplyConvFilterType1 || fCombinedIdCut)
     ReqEventObject(fConversionBranchName, fConversions, true);
 
-  if (fElIdType == ElectronTools::kHggLeptonTagId2012HCP)
+  if (fElIdType == ElectronTools::kHggLeptonTagId2012HCP ||
+      fElIdType == ElectronTools::kMVAID_BDTG_IDIsoCombined ||
+      fElIdType == ElectronTools::kMVAID_BDTG_IDHWW2012TrigV0 ||
+      fElIdType == ElectronTools::kMVAID_BDTG_IDIsoCombinedHWW2012TrigV4 ||
+      fElIsoType == ElectronTools::kPFIso ||
+      fElIsoType == ElectronTools::kPFIsoNoL)
     ReqEventObject(fPFCandidatesName, fPFCandidates, true);
 
   if (fElIdType == ElectronTools::kMVAID_BDTG_IDIsoCombined ||
@@ -120,9 +125,8 @@ void ElectronIDMod::SlaveBegin()
       fElIsoType == ElectronTools::kPFIso_HWW2012TrigV0 ||
       fElIsoType == ElectronTools::kPFIso_HggLeptonTag2012 ||
       fElIsoType == ElectronTools::kPFIso_HggLeptonTag2012HCP ||
-      fElIsoType == ElectronTools::kPhys14VetoIso) {
+      fElIsoType == ElectronTools::kPhys14VetoIso)
     ReqEventObject(fPileupEnergyDensityName, fPileupEnergyDensity, true);
-  }
 
   // Validate options
 
@@ -203,13 +207,18 @@ void ElectronIDMod::Process()
       SendError(kAbortAnalysis, "Process", "Beam spot not found");
   }
 
-  if (fApplyConvFilterType1 && fCombinedIdCut) {
+  if (fApplyConvFilterType1 || fCombinedIdCut) {
     LoadEventObject(fConversionBranchName, fConversions);
     if (!fConversions)
       SendError(kAbortAnalysis, "Process", "Conversions not found");
   }
 
-  if (fElIdType == ElectronTools::kHggLeptonTagId2012HCP) {
+  if (fElIdType == ElectronTools::kHggLeptonTagId2012HCP ||
+      fElIdType == ElectronTools::kMVAID_BDTG_IDIsoCombined ||
+      fElIdType == ElectronTools::kMVAID_BDTG_IDHWW2012TrigV0 ||
+      fElIdType == ElectronTools::kMVAID_BDTG_IDIsoCombinedHWW2012TrigV4 ||
+      fElIsoType == ElectronTools::kPFIso ||
+      fElIsoType == ElectronTools::kPFIsoNoL) {
     LoadEventObject(fPFCandidatesName, fPFCandidates);
     if (!fPFCandidates)
       SendError(kAbortAnalysis, "Process", "PF candidates not found");
@@ -222,14 +231,16 @@ void ElectronIDMod::Process()
       fElIsoType == ElectronTools::kMVAIso_BDTG_IDIsoCombinedHWW2012TrigV4 ||
       fElIsoType == ElectronTools::kPFIso_HWW2012TrigV0      ||
       fElIsoType == ElectronTools::kPFIso_HggLeptonTag2012 ||
-      fElIsoType == ElectronTools::kPFIso_HggLeptonTag2012HCP) {
+      fElIsoType == ElectronTools::kPFIso_HggLeptonTag2012HCP ||
+      fElIsoType == ElectronTools::kPhys14VetoIso) {
     LoadEventObject(fPileupEnergyDensityName, fPileupEnergyDensity);
     if (!fPileupEnergyDensity)
       SendError(kAbortAnalysis, "Process", "Pileup energy density not found");
   }
 
   // Name is hardcoded, can be changed if someone feels to do it
-  if (fElIsoType == ElectronTools::kPFIso_HWW2012TrigV0 || fElIsoType == ElectronTools::kPFIso_HggLeptonTag2012 || fElIsoType == ElectronTools::kPFIso_HggLeptonTag2012HCP)
+  if (fElIsoType == ElectronTools::kPFIso_HWW2012TrigV0 ||
+      fElIsoType == ElectronTools::kPFIso_HggLeptonTag2012)
     fPFNoPileUpCands = GetObjThisEvt<PFCandidateCol>(fPFNoPileUpName);
 
   //get trigger object collection if trigger matching is enabled
@@ -564,7 +575,10 @@ mithep::ElectronIDMod::PassIDCut(Electron const* ele) const
 Bool_t
 mithep::ElectronIDMod::PassIsolationCut(Electron const* ele) const
 {
-  Double_t rho = fPileupEnergyDensity->At(0)->Rho(fRhoAlgo);
+  Double_t rho = 0.;
+  if (fPileupEnergyDensity)
+    fPileupEnergyDensity->At(0)->Rho(fRhoAlgo);
+
   Vertex const* vertex = fVertices->At(0);
 
   switch (fElIsoType) {
