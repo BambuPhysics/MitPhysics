@@ -1,4 +1,4 @@
-#include "MitPhysics/Mods/interface/PhotonIDMod.h"
+#include "MitPhysics/Mods/interface/PhotonIDModRun1.h"
 #include "MitAna/DataTree/interface/PhotonCol.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "MitPhysics/Utils/interface/IsolationTools.h"
@@ -9,10 +9,10 @@
 
 using namespace mithep;
 
-ClassImp(mithep::PhotonIDMod)
+ClassImp(mithep::PhotonIDModRun1)
   
 //--------------------------------------------------------------------------------------------------
-PhotonIDMod::PhotonIDMod(const char *name, const char *title) : 
+PhotonIDModRun1::PhotonIDModRun1(const char *name, const char *title) : 
   BaseMod(name,title),
   fPhotonBranchName  (Names::gkPhotonBrn),
   fGoodPhotonsName   (ModNames::gkGoodPhotonsName),
@@ -141,14 +141,14 @@ PhotonIDMod::PhotonIDMod(const char *name, const char *title) :
   fBarrelWeights = dataDir + "/TMVAClassificationPhotonID_Barrel_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml";
 }
 
-PhotonIDMod::~PhotonIDMod()
+PhotonIDModRun1::~PhotonIDModRun1()
 {
   delete fTool;
   delete fRng;
 }
 
 //--------------------------------------------------------------------------------------------------
-void PhotonIDMod::Process()
+void PhotonIDModRun1::Process()
 {
   // Process entries of the tree. 
 
@@ -595,7 +595,7 @@ void PhotonIDMod::Process()
 }
 
 //--------------------------------------------------------------------------------------------------
-void PhotonIDMod::SlaveBegin()
+void PhotonIDModRun1::SlaveBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis. Here,
   // we just request the photon collection branch.
@@ -643,7 +643,7 @@ void PhotonIDMod::SlaveBegin()
   else if (fPhotonIDType.CompareTo("Loose") == 0) 
     fPhIdType = kLoose;
   else if (fPhotonIDType.CompareTo("LooseEM") == 0) {
-    throw std::runtime_error("Invalid congiruation LooseEM for PhotonIDMod::PhotonIDType");
+    throw std::runtime_error("Invalid congiruation LooseEM for PhotonIDModRun1::PhotonIDType");
   }
   else if (fPhotonIDType.CompareTo("Custom") == 0)
     fPhIdType = kCustomId;
@@ -742,7 +742,7 @@ void PhotonIDMod::SlaveBegin()
 
 
 //---------------------------------------------------------------------------------------------------
-Int_t PhotonIDMod::FindRunRangeIdx(UInt_t run)
+Int_t PhotonIDModRun1::FindRunRangeIdx(UInt_t run)
 {
   // this routine looks for the idx of the run-range
   Int_t runRange=-1;
@@ -756,7 +756,7 @@ Int_t PhotonIDMod::FindRunRangeIdx(UInt_t run)
 }
 
 //---------------------------------------------------------------------------------------------------
-Double_t PhotonIDMod::GetDataEnCorr(Int_t runRange, PhotonTools::eScaleCats cat)
+Double_t PhotonIDModRun1::GetDataEnCorr(Int_t runRange, PhotonTools::eScaleCats cat)
 {
   switch (cat) {
   case PhotonTools::kEBhighEtaGold:
@@ -781,7 +781,7 @@ Double_t PhotonIDMod::GetDataEnCorr(Int_t runRange, PhotonTools::eScaleCats cat)
 }
 
 //---------------------------------------------------------------------------------------------------
-Double_t PhotonIDMod::GetMCSmearFac(PhotonTools::eScaleCats cat)
+Double_t PhotonIDModRun1::GetMCSmearFac(PhotonTools::eScaleCats cat)
 {
   switch (cat) {
   case PhotonTools::kEBhighEtaGold:

@@ -6,6 +6,7 @@
 
 #include "MitPhysics/Mods/interface/CaloMetCorrectionMod.h"
 #include "MitPhysics/Mods/interface/EffMod.h"
+#include "MitPhysics/Mods/interface/IDMod.h"
 #include "MitPhysics/Mods/interface/ElectronCleaningMod.h"
 #include "MitPhysics/Mods/interface/CosmicCleaningMod.h"
 #include "MitPhysics/Mods/interface/ElectronIDMod.h"
@@ -24,6 +25,7 @@
 #include "MitPhysics/Mods/interface/PartonFlavorHistoryMod.h"
 #include "MitPhysics/Mods/interface/PhotonCleaningMod.h"
 #include "MitPhysics/Mods/interface/PhotonIDMod.h"
+#include "MitPhysics/Mods/interface/PhotonIDModRun1.h"
 #include "MitPhysics/Mods/interface/PhotonCiCMod.h"
 #include "MitPhysics/Mods/interface/PhotonMvaMod.h"
 #include "MitPhysics/Mods/interface/PhotonPairSelector.h"
@@ -48,6 +50,7 @@
 
 #pragma link C++ class mithep::CaloMetCorrectionMod+;
 #pragma link C++ class mithep::EffMod+;
+#pragma link C++ class mithep::IDMod+;
 #pragma link C++ class mithep::ElectronCleaningMod+;
 #pragma link C++ class mithep::CosmicCleaningMod+;
 #pragma link C++ class mithep::ElectronIDMod+;
@@ -69,6 +72,7 @@
 #pragma link C++ class mithep::PDFProducerMod+;
 #pragma link C++ class mithep::PhotonCleaningMod+;
 #pragma link C++ class mithep::PhotonIDMod+;
+#pragma link C++ class mithep::PhotonIDModRun1+;
 #pragma link C++ class mithep::PhotonCiCMod+;
 #pragma link C++ class mithep::PhotonPairSelector+;
 #pragma link C++ class mithep::PhotonMvaMod+;

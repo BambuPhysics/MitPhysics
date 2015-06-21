@@ -7,8 +7,8 @@
 // Authors: S.Xie, C.Loizides
 //--------------------------------------------------------------------------------------------------
 
-#ifndef MITPHYSICS_MODS_PHOTONIDMOD_H
-#define MITPHYSICS_MODS_PHOTONIDMOD_H
+#ifndef MITPHYSICS_MODS_PHOTONIDMODRun1_H
+#define MITPHYSICS_MODS_PHOTONIDMODRun1_H
 
 #include "MitAna/TreeMod/interface/BaseMod.h" 
 #include "MitAna/DataTree/interface/PhotonFwd.h"
@@ -32,12 +32,12 @@
 
 namespace mithep 
 {
-  class PhotonIDMod : public BaseMod
+  class PhotonIDModRun1 : public BaseMod
   {
   public:
-    PhotonIDMod(const char *name="PhotonIDMod", 
+    PhotonIDModRun1(const char *name="PhotonIDModRun1", 
                 const char *title="Photon identification module");
-    ~PhotonIDMod();
+    ~PhotonIDModRun1();
 
     Bool_t              GetApplySpikeRemoval()      const { return fApplySpikeRemoval;   }
     Bool_t              GetApplyPixelSeed()         const { return fApplyPixelSeed;      }
@@ -334,7 +334,7 @@ namespace mithep
 
     UInt_t    fRhoAlgo;
 
-    ClassDef(PhotonIDMod, 1) // Photon identification module
+    ClassDef(PhotonIDModRun1, 1) // Photon identification module
   };
 }
 #endif

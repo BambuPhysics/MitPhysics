@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id $
-//
 // PhotonTools
 //
 // Helper Class for photon Identification decisions.
