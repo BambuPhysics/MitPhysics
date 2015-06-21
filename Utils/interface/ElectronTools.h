@@ -52,7 +52,10 @@ namespace mithep {
       kHggLeptonTagId2012HCP,
       kMVAID_BDTG_IDHWW2012TrigV0,
       kMVAID_BDTG_IDIsoCombinedHWW2012TrigV4,
-      kPhys14Veto
+      kPhys14Veto,
+      kPhys14Loose,
+      kPhys14Medium,
+      kPhys14Tight
     };
 
     enum EElIsoType {
@@ -84,7 +87,10 @@ namespace mithep {
       kPFIso_HggLeptonTag2012,
       kPFIso_HggLeptonTag2012HCP,
       kMVAIso_BDTG_IDIsoCombinedHWW2012TrigV4,
-      kPhys14VetoIso
+      kPhys14VetoIso,
+      kPhys14LooseIso,
+      kPhys14MediumIso,
+      kPhys14TightIso
     };
 
     enum EElectronIsoVar {

@@ -329,31 +329,53 @@ Bool_t ElectronTools::PassCustomIso(const Electron *ele, EElIsoType isoType)
 Bool_t
 mithep::ElectronTools::PassID(Electron const* ele, EElIdType type)
 {
-  if (type == ElectronTools::kPhys14Veto) {
-    if (ele->SCluster()->AbsEta() < gkEleEBEtaMax) {
-      if (std::abs(ele->DeltaEtaSuperClusterTrackAtVtx()) > 0.013625)
-        return false;
-      if (std::abs(ele->DeltaPhiSuperClusterTrackAtVtx()) > 0.230374)
-        return false;
-      if (ele->CoviEtaiEta5x5() > 0.011586)
-        return false;
-      if (ele->HadOverEmTow() > 0.181130)
-        return false;
-      if (std::abs(1. / ele->SCluster()->Energy() - 1. / ele->GsfTrk()->P()) > 0.295751)
-        return false;
-    }
-    else {
-      if (std::abs(ele->DeltaEtaSuperClusterTrackAtVtx()) > 0.011932)
-        return false;
-      if (std::abs(ele->DeltaPhiSuperClusterTrackAtVtx()) > 0.255450)
-        return false;
-      if (ele->CoviEtaiEta5x5() > 0.031849)
-        return false;
-      if (ele->HadOverEmTow() > 0.223870)
-        return false;
-      if (std::abs(1. / ele->SCluster()->Energy() - 1. / ele->GsfTrk()->P()) > 0.155501)
-        return false;
-    }
+  if (type >= kPhys14Veto && type <= kPhys14Tight) {
+    double deltaEtaCut, deltaPhiCut, sigmaIetaIetaCut, hOverECut, ooEmooPCut;
+    bool isEB = ele->SCluster()->AbsEta() < gkEleEBEtaMax;
+
+    switch (type) {
+    kPhys14Veto:
+      deltaEtaCut      = isEB ? 0.013625 : 0.011932;
+      deltaPhiCut      = isEB ? 0.230374 : 0.255450;
+      sigmaIetaIetaCut = isEB ? 0.011586 : 0.031849;
+      hOverECut        = isEB ? 0.181130 : 0.223870;
+      ooEmooPCut       = isEB ? 0.295751 : 0.155501;
+      break;
+    kPhys14Loose:
+      deltaEtaCut      = isEB ? 0.009277 : 0.009833;
+      deltaPhiCut      = isEB ? 0.094739 : 0.149934;
+      sigmaIetaIetaCut = isEB ? 0.010331 : 0.031838;
+      hOverECut        = isEB ? 0.093068 : 0.115754;
+      ooEmooPCut       = isEB ? 0.189968 : 0.140662;
+      break;
+    kPhys14Medium:
+      deltaEtaCut      = isEB ? 0.008925 : 0.007429;
+      deltaPhiCut      = isEB ? 0.035973 : 0.067879;
+      sigmaIetaIetaCut = isEB ? 0.009996 : 0.030135;
+      hOverECut        = isEB ? 0.050537 : 0.086782;
+      ooEmooPCut       = isEB ? 0.091942 : 0.100683;
+      break;
+    kPhys14Tight:
+      deltaEtaCut      = isEB ? 0.006046 : 0.007057;
+      deltaPhiCut      = isEB ? 0.028092 : 0.030159;
+      sigmaIetaIetaCut = isEB ? 0.009947 : 0.028237;
+      hOverECut        = isEB ? 0.045772 : 0.067778;
+      ooEmooPCut       = isEB ? 0.020118 : 0.098919;
+      break;
+    default:
+      break;
+    };
+
+    if (std::abs(ele->DeltaEtaSuperClusterTrackAtVtx()) > deltaEtaCut)
+      return false;
+    if (std::abs(ele->DeltaPhiSuperClusterTrackAtVtx()) > deltaPhiCut)
+      return false;
+    if (ele->CoviEtaiEta5x5() > sigmaIetaIetaCut)
+      return false;
+    if (ele->HadOverEmTow() > hOverECut)
+      return false;
+    if (std::abs(1. / ele->SCluster()->Energy() - 1. / ele->GsfTrk()->P()) > ooEmooPCut)
+      return false;
 
     return true;
   }
@@ -365,12 +387,12 @@ Bool_t
 mithep::ElectronTools::PassIso(Electron const* ele, EElIsoType isoType)
 {
   switch (isoType) {
-    case ElectronTools::kMVAIso_BDTG_IDIsoCombined:
+    case kMVAIso_BDTG_IDIsoCombined:
       return (ele->TrackIsolationDr03() < ele->Pt() * 0.2) &&
         (ele->EcalRecHitIsoDr03() < ele->Pt() * 0.2) &&
         (ele->HcalTowerSumEtDr03() < ele->Pt() * 0.2);
 
-    case ElectronTools::kMVAIso_BDTG_IDIsoCombinedHWW2012TrigV4:
+    case kMVAIso_BDTG_IDIsoCombinedHWW2012TrigV4:
       if (ele->SCluster()->AbsEta() < gkEleEBEtaMax)
         return ((ele->TrackIsolationDr03() - 1.0) < ele->Pt() * 0.2) &&
           (ele->EcalRecHitIsoDr03()  < ele->Pt() * 0.2) &&
@@ -413,22 +435,34 @@ Bool_t
 mithep::ElectronTools::PassIsoRhoCorr(Electron const* ele, EElIsoType isoType, Double_t rho,
                                       PFCandidateCol const* pfCandidates/* = 0*/, Vertex const* vertex/* = 0*/)
 {
+  bool isEB = ele->SCluster()->AbsEta() < gkEleEBEtaMax;
+
   switch (isoType) {
-  case ElectronTools::kPFIso_HWW2012TrigV0:
-    return IsolationTools::PFElectronIsolation2012(ele, vertex, pfCandidates, rho, ElectronTools::kEleEANoCorr) < 0.15;
+  case kPFIso_HWW2012TrigV0:
+    return IsolationTools::PFElectronIsolation2012(ele, vertex, pfCandidates, rho, kEleEANoCorr) < 0.15;
 
-  case ElectronTools::kPFIso_HggLeptonTag2012:
-    if (ele->Pt() < 20. && ele->SCluster()->AbsEta() > gkEleEBEtaMax)
-      return IsolationTools::PFElectronIsolation2012LepTag(ele, vertex, pfCandidates, rho, ElectronTools::kEleEAData2012, 0, 0, 0.3) < 0.1;
+  case kPFIso_HggLeptonTag2012:
+    if (ele->Pt() < 20. && isEB)
+      return IsolationTools::PFElectronIsolation2012LepTag(ele, vertex, pfCandidates, rho, kEleEAData2012, 0, 0, 0.3) < 0.1;
     //fallthrough
-  case ElectronTools::kPFIso_HggLeptonTag2012HCP:
-    return IsolationTools::PFElectronIsolation2012LepTag(ele, vertex, pfCandidates, rho, ElectronTools::kEleEAData2012, 0, 0, 0.3) < 0.15;
+  case kPFIso_HggLeptonTag2012HCP:
+    return IsolationTools::PFElectronIsolation2012LepTag(ele, vertex, pfCandidates, rho, kEleEAData2012, 0, 0, 0.3) < 0.15;
 
-  case ElectronTools::kPhys14VetoIso:
-    if (ele->SCluster()->AbsEta() < gkEleEBEtaMax)
-      return IsolationTools::PFElectronIsolationRhoCorr(ele, rho, ElectronTools::kEleEAPhys14) < 0.158721 * ele->Pt();
-    else
-      return IsolationTools::PFElectronIsolationRhoCorr(ele, rho, ElectronTools::kEleEAPhys14) < 0.177032 * ele->Pt();
+  case kPhys14VetoIso:
+  case kPhys14LooseIso:
+  case kPhys14MediumIso:
+  case kPhys14TightIso:
+    {
+      double relIso = IsolationTools::PFElectronIsolationRhoCorr(ele, rho, kEleEAPhys14) / ele->Pt();
+      if (isoType == kPhys14VetoIso)
+        return relIso < (isEB ? 0.158721 : 0.177032);
+      else if (isoType == kPhys14LooseIso)
+        return relIso < (isEB ? 0.130136 : 0.163368);
+      else if (isoType == kPhys14MediumIso)
+        return relIso < (isEB ? 0.107587 : 0.113254);
+      else
+        return relIso < (isEB ? 0.069537 : 0.078265);
+    }
 
   default:
     return false;
@@ -566,6 +600,13 @@ mithep::ElectronTools::PassNExpectedHits(Electron const* ele, EElIdType idType, 
     else
       maxMissing = 3;
     break;
+    
+  case kPhys14Loose:
+  case kPhys14Medium:
+  case kPhys14Tight:
+    maxMissing = 1;
+    break;
+
   default:
     maxMissing = 1;
     break;
@@ -618,13 +659,21 @@ mithep::ElectronTools::PassD0Cut(const Electron *ele, const BeamSpotCol *beamspo
 Bool_t
 mithep::ElectronTools::PassD0Cut(const Electron *ele, Double_t d0, EElIdType idType)
 {
+  bool isEB = ele->SCluster()->AbsEta() < gkEleEBEtaMax;
+
   switch (idType) {
   case kPhys14Veto:
-    if (ele->SCluster()->AbsEta() < gkEleEBEtaMax)
-      return d0 < 0.094095;
-    else
-      return d0 < 0.342293;
-    break;
+    return d0 < (isEB ? 0.094095 : 0.342293);
+
+  case kPhys14Loose:
+    return d0 < (isEB ? 0.035904 : 0.099266);
+
+  case kPhys14Medium:
+    return d0 < (isEB ? 0.012235 : 0.036719);
+
+  case kPhys14Tight:
+    return d0 < (isEB ? 0.008790 : 0.027984);
+
   default:
     return d0 < 0.02;
   }
@@ -656,13 +705,21 @@ mithep::ElectronTools::PassDZCut(const Electron *ele, const VertexCol *vertices,
 Bool_t
 mithep::ElectronTools::PassDZCut(const Electron *ele, Double_t dz, EElIdType idType)
 {
+  bool isEB = ele->SCluster()->AbsEta() < gkEleEBEtaMax;
+
   switch (idType) {
   case kPhys14Veto:
-    if (ele->SCluster()->AbsEta() < gkEleEBEtaMax)
-      return dz < 0.713070;
-    else
-      return dz < 0.953461;
-    break;
+    return dz < (isEB ? 0.713070 : 0.953461);
+
+  case kPhys14Loose:
+    return dz < (isEB ? 0.075496 : 0.197897);
+
+  case kPhys14Medium:
+    return dz < (isEB ? 0.042020 : 0.138142);
+
+  case kPhys14Tight:
+    return dz < (isEB ? 0.021226 : 0.133431);
+
   default:
     return dz < 0.1;
   }
