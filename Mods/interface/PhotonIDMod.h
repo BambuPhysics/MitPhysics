@@ -18,12 +18,10 @@ namespace mithep {
     PhotonIDMod(char const* name = "PhotonIDMod", char const* title = "Photon Identification");
     ~PhotonIDMod();
 
-    void SetOutputName(char const* n) override { static_cast<PhotonOArr*>(fOutput)->SetName(n); }
-
   protected:
     void Process() override;
-    void SlaveBegin() override;
-    void SlaveTerminate() override;
+    void IdBegin() override;
+    void IdTerminate() override;
 
     ClassDef(PhotonIDMod, 0)
   };

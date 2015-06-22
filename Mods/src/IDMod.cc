@@ -13,24 +13,27 @@ mithep::IDMod::~IDMod()
   delete fOutput;
 }
 
-Bool_t
-mithep::IDMod::PublishOutput()
+void
+mithep::IDMod::SlaveBegin()
 {
-  if (!PublishObj(fOutput))
-    return kFALSE;
-
-  if (!fIsFilterMode) {
+  if (fIsFilterMode) {
+    if (!PublishObj(fOutput))
+      SendError(kAbortAnalysis, "SlaveBegin", "Cannot publish output");
+  }
+  else {
     if (!PublishObj(&fFlags))
-      return kFALSE;
+      SendError(kAbortAnalysis, "SlaveBegin", "Cannot publish output");
   }
 
-  return kTRUE;
+  AddTH1(fCutFlow, TString(GetName()) + "CutFlow", "Identification cut flow", 1, 0., 1.);
+
+  IdBegin();
 }
 
 void
-mithep::IDMod::RetractOutput()
+mithep::IDMod::SlaveTerminate()
 {
   RetractObj(GetOutputName());
-  if (!fIsFilterMode)
-    RetractObj(GetFlagsName());
+
+  IdTerminate();
 }

@@ -47,7 +47,6 @@ namespace mithep {
 
     ElectronLikelihood* GetLH() const { return fLH; }
 
-    void SetOutputName(char const* n)              { static_cast<mithep::ElectronOArr*>(fOutput)->SetName(n); }
     void SetConversionBranchName(const char* n)    { fAuxInputNames[kConversions] = n; }
     void SetNonIsolatedMuonsName(const char* n)    { fAuxInputNames[kNonIsolatedMuons] = n; }
     void SetNonIsolatedElectronsName(const char* n){ fAuxInputNames[kNonIsolatedElectrons] = n; }
@@ -74,14 +73,6 @@ namespace mithep {
     void SetLH(ElectronLikelihood* l)              { fLH = l; }
 
   protected:
-    Bool_t   PassLikelihoodID(Electron const&);
-    Bool_t   PassIDCut(Electron const&, TObject const**);
-    Bool_t   PassIsolationCut(Electron const&, TObject const**);
-
-    void Process() override;
-    void SlaveBegin() override;
-    void SlaveTerminate() override;
-    
     enum AuxInput {
       kTrigObjects,
       kConversions,
@@ -94,6 +85,34 @@ namespace mithep {
       nAuxInputs
     };
 
+    enum CutFlow {
+      cAll,
+      cIsEcalDriven,
+      cPt,
+      cEta,
+      cEt,
+      cFiducial,
+      cSpikeRemoval,
+      cChargeFilter,
+      cTriggerMatching,
+      cConvFilterType1,
+      cConvFilterType2,
+      cNExpectedHits,
+      cD0,
+      cDZ,
+      cId,
+      cIsolation,
+      nCuts
+    };
+
+    Bool_t   PassLikelihoodID(Electron const&);
+    Bool_t   PassIDCut(Electron const&, TObject const**);
+    Bool_t   PassIsolationCut(Electron const&, TObject const**);
+    template<class T> void GetAuxInput(AuxInput, TObject const**);
+
+    void Process() override;
+    void IdBegin() override;
+    
     TString  fAuxInputNames[nAuxInputs];
 
     Bool_t   fApplyConvFilterType1 = kTRUE;   //whether remove conversions using fit method
@@ -118,4 +137,5 @@ namespace mithep {
     ClassDef(ElectronIDMod, 0) // Electron identification module
   };
 }
+
 #endif

@@ -3,7 +3,7 @@
 //
 // Base class for object ID modules
 //
-// Authors: S.Xie, C.Loizides
+// Authors: Y.Iiyama
 //--------------------------------------------------------------------------------------------------
 
 
@@ -12,6 +12,9 @@
 
 #include "MitAna/TreeMod/interface/BaseMod.h"
 #include "MitAna/DataCont/interface/NamedFastArrayBasic.h"
+
+#include "TString.h"
+#include "TH1D.h"
 
 #include <limits>
 
@@ -23,8 +26,7 @@ namespace mithep {
     ~IDMod();
 
     char const* GetInputName() const { return fInputName; }
-    char const* GetOutputName() const { return fOutput->GetName(); }
-    char const* GetFlagsName() const { return fFlags.GetName(); }
+    char const* GetOutputName() const;
     Bool_t GetIsFilterMode() const { return fIsFilterMode; }
     UInt_t GetIDType() const { return fIDType; }
     UInt_t GetIsoType() const { return fIsoType; }
@@ -32,8 +34,7 @@ namespace mithep {
     Double_t GetEtaMax() const { return fEtaMax; }
 
     void SetInputName(char const* n) { fInputName = n; }
-    virtual void SetOutputName(char const*)  = 0; // BaseCollection does not have SetName() interface
-    void SetFlagsName(char const* n) { fFlags.SetName(n); }
+    void SetOutputName(char const* n);
     void SetIsFilterMode(Bool_t b) { fIsFilterMode = b; }
     void SetIDType(UInt_t t) { fIDType = t; }
     void SetIsoType(UInt_t t) { fIsoType = t; }
@@ -41,20 +42,21 @@ namespace mithep {
     void SetEtaMax(Double_t m) { fEtaMax = m; }
 
   protected:
-    Bool_t PublishOutput();
-    void RetractOutput();
+    void SlaveBegin() override;
+    void SlaveTerminate() override;
+    virtual void IdBegin() {}
+    virtual void IdTerminate() {}
     
     // fOutput:
     //  Collection of ID'ed objects (filter mode) or all objects (flag mode).
-    //  Need to:
-    //   new the pointer to the desired output
-    //   call PublishOutput() in SlaveBegin
-    //   call RetractOutput() in SlaveTerminate
+    //  A derived class must new the pointer to the desired output in the constructor
     BaseCollection* fOutput = 0;
     // fFlags: Good / bad flags published in flag mode
     NamedFastArrayBasic<Bool_t> fFlags;
 
-    TString fInputName; // input collection of objects to be ID'ed
+    TH1D* fCutFlow = 0;
+
+    TString fInputName = ""; // input collection of objects to be ID'ed
 
     Bool_t fIsFilterMode = kTRUE;
     UInt_t fIDType = 0xffffffff;
@@ -65,6 +67,25 @@ namespace mithep {
     ClassDef(IDMod, 0)
   };
 
+  inline
+  char const*
+  mithep::IDMod::GetOutputName() const
+  {
+    if (fIsFilterMode)
+      return fOutput->GetName();
+    else
+      return fFlags.GetName();
+  }
+
+  inline
+  void
+  mithep::IDMod::SetOutputName(char const* n)
+  {
+    if (fIsFilterMode)
+      return fOutput->SetName(n);
+    else
+      return fFlags.SetName(n);
+  }
 }
 
 #endif
