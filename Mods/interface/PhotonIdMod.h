@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------------------
-// PhotonIDMod
+// PhotonIdMod
 //
 // Authors: Y.Iiyama
 //--------------------------------------------------------------------------------------------------
@@ -8,22 +8,22 @@
 #ifndef MITPHYSICS_MODS_PHOTONIDMOD_H
 #define MITPHYSICS_MODS_PHOTONIDMOD_H
 
-#include "MitPhysics/Mods/interface/IDMod.h"
+#include "MitPhysics/Mods/interface/IdMod.h"
 #include "MitAna/DataTree/interface/PhotonCol.h"
 
 namespace mithep {
 
-  class PhotonIDMod : public IDMod {
+  class PhotonIdMod : public IdMod {
   public:
-    PhotonIDMod(char const* name = "PhotonIDMod", char const* title = "Photon Identification");
-    ~PhotonIDMod();
+    PhotonIdMod(char const* name = "PhotonIdMod", char const* title = "Photon Identification");
+    ~PhotonIdMod();
 
   protected:
     void Process() override;
     void IdBegin() override;
     void IdTerminate() override;
 
-    ClassDef(PhotonIDMod, 0)
+    ClassDef(PhotonIdMod, 0)
   };
 
 }

@@ -1,4 +1,4 @@
-#include "MitPhysics/Mods/interface/ElectronIDMod.h"
+#include "MitPhysics/Mods/interface/ElectronIdMod.h"
 #include "MitPhysics/Utils/interface/ElectronTools.h"
 #include "MitPhysics/Utils/interface/IsolationTools.h"
 #include "MitAna/DataTree/interface/StableData.h"
@@ -15,11 +15,11 @@
 
 using namespace mithep;
 
-ClassImp(mithep::ElectronIDMod)
+ClassImp(mithep::ElectronIdMod)
 
 template<class T>
 void
-ElectronIDMod::GetAuxInput(ElectronIDMod::AuxInput inputCol, TObject const** aux)
+ElectronIdMod::GetAuxInput(ElectronIdMod::AuxInput inputCol, TObject const** aux)
 {
   aux[inputCol] = GetObject<T>(fAuxInputNames[inputCol], true);
   if (!aux[inputCol])
@@ -27,8 +27,8 @@ ElectronIDMod::GetAuxInput(ElectronIDMod::AuxInput inputCol, TObject const** aux
 }
 
 //--------------------------------------------------------------------------------------------------
-ElectronIDMod::ElectronIDMod(const char *name, const char *title) :
-  IDMod(name, title)
+ElectronIdMod::ElectronIdMod(const char *name, const char *title) :
+  IdMod(name, title)
 {
   fOutput = new ElectronOArr(32, TString(name) + "Output");
 
@@ -43,13 +43,13 @@ ElectronIDMod::ElectronIDMod(const char *name, const char *title) :
 
 //--------------------------------------------------------------------------------------------------
 void
-ElectronIDMod::IdBegin()
+ElectronIdMod::IdBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis. Here,
   // we just request the electron collection branch.
 
-  // If we use MVA ID, need to load MVA weights
-  switch (fIDType) {
+  // If we use MVA Id, need to load MVA weights
+  switch (fIdType) {
   case ElectronTools::kLikelihood:
     if (!fLH)
       SendError(kAbortAnalysis, "SlaveBegin", "Electron likelihood is not initialized.");
@@ -90,7 +90,7 @@ ElectronIDMod::IdBegin()
 
 //--------------------------------------------------------------------------------------------------
 void
-ElectronIDMod::Process()
+ElectronIdMod::Process()
 {
   // Process entries of the tree.
   auto* electrons = GetObject<mithep::ElectronCol>(fInputName, true);
@@ -196,7 +196,7 @@ ElectronIDMod::Process()
 
     fCutFlow->Fill(cConvFilterType2);
 
-    if (fApplyNExpectedHitsInnerCut && !ElectronTools::PassNExpectedHits(&electron, ElectronTools::EElIdType(fIDType), fInvertNExpectedHitsInnerCut))
+    if (fApplyNExpectedHitsInnerCut && !ElectronTools::PassNExpectedHits(&electron, ElectronTools::EElIdType(fIdType), fInvertNExpectedHitsInnerCut))
       continue;
 
     fCutFlow->Fill(cNExpectedHits);
@@ -204,23 +204,23 @@ ElectronIDMod::Process()
     // apply d0 cut
     if (fApplyD0Cut) {
       if (fWhichVertex >= -1) {
-        if (!ElectronTools::PassD0Cut(&electron, static_cast<mithep::VertexCol const*>(aux[kVertices]), ElectronTools::EElIdType(fIDType), fWhichVertex))
+        if (!ElectronTools::PassD0Cut(&electron, static_cast<mithep::VertexCol const*>(aux[kVertices]), ElectronTools::EElIdType(fIdType), fWhichVertex))
           continue;
       }
-      else if (!ElectronTools::PassD0Cut(&electron, static_cast<mithep::BeamSpotCol const*>(aux[kBeamSpot]), ElectronTools::EElIdType(fIDType)))
+      else if (!ElectronTools::PassD0Cut(&electron, static_cast<mithep::BeamSpotCol const*>(aux[kBeamSpot]), ElectronTools::EElIdType(fIdType)))
         continue;
     }
 
     fCutFlow->Fill(cD0);
 
     // apply dz cut
-    if (fApplyDZCut && !ElectronTools::PassDZCut(&electron, static_cast<mithep::VertexCol const*>(aux[kVertices]), ElectronTools::EElIdType(fIDType), fWhichVertex))
+    if (fApplyDZCut && !ElectronTools::PassDZCut(&electron, static_cast<mithep::VertexCol const*>(aux[kVertices]), ElectronTools::EElIdType(fIdType), fWhichVertex))
       continue;
 
     fCutFlow->Fill(cDZ);
 
     //apply id cut
-    if (!PassIDCut(electron, aux))
+    if (!PassIdCut(electron, aux))
       continue;
 
     fCutFlow->Fill(cId);
@@ -245,11 +245,11 @@ ElectronIDMod::Process()
 
 //--------------------------------------------------------------------------------------------------
 Bool_t
-ElectronIDMod::PassLikelihoodID(Electron const& ele)
+ElectronIdMod::PassLikelihoodId(Electron const& ele)
 {
   Double_t LikelihoodValue = ElectronTools::Likelihood(fLH, &ele);
 
-  double likCut = fIDLikelihoodCut;
+  double likCut = fIdLikelihoodCut;
   if (likCut > -900) {
     if (ele.Pt() > 20) {
       if (ele.SCluster()->AbsEta() < gkEleEBEtaMax) {
@@ -286,9 +286,9 @@ ElectronIDMod::PassLikelihoodID(Electron const& ele)
 
 //--------------------------------------------------------------------------------------------------
 Bool_t
-mithep::ElectronIDMod::PassIDCut(Electron const& ele, TObject const**)
+mithep::ElectronIdMod::PassIdCut(Electron const& ele, TObject const**)
 {
-  switch (fIDType) {
+  switch (fIdType) {
   case ElectronTools::kTight:
     return ele.PassTightID();
 
@@ -296,7 +296,7 @@ mithep::ElectronIDMod::PassIDCut(Electron const& ele, TObject const**)
     return ele.PassLooseID();
 
   case ElectronTools::kLikelihood:
-    return ElectronTools::PassCustomID(&ele, ElectronTools::kVBTFWorkingPointFakeableId) && PassLikelihoodID(ele);
+    return ElectronTools::PassCustomID(&ele, ElectronTools::kVBTFWorkingPointFakeableId) && PassLikelihoodId(ele);
 
   case ElectronTools::kNoId:
     return true;
@@ -310,13 +310,13 @@ mithep::ElectronIDMod::PassIDCut(Electron const& ele, TObject const**)
   case ElectronTools::kVBTFWorkingPoint80Id:
   case ElectronTools::kVBTFWorkingPointLowPtId:
   case ElectronTools::kVBTFWorkingPoint70Id:
-    return ElectronTools::PassCustomID(&ele, ElectronTools::EElIdType(fIDType));
+    return ElectronTools::PassCustomID(&ele, ElectronTools::EElIdType(fIdType));
 
   case ElectronTools::kPhys14Veto:
   case ElectronTools::kPhys14Loose:
   case ElectronTools::kPhys14Medium:
   case ElectronTools::kPhys14Tight:
-    return ElectronTools::PassID(&ele, ElectronTools::EElIdType(fIDType));
+    return ElectronTools::PassID(&ele, ElectronTools::EElIdType(fIdType));
 
   default:
     return false;
@@ -325,7 +325,7 @@ mithep::ElectronIDMod::PassIDCut(Electron const& ele, TObject const**)
 
 //--------------------------------------------------------------------------------------------------
 Bool_t
-mithep::ElectronIDMod::PassIsolationCut(Electron const& ele, TObject const** aux)
+mithep::ElectronIdMod::PassIsolationCut(Electron const& ele, TObject const** aux)
 {
   switch (fIsoType) {
   case ElectronTools::kPFIso:

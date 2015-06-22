@@ -6,10 +6,10 @@
 
 #include "MitPhysics/Mods/interface/CaloMetCorrectionMod.h"
 #include "MitPhysics/Mods/interface/EffMod.h"
-#include "MitPhysics/Mods/interface/IDMod.h"
+#include "MitPhysics/Mods/interface/IdMod.h"
 #include "MitPhysics/Mods/interface/ElectronCleaningMod.h"
 #include "MitPhysics/Mods/interface/CosmicCleaningMod.h"
-#include "MitPhysics/Mods/interface/ElectronIDMod.h"
+#include "MitPhysics/Mods/interface/ElectronIdMod.h"
 #include "MitPhysics/Mods/interface/ElectronIDModRun1.h"
 #include "MitPhysics/Mods/interface/ElectronCorrectionMod.h"
 #include "MitPhysics/Mods/interface/GeneratorMod.h"
@@ -21,12 +21,12 @@
 #include "MitPhysics/Mods/interface/JetCorrectionMod.h"
 #include "MitPhysics/Mods/interface/MergeLeptonsMod.h"
 #include "MitPhysics/Mods/interface/MetCorrectionMod.h"
-#include "MitPhysics/Mods/interface/MuonIDMod.h"
+#include "MitPhysics/Mods/interface/MuonIdMod.h"
 #include "MitPhysics/Mods/interface/MuonIDModRun1.h"
 #include "MitPhysics/Mods/interface/PDFProducerMod.h"
 #include "MitPhysics/Mods/interface/PartonFlavorHistoryMod.h"
 #include "MitPhysics/Mods/interface/PhotonCleaningMod.h"
-#include "MitPhysics/Mods/interface/PhotonIDMod.h"
+#include "MitPhysics/Mods/interface/PhotonIdMod.h"
 #include "MitPhysics/Mods/interface/PhotonIDModRun1.h"
 #include "MitPhysics/Mods/interface/PhotonCiCMod.h"
 #include "MitPhysics/Mods/interface/PhotonMvaMod.h"
@@ -52,10 +52,10 @@
 
 #pragma link C++ class mithep::CaloMetCorrectionMod+;
 #pragma link C++ class mithep::EffMod+;
-#pragma link C++ class mithep::IDMod+;
+#pragma link C++ class mithep::IdMod+;
 #pragma link C++ class mithep::ElectronCleaningMod+;
 #pragma link C++ class mithep::CosmicCleaningMod+;
-#pragma link C++ class mithep::ElectronIDMod+;
+#pragma link C++ class mithep::ElectronIdMod+;
 #pragma link C++ class mithep::ElectronIDModRun1+;
 #pragma link C++ class mithep::ElectronCorrectionMod+;
 #pragma link C++ class mithep::GeneratorMod+;
@@ -67,12 +67,12 @@
 #pragma link C++ class mithep::JetCorrectionMod+;
 #pragma link C++ class mithep::MergeLeptonsMod+;
 #pragma link C++ class mithep::MetCorrectionMod+;
-#pragma link C++ class mithep::MuonIDMod+;
+#pragma link C++ class mithep::MuonIdMod+;
 #pragma link C++ class mithep::MuonIDModRun1+;
 #pragma link C++ class mithep::PartonFlavorHistoryMod+;
 #pragma link C++ class mithep::PDFProducerMod+;
 #pragma link C++ class mithep::PhotonCleaningMod+;
-#pragma link C++ class mithep::PhotonIDMod+;
+#pragma link C++ class mithep::PhotonIdMod+;
 #pragma link C++ class mithep::PhotonIDModRun1+;
 #pragma link C++ class mithep::PhotonCiCMod+;
 #pragma link C++ class mithep::PhotonPairSelector+;

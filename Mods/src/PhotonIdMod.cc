@@ -1,28 +1,28 @@
-#include "MitPhysics/Mods/interface/PhotonIDMod.h"
+#include "MitPhysics/Mods/interface/PhotonIdMod.h"
 
-ClassImp(mithep::PhotonIDMod)
+ClassImp(mithep::PhotonIdMod)
 
-mithep::PhotonIDMod::PhotonIDMod(char const* name/* = "PhotonIDMod"*/, char const* title/* = "Photon Identification"*/) :
-  IDMod(name, title)
+mithep::PhotonIdMod::PhotonIdMod(char const* name/* = "PhotonIdMod"*/, char const* title/* = "Photon Identification"*/) :
+  IdMod(name, title)
 {
   fOutput = new PhotonOArr(32, TString(name) + "Output");
 }
 
-mithep::PhotonIDMod::~PhotonIDMod()
+mithep::PhotonIdMod::~PhotonIdMod()
 {
 }
 
 void
-mithep::PhotonIDMod::Process()
+mithep::PhotonIdMod::Process()
 {
 }
 
 void
-mithep::PhotonIDMod::IdBegin()
+mithep::PhotonIdMod::IdBegin()
 {
 }
 
 void
-mithep::PhotonIDMod::IdTerminate()
+mithep::PhotonIdMod::IdTerminate()
 {
 }

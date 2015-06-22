@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------------------
-// MuonIDMod
+// MuonIdMod
 //
 // Authors:
 //--------------------------------------------------------------------------------------------------
@@ -7,22 +7,22 @@
 #ifndef MITPHYSICS_MODS_MUONIDMOD_H
 #define MITPHYSICS_MODS_MUONIDMOD_H
 
-#include "MitPhysics/Mods/interface/IDMod.h"
+#include "MitPhysics/Mods/interface/IdMod.h"
 #include "MitAna/DataTree/interface/MuonCol.h"
 
 namespace mithep {
 
-  class MuonIDMod : public IDMod {
+  class MuonIdMod : public IdMod {
   public:
-    MuonIDMod(char const* name = "MuonIDMod", char const* title = "Muon Identification");
-    ~MuonIDMod();
+    MuonIdMod(char const* name = "MuonIdMod", char const* title = "Muon Identification");
+    ~MuonIdMod();
 
   protected:
     void Process() override;
     void IdBegin() override;
     void IdTerminate() override;
 
-    ClassDef(MuonIDMod, 0)
+    ClassDef(MuonIdMod, 0)
   };
 
 }

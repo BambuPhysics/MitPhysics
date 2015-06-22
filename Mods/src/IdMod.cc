@@ -1,20 +1,20 @@
-#include "MitPhysics/Mods/interface/IDMod.h"
+#include "MitPhysics/Mods/interface/IdMod.h"
 
-ClassImp(mithep::IDMod)
+ClassImp(mithep::IdMod)
 
-mithep::IDMod::IDMod(char const* name, char const* title) :
+mithep::IdMod::IdMod(char const* name, char const* title) :
   BaseMod(name, title)
 {
   fFlags.SetName(TString(name) + "Flags");
 }
 
-mithep::IDMod::~IDMod()
+mithep::IdMod::~IdMod()
 {
   delete fOutput;
 }
 
 void
-mithep::IDMod::SlaveBegin()
+mithep::IdMod::SlaveBegin()
 {
   if (fIsFilterMode) {
     if (!PublishObj(fOutput))
@@ -31,7 +31,7 @@ mithep::IDMod::SlaveBegin()
 }
 
 void
-mithep::IDMod::SlaveTerminate()
+mithep::IdMod::SlaveTerminate()
 {
   RetractObj(GetOutputName());
 

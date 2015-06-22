@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------------------
-// ElectronIDMod
+// ElectronIdMod
 //
 // This module applies electron identification criteria and exports a pointer to a collection
 // of "good electrons" according to the specified identification scheme.
@@ -10,16 +10,16 @@
 #ifndef MITPHYSICS_MODS_ELECTRONIDMOD_H
 #define MITPHYSICS_MODS_ELECTRONIDMOD_H
 
-#include "MitPhysics/Mods/interface/IDMod.h"
+#include "MitPhysics/Mods/interface/IdMod.h"
 
 #include "MitAna/DataTree/interface/ElectronCol.h"
 #include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
 #include "MitPhysics/ElectronLikelihood/interface/ElectronLikelihood.h"
 
 namespace mithep {
-  class ElectronIDMod : public IDMod {
+  class ElectronIdMod : public IdMod {
   public:
-    ElectronIDMod(const char* name="ElectronIDMod",
+    ElectronIdMod(const char* name="ElectronIdMod",
                   const char* title="Electron identification module");
 
     const char* GetConversionBranchName() const     { return fAuxInputNames[kConversions]; }
@@ -43,7 +43,7 @@ namespace mithep {
     UInt_t   GetRhoAlgo() const                     { return fRhoAlgo; }
     Int_t    GetWhichVertex() const                 { return fWhichVertex; }
     Double_t GetEtMin() const                       { return fElectronEtMin; }
-    Double_t GetIDLikelihoodCut() const             { return fIDLikelihoodCut; }
+    Double_t GetIdLikelihoodCut() const             { return fIdLikelihoodCut; }
 
     ElectronLikelihood* GetLH() const { return fLH; }
 
@@ -68,7 +68,7 @@ namespace mithep {
     void SetRhoAlgo(UInt_t algo)                   { fRhoAlgo = algo; }
     void SetWhichVertex(Int_t d)                   { fWhichVertex = d; }
     void SetEtMin(Double_t et)                     { fElectronEtMin = et; }
-    void SetIDLikelihoodCut(Double_t cut)          { fIDLikelihoodCut = cut; }
+    void SetIdLikelihoodCut(Double_t cut)          { fIdLikelihoodCut = cut; }
 
     void SetLH(ElectronLikelihood* l)              { fLH = l; }
 
@@ -105,8 +105,8 @@ namespace mithep {
       nCuts
     };
 
-    Bool_t   PassLikelihoodID(Electron const&);
-    Bool_t   PassIDCut(Electron const&, TObject const**);
+    Bool_t   PassLikelihoodId(Electron const&);
+    Bool_t   PassIdCut(Electron const&, TObject const**);
     Bool_t   PassIsolationCut(Electron const&, TObject const**);
     template<class T> void GetAuxInput(AuxInput, TObject const**);
 
@@ -129,12 +129,12 @@ namespace mithep {
     UInt_t   fRhoAlgo = mithep::PileupEnergyDensity::kFixedGridFastjetAll;
     Int_t    fWhichVertex = -1;            //vertex to use (-2: beamspot, -1: closest in Z)
     Double_t fElectronEtMin = 0.;          //min pt cut
-    Double_t fIDLikelihoodCut = -999.;        //cut value for ID likelihood
+    Double_t fIdLikelihoodCut = -999.;        //cut value for Id likelihood
 
     // pointers not owned
     ElectronLikelihood*           fLH = 0;
 
-    ClassDef(ElectronIDMod, 0) // Electron identification module
+    ClassDef(ElectronIdMod, 0) // Electron identification module
   };
 }
 

@@ -1,28 +1,28 @@
-#include "MitPhysics/Mods/interface/MuonIDMod.h"
+#include "MitPhysics/Mods/interface/MuonIdMod.h"
 
-ClassImp(mithep::MuonIDMod)
+ClassImp(mithep::MuonIdMod)
 
-mithep::MuonIDMod::MuonIDMod(char const* name/* = "MuonIDMod"*/, char const* title/* = "Muon Identification"*/) :
-  IDMod(name, title)
+mithep::MuonIdMod::MuonIdMod(char const* name/* = "MuonIdMod"*/, char const* title/* = "Muon Identification"*/) :
+  IdMod(name, title)
 {
   fOutput = new MuonOArr(32, TString(name) + "Output");
 }
 
-mithep::MuonIDMod::~MuonIDMod()
+mithep::MuonIdMod::~MuonIdMod()
 {
 }
 
 void
-mithep::MuonIDMod::Process()
+mithep::MuonIdMod::Process()
 {
 }
 
 void
-mithep::MuonIDMod::IdBegin()
+mithep::MuonIdMod::IdBegin()
 {
 }
 
 void
-mithep::MuonIDMod::IdTerminate()
+mithep::MuonIdMod::IdTerminate()
 {
 }

@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------------------
-// IDMod
+// IdMod
 //
-// Base class for object ID modules
+// Base class for object Id modules
 //
 // Authors: Y.Iiyama
 //--------------------------------------------------------------------------------------------------
@@ -20,15 +20,15 @@
 
 namespace mithep {
 
-  class IDMod : public BaseMod {
+  class IdMod : public BaseMod {
   public:
-    IDMod(char const* name, char const* title);
-    ~IDMod();
+    IdMod(char const* name, char const* title);
+    ~IdMod();
 
     char const* GetInputName() const { return fInputName; }
     char const* GetOutputName() const;
     Bool_t GetIsFilterMode() const { return fIsFilterMode; }
-    UInt_t GetIDType() const { return fIDType; }
+    UInt_t GetIdType() const { return fIdType; }
     UInt_t GetIsoType() const { return fIsoType; }
     Double_t GetPtMin() const { return fPtMin; }
     Double_t GetEtaMax() const { return fEtaMax; }
@@ -36,7 +36,7 @@ namespace mithep {
     void SetInputName(char const* n) { fInputName = n; }
     void SetOutputName(char const* n);
     void SetIsFilterMode(Bool_t b) { fIsFilterMode = b; }
-    void SetIDType(UInt_t t) { fIDType = t; }
+    void SetIdType(UInt_t t) { fIdType = t; }
     void SetIsoType(UInt_t t) { fIsoType = t; }
     void SetPtMin(Double_t m) { fPtMin = m; }
     void SetEtaMax(Double_t m) { fEtaMax = m; }
@@ -48,7 +48,7 @@ namespace mithep {
     virtual void IdTerminate() {}
     
     // fOutput:
-    //  Collection of ID'ed objects (filter mode) or all objects (flag mode).
+    //  Collection of Id'ed objects (filter mode) or all objects (flag mode).
     //  A derived class must new the pointer to the desired output in the constructor
     BaseCollection* fOutput = 0;
     // fFlags: Good / bad flags published in flag mode
@@ -56,20 +56,20 @@ namespace mithep {
 
     TH1D* fCutFlow = 0;
 
-    TString fInputName = ""; // input collection of objects to be ID'ed
+    TString fInputName = ""; // input collection of objects to be Id'ed
 
     Bool_t fIsFilterMode = kTRUE;
-    UInt_t fIDType = 0xffffffff;
+    UInt_t fIdType = 0xffffffff;
     UInt_t fIsoType = 0xffffffff;
     Double_t fPtMin = 0.;
     Double_t fEtaMax = std::numeric_limits<double>::max();
 
-    ClassDef(IDMod, 0)
+    ClassDef(IdMod, 0)
   };
 
   inline
   char const*
-  mithep::IDMod::GetOutputName() const
+  mithep::IdMod::GetOutputName() const
   {
     if (fIsFilterMode)
       return fOutput->GetName();
@@ -79,7 +79,7 @@ namespace mithep {
 
   inline
   void
-  mithep::IDMod::SetOutputName(char const* n)
+  mithep::IdMod::SetOutputName(char const* n)
   {
     if (fIsFilterMode)
       return fOutput->SetName(n);
