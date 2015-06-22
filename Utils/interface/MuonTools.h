@@ -32,6 +32,53 @@ namespace mithep {
                 const char *pitemp="$MIT_DATA/PionCaloTemplate.root");
       virtual ~MuonTools();
 
+      enum EMuIdType {
+        kIdUndef = 0,       //not defined
+        kWMuId,             //"WMuId"
+        kZMuId,             //"ZMuId"
+        kTight,             //"Tight"
+        kmuonPOG2012CutBasedIDTight,             //"muonPOG2012CutBasedIDTight"
+        kLoose,             //"Loose"
+        kWWMuIdV1,          //"WWMuIdV1"
+        kWWMuIdV2,          //"WWMuIdV2"
+        kWWMuIdV3,          //"WWMuIdV3"
+        kWWMuIdV4,          //"WWMuIdV4"
+        kNoId,              //"NoId"        
+        kCustomId,          //"Custom"
+        kMVAID_BDTG_IDIso   //"BDTG ID + Iso03, Iso04 Combined"
+      };
+      enum EMuIsoType {
+        kIsoUndef = 0,                      //"not defined"
+        kTrackCalo,                         //"TrackCalo"
+        kTrackCaloCombined,                 //"TrackCaloCombined"
+        kTrackCaloSliding,                  //"TrackCaloSliding"
+        kTrackCaloSlidingNoCorrection,      //"TrackCaloSlidingNoCorrection"
+        kCombinedRelativeConeAreaCorrected, //"CombinedRelativeConeAreaCorrected"        
+        kCombinedRelativeEffectiveAreaCorrected,
+        kCustomIso,                         //"Custom"
+        kPFIso,                             //"PFIso"
+        kPFRadialIso,                       //"PFRadialIso"
+        kPFIsoBetaPUCorrected,              //"PFISo with PUcorrection using delta Beta
+        kPFIsoEffectiveAreaCorrected,       //"PFIso with EffectiveArea Pileup Correction"
+        kPFIsoNoL,                          //"PFIsoNoL"
+        kNoIso,                             //"NoIso"
+        kMVAIso_BDTG_IDIso,                 //"BDTG ID + Iso03, Iso04 Combined"
+        kIsoRingsV0_BDTG_Iso,               //"BDTG Iso Rings"
+        kIsoDeltaR                          //"BGDT Iso dR"              
+      };
+      enum EMuClassType {
+        kClassUndef = 0,    //not defined
+        kAll,               //"All"
+        kGlobal,            //"Global"
+        kGlobalorTracker,   //"Global or Tracker Muon"
+        kGlobalTracker,     //"GlobalTracker"
+        kSta,               //"Standalone"
+        kTrackerMuon,       //"TrackerMuon"
+        kCaloMuon,          //"CaloMuon"
+        kTrackerBased,      //"TrackerMuon or CaloMuon"
+        kGlobalOnly         //"GlobalOnly"
+      };
+
       enum ESelType { 
         kAllArbitrated,          //All arbitration (DT/CSC/RPC Hits) put on at least one 
                                  //  segments given a global Muon

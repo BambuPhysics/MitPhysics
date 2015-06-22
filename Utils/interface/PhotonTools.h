@@ -33,6 +33,34 @@ namespace mithep {
     public:
       PhotonTools();
       virtual ~PhotonTools() {}
+
+      enum EPhIdType {
+        kIdUndef = 0,       //not defined
+        kTight,             //"Tight"
+        kLoose,             //"Loose"
+        kLooseEM,           //"LooseEM"
+        kBaseLineCiC,          //"2011" Hgg BaseLine CiC
+        kBaseLineCiCPF,        //"2012" Hgg BaseLine CiC
+        kBaseLineCiCPFNoPresel,//"2012" Hgg BaseLine CiC plus eleveto -- for mono photon
+        kMITMVAId,             // MingMing MVA ID
+        kMITPhSelection,       //MIT loose preselection (for mva)
+        kMITPFPhSelection,     //MIT loose preselection (for mva)
+        kMITPFPhSelectionNoEcal,
+        kMITPFPhSelection_NoTrigger,    //MIT loose preselection (for mva, no Trigger)
+        kVgamma2011Selection,  // Vgamma 2011 Photon ID
+        kTrivialSelection,     // only pt & eta cuts
+        kEgammaMedium,
+        kCustomId             //"Custom"
+      };
+
+      enum EPhIsoType {
+        kIsoUndef = 0,      //not defined        
+        kNoIso,             //"NoIso"
+        kCombinedIso,       //"CombinedIso"
+        kCustomIso,         //"Custom"
+        kMITPUCorrected,     //PileUp Corrected Hgg Isolation
+        kPFPUCorrected
+      };
   
      enum DiphotonR9EtaCats {
         kCat1 = 0,       //barrel-barrel highr9/highr9

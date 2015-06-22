@@ -81,53 +81,6 @@ namespace mithep
     void               SetVertexName(const char* name) { fVertexName = name; }
     void               SetPVName(const char *n)             { fPVName = n;                }
 
-    enum EMuIdType {
-      kIdUndef = 0,       //not defined
-      kWMuId,             //"WMuId"
-      kZMuId,             //"ZMuId"
-      kTight,             //"Tight"
-      kmuonPOG2012CutBasedIDTight,             //"muonPOG2012CutBasedIDTight"
-      kLoose,             //"Loose"
-      kWWMuIdV1,          //"WWMuIdV1"
-      kWWMuIdV2,          //"WWMuIdV2"
-      kWWMuIdV3,          //"WWMuIdV3"
-      kWWMuIdV4,          //"WWMuIdV4"
-      kNoId,              //"NoId"        
-      kCustomId,          //"Custom"
-      kMVAID_BDTG_IDIso   //"BDTG ID + Iso03, Iso04 Combined"
-    };
-    enum EMuIsoType {
-      kIsoUndef = 0,                      //"not defined"
-      kTrackCalo,                         //"TrackCalo"
-      kTrackCaloCombined,                 //"TrackCaloCombined"
-      kTrackCaloSliding,                  //"TrackCaloSliding"
-      kTrackCaloSlidingNoCorrection,      //"TrackCaloSlidingNoCorrection"
-      kCombinedRelativeConeAreaCorrected, //"CombinedRelativeConeAreaCorrected"        
-      kCombinedRelativeEffectiveAreaCorrected,
-      kCustomIso,                         //"Custom"
-      kPFIso,                             //"PFIso"
-      kPFRadialIso,                       //"PFRadialIso"
-      kPFIsoBetaPUCorrected,              //"PFISo with PUcorrection using delta Beta
-      kPFIsoEffectiveAreaCorrected,       //"PFIso with EffectiveArea Pileup Correction"
-      kPFIsoNoL,                          //"PFIsoNoL"
-      kNoIso,                             //"NoIso"
-      kMVAIso_BDTG_IDIso,                 //"BDTG ID + Iso03, Iso04 Combined"
-      kIsoRingsV0_BDTG_Iso,               //"BDTG Iso Rings"
-      kIsoDeltaR                          //"BGDT Iso dR"              
-    };
-    enum EMuClassType {
-      kClassUndef = 0,    //not defined
-      kAll,               //"All"
-      kGlobal,            //"Global"
-      kGlobalorTracker,   //"Global or Tracker Muon"
-      kGlobalTracker,     //"GlobalTracker"
-      kSta,               //"Standalone"
-      kTrackerMuon,       //"TrackerMuon"
-      kCaloMuon,          //"CaloMuon"
-      kTrackerBased,      //"TrackerMuon or CaloMuon"
-      kGlobalOnly         //"GlobalOnly"
-    };
-
   protected:
     void               Process();
     void               SlaveBegin();
@@ -159,9 +112,9 @@ namespace mithep
     Double_t           fDZCut;               //max dz
     Int_t              fWhichVertex;         //vertex to use (-2: beamspot, -1: closest in Z)
     Double_t           fEtaCut;              //max eta, absolute value
-    EMuIdType          fMuIDType;            //!muon id type (imposed)
-    EMuIsoType         fMuIsoType;           //!muon iso type (imposed)
-    EMuClassType       fMuClassType;         //!muon class type (imposed)
+    MuonTools::EMuIdType          fMuIDType;            //!muon id type (imposed)
+    MuonTools::EMuIsoType         fMuIsoType;           //!muon iso type (imposed)
+    MuonTools::EMuClassType       fMuClassType;         //!muon class type (imposed)
     const MuonCol      *fMuons;               //!muon collection
     const VertexCol   *fVertices;            //!vertices branch
     const BeamSpotCol *fBeamSpot;            //!beamspot branch
