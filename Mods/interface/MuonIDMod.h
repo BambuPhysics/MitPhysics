@@ -1,31 +1,30 @@
 //--------------------------------------------------------------------------------------------------
-// PhotonIDMod
+// MuonIDMod
 //
 // Authors: Y.Iiyama
 //--------------------------------------------------------------------------------------------------
 
-
-#ifndef MITPHYSICS_MODS_PHOTONIDMOD_H
-#define MITPHYSICS_MODS_PHOTONIDMOD_H
+#ifndef MITPHYSICS_MODS_MUONIDMOD_H
+#define MITPHYSICS_MODS_MUONIDMOD_H
 
 #include "MitPhysics/Mods/interface/IDMod.h"
-#include "MitAna/DataTree/interface/PhotonCol.h"
+#include "MitAna/DataTree/interface/MuonCol.h"
 
 namespace mithep {
 
-  class PhotonIDMod : public IDMod {
+  class MuonIDMod : public IDMod {
   public:
-    PhotonIDMod(char const* name = "PhotonIDMod", char const* title = "Photon Identification");
-    ~PhotonIDMod();
+    MuonIDMod(char const* name = "MuonIDMod", char const* title = "Muon Identification");
+    ~MuonIDMod();
 
-    void SetOutputName(char const* n) override { static_cast<PhotonOArr*>(fOutput)->SetName(n); }
+    void SetOutputName(char const* n) override { static_cast<MuonOArr*>(fOutput)->SetName(n); }
 
   protected:
     void Process() override;
     void SlaveBegin() override;
     void SlaveTerminate() override;
 
-    ClassDef(PhotonIDMod, 0)
+    ClassDef(MuonIDMod, 0)
   };
 
 }

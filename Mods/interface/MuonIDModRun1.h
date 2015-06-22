@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------------------
-// MuonIDMod
+// MuonIDModRun1
 //
 // This module applies muon identification criteria and exports a pointer to a collection
 // of "good muons" according to the specified ID scheme.
@@ -10,8 +10,8 @@
 // Authors: S.Xie
 //--------------------------------------------------------------------------------------------------
 
-#ifndef MITPHYSICS_MODS_MUONIDMOD_H
-#define MITPHYSICS_MODS_MUONIDMOD_H
+#ifndef MITPHYSICS_MODS_MUONIDMODRUN1_H
+#define MITPHYSICS_MODS_MUONIDMODRUN1_H
 
 #include "MitAna/TreeMod/interface/BaseMod.h" 
 #include "MitAna/DataTree/interface/MuonFwd.h"
@@ -27,10 +27,10 @@
 
 namespace mithep 
 {
-  class MuonIDMod : public BaseMod
+  class MuonIDModRun1 : public BaseMod
   {
   public:
-    MuonIDMod(const char *name="MuonIDMod", 
+    MuonIDModRun1(const char *name="MuonIDModRun1", 
               const char *title="Muon identification module");
 
     Double_t           GetCaloIsoCut()                const { return fCaloIsolationCut;   }
@@ -180,7 +180,7 @@ namespace mithep
 
     UInt_t              fRhoAlgo;
       
-    ClassDef(MuonIDMod, 1) // Muon identification module
+    ClassDef(MuonIDModRun1, 1) // Muon identification module
   };
 }
 #endif

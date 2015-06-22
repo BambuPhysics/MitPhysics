@@ -10,6 +10,7 @@
 #include "MitPhysics/Mods/interface/ElectronCleaningMod.h"
 #include "MitPhysics/Mods/interface/CosmicCleaningMod.h"
 #include "MitPhysics/Mods/interface/ElectronIDMod.h"
+#include "MitPhysics/Mods/interface/ElectronIDModRun1.h"
 #include "MitPhysics/Mods/interface/ElectronCorrectionMod.h"
 #include "MitPhysics/Mods/interface/GeneratorMod.h"
 #include "MitPhysics/Mods/interface/GoodPVFilterMod.h"
@@ -21,6 +22,7 @@
 #include "MitPhysics/Mods/interface/MergeLeptonsMod.h"
 #include "MitPhysics/Mods/interface/MetCorrectionMod.h"
 #include "MitPhysics/Mods/interface/MuonIDMod.h"
+#include "MitPhysics/Mods/interface/MuonIDModRun1.h"
 #include "MitPhysics/Mods/interface/PDFProducerMod.h"
 #include "MitPhysics/Mods/interface/PartonFlavorHistoryMod.h"
 #include "MitPhysics/Mods/interface/PhotonCleaningMod.h"
@@ -54,6 +56,7 @@
 #pragma link C++ class mithep::ElectronCleaningMod+;
 #pragma link C++ class mithep::CosmicCleaningMod+;
 #pragma link C++ class mithep::ElectronIDMod+;
+#pragma link C++ class mithep::ElectronIDModRun1+;
 #pragma link C++ class mithep::ElectronCorrectionMod+;
 #pragma link C++ class mithep::GeneratorMod+;
 #pragma link C++ class mithep::GoodPVFilterMod+;
@@ -65,9 +68,7 @@
 #pragma link C++ class mithep::MergeLeptonsMod+;
 #pragma link C++ class mithep::MetCorrectionMod+;
 #pragma link C++ class mithep::MuonIDMod+;
-#pragma link C++ enum mithep::MuonIDMod::EMuClassType;
-#pragma link C++ enum mithep::MuonIDMod::EMuIdType;
-#pragma link C++ enum mithep::MuonIDMod::EMuIsoType;
+#pragma link C++ class mithep::MuonIDModRun1+;
 #pragma link C++ class mithep::PartonFlavorHistoryMod+;
 #pragma link C++ class mithep::PDFProducerMod+;
 #pragma link C++ class mithep::PhotonCleaningMod+;

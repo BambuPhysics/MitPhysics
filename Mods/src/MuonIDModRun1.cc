@@ -1,4 +1,4 @@
-#include "MitPhysics/Mods/interface/MuonIDMod.h"
+#include "MitPhysics/Mods/interface/MuonIDModRun1.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitAna/DataTree/interface/MuonFwd.h"
 #include "MitAna/DataTree/interface/ElectronFwd.h"
@@ -7,10 +7,10 @@
 
 using namespace mithep;
 
-ClassImp(mithep::MuonIDMod)
+ClassImp(mithep::MuonIDModRun1)
 
 //--------------------------------------------------------------------------------------------------
-MuonIDMod::MuonIDMod(const char *name, const char *title)
+MuonIDModRun1::MuonIDModRun1(const char *name, const char *title)
 : BaseMod(name,title),
   fPrintMVADebugInfo(kFALSE),
   fMuonBranchName(Names::gkMuonBrn),
@@ -62,7 +62,7 @@ MuonIDMod::MuonIDMod(const char *name, const char *title)
 }
 
 void
-mithep::MuonIDMod::SetRhoType(RhoUtilities::RhoType type)
+mithep::MuonIDModRun1::SetRhoType(RhoUtilities::RhoType type)
 {
   /*DEPRECATED FUNCTION*/
   // use SetRhoAlgo instead
@@ -91,7 +91,7 @@ mithep::MuonIDMod::SetRhoType(RhoUtilities::RhoType type)
 }
 
 //--------------------------------------------------------------------------------------------------
-void MuonIDMod::Process()
+void MuonIDModRun1::Process()
 {
   // Process entries of the tree.
 
@@ -592,7 +592,7 @@ AddObjThisEvt(CleanMuons);
 }
 
 //--------------------------------------------------------------------------------------------------
-void MuonIDMod::SlaveBegin()
+void MuonIDModRun1::SlaveBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis. Here, we just request the
   // muon collection branch.
@@ -766,7 +766,7 @@ void MuonIDMod::SlaveBegin()
 
 
 //--------------------------------------------------------------------------------------------------
-Bool_t MuonIDMod::PassMuonMVA_BDTG_IdIso(const Muon *mu, const Vertex *vertex,
+Bool_t MuonIDModRun1::PassMuonMVA_BDTG_IdIso(const Muon *mu, const Vertex *vertex,
                                          const PileupEnergyDensityCol *PileupEnergyDensity) const
 {
 
@@ -824,7 +824,7 @@ Bool_t MuonIDMod::PassMuonMVA_BDTG_IdIso(const Muon *mu, const Vertex *vertex,
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t MuonIDMod::PassMuonIsoRingsV0_BDTG_Iso(const Muon *mu, const Vertex *vertex,
+Bool_t MuonIDModRun1::PassMuonIsoRingsV0_BDTG_Iso(const Muon *mu, const Vertex *vertex,
                                               const PileupEnergyDensityCol *PileupEnergyDensity)
   const
 {
@@ -875,7 +875,7 @@ Bool_t MuonIDMod::PassMuonIsoRingsV0_BDTG_Iso(const Muon *mu, const Vertex *vert
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t MuonIDMod::PassMuonIsoDeltaR(const Muon *mu, const Vertex *vertex,
+Bool_t MuonIDModRun1::PassMuonIsoDeltaR(const Muon *mu, const Vertex *vertex,
                                     const PileupEnergyDensityCol *PileupEnergyDensity) const
 {
   const Track *muTrk=0;
@@ -911,9 +911,9 @@ Bool_t MuonIDMod::PassMuonIsoDeltaR(const Muon *mu, const Vertex *vertex,
 }
 
 //--------------------------------------------------------------------------------------------------
-void MuonIDMod::SlaveTerminate()
+void MuonIDModRun1::SlaveTerminate()
 {
-  printf(" MuonIDMod::SlaveTerminate -- enter\n");
+  printf(" MuonIDModRun1::SlaveTerminate -- enter\n");
 
   // Run finishing code on the computer (slave) that did the analysis
   if (fMuonIDMVA)
@@ -921,5 +921,5 @@ void MuonIDMod::SlaveTerminate()
   if (fMuonTools)
     delete fMuonTools;
 
-  printf(" MuonIDMod::SlaveTerminate -- exit\n");
+  printf(" MuonIDModRun1::SlaveTerminate -- exit\n");
 }

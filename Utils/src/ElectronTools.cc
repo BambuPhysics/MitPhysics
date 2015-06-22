@@ -334,28 +334,28 @@ mithep::ElectronTools::PassID(Electron const* ele, EElIdType type)
     bool isEB = ele->SCluster()->AbsEta() < gkEleEBEtaMax;
 
     switch (type) {
-    kPhys14Veto:
+    case kPhys14Veto:
       deltaEtaCut      = isEB ? 0.013625 : 0.011932;
       deltaPhiCut      = isEB ? 0.230374 : 0.255450;
       sigmaIetaIetaCut = isEB ? 0.011586 : 0.031849;
       hOverECut        = isEB ? 0.181130 : 0.223870;
       ooEmooPCut       = isEB ? 0.295751 : 0.155501;
       break;
-    kPhys14Loose:
+    case kPhys14Loose:
       deltaEtaCut      = isEB ? 0.009277 : 0.009833;
       deltaPhiCut      = isEB ? 0.094739 : 0.149934;
       sigmaIetaIetaCut = isEB ? 0.010331 : 0.031838;
       hOverECut        = isEB ? 0.093068 : 0.115754;
       ooEmooPCut       = isEB ? 0.189968 : 0.140662;
       break;
-    kPhys14Medium:
+    case kPhys14Medium:
       deltaEtaCut      = isEB ? 0.008925 : 0.007429;
       deltaPhiCut      = isEB ? 0.035973 : 0.067879;
       sigmaIetaIetaCut = isEB ? 0.009996 : 0.030135;
       hOverECut        = isEB ? 0.050537 : 0.086782;
       ooEmooPCut       = isEB ? 0.091942 : 0.100683;
       break;
-    kPhys14Tight:
+    case kPhys14Tight:
       deltaEtaCut      = isEB ? 0.006046 : 0.007057;
       deltaPhiCut      = isEB ? 0.028092 : 0.030159;
       sigmaIetaIetaCut = isEB ? 0.009947 : 0.028237;
