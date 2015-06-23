@@ -17,6 +17,147 @@ PhotonTools::PhotonTools()
   // Constructor.
 }
 
+
+Bool_t
+mithep::PhotonTools::PassID(Photon const* pho, EPhIdType type)
+{
+  if(type == kRun2Tight || type == kRun2Medium || type == kRun2Loose){
+    double hOverECut, sigmaIEtaIEtaCut;
+    bool isEB = pho->SCluster()->AbsEta() < 1.4442;
+
+    switch(type){
+    case kRun2Loose:
+      hOverECut          = isEB ? 0.028  : 0.093;
+      sigmaIEtaIEtaCut   = isEB ? 0.0107 : 0.0272;
+      //printf("Loose Id for pho with eta = %3f , H/E = %5f, sigmaIEtaIEta = %5f\n",pho->SCluster()->AbsEta(),hOverECut, sigmaIEtaIEtaCut);
+      break;
+    case kRun2Medium:
+      hOverECut          = isEB ? 0.012  : 0.023;
+      sigmaIEtaIEtaCut   = isEB ? 0.0100 : 0.0267;
+      //printf("Medium Id for pho with eta = %3f , H/E = %5f, sigmaIEtaIEta = %5f\n",pho->SCluster()->AbsEta(),hOverECut, sigmaIEtaIEtaCut);
+      break;
+    case kRun2Tight:
+      hOverECut          = isEB ? 0.010  : 0.015;
+      sigmaIEtaIEtaCut   = isEB ? 0.0100 : 0.0265;
+      //printf("Tight Id for pho with eta = %3f , H/E = %5f, sigmaIEtaIEta = %5f\n",pho->SCluster()->AbsEta(),hOverECut, sigmaIEtaIEtaCut);
+      break;
+    default:
+      break;
+    }
+
+    if(pho->HadOverEm() > hOverECut)
+      return false;
+
+    //This is for backwards compatibility
+    double ietaieta = -1;
+    if(pho->CoviEtaiEta5x5() < 0) 
+      ietaieta = pho->CoviEtaiEta();
+    else 
+      ietaieta = pho->CoviEtaiEta5x5();
+
+    //check the cut
+    if(ietaieta > sigmaIEtaIEtaCut)
+      return false;
+
+    //printf("Pho with eta = %3f , H/E = %5f, sigmaIEtaIEta = %5f\n",pho->SCluster()->AbsEta(),pho->HadOverEm(),pho->CoviEtaiEta5x5());
+    //printf("Cut you have applied are: , H/E = %5f, sigmaIEtaIEta = %5f\n",hOverECut, sigmaIEtaIEtaCut);
+
+    return true;
+
+  }
+  return false;
+}
+
+
+Bool_t
+mithep::PhotonTools::PassIsoRhoCorr(Photon const*pho, EPhIsoType isoType, Double_t rho)
+{
+
+  float chEA,nhEA,phEA,chIsoCor,nhIsoCor,phIsoCor,tmpEta;
+  float chIsoCut =0, nhIsoCut =0 ,phIsoCut =0;
+  bool isEB = pho->SCluster()->AbsEta() < 1.4442;
+  double pEt = pho->Et();
+  tmpEta = pho->SCluster()->AbsEta() ;
+
+  // ch      nh       ph
+  float EAPho[7][3] = {
+    {0.0234,  0.0053,   0.078 }, //         eta < 1.0  
+    {0.0189,  0.0103,   0.0629}, // 1.0   < eta < 1.479   
+    {0.0171,  0.0057,   0.0264}, // 1.479 < eta < 2.0  
+    {0.0129,  0.0070,   0.0462}, // 2.0   < eta < 2.2 
+    {0.0110,  0.0152,   0.0740}, // 2.2   < eta < 2.3  
+    {0.0074,  0.0232,   0.0924}, // 2.3   < eta < 2.4 
+    {0.0034,  0.1709,   0.1484}  // 2.4   < eta       
+  };
+
+
+  if (fabs(tmpEta) < 1.0){
+    chEA = EAPho[0][0];
+    nhEA = EAPho[0][1];
+    phEA = EAPho[0][2];
+  }else if (fabs(tmpEta) < 1.479){
+    chEA = EAPho[1][0];
+    nhEA = EAPho[1][1];
+    phEA = EAPho[1][2];
+  }else if (fabs(tmpEta) < 2.0){
+    chEA = EAPho[2][0];
+    nhEA = EAPho[2][1];
+    phEA = EAPho[2][2];
+  }else if (fabs(tmpEta) < 2.2){
+    chEA = EAPho[3][0];
+    nhEA = EAPho[3][1];
+    phEA = EAPho[3][2];
+  }else if (fabs(tmpEta) < 2.3){
+    chEA = EAPho[4][0];
+    nhEA = EAPho[4][1];
+    phEA = EAPho[4][2];
+  }else if (fabs(tmpEta) < 2.4){
+    chEA = EAPho[5][0];
+    nhEA = EAPho[5][1];
+    phEA = EAPho[5][2];
+  }else{
+    chEA = EAPho[6][0];
+    nhEA = EAPho[6][1];
+    phEA = EAPho[6][2];
+  }
+
+  chIsoCor = TMath::Max(pho->PFChargedHadronIso()-rho*chEA , 0.0);
+  nhIsoCor = TMath::Max(pho->PFNeutralHadronIso()-rho*nhEA , 0.0);
+  phIsoCor = TMath::Max(pho->PFPhotonIso()-rho*phEA , 0.0);
+
+  switch (isoType){
+  case kRun2LooseIso:
+    chIsoCut = isEB ? 2.67 : 1.79;
+    nhIsoCut = isEB ? (7.23 + TMath::Exp(0.0028 * pEt + 0.5408)) : (8.89 + 0.01725*pEt);
+    phIsoCut = isEB ? (2.11+0.0014*pEt) : (3.09+0.0091*pEt);
+    break;
+  case kRun2MediumIso:
+    chIsoCut = isEB ? 1.79 : 1.09;
+    nhIsoCut = isEB ? (0.16 + TMath::Exp(0.0028 * pEt + 0.5408)) : (4.31 + 0.0172*pEt);
+    phIsoCut = isEB ? (1.90+0.0014*pEt) : (1.90+0.0091*pEt);
+    break;
+  case kRun2TightIso:
+    chIsoCut = isEB ? 1.66 : 1.04;
+    nhIsoCut = isEB ? (0.14 + TMath::Exp(0.0028 * pEt + 0.5408)) : (3.89 + 0.0172*pEt);
+    phIsoCut = isEB ? (1.40+0.0014*pEt) : (1.40+0.0091*pEt);
+    break;
+  default:
+    break;
+  }
+  
+  if (chIsoCor > chIsoCut )
+    return false;
+  if (nhIsoCor > nhIsoCut )
+    return false;
+  if (phIsoCor > phIsoCut )
+    return false;
+
+  return true;
+
+}
+
+
+
 //--------------------------------------------------------------------------------------------------
 PhotonTools::eScaleCats PhotonTools::EScaleCat(const Photon *p)
 {
