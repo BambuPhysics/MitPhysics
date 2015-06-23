@@ -29,22 +29,41 @@ mithep::PhotonTools::PassID(Photon const* pho, EPhIdType type)
     case kRun2Loose:
       hOverECut          = isEB ? 0.028  : 0.093;
       sigmaIEtaIEtaCut   = isEB ? 0.0107 : 0.0272;
+      //printf("Loose Id for pho with eta = %3f , H/E = %5f, sigmaIEtaIEta = %5f\n",pho->SCluster()->AbsEta(),hOverECut, sigmaIEtaIEtaCut);
+      break;
     case kRun2Medium:
       hOverECut          = isEB ? 0.012  : 0.023;
       sigmaIEtaIEtaCut   = isEB ? 0.0100 : 0.0267;
+      //printf("Medium Id for pho with eta = %3f , H/E = %5f, sigmaIEtaIEta = %5f\n",pho->SCluster()->AbsEta(),hOverECut, sigmaIEtaIEtaCut);
+      break;
     case kRun2Tight:
       hOverECut          = isEB ? 0.010  : 0.015;
       sigmaIEtaIEtaCut   = isEB ? 0.0100 : 0.0265;
+      //printf("Tight Id for pho with eta = %3f , H/E = %5f, sigmaIEtaIEta = %5f\n",pho->SCluster()->AbsEta(),hOverECut, sigmaIEtaIEtaCut);
+      break;
     default:
       break;
     }
 
     if(pho->HadOverEm() > hOverECut)
       return false;
-    if(pho->CoviEtaiEta5x5() > sigmaIEtaIEtaCut)
+
+    //This is for backwards compatibility
+    double ietaieta = -1;
+    if(pho->CoviEtaiEta5x5() < 0) 
+      ietaieta = pho->CoviEtaiEta();
+    else 
+      ietaieta = pho->CoviEtaiEta5x5();
+
+    //check the cut
+    if(ietaieta > sigmaIEtaIEtaCut)
       return false;
 
+    //printf("Pho with eta = %3f , H/E = %5f, sigmaIEtaIEta = %5f\n",pho->SCluster()->AbsEta(),pho->HadOverEm(),pho->CoviEtaiEta5x5());
+    //printf("Cut you have applied are: , H/E = %5f, sigmaIEtaIEta = %5f\n",hOverECut, sigmaIEtaIEtaCut);
+
     return true;
+
   }
   return false;
 }
@@ -111,14 +130,17 @@ mithep::PhotonTools::PassIsoRhoCorr(Photon const*pho, EPhIsoType isoType, Double
     chIsoCut = isEB ? 2.67 : 1.79;
     nhIsoCut = isEB ? (7.23 + TMath::Exp(0.0028 * pEt + 0.5408)) : (8.89 + 0.01725*pEt);
     phIsoCut = isEB ? (2.11+0.0014*pEt) : (3.09+0.0091*pEt);
+    break;
   case kRun2MediumIso:
     chIsoCut = isEB ? 1.79 : 1.09;
     nhIsoCut = isEB ? (0.16 + TMath::Exp(0.0028 * pEt + 0.5408)) : (4.31 + 0.0172*pEt);
     phIsoCut = isEB ? (1.90+0.0014*pEt) : (1.90+0.0091*pEt);
+    break;
   case kRun2TightIso:
     chIsoCut = isEB ? 1.66 : 1.04;
     nhIsoCut = isEB ? (0.14 + TMath::Exp(0.0028 * pEt + 0.5408)) : (3.89 + 0.0172*pEt);
     phIsoCut = isEB ? (1.40+0.0014*pEt) : (1.40+0.0091*pEt);
+    break;
   default:
     break;
   }
