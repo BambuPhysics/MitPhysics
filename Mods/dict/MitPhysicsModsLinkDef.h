@@ -16,7 +16,8 @@
 #include "MitPhysics/Mods/interface/GoodPVFilterMod.h"
 #include "MitPhysics/Mods/interface/HKFactorProducer.h"
 #include "MitPhysics/Mods/interface/JetCleaningMod.h"
-#include "MitPhysics/Mods/interface/JetIDMod.h"
+#include "MitPhysics/Mods/interface/JetIDModRun1.h"
+#include "MitPhysics/Mods/interface/JetIdMod.h"
 #include "MitPhysics/Mods/interface/MVAMetMod.h"
 #include "MitPhysics/Mods/interface/JetCorrectionMod.h"
 #include "MitPhysics/Mods/interface/MergeLeptonsMod.h"
@@ -62,7 +63,8 @@
 #pragma link C++ class mithep::GoodPVFilterMod+;
 #pragma link C++ class mithep::HKFactorProducer+;
 #pragma link C++ class mithep::JetCleaningMod+;
-#pragma link C++ class mithep::JetIDMod+;
+#pragma link C++ class mithep::JetIdMod+;
+#pragma link C++ class mithep::JetIDModRun1+;
 #pragma link C++ class mithep::MVAMetMod+;
 #pragma link C++ class mithep::JetCorrectionMod+;
 #pragma link C++ class mithep::MergeLeptonsMod+;
@@ -90,3 +92,5 @@
 #pragma link C++ class mithep::SeparatePileUpMod+;
 #pragma link C++ class mithep::VTagMod+;
 #endif
+
+// dumb
