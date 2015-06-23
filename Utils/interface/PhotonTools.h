@@ -50,7 +50,10 @@ namespace mithep {
         kVgamma2011Selection,  // Vgamma 2011 Photon ID
         kTrivialSelection,     // only pt & eta cuts
         kEgammaMedium,
-        kCustomId             //"Custom"
+        kCustomId,             //"Custom"
+	kRun2Tight,            //Run 2 cut based tight id
+	kRun2Medium,           //Run 2 cut based medium id 
+	kRun2Loose             //Run 2 cut based loose id      
       };
 
       enum EPhIsoType {
@@ -59,7 +62,10 @@ namespace mithep {
         kCombinedIso,       //"CombinedIso"
         kCustomIso,         //"Custom"
         kMITPUCorrected,     //PileUp Corrected Hgg Isolation
-        kPFPUCorrected
+        kPFPUCorrected,
+	kRun2LooseIso,      //Run 2 cut based loose iso
+	kRun2MediumIso,     //Run 2 cut based medium iso
+	kRun2TightIso       //Run 2 cut based tight iso
       };
   
      enum DiphotonR9EtaCats {
@@ -201,6 +207,9 @@ namespace mithep {
                                                      );// add for mono photon 
 
     static bool PassVgamma2011Selection(const Photon* ph, double rho);
+
+    static Bool_t PassID(const Photon *ph, EPhIdType idType);
+    static Bool_t PassIsoRhoCorr(Photon const*, EPhIsoType, Double_t rho);
 
     static const MCParticle *MatchMC(const Particle *ph, const MCParticleCol *c, Bool_t matchElectrons = kFALSE);
     ClassDef(PhotonTools, 1) // Muon tools
