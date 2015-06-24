@@ -12,13 +12,11 @@
 #include <algorithm>
 #include <limits>
 
-using namespace mithep;
-
 ClassImp(mithep::JetIdMod)
 
 template<class T>
 void
-JetIdMod::GetAuxInput(JetIdMod::AuxInput inputCol, TObject const** aux)
+mithep::JetIdMod::GetAuxInput(JetIdMod::AuxInput inputCol, TObject const** aux)
 {
   aux[inputCol] = GetObject<T>(fAuxInputNames[inputCol], true);
   if (!aux[inputCol])
@@ -26,7 +24,7 @@ JetIdMod::GetAuxInput(JetIdMod::AuxInput inputCol, TObject const** aux)
 }
 
 //--------------------------------------------------------------------------------------------------
-JetIdMod::JetIdMod(const char *name, const char *title) :
+mithep::JetIdMod::JetIdMod(const char *name, const char *title) :
   IdMod(name, title)
 {
   fOutput = new JetOArr(32, TString(name) + "Output");
@@ -36,13 +34,13 @@ JetIdMod::JetIdMod(const char *name, const char *title) :
 
 //--------------------------------------------------------------------------------------------------
 void
-JetIdMod::IdBegin()
+mithep::JetIdMod::IdBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis. Here,
   // we just request the jet collection branch.
 
   // If we use MVA Id, need to load MVA weights
-  if (fApplyMVACut) {
+  if (fApplyMVACut && !fJetIDMVA) {
     fJetIDMVA = new JetIDMVA();
     TString dataDir(gSystem->Getenv("MIT_DATA"));
     if (dataDir.Length() == 0) {
@@ -53,35 +51,38 @@ JetIdMod::IdBegin()
     if (fApplyMVACHS)
       fJetIDMVA->Initialize(JetIDMVA::kLoose,
                             dataDir + "/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml",
-          dataDir + "/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml",
-          JetIDMVA::k53,
+                            dataDir + "/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml",
+                            JetIDMVA::k53,
                             dataDir + "/JetIDMVA_JetIdParams.py");
     else
       fJetIDMVA->Initialize(JetIDMVA::kLoose,
-          dataDir + "/mva_JetID_lowpt.weights.xml",
-          dataDir + "/mva_JetID_highpt.weights.xml",
-          JetIDMVA::kBaseline,
-          dataDir + "/JetIDMVA_JetIdParams.py");
+                            dataDir + "/mva_JetID_lowpt.weights.xml",
+                            dataDir + "/mva_JetID_highpt.weights.xml",
+                            JetIDMVA::kBaseline,
+                            dataDir + "/JetIDMVA_JetIdParams.py");
   }
+
+  if (fJetIDMVA && !fJetIDMVA->IsInitialized())
+    SendError(kAbortModule, "SlaveBegin", "Jet ID MVA is not initialized.");
 
   fCutFlow->SetBins(nCuts, 0., double(nCuts));
   TAxis* xaxis = fCutFlow->GetXaxis();
   xaxis->SetBinLabel(cAll + 1, "All");
   xaxis->SetBinLabel(cPt + 1, "Pt");
   xaxis->SetBinLabel(cEta + 1, "Eta");
-  xaxis->SetBinLabel(cEEMFraction+1,"EEMFraction");
-  xaxis->SetBinLabel(cBeta+1,"Beta");
-  xaxis->SetBinLabel(cMVA+1,"MVA");
-  xaxis->SetBinLabel(cPFLooseId+1,"PFLooseId");
-  xaxis->SetBinLabel(cChargedHFrac,"chargedHadronFraction");
-  xaxis->SetBinLabel(cNeutralHFrac,"neutralHadronFraction");
-  xaxis->SetBinLabel(cChargedEMFrac,"chargedEMFraction");
-  xaxis->SetBinLabel(cNeutralEMFrac,"neutralEMFraction");
+  xaxis->SetBinLabel(cEEMFraction + 1, "EEMFraction");
+  xaxis->SetBinLabel(cChargedHFrac + 1, "chargedHadronFraction");
+  xaxis->SetBinLabel(cNeutralHFrac + 1, "neutralHadronFraction");
+  xaxis->SetBinLabel(cChargedEMFrac + 1, "chargedEMFraction");
+  xaxis->SetBinLabel(cNeutralEMFrac + 1, "neutralEMFraction");
+  xaxis->SetBinLabel(cPFLooseId + 1, "PFLooseId");
+  xaxis->SetBinLabel(cBeta + 1, "Beta");
+  xaxis->SetBinLabel(cMVA + 1, "MVA");
 }
 
 //--------------------------------------------------------------------------------------------------
 void
-JetIdMod::Process()
+mithep::JetIdMod::Process()
 {
   // Process entries of the tree.
   auto* jets = GetObject<mithep::JetCol>(fInputName, true);
@@ -90,9 +91,13 @@ JetIdMod::Process()
 
   TObject const* aux[nAuxInputs] = {};
 
-  GetAuxInput<mithep::VertexCol>(kVertices,aux);
-  if (!aux[kVertices])
-    SendError(kAbortAnalysis,"Process","Vertices not found");
+  mithep::VertexCol const* vertices = 0;
+  mithep::Vertex const* pv = 0;
+  if (fApplyBetaCut || fApplyMVACut) {
+    GetAuxInput<mithep::VertexCol>(kVertices, aux);
+    vertices = static_cast<mithep::VertexCol const*>(aux[kVertices]);
+    pv = vertices->At(0);
+  }
 
   mithep::JetOArr* goodJets = 0;
   if (fIsFilterMode) {
@@ -101,12 +106,13 @@ JetIdMod::Process()
   }
   else {
     fFlags.Resize(jets->GetEntries());
-    for (unsigned int i = 0; i < jets->GetEntries(); i++)
-      fFlags.At(i) = false;
+    for (UInt_t iJ = 0; iJ != jets->GetEntries(); ++iJ)
+      fFlags.At(iJ) = false;
   }
+
   UInt_t nGoodJets = 0;
-  for (UInt_t i = 0; i < jets->GetEntries(); i++) {
-    Jet const& jet = *jets->At(i);
+  for (UInt_t iJ = 0; iJ != jets->GetEntries(); ++iJ) {
+    Jet const& jet = *jets->At(iJ);
 
     fCutFlow->Fill(cAll);
 
@@ -120,7 +126,7 @@ JetIdMod::Process()
     else
       jetpt = jet.RawMom().Pt();
 
-    if (jetpt < fJetPtCut)
+    if (jetpt < fPtMin)
       continue;
     fCutFlow->Fill(cPt);
 
@@ -135,44 +141,46 @@ JetIdMod::Process()
 
     PFJet const* pfJet = dynamic_cast<mithep::PFJet const*>(&jet);
 
-    if (!pfJet) continue;
-  
-    if (fApplyBetaCut && !JetTools::PassBetaVertexAssociationCut(pfJet, static_cast<mithep::VertexCol const*>(aux[kVertices])->At(0), static_cast<mithep::VertexCol const*>(aux[kVertices]), 0.2))
-      continue;
-    fCutFlow->Fill(cBeta);
-    if (fApplyPFLooseId && !JetTools::passPFLooseId(pfJet))
-      continue;
-    fCutFlow->Fill(cPFLooseId);
+    if (pfJet) {
+      double chargedHadronFraction = pfJet->ChargedHadronEnergy() / pfJet->E();
+      if (chargedHadronFraction < fMinChargedHadronFraction || chargedHadronFraction > fMaxChargedHadronFraction)
+        continue;
+      fCutFlow->Fill(cChargedHFrac);
+
+      double neutralHadronFraction = pfJet->NeutralHadronEnergy() / pfJet->E();
+      if (neutralHadronFraction < fMinNeutralHadronFraction || neutralHadronFraction > fMaxNeutralHadronFraction)
+        continue;
+      fCutFlow->Fill(cNeutralHFrac);
+
+      double chargedEMFraction = pfJet->ChargedEmEnergy() / pfJet->E();
+      if (chargedEMFraction < fMinChargedEMFraction || chargedEMFraction > fMaxChargedEMFraction)
+        continue;
+      fCutFlow->Fill(cChargedEMFrac);
+
+      double neutralEMFraction = pfJet->NeutralEmEnergy() / pfJet->E();
+      if (neutralEMFraction < fMinNeutralEMFraction || neutralEMFraction > fMaxNeutralEMFraction)
+        continue;
+      fCutFlow->Fill(cNeutralEMFrac);
+
+      if (fApplyPFLooseId && !JetTools::passPFLooseId(pfJet))
+        continue;
+      fCutFlow->Fill(cPFLooseId);
+
+      if (fApplyBetaCut && !JetTools::PassBetaVertexAssociationCut(pfJet, pv, vertices, 0.2))
+        continue;
+      fCutFlow->Fill(cBeta);
     
-    if (fApplyMVACut && !fJetIDMVA->pass(pfJet, static_cast<mithep::VertexCol const*>(aux[kVertices])->At(0), static_cast<mithep::VertexCol const*>(aux[kVertices])))
-      continue;
-    fCutFlow->Fill(cMVA);
-
-    double chargedHadronFraction = pfJet->ChargedHadronEnergy() / pfJet->E();
-    if (chargedHadronFraction < fMinChargedHadronFraction || chargedHadronFraction > fMaxChargedHadronFraction)
-      continue;
-    fCutFlow->Fill(cChargedHFrac);
-
-    double neutralHadronFraction = pfJet->NeutralHadronEnergy() / pfJet->E();
-    if (neutralHadronFraction < fMinNeutralHadronFraction || neutralHadronFraction > fMaxNeutralHadronFraction)
-      continue;
-    fCutFlow->Fill(cNeutralHFrac);
-
-    double chargedEMFraction = pfJet->ChargedEmEnergy() / pfJet->E();
-    if (chargedEMFraction < fMinChargedEMFraction || chargedEMFraction > fMaxChargedEMFraction)
-      continue;
-    fCutFlow->Fill(cChargedEMFrac);
-
-    double neutralEMFraction = pfJet->NeutralEmEnergy() / pfJet->E();
-    if (neutralEMFraction < fMinNeutralEMFraction || neutralEMFraction > fMaxNeutralEMFraction)
-      continue;
-    fCutFlow->Fill(cNeutralEMFrac);
+      if (fApplyMVACut && !fJetIDMVA->pass(pfJet, pv, vertices))
+        continue;
+      fCutFlow->Fill(cMVA);
+    }
 
     if (fIsFilterMode)
       goodJets->Add(&jet);
     else
-      fFlags.At(i) = true;
-    nGoodJets++;
+      fFlags.At(iJ) = true;
+
+    ++nGoodJets;
   }
 
   if (nGoodJets < fMinNJets) {
