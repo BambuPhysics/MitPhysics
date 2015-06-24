@@ -235,6 +235,7 @@ namespace mithep {
         else
           fFlags.At(iO) = true;
 
+        obj.Mark();
         ++nGoodObjects;
       }
     }

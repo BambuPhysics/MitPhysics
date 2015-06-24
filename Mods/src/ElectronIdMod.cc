@@ -14,9 +14,6 @@ mithep::ElectronIdMod::ElectronIdMod(const char *name, const char *title) :
 void
 mithep::ElectronIdMod::IdBegin()
 {
-  // Run startup code on the computer (slave) doing the actual analysis. Here,
-  // we just request the electron collection branch.
-
   // If we use MVA Id, need to load MVA weights
   switch (fIdType) {
   case ElectronTools::kLikelihood:

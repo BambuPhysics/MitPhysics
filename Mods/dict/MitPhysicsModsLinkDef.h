@@ -33,7 +33,8 @@
 #include "MitPhysics/Mods/interface/TauCleaningMod.h"
 #include "MitPhysics/Mods/interface/PFTauCleaningMod.h"
 #include "MitPhysics/Mods/interface/TauIDMod.h"
-#include "MitPhysics/Mods/interface/PFTauIDMod.h"
+#include "MitPhysics/Mods/interface/PFTauIdMod.h"
+#include "MitPhysics/Mods/interface/PFTauIDModRun1.h"
 #include "MitPhysics/Mods/interface/TrackingPurityFilterMod.h"
 #include "MitPhysics/Mods/interface/MVASystematicsMod.h"
 #include "MitPhysics/Mods/interface/SeparatePileUpMod.h"
@@ -86,7 +87,9 @@
 #pragma link C++ class mithep::TauCleaningMod+;
 #pragma link C++ class mithep::PFTauCleaningMod+;
 #pragma link C++ class mithep::TauIDMod+;
-#pragma link C++ class mithep::PFTauIDMod+;
+#pragma link C++ class mithep::PFTauIdMod+;
+#pragma link C++ class mithep::IdMod<mithep::PFTau>+;
+#pragma link C++ class mithep::PFTauIDModRun1+;
 #pragma link C++ class mithep::TrackingPurityFilterMod+;
 #pragma link C++ class mithep::MVASystematicsMod+;
 #pragma link C++ class mithep::SeparatePileUpMod+;
