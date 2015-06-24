@@ -1,4 +1,4 @@
-#include "MitPhysics/Mods/interface/JetIDMod.h"
+#include "MitPhysics/Mods/interface/JetIDModRun1.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "MitAna/DataTree/interface/JetCol.h"
 #include "MitAna/DataTree/interface/CaloJetCol.h"
@@ -9,9 +9,9 @@
 
 #include "TSystem.h"
 
-ClassImp(mithep::JetIDMod)
+ClassImp(mithep::JetIDModRun1)
 
-mithep::JetIDMod::JetIDMod(const char* name, const char* title) :
+mithep::JetIDModRun1::JetIDModRun1(const char* name, const char* title) :
   BaseMod(name, title),
   fJetsName(ModNames::gkPubJetsName),
   fGoodJetsName(ModNames::gkGoodJetsName),  
@@ -36,7 +36,7 @@ mithep::JetIDMod::JetIDMod(const char* name, const char* title) :
 }
 
 void
-mithep::JetIDMod::Process()
+mithep::JetIDModRun1::Process()
 {
   // Process entries of the tree. 
 
@@ -130,7 +130,7 @@ mithep::JetIDMod::Process()
 }
 
 void
-mithep::JetIDMod::SlaveBegin()
+mithep::JetIDModRun1::SlaveBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis. Here, we typically
   // initialize histograms and other analysis objects and request branches. For this module, we
@@ -160,7 +160,7 @@ mithep::JetIDMod::SlaveBegin()
 }
 
 void
-mithep::JetIDMod::SlaveTerminate()
+mithep::JetIDModRun1::SlaveTerminate()
 {
   delete fJetIDMVA;
 }
