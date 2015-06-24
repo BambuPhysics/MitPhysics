@@ -1,114 +1,57 @@
 #include "MitPhysics/Mods/interface/PhotonIdMod.h"
 #include "MitPhysics/Utils/interface/PhotonTools.h" 
-#include "MitPhysics/Utils/interface/IsolationTools.h" 
-#include "MitAna/DataTree/interface/StableData.h" 
-#include "MitAna/DataTree/interface/TriggerObjectCol.h"  
-#include "MitPhysics/Init/interface/ModNames.h"   
-#include "MitPhysics/Init/interface/Constants.h"
 
 ClassImp(mithep::PhotonIdMod)
 
-template<class T> 
-void
-mithep::PhotonIdMod::GetAuxInput(PhotonIdMod::AuxInput inputCol, TObject const** aux)
-{
-  aux[inputCol] = GetObject<T>(fAuxInputNames[inputCol], true);  
-  if (!aux[inputCol])       
-    SendError(kAbortAnalysis, "GetAuxInput", "Could not retrieve auxiliary input " + fAuxInputNames[inputCol]);    
-}
-
-
 mithep::PhotonIdMod::PhotonIdMod(char const* name/* = "PhotonIdMod"*/, char const* title/* = "Photon Identification"*/) :
-  IdMod(name, title)
+  IdMod<mithep::Photon>(name, title)
 {
-  fOutput = new mithep::PhotonOArr(32, TString(name) + "Output");
-
-  fAuxInputNames[kPileupEnergyDensity] = Names::gkPileupEnergyDensityBrn; 
 }
 
 mithep::PhotonIdMod::~PhotonIdMod()
 {
 }
 
-void
-mithep::PhotonIdMod::Process()
+Bool_t
+mithep::PhotonIdMod::IsGood(mithep::Photon const& photon)
 {
-  auto* photons = GetObject<mithep::PhotonCol>(fInputName, true); 
-  if (!photons) 
-    SendError(kAbortAnalysis, "Process", "Photons not found");  
-
-  TObject const* aux[nAuxInputs] = {};
-
-  //get trigger object collection if trigger matching is enabled  
-  if (fApplyTriggerMatching) {       
-    aux[kTrigObjects] = GetHLTObjects(fAuxInputNames[kTrigObjects]);
-    if (!aux[kTrigObjects])                     
-      SendError(kAbortAnalysis, "Process", "TrigObjects not found");   
-  }
-
-  mithep::PhotonOArr* goodPhotons = 0; 
-  if (fIsFilterMode) { 
-    goodPhotons = static_cast<mithep::PhotonOArr*>(fOutput);  
-    goodPhotons->Reset();  
-  }
-  else {
-    fFlags.Resize(photons->GetEntries());
-    for (unsigned iP = 0; iP != photons->GetEntries(); ++iP) 
-      fFlags.At(iP) = false; 
-  }
- 
-  for (UInt_t iP = 0; iP != photons->GetEntries(); ++iP) { 
-    Photon const& photon = *photons->At(iP);
-
-    fCutFlow->Fill(cAll); 
+  fCutFlow->Fill(cAll); 
   
-    if (photon.Pt() < fPtMin)
-      continue; 
+  if (photon.Pt() < fPtMin)
+    return false; 
 
-    fCutFlow->Fill(cPt); 
+  fCutFlow->Fill(cPt); 
 
-    if (photon.AbsEta() > fEtaMax)
-      continue;
+  if (photon.AbsEta() > fEtaMax)
+    return false;
 
-    fCutFlow->Fill(cEta); 
+  fCutFlow->Fill(cEta); 
     
-    //apply trigger matching      
-    if (fApplyTriggerMatching &&
-        !PhotonTools::PassTriggerMatching(&photon, static_cast<mithep::TriggerObjectCol const*>(aux[kTrigObjects])))
-      continue; 
+  //apply trigger matching      
+  if (fApplyTriggerMatching &&
+      !PhotonTools::PassTriggerMatching(&photon, GetTrigObjects()))
+    return false; 
 
-    fCutFlow->Fill(cTriggerMatching);   
+  fCutFlow->Fill(cTriggerMatching);   
 
-    //apply id cut 
-    if (!PassIdCut(photon, aux))
-      continue;         
+  //apply id cut 
+  if (!PassIdCut(photon))
+    return false;         
 
-    fCutFlow->Fill(cId); 
+  fCutFlow->Fill(cId); 
 
-    //apply Isolation Cut 
-    if (!PassIsolationCut(photon, aux))
-      continue;
+  //apply Isolation Cut 
+  if (!PassIsolationCut(photon))
+    return false;
 
-    fCutFlow->Fill(cIsolation); 
+  fCutFlow->Fill(cIsolation); 
 
-    if (fIsFilterMode)  
-      goodPhotons->Add(&photon);
-    else
-      fFlags.At(iP) = true;
-  }
-
-  if (fIsFilterMode) {
-    // sort according to pt
-    goodPhotons->Sort();
-  }
+  return true;
 }
 
 void
 mithep::PhotonIdMod::IdBegin()
 {
-  if (fApplyTriggerMatching && fAuxInputNames[kTrigObjects] == "")
-    SendError(kAbortAnalysis, "SlaveBegin", "Trigger matching turned on but HLT object collection not given.");
-
   fCutFlow->SetBins(nCuts, 0., double(nCuts)); 
   TAxis* xaxis = fCutFlow->GetXaxis(); 
   xaxis->SetBinLabel(cAll + 1, "All");
@@ -121,10 +64,9 @@ mithep::PhotonIdMod::IdBegin()
 
 //--------------------------------------------------------------------------------------------------
 Bool_t 
-mithep::PhotonIdMod::PassIdCut(Photon const& pho, TObject const**)
+mithep::PhotonIdMod::PassIdCut(Photon const& pho)
 {
   switch (fIdType) {
-
   case PhotonTools::kPhys14Tight:
   case PhotonTools::kPhys14Medium:
   case PhotonTools::kPhys14Loose:
@@ -137,18 +79,14 @@ mithep::PhotonIdMod::PassIdCut(Photon const& pho, TObject const**)
 
 //--------------------------------------------------------------------------------------------------
 Bool_t
-mithep::PhotonIdMod::PassIsolationCut(Photon const& pho, TObject const** aux)
+mithep::PhotonIdMod::PassIsolationCut(Photon const& pho)
 {
   switch (fIsoType) { 
-    
   case PhotonTools::kPhys14LooseIso:
   case PhotonTools::kPhys14MediumIso:
   case PhotonTools::kPhys14TightIso:
-    if (!aux[kPileupEnergyDensity])  
-      GetAuxInput<mithep::PileupEnergyDensityCol>(kPileupEnergyDensity, aux);  
-
     return PhotonTools::PassIsoRhoCorr(&pho, PhotonTools::EPhIsoType(fIsoType),
-                                       static_cast<mithep::PileupEnergyDensityCol const*>(aux[kPileupEnergyDensity])->At(0)->Rho(fRhoAlgo));
+                                       GetPileupEnergyDensity()->At(0)->Rho(fRhoAlgo));
 
   case PhotonTools::kNoIso:
     return true;

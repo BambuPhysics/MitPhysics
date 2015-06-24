@@ -1,44 +1,25 @@
 #include "MitPhysics/Mods/interface/JetIdMod.h"
 #include "MitPhysics/Init/interface/ModNames.h"
-#include "MitAna/DataTree/interface/JetCol.h"
-#include "MitAna/DataTree/interface/CaloJetCol.h"
-#include "MitAna/DataTree/interface/PFJetCol.h"
+#include "MitAna/DataTree/interface/CaloJet.h"
+#include "MitAna/DataTree/interface/PFJet.h"
 #include "MitPhysics/Utils/interface/JetTools.h"
 #include "MitPhysics/Utils/interface/JetIDMVA.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
-#include "MitAna/DataTree/interface/JetFwd.h"
 
 #include "TSystem.h"
-#include <algorithm>
-#include <limits>
 
 ClassImp(mithep::JetIdMod)
 
-template<class T>
-void
-mithep::JetIdMod::GetAuxInput(JetIdMod::AuxInput inputCol, TObject const** aux)
-{
-  aux[inputCol] = GetObject<T>(fAuxInputNames[inputCol], true);
-  if (!aux[inputCol])
-    SendError(kAbortAnalysis, "GetAuxInput", "Could not retrieve auxiliary input " + fAuxInputNames[inputCol]);
-}
-
 //--------------------------------------------------------------------------------------------------
 mithep::JetIdMod::JetIdMod(const char *name, const char *title) :
-  IdMod(name, title)
+  IdMod<mithep::Jet>(name, title)
 {
-  fOutput = new JetOArr(32, TString(name) + "Output");
-  SetInputName(ModNames::gkPubJetsName);
-  fAuxInputNames[kVertices] = ModNames::gkGoodVertexesName;
 }
 
 //--------------------------------------------------------------------------------------------------
 void
 mithep::JetIdMod::IdBegin()
 {
-  // Run startup code on the computer (slave) doing the actual analysis. Here,
-  // we just request the jet collection branch.
-
   // If we use MVA Id, need to load MVA weights
   if (fApplyMVACut && !fJetIDMVA) {
     fJetIDMVA = new JetIDMVA();
@@ -81,115 +62,69 @@ mithep::JetIdMod::IdBegin()
 }
 
 //--------------------------------------------------------------------------------------------------
-void
-mithep::JetIdMod::Process()
+Bool_t
+mithep::JetIdMod::IsGood(mithep::Jet const& jet)
 {
-  // Process entries of the tree.
-  auto* jets = GetObject<mithep::JetCol>(fInputName, true);
-  if (!jets)
-    SendError(kAbortAnalysis, "Process", "Jets not found");
+  fCutFlow->Fill(cAll);
 
-  TObject const* aux[nAuxInputs] = {};
+  if(jet.AbsEta() > fEtaMax)
+    return false;
+  fCutFlow->Fill(cEta);
 
-  mithep::VertexCol const* vertices = 0;
-  mithep::Vertex const* pv = 0;
-  if (fApplyBetaCut || fApplyMVACut) {
-    GetAuxInput<mithep::VertexCol>(kVertices, aux);
-    vertices = static_cast<mithep::VertexCol const*>(aux[kVertices]);
-    pv = vertices->At(0);
+  Double_t jetpt;
+  if (fUseJetCorrection)
+    jetpt = jet.Pt();
+  else
+    jetpt = jet.RawMom().Pt();
+
+  if (jetpt < fPtMin)
+    return false;
+  fCutFlow->Fill(cPt);
+
+  if (fJetEEMFractionMinCut > 0) {
+    mithep::CaloJet const* caloJet = dynamic_cast<mithep::CaloJet const*>(&jet); 
+    // The 2.6 value is hardcoded, no reason to change that value in CMS
+    if (caloJet && caloJet->AbsEta() < 2.6 &&
+        caloJet->EnergyFractionEm() < fJetEEMFractionMinCut)
+      return false;
+  }
+  fCutFlow->Fill(cEEMFraction);
+
+  PFJet const* pfJet = dynamic_cast<mithep::PFJet const*>(&jet);
+
+  if (pfJet) {
+    double chargedHadronFraction = pfJet->ChargedHadronEnergy() / pfJet->E();
+    if (chargedHadronFraction < fMinChargedHadronFraction || chargedHadronFraction > fMaxChargedHadronFraction)
+      return false;
+    fCutFlow->Fill(cChargedHFrac);
+
+    double neutralHadronFraction = pfJet->NeutralHadronEnergy() / pfJet->E();
+    if (neutralHadronFraction < fMinNeutralHadronFraction || neutralHadronFraction > fMaxNeutralHadronFraction)
+      return false;
+    fCutFlow->Fill(cNeutralHFrac);
+
+    double chargedEMFraction = pfJet->ChargedEmEnergy() / pfJet->E();
+    if (chargedEMFraction < fMinChargedEMFraction || chargedEMFraction > fMaxChargedEMFraction)
+      return false;
+    fCutFlow->Fill(cChargedEMFrac);
+
+    double neutralEMFraction = pfJet->NeutralEmEnergy() / pfJet->E();
+    if (neutralEMFraction < fMinNeutralEMFraction || neutralEMFraction > fMaxNeutralEMFraction)
+      return false;
+    fCutFlow->Fill(cNeutralEMFrac);
+
+    if (fApplyPFLooseId && !JetTools::passPFLooseId(pfJet))
+      return false;
+    fCutFlow->Fill(cPFLooseId);
+
+    if (fApplyBetaCut && !JetTools::PassBetaVertexAssociationCut(pfJet, GetVertices()->At(0), GetVertices(), 0.2))
+      return false;
+    fCutFlow->Fill(cBeta);
+
+    if (fApplyMVACut && !fJetIDMVA->pass(pfJet, GetVertices()->At(0), GetVertices()))
+      return false;
+    fCutFlow->Fill(cMVA);
   }
 
-  mithep::JetOArr* goodJets = 0;
-  if (fIsFilterMode) {
-    goodJets = static_cast<mithep::JetOArr*>(fOutput);
-    goodJets->Reset();
-  }
-  else {
-    fFlags.Resize(jets->GetEntries());
-    for (UInt_t iJ = 0; iJ != jets->GetEntries(); ++iJ)
-      fFlags.At(iJ) = false;
-  }
-
-  UInt_t nGoodJets = 0;
-  for (UInt_t iJ = 0; iJ != jets->GetEntries(); ++iJ) {
-    Jet const& jet = *jets->At(iJ);
-
-    fCutFlow->Fill(cAll);
-
-    if(jet.AbsEta() > fEtaMax)
-      continue;
-    fCutFlow->Fill(cEta);
-
-    Double_t jetpt;
-    if (fUseJetCorrection)
-      jetpt = jet.Pt();
-    else
-      jetpt = jet.RawMom().Pt();
-
-    if (jetpt < fPtMin)
-      continue;
-    fCutFlow->Fill(cPt);
-
-    if (fJetEEMFractionMinCut > 0) {
-      mithep::CaloJet const* caloJet = dynamic_cast<mithep::CaloJet const*>(&jet); 
-      // The 2.6 value is hardcoded, no reason to change that value in CMS
-      if (caloJet && caloJet->AbsEta() < 2.6 &&
-          caloJet->EnergyFractionEm() < fJetEEMFractionMinCut)
-        continue;
-    }
-    fCutFlow->Fill(cEEMFraction);
-
-    PFJet const* pfJet = dynamic_cast<mithep::PFJet const*>(&jet);
-
-    if (pfJet) {
-      double chargedHadronFraction = pfJet->ChargedHadronEnergy() / pfJet->E();
-      if (chargedHadronFraction < fMinChargedHadronFraction || chargedHadronFraction > fMaxChargedHadronFraction)
-        continue;
-      fCutFlow->Fill(cChargedHFrac);
-
-      double neutralHadronFraction = pfJet->NeutralHadronEnergy() / pfJet->E();
-      if (neutralHadronFraction < fMinNeutralHadronFraction || neutralHadronFraction > fMaxNeutralHadronFraction)
-        continue;
-      fCutFlow->Fill(cNeutralHFrac);
-
-      double chargedEMFraction = pfJet->ChargedEmEnergy() / pfJet->E();
-      if (chargedEMFraction < fMinChargedEMFraction || chargedEMFraction > fMaxChargedEMFraction)
-        continue;
-      fCutFlow->Fill(cChargedEMFrac);
-
-      double neutralEMFraction = pfJet->NeutralEmEnergy() / pfJet->E();
-      if (neutralEMFraction < fMinNeutralEMFraction || neutralEMFraction > fMaxNeutralEMFraction)
-        continue;
-      fCutFlow->Fill(cNeutralEMFrac);
-
-      if (fApplyPFLooseId && !JetTools::passPFLooseId(pfJet))
-        continue;
-      fCutFlow->Fill(cPFLooseId);
-
-      if (fApplyBetaCut && !JetTools::PassBetaVertexAssociationCut(pfJet, pv, vertices, 0.2))
-        continue;
-      fCutFlow->Fill(cBeta);
-    
-      if (fApplyMVACut && !fJetIDMVA->pass(pfJet, pv, vertices))
-        continue;
-      fCutFlow->Fill(cMVA);
-    }
-
-    if (fIsFilterMode)
-      goodJets->Add(&jet);
-    else
-      fFlags.At(iJ) = true;
-
-    ++nGoodJets;
-  }
-
-  if (nGoodJets < fMinNJets) {
-    SkipEvent();
-    return;
-  }
-
-  if (fIsFilterMode) {
-    // sort according to pt
-    goodJets->Sort();
-  }
+  return true;
 }

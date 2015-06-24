@@ -620,7 +620,7 @@ mithep::ElectronTools::PassNExpectedHits(Electron const* ele, EElIdType idType, 
 Bool_t
 mithep::ElectronTools::PassD0Cut(const Electron *ele, const VertexCol *vertices, EElIdType idType, Int_t iVertex)
 {
-  if( iVertex >= (int) vertices->GetEntries() )
+  if (iVertex >= (int)vertices->GetEntries())
     iVertex = vertices->GetEntries() - 1;
 
   Double_t d0 = 0.;
@@ -683,12 +683,12 @@ mithep::ElectronTools::PassD0Cut(const Electron *ele, Double_t d0, EElIdType idT
 Bool_t
 mithep::ElectronTools::PassDZCut(const Electron *ele, const VertexCol *vertices, EElIdType idType, Int_t iVertex)
 {
-  if( iVertex >= (int) vertices->GetEntries() )
+  if (iVertex >= (int) vertices->GetEntries())
     iVertex = vertices->GetEntries()-1;
 
   Double_t dz;
 
-  if(iVertex >= 0)
+  if (iVertex >= 0)
     dz = TMath::Abs(ele->GsfTrk()->DzCorrected(*vertices->At(iVertex)));
   else {
     dz = std::numeric_limits<double>::max();

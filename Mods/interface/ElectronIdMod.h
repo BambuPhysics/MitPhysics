@@ -12,22 +12,15 @@
 
 #include "MitPhysics/Mods/interface/IdMod.h"
 
-#include "MitAna/DataTree/interface/ElectronCol.h"
-#include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
+#include "MitAna/DataTree/interface/Electron.h"
+#include "MitAna/DataTree/interface/PileupEnergyDensity.h"
 #include "MitPhysics/ElectronLikelihood/interface/ElectronLikelihood.h"
 
 namespace mithep {
-  class ElectronIdMod : public IdMod {
+  class ElectronIdMod : public IdMod<mithep::Electron> {
   public:
     ElectronIdMod(const char* name="ElectronIdMod",
                   const char* title="Electron identification module");
-
-    const char* GetConversionBranchName() const     { return fAuxInputNames[kConversions]; }
-    const char* GetNonIsolatedMuonsName() const     { return fAuxInputNames[kNonIsolatedMuons]; }
-    const char* GetNonIsolatedElectronsName() const { return fAuxInputNames[kNonIsolatedElectrons]; }
-    const char* GetVerticesName() const             { return fAuxInputNames[kVertices]; }
-    const char* GetTriggerObjectsName() const       { return fAuxInputNames[kTrigObjects]; }
-    const char* GetPileupEnergyDensityName() const  { return fAuxInputNames[kPileupEnergyDensity]; }
 
     Bool_t   GetApplyConversionFilterType1() const  { return fApplyConvFilterType1; }
     Bool_t   GetApplyConversionFilterType2() const  { return fApplyConvFilterType2; }
@@ -46,13 +39,6 @@ namespace mithep {
     Double_t GetIdLikelihoodCut() const             { return fIdLikelihoodCut; }
 
     ElectronLikelihood* GetLH() const { return fLH; }
-
-    void SetConversionBranchName(const char* n)    { fAuxInputNames[kConversions] = n; }
-    void SetNonIsolatedMuonsName(const char* n)    { fAuxInputNames[kNonIsolatedMuons] = n; }
-    void SetNonIsolatedElectronsName(const char* n){ fAuxInputNames[kNonIsolatedElectrons] = n; }
-    void SetVertexName(const char* n)              { fAuxInputNames[kVertices] = n; }
-    void SetTriggerObjectsName(const char* n)      { fAuxInputNames[kTrigObjects] = n; }
-    void SetPileupEnergyDensityName(const char* n) { fAuxInputNames[kPileupEnergyDensity] = n; }
 
     void SetApplyConversionFilterType1(Bool_t b)   { fApplyConvFilterType1 = b; }
     void SetApplyConversionFilterType2(Bool_t b)   { fApplyConvFilterType2 = b; }
@@ -73,18 +59,6 @@ namespace mithep {
     void SetLH(ElectronLikelihood* l)              { fLH = l; }
 
   protected:
-    enum AuxInput {
-      kTrigObjects,
-      kConversions,
-      kVertices,
-      kBeamSpot,
-      kPFCandidates,
-      kPileupEnergyDensity,
-      kNonIsolatedMuons,
-      kNonIsolatedElectrons,
-      nAuxInputs
-    };
-
     enum CutFlow {
       cAll,
       cIsEcalDriven,
@@ -106,16 +80,12 @@ namespace mithep {
     };
 
     Bool_t PassLikelihoodId(Electron const&);
-    Bool_t PassIdCut(Electron const&, TObject const**);
-    Bool_t PassIsolationCut(Electron const&, TObject const**);
+    Bool_t PassIdCut(Electron const&);
+    Bool_t PassIsolationCut(Electron const&);
 
-    template<class T> void GetAuxInput(AuxInput, TObject const**);
-
-    void Process() override;
+    Bool_t IsGood(mithep::Electron const&) override;
     void IdBegin() override;
     
-    TString  fAuxInputNames[nAuxInputs] = {};
-
     Bool_t   fApplyConvFilterType1 = kTRUE;   //whether remove conversions using fit method
     Bool_t   fApplyConvFilterType2 = kFALSE;   //whether remove conversions using DCotTheta method
     Bool_t   fApplyNExpectedHitsInnerCut = kTRUE;

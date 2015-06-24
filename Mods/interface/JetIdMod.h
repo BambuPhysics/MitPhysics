@@ -11,23 +11,18 @@
 #define MITPHYSICS_MODS_JETIDMOD_H
 #include "MitPhysics/Mods/interface/IdMod.h"
 
-#include "MitAna/TreeMod/interface/BaseMod.h" 
-#include "MitAna/DataTree/interface/VertexCol.h"
+#include "MitAna/DataTree/interface/Jet.h"
 #include "MitPhysics/Utils/interface/JetIDMVA.h"
-
 
 namespace mithep {
   class JetIdMVA; 
 
-  class JetIdMod : public IdMod {
+  class JetIdMod : public IdMod<mithep::Jet> {
   public:
     JetIdMod(const char* name="JetIdMod",
              const char* title="Jet identification module");
 
-    const char* GetVertexName() const { return fAuxInputNames[kVertices]; }
-
     Bool_t   GetUseJetCorrection() const         { return fUseJetCorrection; }
-    UInt_t   GetMinNJets() const                 { return fMinNJets; }
     Double_t GetJetEEMFractionMinCut() const     { return fJetEEMFractionMinCut; }
     Double_t GetMinChargedHadronFraction() const { return fMinChargedHadronFraction; }
     Double_t GetMaxChargedHadronFraction() const { return fMaxChargedHadronFraction; }
@@ -44,10 +39,7 @@ namespace mithep {
     
     JetIDMVA* GetJetIDMVA() const { return fJetIDMVA; }
 
-    void SetVertexName(const char *s)          { fAuxInputNames[kVertices] = s; }
-
     void SetJetUseCorrection(Bool_t b)         { fUseJetCorrection = b; }
-    void SetMinNJets(UInt_t n)                 { fMinNJets = n; }
     void SetJetEEMFractionMinCut(Double_t cut) { fJetEEMFractionMinCut = cut; }
     void SetMinChargedHadronFraction(Double_t m) { fMinChargedHadronFraction = m; }
     void SetMaxChargedHadronFraction(Double_t m) { fMaxChargedHadronFraction = m; }
@@ -74,11 +66,6 @@ namespace mithep {
     { fMinNeutralEMFraction = min; fMaxNeutralEMFraction = max; }
 
   protected:
-    enum AuxInput {
-      kVertices,
-      nAuxInputs
-    };
-
     enum CutFlow {
       cAll,
       cEta,
@@ -94,30 +81,25 @@ namespace mithep {
       nCuts
     };
 
-    template<class T> void GetAuxInput(AuxInput, TObject const**);
-
-    void Process() override;
+    Bool_t IsGood(mithep::Jet const&) override;
     void IdBegin() override;
-    
-    TString  fAuxInputNames[nAuxInputs];
 
-    Bool_t            fUseJetCorrection = kTRUE;        //=true then use corrected energy
-    UInt_t            fMinNJets = 0;              //minimum required number of jets passing the ID
-    Double_t          fJetEEMFractionMinCut = 0.01;  //jet Eem fraction min cut for calo jets
-    Double_t          fMinChargedHadronFraction = 0.;
-    Double_t          fMaxChargedHadronFraction = 1.;
-    Double_t          fMinNeutralHadronFraction = 0.;
-    Double_t          fMaxNeutralHadronFraction = 1.;
-    Double_t          fMinChargedEMFraction = 0.;
-    Double_t          fMaxChargedEMFraction = 1.;
-    Double_t          fMinNeutralEMFraction = 0.;
-    Double_t          fMaxNeutralEMFraction = 1.;
-    Bool_t            fApplyBetaCut = kFALSE;          //=true then apply beta cut
-    Bool_t            fApplyPFLooseId = kFALSE;        //=true then apply PF loose ID
-    Bool_t            fApplyMVACut = kFALSE;           //=true then apply MVA cut
-    Bool_t            fApplyMVACHS = kFALSE;           //=true then apply MVA for CHS
+    Bool_t   fUseJetCorrection = kTRUE;        //=true then use corrected energy
+    Double_t fJetEEMFractionMinCut = 0.01;  //jet Eem fraction min cut for calo jets
+    Double_t fMinChargedHadronFraction = 0.;
+    Double_t fMaxChargedHadronFraction = 1.;
+    Double_t fMinNeutralHadronFraction = 0.;
+    Double_t fMaxNeutralHadronFraction = 1.;
+    Double_t fMinChargedEMFraction = 0.;
+    Double_t fMaxChargedEMFraction = 1.;
+    Double_t fMinNeutralEMFraction = 0.;
+    Double_t fMaxNeutralEMFraction = 1.;
+    Bool_t   fApplyBetaCut = kFALSE;          //=true then apply beta cut
+    Bool_t   fApplyPFLooseId = kFALSE;        //=true then apply PF loose ID
+    Bool_t   fApplyMVACut = kFALSE;           //=true then apply MVA cut
+    Bool_t   fApplyMVACHS = kFALSE;           //=true then apply MVA for CHS
 
-    JetIDMVA         *fJetIDMVA = 0;
+    JetIDMVA* fJetIDMVA = 0;
 
     ClassDef(JetIdMod, 0) // Jet identification module
   };

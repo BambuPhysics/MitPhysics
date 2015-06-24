@@ -50,10 +50,10 @@
 
 #pragma link C++ class mithep::CaloMetCorrectionMod+;
 #pragma link C++ class mithep::EffMod+;
-#pragma link C++ class mithep::IdMod+;
 #pragma link C++ class mithep::ElectronCleaningMod+;
 #pragma link C++ class mithep::CosmicCleaningMod+;
 #pragma link C++ class mithep::ElectronIdMod+;
+#pragma link C++ class mithep::IdMod<mithep::Electron>+;
 #pragma link C++ class mithep::ElectronIDModRun1+;
 #pragma link C++ class mithep::ElectronCorrectionMod+;
 #pragma link C++ class mithep::GeneratorMod+;
@@ -61,17 +61,20 @@
 #pragma link C++ class mithep::HKFactorProducer+;
 #pragma link C++ class mithep::JetCleaningMod+;
 #pragma link C++ class mithep::JetIdMod+;
+#pragma link C++ class mithep::IdMod<mithep::Jet>+;
 #pragma link C++ class mithep::JetIDModRun1+;
 #pragma link C++ class mithep::MVAMetMod+;
 #pragma link C++ class mithep::JetCorrectionMod+;
 #pragma link C++ class mithep::MergeLeptonsMod+;
 #pragma link C++ class mithep::MetCorrectionMod+;
 #pragma link C++ class mithep::MuonIdMod+;
+#pragma link C++ class mithep::IdMod<mithep::Muon>+;
 #pragma link C++ class mithep::MuonIDModRun1+;
 #pragma link C++ class mithep::PartonFlavorHistoryMod+;
 #pragma link C++ class mithep::PDFProducerMod+;
 #pragma link C++ class mithep::PhotonCleaningMod+;
 #pragma link C++ class mithep::PhotonIdMod+;
+#pragma link C++ class mithep::IdMod<mithep::Photon>+;
 #pragma link C++ class mithep::PhotonIDModRun1+;
 #pragma link C++ class mithep::PhotonCiCMod+;
 #pragma link C++ class mithep::PhotonPairSelector+;

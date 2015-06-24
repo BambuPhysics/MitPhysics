@@ -23,6 +23,7 @@
 #include "MitAna/DataTree/interface/DecayParticleFwd.h"
 #include "MitAna/DataTree/interface/PileupEnergyDensityFwd.h"
 #include "MitPhysics/Utils/interface/ElectronTools.h"
+#include "MitPhysics/Utils/interface/MuonTools.h"
 
 namespace mithep
 {
@@ -71,6 +72,8 @@ namespace mithep
                                                   const MuonCol *goodMuons = 0,
                                                   Double_t dRMax = 0.3, Bool_t isDebug=kFALSE);
     static Double_t PFElectronIsolationRhoCorr(Electron const*, Double_t rho, ElectronTools::EElectronEffectiveAreaTarget);
+
+    static Double_t PFMuonIsolationRhoCorr(Muon const*, Double_t rho, MuonTools::EMuonEffectiveAreaTarget);
 
     static Double_t BetaM(const TrackCol *tracks, const Muon *p, const Vertex *vertex, 
                           Double_t ptMin, Double_t  delta_z, Double_t extRadius,

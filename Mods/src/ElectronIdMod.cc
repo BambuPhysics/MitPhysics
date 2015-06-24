@@ -1,49 +1,18 @@
 #include "MitPhysics/Mods/interface/ElectronIdMod.h"
 #include "MitPhysics/Utils/interface/ElectronTools.h"
-#include "MitPhysics/Utils/interface/IsolationTools.h"
-#include "MitAna/DataTree/interface/StableData.h"
-#include "MitAna/DataTree/interface/MuonCol.h"
-#include "MitAna/DataTree/interface/VertexCol.h"
-#include "MitAna/DataTree/interface/TriggerObjectCol.h"
-#include "MitAna/DataTree/interface/DecayParticleCol.h"
-#include "MitAna/DataTree/interface/PFCandidateCol.h"
-#include "MitPhysics/Init/interface/ModNames.h"
 #include "MitPhysics/Init/interface/Constants.h"
-
-#include <algorithm>
-#include <limits>
-
-using namespace mithep;
 
 ClassImp(mithep::ElectronIdMod)
 
-template<class T>
-void
-ElectronIdMod::GetAuxInput(ElectronIdMod::AuxInput inputCol, TObject const** aux)
-{
-  aux[inputCol] = GetObject<T>(fAuxInputNames[inputCol], true);
-  if (!aux[inputCol])
-    SendError(kAbortAnalysis, "GetAuxInput", "Could not retrieve auxiliary input " + fAuxInputNames[inputCol]);
-}
-
 //--------------------------------------------------------------------------------------------------
-ElectronIdMod::ElectronIdMod(const char *name, const char *title) :
-  IdMod(name, title)
+mithep::ElectronIdMod::ElectronIdMod(const char *name, const char *title) :
+  IdMod<mithep::Electron>(name, title)
 {
-  fOutput = new ElectronOArr(32, TString(name) + "Output");
-
-  fAuxInputNames[kConversions] = Names::gkMvfConversionBrn;
-  fAuxInputNames[kVertices] = ModNames::gkGoodVertexesName;
-  fAuxInputNames[kBeamSpot] = Names::gkBeamSpotBrn;
-  fAuxInputNames[kPFCandidates] = Names::gkPFCandidatesBrn;
-  fAuxInputNames[kPileupEnergyDensity] = Names::gkPileupEnergyDensityBrn;
-  fAuxInputNames[kNonIsolatedMuons] = "random";
-  fAuxInputNames[kNonIsolatedElectrons] = "random";
 }
 
 //--------------------------------------------------------------------------------------------------
 void
-ElectronIdMod::IdBegin()
+mithep::ElectronIdMod::IdBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis. Here,
   // we just request the electron collection branch.
@@ -68,9 +37,6 @@ ElectronIdMod::IdBegin()
     break;
   }
 
-  if (fApplyTriggerMatching && fAuxInputNames[kTrigObjects] == "")
-    SendError(kAbortAnalysis, "SlaveBegin", "Trigger matching turned on but HLT object collection not given.");
-
   fCutFlow->SetBins(nCuts, 0., double(nCuts));
   TAxis* xaxis = fCutFlow->GetXaxis();
   xaxis->SetBinLabel(cAll + 1, "All");
@@ -92,163 +58,117 @@ ElectronIdMod::IdBegin()
 }
 
 //--------------------------------------------------------------------------------------------------
-void
-ElectronIdMod::Process()
+Bool_t
+mithep::ElectronIdMod::IsGood(mithep::Electron const& electron)
 {
-  // Process entries of the tree.
-  auto* electrons = GetObject<mithep::ElectronCol>(fInputName, true);
-  if (!electrons)
-    SendError(kAbortAnalysis, "Process", "Electrons not found");
+  fCutFlow->Fill(cAll);
 
-  TObject const* aux[nAuxInputs] = {};
+  if (electron.SCluster() == 0)
+    return false;
 
-  //get trigger object collection if trigger matching is enabled
-  if (fApplyTriggerMatching) {
-    aux[kTrigObjects] = GetHLTObjects(fAuxInputNames[kTrigObjects]);
-    if (!aux[kTrigObjects])
-      SendError(kAbortAnalysis, "Process", "TrigObjects not found");
-  }
+  if (fApplyEcalSeeded && !electron.IsEcalDriven())
+    return false;
 
-  if (fApplyConvFilterType1)
-    GetAuxInput<mithep::DecayParticleCol>(kConversions, aux);
+  fCutFlow->Fill(cIsEcalDriven);
 
-  if (fApplyConvFilterType1 || (fApplyD0Cut && fWhichVertex < -1))
-    GetAuxInput<mithep::BeamSpotCol>(kBeamSpot, aux);
+  if (electron.Pt() < fPtMin)
+    return false;
 
-  if ((fApplyD0Cut && fWhichVertex >= -1) || fApplyDZCut)
-    GetAuxInput<mithep::VertexCol>(kVertices, aux);
+  fCutFlow->Fill(cPt);
 
-  mithep::ElectronOArr* goodElectrons = 0;
-  if (fIsFilterMode) {
-    goodElectrons = static_cast<mithep::ElectronOArr*>(fOutput);
-    goodElectrons->Reset();
-  }
-  else {
-    fFlags.Resize(electrons->GetEntries());
-    for (unsigned iE = 0; iE != electrons->GetEntries(); ++iE)
-      fFlags.At(iE) = false;
-  }
+  if (electron.AbsEta() > fEtaMax)
+    return false;
 
-  for (UInt_t iE = 0; iE != electrons->GetEntries(); ++iE) {
-    Electron const& electron = *electrons->At(iE);
+  fCutFlow->Fill(cEta);
 
-    fCutFlow->Fill(cAll);
+  if (electron.SCluster()->Et() < fElectronEtMin)
+    return false;
 
-    if (electron.SCluster() == 0)
-      continue;
+  fCutFlow->Fill(cEt);
 
-    if (fApplyEcalSeeded && !electron.IsEcalDriven())
-      continue;
+  double scAbsEta = electron.SCluster()->AbsEta();
 
-    fCutFlow->Fill(cIsEcalDriven);
+  if (fApplyEcalFiducial &&
+      ((scAbsEta > gkEleEBEtaMax && scAbsEta < gkEleEEEtaMin) || scAbsEta > gkEleEEEtaMax))
+    return false;
 
-    if (electron.Pt() < fPtMin)
-      continue;
+  fCutFlow->Fill(cFiducial);
 
-    fCutFlow->Fill(cPt);
+  //apply ECAL spike removal
+  if (fApplySpikeRemoval && !ElectronTools::PassSpikeRemovalFilter(&electron))
+    return false;
 
-    if (electron.AbsEta() > fEtaMax)
-      continue;
+  fCutFlow->Fill(cSpikeRemoval);
 
-    fCutFlow->Fill(cEta);
+  // apply charge filter
+  if (fChargeFilter && !ElectronTools::PassChargeFilter(&electron))
+    return false;
 
-    if (electron.SCluster()->Et() < fElectronEtMin)
-      continue;
+  fCutFlow->Fill(cChargeFilter);
 
-    fCutFlow->Fill(cEt);
+  //apply trigger matching
+  if (fApplyTriggerMatching &&
+      !ElectronTools::PassTriggerMatching(&electron, GetTrigObjects()))
+    return false;
 
-    double scAbsEta = electron.SCluster()->AbsEta();
+  fCutFlow->Fill(cTriggerMatching);
 
-    if (fApplyEcalFiducial &&
-        ((scAbsEta > gkEleEBEtaMax && scAbsEta < gkEleEEEtaMin) || scAbsEta > gkEleEEEtaMax))
-      continue;
+  // apply conversion filters
+  if (fApplyConvFilterType1 &&
+      !ElectronTools::PassConversionFilter(&electron,
+                                           GetConversions(),
+                                           GetBeamSpot()->At(0),
+                                           0, 1e-6, 2.0, true, false))
+    return false;
 
-    fCutFlow->Fill(cFiducial);
+  fCutFlow->Fill(cConvFilterType1);
 
-    //apply ECAL spike removal
-    if (fApplySpikeRemoval && !ElectronTools::PassSpikeRemovalFilter(&electron))
-      continue;
+  if (fApplyConvFilterType2 && TMath::Abs(electron.ConvPartnerDCotTheta()) < 0.02 && TMath::Abs(electron.ConvPartnerDist()) < 0.02)
+    return false;
 
-    fCutFlow->Fill(cSpikeRemoval);
+  fCutFlow->Fill(cConvFilterType2);
 
-    // apply charge filter
-    if (fChargeFilter && !ElectronTools::PassChargeFilter(&electron))
-      continue;
+  if (fApplyNExpectedHitsInnerCut && !ElectronTools::PassNExpectedHits(&electron, ElectronTools::EElIdType(fIdType), fInvertNExpectedHitsInnerCut))
+    return false;
 
-    fCutFlow->Fill(cChargeFilter);
+  fCutFlow->Fill(cNExpectedHits);
 
-    //apply trigger matching
-    if (fApplyTriggerMatching &&
-        !ElectronTools::PassTriggerMatching(&electron, static_cast<mithep::TriggerObjectCol const*>(aux[kTrigObjects])))
-      continue;
-
-    fCutFlow->Fill(cTriggerMatching);
-
-    // apply conversion filters
-    if (fApplyConvFilterType1 &&
-        !ElectronTools::PassConversionFilter(&electron,
-                                             static_cast<mithep::DecayParticleCol const*>(aux[kConversions]),
-                                             static_cast<mithep::BeamSpotCol const*>(aux[kBeamSpot])->At(0),
-                                             0, 1e-6, 2.0, true, false))
-      continue;
-
-    fCutFlow->Fill(cConvFilterType1);
-
-    if (fApplyConvFilterType2 && TMath::Abs(electron.ConvPartnerDCotTheta()) < 0.02 && TMath::Abs(electron.ConvPartnerDist()) < 0.02)
-      continue;
-
-    fCutFlow->Fill(cConvFilterType2);
-
-    if (fApplyNExpectedHitsInnerCut && !ElectronTools::PassNExpectedHits(&electron, ElectronTools::EElIdType(fIdType), fInvertNExpectedHitsInnerCut))
-      continue;
-
-    fCutFlow->Fill(cNExpectedHits);
-
-    // apply d0 cut
-    if (fApplyD0Cut) {
-      if (fWhichVertex >= -1) {
-        if (!ElectronTools::PassD0Cut(&electron, static_cast<mithep::VertexCol const*>(aux[kVertices]), ElectronTools::EElIdType(fIdType), fWhichVertex))
-          continue;
-      }
-      else if (!ElectronTools::PassD0Cut(&electron, static_cast<mithep::BeamSpotCol const*>(aux[kBeamSpot]), ElectronTools::EElIdType(fIdType)))
-        continue;
+  // apply d0 cut
+  if (fApplyD0Cut) {
+    if (fWhichVertex >= -1) {
+      if (!ElectronTools::PassD0Cut(&electron, GetVertices(), ElectronTools::EElIdType(fIdType), fWhichVertex))
+        return false;
     }
-
-    fCutFlow->Fill(cD0);
-
-    // apply dz cut
-    if (fApplyDZCut && !ElectronTools::PassDZCut(&electron, static_cast<mithep::VertexCol const*>(aux[kVertices]), ElectronTools::EElIdType(fIdType), fWhichVertex))
-      continue;
-
-    fCutFlow->Fill(cDZ);
-
-    //apply id cut
-    if (!PassIdCut(electron, aux))
-      continue;
-
-    fCutFlow->Fill(cId);
-
-    //apply Isolation Cut
-    if (!PassIsolationCut(electron, aux))
-      continue;
-
-    fCutFlow->Fill(cIsolation);
-
-    if (fIsFilterMode)
-      goodElectrons->Add(&electron);
-    else
-      fFlags.At(iE) = true;
+    else if (!ElectronTools::PassD0Cut(&electron, GetBeamSpot(), ElectronTools::EElIdType(fIdType)))
+      return false;
   }
 
-  if (fIsFilterMode) {
-    // sort according to pt
-    goodElectrons->Sort();
-  }
+  fCutFlow->Fill(cD0);
+
+  // apply dz cut
+  if (fApplyDZCut && !ElectronTools::PassDZCut(&electron, GetVertices(), ElectronTools::EElIdType(fIdType), fWhichVertex))
+    return false;
+
+  fCutFlow->Fill(cDZ);
+
+  //apply id cut
+  if (!PassIdCut(electron))
+    return false;
+
+  fCutFlow->Fill(cId);
+
+  //apply Isolation Cut
+  if (!PassIsolationCut(electron))
+    return false;
+
+  fCutFlow->Fill(cIsolation);
+
+  return true;
 }
 
 //--------------------------------------------------------------------------------------------------
 Bool_t
-ElectronIdMod::PassLikelihoodId(Electron const& ele)
+mithep::ElectronIdMod::PassLikelihoodId(Electron const& ele)
 {
   Double_t LikelihoodValue = ElectronTools::Likelihood(fLH, &ele);
 
@@ -289,7 +209,7 @@ ElectronIdMod::PassLikelihoodId(Electron const& ele)
 
 //--------------------------------------------------------------------------------------------------
 Bool_t
-mithep::ElectronIdMod::PassIdCut(Electron const& ele, TObject const**)
+mithep::ElectronIdMod::PassIdCut(Electron const& ele)
 {
   switch (fIdType) {
   case ElectronTools::kTight:
@@ -328,32 +248,22 @@ mithep::ElectronIdMod::PassIdCut(Electron const& ele, TObject const**)
 
 //--------------------------------------------------------------------------------------------------
 Bool_t
-mithep::ElectronIdMod::PassIsolationCut(Electron const& ele, TObject const** aux)
+mithep::ElectronIdMod::PassIsolationCut(Electron const& ele)
 {
   switch (fIsoType) {
   case ElectronTools::kPFIso:
   case ElectronTools::kPFIsoNoL:
-    if (!aux[kPFCandidates])
-      GetAuxInput<mithep::PFCandidateCol>(kPFCandidates, aux);
-    if (!aux[kVertices])
-      GetAuxInput<mithep::VertexCol>(kVertices, aux);
-
     if (fIsoType == ElectronTools::kPFIso) {
       return ElectronTools::PassPFIso(&ele, ElectronTools::EElIsoType(fIsoType),
-                                      static_cast<mithep::PFCandidateCol const*>(aux[kPFCandidates]),
-                                      static_cast<mithep::VertexCol const*>(aux[kVertices])->At(0));
+                                      GetPFCandidates(),
+                                      GetVertices()->At(0));
     }
     else {
-      if (!aux[kNonIsolatedMuons])
-        GetAuxInput<mithep::MuonCol>(kNonIsolatedMuons, aux);
-      if (!aux[kNonIsolatedElectrons])
-        GetAuxInput<mithep::ElectronCol>(kNonIsolatedElectrons, aux);
-
       return ElectronTools::PassPFIso(&ele, ElectronTools::EElIsoType(fIsoType),
-                                      static_cast<mithep::PFCandidateCol const*>(aux[kPFCandidates]),
-                                      static_cast<mithep::VertexCol const*>(aux[kVertices])->At(0),
-                                      static_cast<mithep::MuonCol const*>(aux[kNonIsolatedMuons]),
-                                      static_cast<mithep::ElectronCol const*>(aux[kNonIsolatedElectrons]));
+                                      GetPFCandidates(),
+                                      GetVertices()->At(0),
+                                      GetNonIsolatedMuons(),
+                                      GetNonIsolatedElectrons());
     }
 
   case ElectronTools::kVBTFWorkingPoint95IndividualIso:
@@ -370,11 +280,8 @@ mithep::ElectronIdMod::PassIsolationCut(Electron const& ele, TObject const** aux
   case ElectronTools::kPhys14LooseIso:
   case ElectronTools::kPhys14MediumIso:
   case ElectronTools::kPhys14TightIso:
-    if (!aux[kPileupEnergyDensity])
-      GetAuxInput<mithep::PileupEnergyDensityCol>(kPileupEnergyDensity, aux);
-
     return ElectronTools::PassIsoRhoCorr(&ele, ElectronTools::EElIsoType(fIsoType),
-                                         static_cast<mithep::PileupEnergyDensityCol const*>(aux[kPileupEnergyDensity])->At(0)->Rho(fRhoAlgo));
+                                         GetPileupEnergyDensity()->At(0)->Rho(fRhoAlgo));
 
   case ElectronTools::kNoIso:
     return true;

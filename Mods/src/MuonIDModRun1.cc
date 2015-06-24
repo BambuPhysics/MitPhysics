@@ -271,7 +271,7 @@ void MuonIDModRun1::Process()
 	mu->BestTrk()->NPixelHits() > 0 &&
 	RChi2 < 10.0;
       break;
-    case MuonTools::kmuonPOG2012CutBasedIDTight:
+    case MuonTools::kMuonPOG2012CutBasedIdTight:
       idpass = mu->IsGlobalMuon() &&
 	mu->IsPFMuon() &&
 	mu->GlobalTrk()->RChi2() < 10 &&
@@ -318,8 +318,8 @@ void MuonIDModRun1::Process()
 				    mu->BestTrk()->NHits() > 10 &&
 				    mu->BestTrk()->NPixelHits() > 0 &&
 				    mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
-				    MuonTools::PassD0Cut(mu, fVertices, 0.20, 0) &&
-				    MuonTools::PassDZCut(mu, fVertices, 0.10, 0) &&
+				    MuonTools::PassD0Cut(mu, fVertices, MuonTools::kMVAID_BDTG_IDIso, 0) &&
+				    MuonTools::PassDZCut(mu, fVertices, MuonTools::kMVAID_BDTG_IDIso, 0) &&
 				    mu->TrkKink() < 20.0
                                   );
 	idpass =  passDenominatorM2;
@@ -360,21 +360,7 @@ void MuonIDModRun1::Process()
                 1.0 * mu->IsoR03EmEt()  +
                 1.0 * mu->IsoR03HadEt() < fCombIsolationCut);
       break;
-    case MuonTools::kTrackCaloSliding:
-      {
-        Double_t totalIso =  mu->IsoR03SumPt() + TMath::Max(mu->IsoR03EmEt() + mu->IsoR03HadEt()
-                                                            - Rho * TMath::Pi() * 0.3 * 0.3, 0.0);
-        // trick to change the signal region cut
-        double theIsoCut = fCombIsolationCut;
-        if (theIsoCut < 0.20) {
-          if (mu->Pt() >  20.0)
-            theIsoCut = 0.15;
-          else
-            theIsoCut = 0.10;
-        }
-        if (totalIso < (mu->Pt()*theIsoCut))
-          isocut = kTRUE;
-      }
+
       break;
     case MuonTools::kTrackCaloSlidingNoCorrection:
       {
@@ -565,16 +551,16 @@ void MuonIDModRun1::Process()
           fD0Cut = 0.01;
       }
       if (fWhichVertex >= -1)
-        passD0cut = MuonTools::PassD0Cut(mu, fVertices, fD0Cut, fWhichVertex);
+        passD0cut = MuonTools::PassD0Cut(mu, fVertices, fMuIDType, fWhichVertex);
       else
-        passD0cut = MuonTools::PassD0Cut(mu, fBeamSpot, fD0Cut);
+        passD0cut = MuonTools::PassD0Cut(mu, fBeamSpot, fMuIDType);
       if (!passD0cut)
         continue;
     }
 
     // apply dz cut
     if (fApplyDZCut) {
-      Bool_t passDZcut = MuonTools::PassDZCut(mu, fVertices, fDZCut, fWhichVertex);
+      Bool_t passDZcut = MuonTools::PassDZCut(mu, fVertices, fMuIDType, fWhichVertex);
       if (!passDZcut)
         continue;
     }
@@ -629,7 +615,7 @@ void MuonIDModRun1::SlaveBegin()
   else if (fMuonIDType.CompareTo("Tight") == 0)
     fMuIDType = MuonTools::kTight;
   else if (fMuonIDType.CompareTo("muonPOG2012CutBasedIDTight") == 0)
-    fMuIDType = MuonTools::kmuonPOG2012CutBasedIDTight;
+    fMuIDType = MuonTools::kMuonPOG2012CutBasedIdTight;
   else if (fMuonIDType.CompareTo("Loose") == 0)
     fMuIDType = MuonTools::kLoose;
   else if (fMuonIDType.CompareTo("WWMuIdV1") == 0)

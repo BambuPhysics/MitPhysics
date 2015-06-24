@@ -1,6 +1,10 @@
-// $Id: MuonTools.cc,v 1.28 2012/05/17 13:25:30 anlevin Exp $
-
 #include "MitPhysics/Utils/interface/MuonTools.h"
+#include "MitPhysics/Utils/interface/IsolationTools.h"
+#include "MitAna/DataTree/interface/VertexCol.h"
+#include "MitAna/DataTree/interface/BeamSpotCol.h"
+#include "MitAna/DataTree/interface/PFCandidateCol.h"
+#include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
+#include <limits>
 #include <TFile.h>
 
 ClassImp(mithep::MuonTools)
@@ -122,7 +126,7 @@ Double_t MuonTools::GetCaloCompatability(const Muon *iMuon,
   TH2D *lTPionEm  = 0;
     
   if (aEta >= 1.27) {
-  if (iCorrectedHCAL) 
+    if (iCorrectedHCAL) 
       lHad *= 1.8/2.2;
     if (lEta > 0) {
       lTPionHad = fpion_had_etaEpl;
@@ -176,16 +180,16 @@ Double_t MuonTools::GetCaloCompatability(const Muon *iMuon,
   Double_t lPSZ = 1.; 
   if (!Overflow(lTPionEm, lP,lEM))  
     lPBX = lTPionEm ->GetBinContent(lTPionEm ->GetXaxis()->FindBin(lP),
-                                     lTPionEm ->GetYaxis()->FindBin(lEM));
+                                    lTPionEm ->GetYaxis()->FindBin(lEM));
   if (!Overflow(lTPionHad,lP,lHad)) 
     lPBY = lTPionHad->GetBinContent(lTPionHad->GetXaxis()->FindBin(lP),
-                                     lTPionHad->GetYaxis()->FindBin(lHad));
+                                    lTPionHad->GetYaxis()->FindBin(lHad));
   if (!Overflow(lTPionHo, lP,lHO))  
     lPBZ = lTPionHo ->GetBinContent(lTPionHo ->GetXaxis()->FindBin(lP),
-                                     lTPionHo ->GetYaxis()->FindBin(lHO));
+                                    lTPionHo ->GetYaxis()->FindBin(lHO));
   if (!Overflow(lTMuonEm, lP,lEM )) 
     lPSX = lTMuonEm ->GetBinContent(lTMuonEm ->GetXaxis()->FindBin(lP),
-                                     lTMuonEm ->GetYaxis()->FindBin(lEM));
+                                    lTMuonEm ->GetYaxis()->FindBin(lEM));
   if (!Overflow(lTMuonHad,lP,lHad)) 
     lPSY = lTMuonHad->GetBinContent(lTMuonHad->GetXaxis()->FindBin(lP),
                                     lTMuonHad->GetYaxis()->FindBin(lHad));
@@ -269,36 +273,36 @@ Bool_t MuonTools::IsGood(const mithep::Muon *iMuon, ESelType iSel) const
   Double_t tm2dcut = 0.;
 
   switch(iSel) {
-    case kAllArbitrated:
-      if (iMuon->StandaloneTrk() != 0 || iMuon->GlobalTrk()!= 0)  
-        return kTRUE;
-      if (iMuon->NSegments() > 0) 
-        return kTRUE;
-      break;
-    case kPromptTight: 
-      return iMuon->PromptTight(Muon::kAny);
-      break;
-    case kTMOneStationLoose:
-      return iMuon->TMOneStation(999999,999999);
-      break;
-    case kTMOneStationTight:
-      return iMuon->TMOneStation();
-      break;
-    case kTMLastStationLoose: 
-      return iMuon->TMLastStation(999999,999999);
-      break;
-    case kTMLastStationTight: 
-      return iMuon->TMLastStation();
-      break;
-    case kTM2DCompatibilityLoose: 
-      tm2dcut = 0.7;
-      break;
-    case kTM2DCompatibilityTight: 
-      tm2dcut = 1.0;
-      break;
-    default:
-      return kFALSE;
-      break;
+  case kAllArbitrated:
+    if (iMuon->StandaloneTrk() != 0 || iMuon->GlobalTrk()!= 0)  
+      return kTRUE;
+    if (iMuon->NSegments() > 0) 
+      return kTRUE;
+    break;
+  case kPromptTight: 
+    return iMuon->PromptTight(Muon::kAny);
+    break;
+  case kTMOneStationLoose:
+    return iMuon->TMOneStation(999999,999999);
+    break;
+  case kTMOneStationTight:
+    return iMuon->TMOneStation();
+    break;
+  case kTMLastStationLoose: 
+    return iMuon->TMLastStation(999999,999999);
+    break;
+  case kTMLastStationTight: 
+    return iMuon->TMLastStation();
+    break;
+  case kTM2DCompatibilityLoose: 
+    tm2dcut = 0.7;
+    break;
+  case kTM2DCompatibilityTight: 
+    tm2dcut = 1.0;
+    break;
+  default:
+    return kFALSE;
+    break;
   }
 
   Double_t lVal = GetSegmentCompatability(iMuon); 
@@ -311,6 +315,7 @@ Bool_t MuonTools::IsGood(const mithep::Muon *iMuon, ESelType iSel) const
     return kTRUE;
 
   return kFALSE;
+
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -357,35 +362,35 @@ Double_t MuonTools::GetSegmentCompatability(const mithep::Muon *iMuon) const
       lPCross++;
 
       switch (lNStationsCrossed) { 
-        case 1 : 
-          lStWeight[i0] =  1.;
-          break;
-        case 2 :
-          if (lPCross == 0 ) 
-            lStWeight[i0] = 0.33;
-          else 
-            lStWeight[i0] = 0.67;
-          break;
-        case 3 : 
-          if (lPCross == 0) 
-            lStWeight[i0] = 0.23;
-          else if (lPCross == 1) 
-            lStWeight[i0] = 0.33;
-          else 
-            lStWeight[i0] = 0.44;
-          break;
-        case 4 : 
-          if (lPCross == 0) 
-            lStWeight[i0] = 0.10;
-          else if (lPCross == 1) 
-            lStWeight[i0] = 0.20;
-          else if (lPCross == 2) 
-            lStWeight[i0] = 0.30;
-          else                    
-            lStWeight[i0] = 0.40;
-          break;
-        default : 
-          lStWeight[i0] = 1./lNStationsCrossed;
+      case 1 : 
+        lStWeight[i0] =  1.;
+        break;
+      case 2 :
+        if (lPCross == 0 ) 
+          lStWeight[i0] = 0.33;
+        else 
+          lStWeight[i0] = 0.67;
+        break;
+      case 3 : 
+        if (lPCross == 0) 
+          lStWeight[i0] = 0.23;
+        else if (lPCross == 1) 
+          lStWeight[i0] = 0.33;
+        else 
+          lStWeight[i0] = 0.44;
+        break;
+      case 4 : 
+        if (lPCross == 0) 
+          lStWeight[i0] = 0.10;
+        else if (lPCross == 1) 
+          lStWeight[i0] = 0.20;
+        else if (lPCross == 2) 
+          lStWeight[i0] = 0.30;
+        else                    
+          lStWeight[i0] = 0.40;
+        break;
+      default : 
+        lStWeight[i0] = 1./lNStationsCrossed;
       }
     
       if (lStSegmentmatch[i0] <= 0 && lStBoundary[i0] != 0.)
@@ -413,6 +418,337 @@ Double_t MuonTools::GetSegmentCompatability(const mithep::Muon *iMuon) const
 }
 
 //--------------------------------------------------------------------------------------------------
+Bool_t
+mithep::MuonTools::PassClass(const Muon *mu, EMuClassType classType)
+{
+  switch (classType) {
+  case kAll:
+    return true;
+
+  case kGlobal:
+    return mu->HasGlobalTrk() && mu->IsTrackerMuon();
+
+  case kGlobalorTracker:
+    return mu->HasGlobalTrk() || mu->IsTrackerMuon();
+
+  case kGlobalTracker:
+    if (mu->HasGlobalTrk() && mu->GlobalTrk()->Chi2() / mu->GlobalTrk()->Ndof() < 10 &&
+        (mu->NSegments() > 1 || mu->NMatches() > 1) && mu->NValidHits() > 0)
+      return true;
+    if (mu->IsTrackerMuon() && mu->Quality().Quality(MuonQuality::TMLastStationTight))
+      return true;
+
+  case kSta:
+    return mu->HasStandaloneTrk();
+
+  case kTrackerMuon:
+    return mu->HasTrackerTrk() && mu->IsTrackerMuon() &&
+      mu->Quality().Quality(MuonQuality::TrackerMuonArbitrated);
+
+  case kCaloMuon:
+    return mu->HasTrackerTrk() && mu->IsCaloMuon();
+
+  case kTrackerBased:
+    return mu->HasTrackerTrk();
+
+  case kGlobalOnly:
+    return mu->HasGlobalTrk();
+
+  default:
+    break;
+  }
+
+  return false;
+}
+
+//--------------------------------------------------------------------------------------------------
+void
+mithep::MuonTools::MuonPtEta(const Muon *mu, EMuClassType classType, Double_t& pt, Double_t& absEta)
+{
+  switch (classType) {
+  case kAll:
+    pt = mu->Pt();
+    absEta = TMath::Abs(mu->Eta());
+    return;
+
+  case kGlobal:
+    if (mu->TrackerTrk()) {
+      pt = mu->TrackerTrk()->Pt();
+      absEta = TMath::Abs(mu->TrackerTrk()->Eta());
+    }
+    else {
+      pt = mu->Pt();
+      absEta = TMath::Abs(mu->Eta());
+    }
+    return;
+
+  case kGlobalorTracker:
+    if (mu->TrackerTrk()) {
+      pt = mu->TrackerTrk()->Pt();
+      absEta = TMath::Abs(mu->TrackerTrk()->Eta());
+    }
+    else {
+      pt = mu->Pt();
+      absEta = TMath::Abs(mu->Eta());
+    }
+    return;
+
+  case kGlobalTracker:
+    pt = mu->TrackerTrk()->Pt();
+    absEta = TMath::Abs(mu->TrackerTrk()->Eta());
+    return;
+
+  case kSta:
+    pt = mu->StandaloneTrk()->Pt();
+    absEta = TMath::Abs(mu->StandaloneTrk()->Eta());
+    return;
+
+  case kTrackerMuon:
+    pt = mu->TrackerTrk()->Pt();
+    absEta = TMath::Abs(mu->TrackerTrk()->Eta());
+    return;
+
+  case kCaloMuon:
+    pt = mu->TrackerTrk()->Pt();
+    absEta = TMath::Abs(mu->TrackerTrk()->Eta());
+    return;
+
+  case kTrackerBased:
+    pt = mu->TrackerTrk()->Pt();
+    absEta = TMath::Abs(mu->TrackerTrk()->Eta());
+    return;
+
+  case kGlobalOnly:
+    if (mu->TrackerTrk()) {
+      pt = mu->TrackerTrk()->Pt();
+      absEta = TMath::Abs(mu->TrackerTrk()->Eta());
+    }
+    else {
+      pt = mu->Pt();
+      absEta = TMath::Abs(mu->Eta());
+    }
+    return;
+
+  default:
+    break;
+  }
+
+  pt = mu->Pt();
+  absEta = TMath::Abs(mu->Eta());
+}
+
+//--------------------------------------------------------------------------------------------------
+Bool_t 
+mithep::MuonTools::PassIso(const Muon *mu, EMuIsoType isoType)
+{
+  switch (isoType) {
+  case kTrackCalo:
+    return mu->IsoR03SumPt() < 5. && mu->IsoR03EmEt() + mu->IsoR03HadEt() < 5.;
+
+  case kTrackCaloCombined:
+    return mu->IsoR03SumPt() + mu->IsoR03EmEt()  + mu->IsoR03HadEt() < 10.;
+
+  case kNoIso:
+    return true;
+
+  default:
+    break;
+  }
+
+  return false;
+}
+
+Bool_t
+mithep::MuonTools::PassIsoRhoCorr(Muon const* mu, MuonTools::EMuIsoType type, Double_t rho, PFCandidateCol const* pfCandidates/* = 0*/, Vertex const* vertex/* = 0*/)
+{
+  switch (type) {
+  case kTrackCaloSliding:
+    return mu->IsoR03SumPt() + TMath::Max(mu->IsoR03EmEt() + mu->IsoR03HadEt() - rho * TMath::Pi() * 0.3 * 0.3, 0.) < mu->Pt() * 0.15;
+
+  case kCombinedRelativeConeAreaCorrected:
+    return mu->IsoR03SumPt() + mu->IsoR03EmEt() + mu->IsoR03HadEt()
+      - rho * MuonEffectiveArea(kMuEMIso03, mu->Eta())
+      - rho * MuonEffectiveArea(kMuHadIso03, mu->Eta())
+      < mu->Pt() * 0.40;
+
+  case kPFIsoEffectiveAreaCorrected:
+    return IsolationTools::PFMuonIsolation(mu, pfCandidates, vertex, 0.1, 1., 0.3, 0., 0.3)
+      - rho * MuonEffectiveArea(kMuNeutralIso03, mu->Eta()) < mu->Pt() * 0.15;
+
+  default:
+    break;
+  }
+
+  return false;
+}
+
+Bool_t
+mithep::MuonTools::PassPFIso(Muon const* mu, EMuIsoType type, PFCandidateCol const* pfCandidates,
+                             Vertex const* vertex/* = 0*/,
+                             PFCandidateCol const* pileupCands/* = 0*/,
+                             ElectronCol const* nonisolatedElectrons/* = 0*/,
+                             MuonCol const* nonisolatedMuons/* = 0*/)
+{
+  switch (type) {
+  case kPFIso:
+    {
+      Double_t cutValue = 0.;
+      if (mu->AbsEta() < 1.479) {
+        if (mu->Pt() > 20)
+          cutValue = 0.13;
+        else
+          cutValue = 0.06;
+      }
+      else {
+        if (mu->Pt() > 20)
+          cutValue = 0.09;
+        else
+          cutValue = 0.05;
+      }
+      return IsolationTools::PFMuonIsolation(mu, pfCandidates, vertex,
+                                             0.1, 1.0, 0.3, 0.0, 0.3) < mu->Pt() * cutValue;
+    }
+
+  case kPFRadialIso:
+    {
+      Double_t cutValue = 0.;
+      if (mu->Pt() > 20)
+        cutValue = 0.10;
+      else
+        cutValue = 0.05;
+
+      // pfCandidates here should be NoPileupCandidates
+      return IsolationTools::PFRadialMuonIsolation(mu, pfCandidates, 1.0, 0.3) < mu->Pt() * cutValue;
+    }
+
+  case kPFIsoBetaPUCorrected:
+    // pfCandidates here should be NoPileupCandidates
+    return IsolationTools::BetaMwithPUCorrection(pfCandidates, pileupCands, mu, 0.4) < mu->Pt() * 0.2;
+
+  case kPFIsoNoL:
+    {
+      Double_t cutValue = 0.;
+      if (mu->AbsEta() < 1.479) {
+        if (mu->Pt() > 20)
+          cutValue = 0.13;
+        else
+          cutValue = 0.06;
+      }
+      else {
+        if (mu->Pt() > 20)
+          cutValue = 0.09;
+        else
+          cutValue = 0.05;
+      }
+      return IsolationTools::PFMuonIsolation(mu, pfCandidates, nonisolatedMuons, nonisolatedElectrons,
+                                             vertex, 0.1, 1.0, 0.3, 0., 0.3) < mu->Pt() * cutValue;
+    }
+
+  case kMVAIso_BDTG_IDIso:
+    return IsolationTools::PFMuonIsolation(mu, pfCandidates, vertex,
+                                           0.1, 1.0, 0.3, 0.0, 0.3) < mu->Pt() * 0.4;
+
+  default:
+    break;
+  }
+
+  return false;
+}
+
+//--------------------------------------------------------------------------------------------------
+Bool_t
+mithep::MuonTools::PassId(const Muon *mu, EMuIdType idType)
+{
+  Double_t normChi2 = 0.0;
+  if (mu->HasGlobalTrk())
+    normChi2 = mu->GlobalTrk()->Chi2() / mu->GlobalTrk()->Ndof();
+  else if (mu->BestTrk() != 0)
+    normChi2 = mu->BestTrk()->Chi2() / mu->BestTrk()->Ndof();
+
+  switch (idType) {
+  case kWMuId:
+    return mu->BestTrk() != 0 &&
+      mu->BestTrk()->NHits() > 10 &&
+      normChi2 < 10.0 &&
+      (mu->NSegments() > 1 || mu->NMatches() > 1) &&
+      mu->BestTrk()->NPixelHits() > 0 &&
+      mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
+
+  case kZMuId:
+    return mu->BestTrk() != 0 &&
+      mu->BestTrk()->NHits() > 10 &&
+      (mu->NSegments() > 1 || mu->NMatches() > 1) &&
+      mu->BestTrk()->NPixelHits() > 0 &&
+      mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
+
+  case kLoose:
+    return mu->BestTrk() != 0 &&
+      mu->Quality().Quality(MuonQuality::TMOneStationLoose) &&
+      mu->Quality().Quality(MuonQuality::TM2DCompatibilityLoose) &&
+      mu->BestTrk()->NHits() > 10 &&
+      normChi2 < 10.0 &&
+      mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
+
+  case kTight:
+    return mu->BestTrk() != 0 &&
+      mu->NTrkLayersHit() > 5 &&
+      mu->IsPFMuon() == kTRUE &&
+      mu->BestTrk()->NPixelHits() > 0 &&
+      normChi2 < 10.0;
+
+  case kMuonPOG2012CutBasedIdTight:
+    return mu->IsGlobalMuon() &&
+      mu->IsPFMuon() &&
+      mu->GlobalTrk()->RChi2() < 10 &&
+      mu->NValidHits() != 0 &&
+      mu->NMatches() > 1    &&
+      mu->BestTrk()->NPixelHits() != 0 &&
+      mu->NTrkLayersHit() > 5;
+
+    // 2012 WW analysis for 42x (there is no PFMuon link)
+  case kWWMuIdV1:
+    return mu->BestTrk() != 0 &&
+      mu->NTrkLayersHit() > 5 &&
+      mu->BestTrk()->NPixelHits() > 0 &&
+      mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
+      mu->TrkKink() < 20.0;
+
+    // 2010 WW analysis
+  case kWWMuIdV2:
+    return mu->BestTrk() != 0 &&
+      mu->BestTrk()->NHits() > 10 &&
+      mu->BestTrk()->NPixelHits() > 0 &&
+      mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1;
+
+    // 2011 WW analysis
+  case kWWMuIdV3:
+    return mu->BestTrk() != 0 &&
+      mu->BestTrk()->NHits() > 10 &&
+      mu->BestTrk()->NPixelHits() > 0 &&
+      mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
+      mu->TrkKink() < 20.0;
+
+    // 2012 WW analysis
+  case kWWMuIdV4:
+    return mu->BestTrk() != 0 &&
+      mu->NTrkLayersHit() > 5 &&
+      mu->IsPFMuon() == kTRUE &&
+      mu->BestTrk()->NPixelHits() > 0 &&
+      mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
+      mu->TrkKink() < 20.0;
+    break;
+
+  case kNoId:
+    return true;
+
+  default:
+    break;
+  }
+
+  return false;
+}
+
+//--------------------------------------------------------------------------------------------------
 TH2D *MuonTools::LoadHisto(const char *name, TFile *file) const
 {
   // Load histogram with given name from given file and return it.
@@ -425,81 +761,109 @@ TH2D *MuonTools::LoadHisto(const char *name, TFile *file) const
   ret->SetDirectory(0);
   return ret;
 }
-//--------------------------------------------------------------------------------------------------
-Bool_t MuonTools::PassD0Cut(const Muon *mu, const VertexCol *vertices, Double_t fD0Cut, Int_t nVertex) 
+
+Bool_t
+MuonTools::PassD0Cut(Muon const* mu, VertexCol const* vertices, EMuIdType idType, Int_t iVertex/* = 0*/)
 {
-  Bool_t d0cut = kFALSE;
-  const Track *mt = mu->BestTrk();
-  if (!mt) return kFALSE;
+  Track const* mt = mu->BestTrk();
+  if (!mt)
+    return false;
 
-  if( nVertex >= (int) vertices->GetEntries() )
-    nVertex = vertices->GetEntries() - 1;
+  if (iVertex >= (int)vertices->GetEntries())
+    iVertex = vertices->GetEntries() - 1;
 
-  Double_t d0_real = 1e30;
-  if(nVertex >= 0) d0_real = TMath::Abs(mt->D0Corrected(*vertices->At(nVertex)));
-  else            {
-    Double_t distVtx = 999.0;
-    Int_t closestVtx = 0;
-    for(UInt_t nv=0; nv<vertices->GetEntries(); nv++){
-      double dz = TMath::Abs(mt->DzCorrected(*vertices->At(nv)));
-      if(dz < distVtx) {
-	distVtx    = dz;
-        closestVtx = nv;
-      }
-    }
-    d0_real = TMath::Abs(mt->D0Corrected(*vertices->At(closestVtx)));
-  }
-  if(d0_real < fD0Cut) d0cut = kTRUE;
-  
-  return d0cut;
-}
-
-//--------------------------------------------------------------------------------------------------
-Bool_t MuonTools::PassD0Cut(const Muon *mu, const BeamSpotCol *beamspots, Double_t fD0Cut) 
-{
-  Bool_t d0cut = kFALSE;
-  const Track *mt = mu->BestTrk();
-  if (!mt) return kFALSE;
-
-  // d0 cut
-  Double_t d0_real = 99999;
-  for(UInt_t i0 = 0; i0 < beamspots->GetEntries(); i0++) {
-    Double_t pD0 = mt->D0Corrected(*beamspots->At(i0));
-    if(TMath::Abs(pD0) < TMath::Abs(d0_real)) d0_real = TMath::Abs(pD0);
-  }
-  if(d0_real < fD0Cut) d0cut = kTRUE;
-  
-  return d0cut;
-}
-
-//--------------------------------------------------------------------------------------------------
-Bool_t MuonTools::PassDZCut(const Muon *mu, const VertexCol *vertices, Double_t fDZCut, Int_t nVertex) 
-{
-  Bool_t dzcut = kFALSE;
-  const Track *mt = mu->BestTrk();
-  if (!mt) return kFALSE;
-
-  if( nVertex >= (int) vertices->GetEntries() )
-    nVertex = vertices->GetEntries() - 1;
-
-  Double_t distVtx = 999.0;
-  if(nVertex >= 0) distVtx = TMath::Abs(mt->DzCorrected(*vertices->At(nVertex)));
+  Double_t d0 = 0.;
+  if(iVertex >= 0)
+    d0 = TMath::Abs(mt->D0Corrected(*vertices->At(iVertex)));
   else {
-    for(UInt_t nv=0; nv<vertices->GetEntries(); nv++){
+    Double_t distVtx = std::numeric_limits<double>::max();
+    for(UInt_t nv = 0; nv != vertices->GetEntries(); ++nv){
       double dz = TMath::Abs(mt->DzCorrected(*vertices->At(nv)));
       if(dz < distVtx) {
         distVtx = dz;
+        d0 = TMath::Abs(mt->D0Corrected(*vertices->At(nv)));
       }
     }
   }
 
-  if(distVtx < fDZCut) dzcut = kTRUE;
-  
-  return dzcut;
+  return PassD0Cut(mu, d0, idType);
+}
+
+Bool_t
+MuonTools::PassD0Cut(Muon const* mu, BeamSpotCol const* beamspots, EMuIdType idType)
+{
+  Track const* mt = mu->BestTrk();
+  if (!mt)
+    return false;
+
+  // d0 cut
+  Double_t d0 = std::numeric_limits<double>::max();
+  for (UInt_t i0 = 0; i0 < beamspots->GetEntries(); ++i0) {
+    Double_t pD0 = mt->D0Corrected(*beamspots->At(i0));
+    if(TMath::Abs(pD0) < d0)
+      d0 = TMath::Abs(pD0);
+  }
+
+  return PassD0Cut(mu, d0, idType);
+}
+
+Bool_t
+MuonTools::PassD0Cut(Muon const*, Double_t d0, EMuIdType idType)
+{
+  switch (idType) {
+  case kMuonPOG2012CutBasedIdTight:
+  case kMVAID_BDTG_IDIso:
+    return d0 < 0.2;
+    break;
+  default:
+    return d0 < 0.3;
+    break;
+  }
+}
+
+Bool_t
+MuonTools::PassDZCut(Muon const* mu, VertexCol const* vertices, EMuIdType idType, Int_t iVertex/* = 0*/)
+{
+  const Track *mt = mu->BestTrk();
+  if (!mt)
+    return false;
+
+  if (iVertex >= (int) vertices->GetEntries())
+    iVertex = vertices->GetEntries()-1;
+
+  Double_t dz;
+
+  if (iVertex >= 0)
+    dz = TMath::Abs(mt->DzCorrected(*vertices->At(iVertex)));
+  else {
+    dz = std::numeric_limits<double>::max();
+    for(UInt_t nv = 0; nv != vertices->GetEntries(); ++nv) {
+      double test = TMath::Abs(mt->DzCorrected(*vertices->At(nv)));
+      if(test < dz)
+        dz = test;
+    }
+  }
+
+  return PassDZCut(mu, dz, idType);
+}
+
+Bool_t
+MuonTools::PassDZCut(Muon const*, Double_t dz, EMuIdType idType)
+{
+  switch (idType) {
+  case kMuonPOG2012CutBasedIdTight:
+    return dz < 0.5;
+
+  case kMVAID_BDTG_IDIso:
+    return dz < 0.1;
+
+  default:
+    return dz < 20.;
+  }
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t MuonTools::PassSoftMuonCut(const Muon *mu, const VertexCol *vertices, const Double_t fDZCut,
+Bool_t MuonTools::PassSoftMuonCut(const Muon *mu, const VertexCol *vertices, const Double_t,
                                   const Bool_t applyIso) 
 {
   if(mu->Pt() <= 3.0) return kFALSE;
@@ -510,14 +874,14 @@ Bool_t MuonTools::PassSoftMuonCut(const Muon *mu, const VertexCol *vertices, con
 
   if(mu->NTrkLayersHit() <= 5) return kFALSE;
 
-  if(!PassD0Cut(mu, vertices, 0.2, 0)) return kFALSE;
+  if(!PassD0Cut(mu, vertices, kMuonPOG2012CutBasedIdTight, 0)) return kFALSE;
 
-  if(!PassDZCut(mu, vertices, fDZCut, 0)) return kFALSE;
+  if(!PassDZCut(mu, vertices, kMuonPOG2012CutBasedIdTight, 0)) return kFALSE;
 
   if(applyIso == kTRUE){
     Double_t totalIso = 1.0 * mu->IsoR03SumPt() + 
-                        1.0 * mu->IsoR03EmEt() + 
-                        1.0 * mu->IsoR03HadEt();
+      1.0 * mu->IsoR03EmEt() + 
+      1.0 * mu->IsoR03HadEt();
     if (totalIso < (mu->Pt()*0.10) && mu->Pt() > 20.0) return kFALSE;
   }
 
@@ -621,7 +985,7 @@ Double_t MuonTools::MuonEffectiveArea(EMuonEffectiveAreaType type, Double_t Eta,
   
   //2012 Data Effective Areas
   else if (EffectiveAreaTarget == kMuEAData2012) {
-	    if (type == kMuGammaIsoDR0p0To0p1) {
+    if (type == kMuGammaIsoDR0p0To0p1) {
       if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 ) EffectiveArea = 0.005;
       if (fabs(Eta) >= 1.0 && fabs(Eta) < 1.479 ) EffectiveArea = 0.002;
       if (fabs(Eta) >= 1.479 && fabs(Eta) < 2.0 ) EffectiveArea = 0.005;
@@ -702,15 +1066,15 @@ Double_t MuonTools::MuonEffectiveArea(EMuonEffectiveAreaType type, Double_t Eta,
       if (fabs(Eta) >= 2.3  ) EffectiveArea = 0.077;
     }
 
-	
-	
+        
+        
     if (type == kMuGammaIso04){
       if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 )   EffectiveArea = 0.50419;
       if (fabs(Eta) >= 1.0 && fabs(Eta) < 1.479 ) EffectiveArea = 0.30582;
       if (fabs(Eta) >= 1.479 && fabs(Eta) < 2.0 ) EffectiveArea = 0.19765;
       if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 )   EffectiveArea = 0.28723;
       if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 )   EffectiveArea = 0.52529;
-      if (fabs(Eta) >= 2.3 )  		      EffectiveArea = 0.48818;
+      if (fabs(Eta) >= 2.3 )                  EffectiveArea = 0.48818;
     }
     if (type == kMuNeutralHadronIso04){
       if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 )   EffectiveArea = 0.16580;
@@ -718,7 +1082,7 @@ Double_t MuonTools::MuonEffectiveArea(EMuonEffectiveAreaType type, Double_t Eta,
       if (fabs(Eta) >= 1.479 && fabs(Eta) < 2.0 ) EffectiveArea = 0.24695;
       if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 )   EffectiveArea = 0.22021;
       if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 )   EffectiveArea = 0.34045;
-      if (fabs(Eta) >= 2.3 )  		      EffectiveArea = 0.21592;
+      if (fabs(Eta) >= 2.3 )                  EffectiveArea = 0.21592;
     }
     if (type == kMuGammaAndNeutralHadronIso04){
       if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 )   EffectiveArea = 0.674;
@@ -726,7 +1090,7 @@ Double_t MuonTools::MuonEffectiveArea(EMuonEffectiveAreaType type, Double_t Eta,
       if (fabs(Eta) >= 1.479 && fabs(Eta) < 2.0 ) EffectiveArea = 0.442;
       if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 )   EffectiveArea = 0.515;
       if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 )   EffectiveArea = 0.821;
-      if (fabs(Eta) >= 2.3 )  		      EffectiveArea = 0.660;
+      if (fabs(Eta) >= 2.3 )                  EffectiveArea = 0.660;
     }
     if (type == kMuGammaAndNeutralHadronIso03){
       if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 )   EffectiveArea = 0.382;
@@ -734,7 +1098,7 @@ Double_t MuonTools::MuonEffectiveArea(EMuonEffectiveAreaType type, Double_t Eta,
       if (fabs(Eta) >= 1.479 && fabs(Eta) < 2.0 ) EffectiveArea = 0.242;
       if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 )   EffectiveArea = 0.326;
       if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 )   EffectiveArea = 0.462;
-      if (fabs(Eta) >= 2.3 )  		      EffectiveArea = 0.372;
+      if (fabs(Eta) >= 2.3 )                  EffectiveArea = 0.372;
     }
     if (type == kMuGammaAndNeutralHadronIso04Tight){
       if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 )   EffectiveArea = 0.340;
@@ -742,7 +1106,7 @@ Double_t MuonTools::MuonEffectiveArea(EMuonEffectiveAreaType type, Double_t Eta,
       if (fabs(Eta) >= 1.479 && fabs(Eta) < 2.0 ) EffectiveArea = 0.315;
       if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 )   EffectiveArea = 0.415;
       if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 )   EffectiveArea = 0.658;
-      if (fabs(Eta) >= 2.3 )  		      EffectiveArea = 0.405;
+      if (fabs(Eta) >= 2.3 )                  EffectiveArea = 0.405;
     }
     if (type == kMuGammaAndNeutralHadronIso03Tight){
       if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 )   EffectiveArea = 0.207;
@@ -750,7 +1114,7 @@ Double_t MuonTools::MuonEffectiveArea(EMuonEffectiveAreaType type, Double_t Eta,
       if (fabs(Eta) >= 1.479 && fabs(Eta) < 2.0 ) EffectiveArea = 0.177;
       if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 )   EffectiveArea = 0.271;
       if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 )   EffectiveArea = 0.348;
-      if (fabs(Eta) >= 2.3 )  		      EffectiveArea = 0.246;
+      if (fabs(Eta) >= 2.3 )                  EffectiveArea = 0.246;
     }
   }
 
@@ -845,7 +1209,7 @@ Double_t MuonTools::MuonEffectiveArea(EMuonEffectiveAreaType type, Double_t Eta,
       if (fabs(Eta) >= 1.5 && fabs(Eta) < 2.0 ) EffectiveArea = 0.022;
       if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 ) EffectiveArea = 0.034;
       if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 ) EffectiveArea = 0.041;
-      if (fabs(Eta) >= 2.3 )  		    EffectiveArea = 0.048;
+      if (fabs(Eta) >= 2.3 )                EffectiveArea = 0.048;
     }
     if (type == kMuGammaIso04){
       if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 ) EffectiveArea = 0.085;
@@ -853,39 +1217,39 @@ Double_t MuonTools::MuonEffectiveArea(EMuonEffectiveAreaType type, Double_t Eta,
       if (fabs(Eta) >= 1.5 && fabs(Eta) < 2.0 ) EffectiveArea = 0.038;
       if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 ) EffectiveArea = 0.055;
       if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 ) EffectiveArea = 0.070;
-      if (fabs(Eta) >= 2.3 )  		    EffectiveArea = 0.081;
+      if (fabs(Eta) >= 2.3 )                EffectiveArea = 0.081;
     }
     if (type == kMuNeutralHadronIso03){
-  	if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 ) EffectiveArea = 0.027;
-  	if (fabs(Eta) >= 1.0 && fabs(Eta) < 1.5 ) EffectiveArea = 0.039;
-  	if (fabs(Eta) >= 1.5 && fabs(Eta) < 2.0 ) EffectiveArea = 0.044;
-  	if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 ) EffectiveArea = 0.047;
-  	if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 ) EffectiveArea = 0.055;
-  	if (fabs(Eta) >= 2.3 )		      EffectiveArea = 0.065;
+      if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 ) EffectiveArea = 0.027;
+      if (fabs(Eta) >= 1.0 && fabs(Eta) < 1.5 ) EffectiveArea = 0.039;
+      if (fabs(Eta) >= 1.5 && fabs(Eta) < 2.0 ) EffectiveArea = 0.044;
+      if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 ) EffectiveArea = 0.047;
+      if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 ) EffectiveArea = 0.055;
+      if (fabs(Eta) >= 2.3 )                  EffectiveArea = 0.065;
     }
     if (type == kMuNeutralHadronIso04){
-  	if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 ) EffectiveArea = 0.046;
-  	if (fabs(Eta) >= 1.0 && fabs(Eta) < 1.5 ) EffectiveArea = 0.067;
-  	if (fabs(Eta) >= 1.5 && fabs(Eta) < 2.0 ) EffectiveArea = 0.074;
-  	if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 ) EffectiveArea = 0.083;
-  	if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 ) EffectiveArea = 0.095;
-  	if (fabs(Eta) >= 2.3 )		      EffectiveArea = 0.105;
+      if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 ) EffectiveArea = 0.046;
+      if (fabs(Eta) >= 1.0 && fabs(Eta) < 1.5 ) EffectiveArea = 0.067;
+      if (fabs(Eta) >= 1.5 && fabs(Eta) < 2.0 ) EffectiveArea = 0.074;
+      if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 ) EffectiveArea = 0.083;
+      if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 ) EffectiveArea = 0.095;
+      if (fabs(Eta) >= 2.3 )                  EffectiveArea = 0.105;
     }
     if (type == kMuGammaAndNeutralHadronIso03){
-  	if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 ) EffectiveArea = 0.076;
-  	if (fabs(Eta) >= 1.0 && fabs(Eta) < 1.5 ) EffectiveArea = 0.070;
-  	if (fabs(Eta) >= 1.5 && fabs(Eta) < 2.0 ) EffectiveArea = 0.067;
-  	if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 ) EffectiveArea = 0.082;
-  	if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 ) EffectiveArea = 0.097;
-  	if (fabs(Eta) >= 2.3 )		      EffectiveArea = 0.115;
+      if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 ) EffectiveArea = 0.076;
+      if (fabs(Eta) >= 1.0 && fabs(Eta) < 1.5 ) EffectiveArea = 0.070;
+      if (fabs(Eta) >= 1.5 && fabs(Eta) < 2.0 ) EffectiveArea = 0.067;
+      if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 ) EffectiveArea = 0.082;
+      if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 ) EffectiveArea = 0.097;
+      if (fabs(Eta) >= 2.3 )                  EffectiveArea = 0.115;
     }
     if (type == kMuGammaAndNeutralHadronIso04){
-  	if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 ) EffectiveArea = 0.132;
-  	if (fabs(Eta) >= 1.0 && fabs(Eta) < 1.5 ) EffectiveArea = 0.120;
-  	if (fabs(Eta) >= 1.5 && fabs(Eta) < 2.0 ) EffectiveArea = 0.114;
-  	if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 ) EffectiveArea = 0.139;
-  	if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 ) EffectiveArea = 0.168;
-  	if (fabs(Eta) >= 2.3 )		      EffectiveArea = 0.189;
+      if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 ) EffectiveArea = 0.132;
+      if (fabs(Eta) >= 1.0 && fabs(Eta) < 1.5 ) EffectiveArea = 0.120;
+      if (fabs(Eta) >= 1.5 && fabs(Eta) < 2.0 ) EffectiveArea = 0.114;
+      if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 ) EffectiveArea = 0.139;
+      if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 ) EffectiveArea = 0.168;
+      if (fabs(Eta) >= 2.3 )                  EffectiveArea = 0.189;
     }
     /// END FROM SLIDE 11 OF  https://indico.cern.ch/getFile.py/access?contribId=1&resId=0&materialId=slides&confId=188494
 
@@ -1047,7 +1411,7 @@ Double_t MuonTools::MuonEffectiveArea(EMuonEffectiveAreaType type, Double_t Eta,
       if (fabs(Eta) >= 1.479 && fabs(Eta) < 2.0 ) EffectiveArea = 0.009;
       if (fabs(Eta) >= 2.0 && fabs(Eta) < 2.2 )   EffectiveArea = 0.009;
       if (fabs(Eta) >= 2.2 && fabs(Eta) < 2.3 )   EffectiveArea = 0.015;
-      if (fabs(Eta) >= 2.3  ) 		      EffectiveArea = 0.017;
+      if (fabs(Eta) >= 2.3  )                 EffectiveArea = 0.017;
     }
     if (type == kMuNeutralHadronIsoDR0p2To0p3) {
       if (fabs(Eta) >= 0.0 && fabs(Eta) < 1.0 ) EffectiveArea = 0.009;
@@ -1078,5 +1442,4 @@ Double_t MuonTools::MuonEffectiveArea(EMuonEffectiveAreaType type, Double_t Eta,
   return EffectiveArea;  
 
 }
-
 
