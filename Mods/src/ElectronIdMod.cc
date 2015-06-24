@@ -68,6 +68,9 @@ ElectronIdMod::IdBegin()
     break;
   }
 
+  if (fApplyTriggerMatching && fAuxInputNames[kTrigObjects] == "")
+    SendError(kAbortAnalysis, "SlaveBegin", "Trigger matching turned on but HLT object collection not given.");
+
   fCutFlow->SetBins(nCuts, 0., double(nCuts));
   TAxis* xaxis = fCutFlow->GetXaxis();
   xaxis->SetBinLabel(cAll + 1, "All");

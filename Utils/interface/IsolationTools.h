@@ -59,19 +59,19 @@ namespace mithep
     static Double_t PFElectronIsolation2012(const Electron *ele, const Vertex *vertex, 
                                             const PFCandidateCol *PFCands, 
                                             Double_t rho,
-                                            ElectronTools::EElectronEffectiveAreaTarget EffectiveAreaTarget,
+                                            ElectronTools::EElectronEffectiveAreaTarget,
                                             const ElectronCol *goodElectrons = 0,
                                             const MuonCol *goodMuons = 0,
                                             Double_t dRMax = 0.4, Bool_t isDebug = kFALSE);
     static Double_t PFElectronIsolation2012LepTag(const Electron *ele, const Vertex *vertex, 
                                                   const PFCandidateCol *PFCands, 
                                                   Double_t rho,
-                                                  ElectronTools::EElectronEffectiveAreaTarget EffectiveAreaTarget,
+                                                  ElectronTools::EElectronEffectiveAreaTarget,
                                                   const ElectronCol *goodElectrons = 0,
                                                   const MuonCol *goodMuons = 0,
                                                   Double_t dRMax = 0.3, Bool_t isDebug=kFALSE);
     static Double_t PFElectronIsolationRhoCorr(Electron const*, Double_t rho, ElectronTools::EElectronEffectiveAreaTarget);
-      
+
     static Double_t BetaM(const TrackCol *tracks, const Muon *p, const Vertex *vertex, 
                           Double_t ptMin, Double_t  delta_z, Double_t extRadius,
                           Double_t intRadius);

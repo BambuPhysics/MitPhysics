@@ -1390,18 +1390,16 @@ mithep::ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Do
   if (target == kEleEANoCorr)
     return 0.0;
 
-  std::vector<double> etaBinning1{0., 1., gkEleEBEtaMax, 2., 2.2, 2.3, 2.4, std::numeric_limits<double>::max()};
-  std::vector<double> etaBinning2{0., 1., gkEleEBEtaMax, 2., 2.2, 2.25, 2.5, std::numeric_limits<double>::max()};
-  std::vector<double> etaBinning3{0., 0.8, 1.3, 2., 2.2, 2.5, std::numeric_limits<double>::max()};
+  double etaBinning1[] = {0., 1., gkEleEBEtaMax, 2., 2.2, 2.3, 2.4, std::numeric_limits<double>::max()};
+  double etaBinning2[] = {0., 1., gkEleEBEtaMax, 2., 2.2, 2.25, 2.5, std::numeric_limits<double>::max()};
+  double etaBinning3[] = {0., 0.8, 1.3, 2., 2.2, 2.5, std::numeric_limits<double>::max()};
 
-  std::vector<double>* etaBinning = 0;
+  double* etaBinning = etaBinning1;
   std::vector<double> areas;
 
   switch (target) {
   case kEleEAData2012:
-    etaBinning = &etaBinning1;
-
-    switch(type) {
+    switch (type) {
     case kEleGammaIso03:
       areas = {0.122, 0.147, 0.055, 0.106, 0.138, 0.221, 0.211};
       break;
@@ -1453,7 +1451,7 @@ mithep::ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Do
     break;
 
   case kEleEAData2011:
-    etaBinning = &etaBinning1;
+    etaBinning = etaBinning1;
 
     switch (type) {
     case kEleGammaAndNeutralHadronIso03:
@@ -1498,7 +1496,7 @@ mithep::ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Do
     break;
 
   case kEleEASummer11MC:
-    etaBinning = &etaBinning1;
+    etaBinning = etaBinning1;
 
     switch (type) {
     case kEleGammaIsoDR0p0To0p1:
@@ -1537,7 +1535,7 @@ mithep::ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Do
     break;
 
   case kEleEAFall11MC:
-    etaBinning = &etaBinning1;
+    etaBinning = etaBinning1;
 
     switch (type) {
     case kEleGammaIsoDR0p0To0p1:
@@ -1576,7 +1574,7 @@ mithep::ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Do
     break;
 
   case kEleEAPhys14:
-    etaBinning = &etaBinning3;
+    etaBinning = etaBinning3;
 
     switch (type) {
     case kEleNeutralIso03:
@@ -1588,7 +1586,7 @@ mithep::ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Do
     break;
 
   default:
-    etaBinning = &etaBinning2;
+    etaBinning = etaBinning2;
 
     switch (type) {
     case kEleChargedIso03:
@@ -1596,7 +1594,7 @@ mithep::ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Do
     case kEleNeutralHadronIso007:
       return 0.;
     case kEleNeutralIso04:
-      etaBinning = &etaBinning1;
+      etaBinning = etaBinning1;
       areas = {0.208, 0.209, 0.115, 0.143, 0.183, 0.194, 0.261};
       break;
     case kEleNeutralHadronIso03:
@@ -1632,8 +1630,10 @@ mithep::ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Do
   }
 
   double absEta = std::abs(SCEta);
-  unsigned etaBin = std::lower_bound(etaBinning->begin(), etaBinning->end(), absEta) - etaBinning->begin();
-  return areas[etaBin];
+  unsigned etaBin = 0;
+  while (absEta >= etaBinning[etaBin + 1])
+    ++etaBin;
+  return areas.at(etaBin);
 }
 
 

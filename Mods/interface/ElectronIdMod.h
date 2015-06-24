@@ -105,15 +105,16 @@ namespace mithep {
       nCuts
     };
 
-    Bool_t   PassLikelihoodId(Electron const&);
-    Bool_t   PassIdCut(Electron const&, TObject const**);
-    Bool_t   PassIsolationCut(Electron const&, TObject const**);
+    Bool_t PassLikelihoodId(Electron const&);
+    Bool_t PassIdCut(Electron const&, TObject const**);
+    Bool_t PassIsolationCut(Electron const&, TObject const**);
+
     template<class T> void GetAuxInput(AuxInput, TObject const**);
 
     void Process() override;
     void IdBegin() override;
     
-    TString  fAuxInputNames[nAuxInputs];
+    TString  fAuxInputNames[nAuxInputs] = {};
 
     Bool_t   fApplyConvFilterType1 = kTRUE;   //whether remove conversions using fit method
     Bool_t   fApplyConvFilterType2 = kFALSE;   //whether remove conversions using DCotTheta method

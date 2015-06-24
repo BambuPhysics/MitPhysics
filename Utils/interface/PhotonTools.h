@@ -30,95 +30,106 @@ class TRandom3;
 
 namespace mithep {
   class PhotonTools {
-    public:
-      PhotonTools();
-      virtual ~PhotonTools() {}
+  public:
+    PhotonTools();
+    virtual ~PhotonTools() {}
 
-      enum EPhIdType {
-        kIdUndef = 0,       //not defined
-        kTight,             //"Tight"
-        kLoose,             //"Loose"
-        kLooseEM,           //"LooseEM"
-        kBaseLineCiC,          //"2011" Hgg BaseLine CiC
-        kBaseLineCiCPF,        //"2012" Hgg BaseLine CiC
-        kBaseLineCiCPFNoPresel,//"2012" Hgg BaseLine CiC plus eleveto -- for mono photon
-        kMITMVAId,             // MingMing MVA ID
-        kMITPhSelection,       //MIT loose preselection (for mva)
-        kMITPFPhSelection,     //MIT loose preselection (for mva)
-        kMITPFPhSelectionNoEcal,
-        kMITPFPhSelection_NoTrigger,    //MIT loose preselection (for mva, no Trigger)
-        kVgamma2011Selection,  // Vgamma 2011 Photon ID
-        kTrivialSelection,     // only pt & eta cuts
-        kEgammaMedium,
-        kCustomId,             //"Custom"
-	kRun2Tight,            //Run 2 cut based tight id
-	kRun2Medium,           //Run 2 cut based medium id 
-	kRun2Loose             //Run 2 cut based loose id      
-      };
+    enum EPhIdType {
+      kIdUndef = 0,       //not defined
+      kTight,             //"Tight"
+      kLoose,             //"Loose"
+      kLooseEM,           //"LooseEM"
+      kBaseLineCiC,          //"2011" Hgg BaseLine CiC
+      kBaseLineCiCPF,        //"2012" Hgg BaseLine CiC
+      kBaseLineCiCPFNoPresel,//"2012" Hgg BaseLine CiC plus eleveto -- for mono photon
+      kMITMVAId,             // MingMing MVA ID
+      kMITPhSelection,       //MIT loose preselection (for mva)
+      kMITPFPhSelection,     //MIT loose preselection (for mva)
+      kMITPFPhSelectionNoEcal,
+      kMITPFPhSelection_NoTrigger,    //MIT loose preselection (for mva, no Trigger)
+      kVgamma2011Selection,  // Vgamma 2011 Photon ID
+      kTrivialSelection,     // only pt & eta cuts
+      kEgammaMedium,
+      kCustomId,             //"Custom"
+      kPhys14Tight,            //Run 2 cut based tight id
+      kPhys14Medium,           //Run 2 cut based medium id 
+      kPhys14Loose             //Run 2 cut based loose id      
+    };
 
-      enum EPhIsoType {
-        kIsoUndef = 0,      //not defined        
-        kNoIso,             //"NoIso"
-        kCombinedIso,       //"CombinedIso"
-        kCustomIso,         //"Custom"
-        kMITPUCorrected,     //PileUp Corrected Hgg Isolation
-        kPFPUCorrected,
-	kRun2LooseIso,      //Run 2 cut based loose iso
-	kRun2MediumIso,     //Run 2 cut based medium iso
-	kRun2TightIso       //Run 2 cut based tight iso
-      };
+    enum EPhIsoType {
+      kIsoUndef = 0,      //not defined        
+      kNoIso,             //"NoIso"
+      kCombinedIso,       //"CombinedIso"
+      kCustomIso,         //"Custom"
+      kMITPUCorrected,     //PileUp Corrected Hgg Isolation
+      kPFPUCorrected,
+      kPhys14LooseIso,      //Run 2 cut based loose iso
+      kPhys14MediumIso,     //Run 2 cut based medium iso
+      kPhys14TightIso       //Run 2 cut based tight iso
+    };
+
+    enum EPhotonEffectiveAreaType {
+      kPhoChargedHadron03,
+      kPhoNeutralHadron03,
+      kPhoPhoton03
+    };
+
+    enum EPhotonEffectiveAreaTarget {
+      kPhoEANoCorr,
+      kPhoEAPhys14
+    };
   
-     enum DiphotonR9EtaCats {
-        kCat1 = 0,       //barrel-barrel highr9/highr9
-        kCat2,             //barrel-barrel highr9/lowr9+lowr9/lowr9
-        kCat3,             //barrel-endcap+endcap/endcap highr9/highr9
-        kCat4        //barrel-endcap+endcap-endcap highr9/lowr9 + lowr9-lowr9
-      };
+    enum DiphotonR9EtaCats {
+      kCat1 = 0,       //barrel-barrel highr9/highr9
+      kCat2,             //barrel-barrel highr9/lowr9+lowr9/lowr9
+      kCat3,             //barrel-endcap+endcap/endcap highr9/highr9
+      kCat4        //barrel-endcap+endcap-endcap highr9/lowr9 + lowr9-lowr9
+    };
       
-     enum DiphotonR9EtaPtCats {
-       kOctCat0,
-       kOctCat1,
-       kOctCat2,
-       kOctCat3,
-       kOctCat4,
-       kOctCat5,
-       kOctCat6,
-       kOctCat7
-     };
+    enum DiphotonR9EtaPtCats {
+      kOctCat0,
+      kOctCat1,
+      kOctCat2,
+      kOctCat3,
+      kOctCat4,
+      kOctCat5,
+      kOctCat6,
+      kOctCat7
+    };
       
-     enum DiphotonR9EtaConversionCats {
-        kNewCat1 = 0,       //barrel-barrel highr9/highr9
-        kNewCat2,             //barrel-barrel highr9/lowr9+lowr9/lowr9 one/two conversion
-        kNewCat3,             //barrel-barrel highr9/lowr9+lowr9/lowr9 no conversion        
-        kNewCat4,             //barrel-endcap+endcap/endcap highr9/highr9
-        kNewCat5,        //barrel-endcap+endcap-endcap highr9/lowr9 + lowr9-lowr9 one/two conversion
-        kNewCat6        //barrel-endcap+endcap-endcap highr9/lowr9 + lowr9-lowr9 no conversion
-      };      
+    enum DiphotonR9EtaConversionCats {
+      kNewCat1 = 0,       //barrel-barrel highr9/highr9
+      kNewCat2,             //barrel-barrel highr9/lowr9+lowr9/lowr9 one/two conversion
+      kNewCat3,             //barrel-barrel highr9/lowr9+lowr9/lowr9 no conversion        
+      kNewCat4,             //barrel-endcap+endcap/endcap highr9/highr9
+      kNewCat5,        //barrel-endcap+endcap-endcap highr9/lowr9 + lowr9-lowr9 one/two conversion
+      kNewCat6        //barrel-endcap+endcap-endcap highr9/lowr9 + lowr9-lowr9 no conversion
+    };      
       
-     enum CiCBaseLineCats {
-       kCiCNoCat = 0,
-       kCiCCat1,
-       kCiCCat2,
-       kCiCCat3,
-       kCiCCat4
-     };     
+    enum CiCBaseLineCats {
+      kCiCNoCat = 0,
+      kCiCCat1,
+      kCiCCat2,
+      kCiCCat3,
+      kCiCCat4
+    };     
      
-     enum eScaleCats {
-       kEBlowEtaGold = 0,
-       kEBlowEtaBad,
-       kEBhighEtaGold,
-       kEBhighEtaBad,
-       kEElowEtaGold,
-       kEElowEtaBad,
-       kEEhighEtaGold,
-       kEEhighEtaBad
-     };
+    enum eScaleCats {
+      kEBlowEtaGold = 0,
+      kEBlowEtaBad,
+      kEBhighEtaGold,
+      kEBhighEtaBad,
+      kEElowEtaGold,
+      kEElowEtaBad,
+      kEEhighEtaGold,
+      kEEhighEtaBad
+    };
        
-     enum ShowerShapeScales {
-       kNoShowerShapeScaling = 0,
-       k2011ShowerShape,
-       k2012ShowerShape
-     };
+    enum ShowerShapeScales {
+      kNoShowerShapeScaling = 0,
+      k2011ShowerShape,
+      k2012ShowerShape
+    };
 
     static eScaleCats EScaleCat(const Photon *p);
 
@@ -131,7 +142,6 @@ namespace mithep {
 
     static void ScalePhotonShowerShapes(Photon *p, ShowerShapeScales scale);
 
-
     static Bool_t       PassSinglePhotonPresel(const Photon *p,const ElectronCol *els, const DecayParticleCol *conversions, const BaseVertex *bs, const TrackCol* trackCol, const Vertex *vtx, double rho, Bool_t applyElectronVeto = kTRUE, Bool_t invertElectronVeto = kFALSE);
     static Bool_t       PassSinglePhotonPreselPFISO(const Photon *p,const ElectronCol *els, const DecayParticleCol *conversions, const BaseVertex *bs, const TrackCol* trackCol,const Vertex *vtx, double rho, const PFCandidateCol *fPFCands, Bool_t applyElectronVeto = kTRUE, Bool_t invertElectronVeto = kFALSE);
     static Bool_t       PassSinglePhotonPreselPFISONoEcal(const Photon *p,const ElectronCol *els, const DecayParticleCol *conversions, const BaseVertex *bs, const TrackCol* trackCol,const Vertex *vtx, double rho, const PFCandidateCol *fPFCands, Bool_t applyElectronVeto = kTRUE, Bool_t invertElectronVeto = kFALSE);
@@ -143,23 +153,23 @@ namespace mithep {
     static Bool_t       PassElectronVetoConvRecovery(const Photon *p, const ElectronCol *els, const DecayParticleCol *conversions, const BaseVertex *v);
     static Bool_t       PassTriggerMatching(const Photon *p, const TriggerObjectCol *trigobjs);
     static const DecayParticle *MatchedConversion(const Photon *p, const DecayParticleCol *conversions, 
-						  const BaseVertex *vtx, Int_t nWrongHitsMax=1, Double_t probMin=1e-6,
-						  Double_t lxyMin = 2.0, Double_t dRMin = 0.1);
+                                                  const BaseVertex *vtx, Int_t nWrongHitsMax=1, Double_t probMin=1e-6,
+                                                  Double_t lxyMin = 2.0, Double_t dRMin = 0.1);
     static const DecayParticle *MatchedConversion(const SuperCluster *sc, const DecayParticleCol *conversions, 
                                                   const BaseVertex *vtx, Int_t nWrongHitsMax=1, Double_t probMin=1e-6,
                                                   Double_t lxyMin = 2.0, Double_t dRMin = 0.1);                                                   
     static const DecayParticle *MatchedConversion(const Track *t, const DecayParticleCol *conversions, 
-						  const BaseVertex *vtx, Int_t nWrongHitsMax=1, Double_t probMin=1e-6,
-						  Double_t lxyMin = 2.0);                                               
+                                                  const BaseVertex *vtx, Int_t nWrongHitsMax=1, Double_t probMin=1e-6,
+                                                  Double_t lxyMin = 2.0);                                               
     static DiphotonR9EtaCats DiphotonR9EtaCat(const Photon *p1, const Photon *p2);
     static DiphotonR9EtaPtCats DiphotonR9EtaPtCat(const Photon *p1, const Photon *p2);
     static DiphotonR9EtaConversionCats DiphotonR9EtaConversionCat(const Photon *p1, const Photon *p2, const DecayParticleCol *conversions, const BaseVertex *v);
     static CiCBaseLineCats CiCBaseLineCat(const Photon *p);
     
     static const DecayParticle *MatchedCiCConversion(const Photon *p, const DecayParticleCol *conversions, 
-						     Double_t dPhiMin=0.1, Double_t dEtaMin=0.1,Double_t dRMin=0.1, 
-						     bool print   = false,
-						     int* numLegs = NULL, int* convIdx = NULL);  // for debugging
+                                                     Double_t dPhiMin=0.1, Double_t dEtaMin=0.1,Double_t dRMin=0.1, 
+                                                     bool print   = false,
+                                                     int* numLegs = NULL, int* convIdx = NULL);  // for debugging
 
                                                      
     static const Electron *MatchedElectron(const Photon *p, const ElectronCol *els);
@@ -169,31 +179,31 @@ namespace mithep {
     static const SuperCluster *MatchedPFSC(const SuperCluster *psc, const PhotonCol *pfphos, const ElectronCol *eles, Double_t drMin=0.1);
     
     static bool PassCiCSelection(const Photon* ph, 
-				 const Vertex* vtx, 
-				 const TrackCol*    trackCol,
-				 const ElectronCol* eleCol,
-				 const VertexCol*   vtxCol,
-				 double rho, double ptmin,
-				 bool applyEleVeto = true,
-				 bool print = false, float* kin=NULL);
+                                 const Vertex* vtx, 
+                                 const TrackCol*    trackCol,
+                                 const ElectronCol* eleCol,
+                                 const VertexCol*   vtxCol,
+                                 double rho, double ptmin,
+                                 bool applyEleVeto = true,
+                                 bool print = false, float* kin=NULL);
 
     static bool PassCiCPFIsoSelection(const Photon* ph, 
-				      const Vertex* vtx, 
-				      const PFCandidateCol*    pfCol,
-				      const VertexCol*   vtxCol,
-				      double rho, double ptmin,bool dor9rescale, double p0b, double p1b,double p0e, double p1e, 
-				      std::vector<double>* kin = NULL); 
+                                      const Vertex* vtx, 
+                                      const PFCandidateCol*    pfCol,
+                                      const VertexCol*   vtxCol,
+                                      double rho, double ptmin,bool dor9rescale, double p0b, double p1b,double p0e, double p1e, 
+                                      std::vector<double>* kin = NULL); 
 
     static bool PassCiCPFIsoSelectionWithEleVeto(const Photon* ph, 
-						 const ElectronCol *els,
-						 const DecayParticleCol *conversions, const BaseVertex *bs,
-						 const Vertex* vtx, 
-						 const PFCandidateCol*    pfCol,
-						 const VertexCol*   vtxCol,
-						 double rho, double ptmin,
-						 Bool_t applyElectronVeto, Bool_t invertElectronVeto,
-						 std::vector<double>* kin= NULL  // store variables for debugging...
-						 );// add for mono photon                                
+                                                 const ElectronCol *els,
+                                                 const DecayParticleCol *conversions, const BaseVertex *bs,
+                                                 const Vertex* vtx, 
+                                                 const PFCandidateCol*    pfCol,
+                                                 const VertexCol*   vtxCol,
+                                                 double rho, double ptmin,
+                                                 Bool_t applyElectronVeto, Bool_t invertElectronVeto,
+                                                 std::vector<double>* kin= NULL  // store variables for debugging...
+                                                 );// add for mono photon                                
     
     static bool PassEgammaMediumSelectionWithEleVeto(const Photon* ph,
                                                      const ElectronCol *els,
@@ -208,12 +218,13 @@ namespace mithep {
 
     static bool PassVgamma2011Selection(const Photon* ph, double rho);
 
+    static Double_t PhotonEffectiveArea(EPhotonEffectiveAreaType, Double_t absEta, EPhotonEffectiveAreaTarget);
     static Bool_t PassID(const Photon *ph, EPhIdType idType);
     static Bool_t PassIsoRhoCorr(Photon const*, EPhIsoType, Double_t rho);
 
     static const MCParticle *MatchMC(const Particle *ph, const MCParticleCol *c, Bool_t matchElectrons = kFALSE);
-    ClassDef(PhotonTools, 1) // Muon tools
-      };
+    ClassDef(PhotonTools, 1)
+  };
 }
 
 #endif
