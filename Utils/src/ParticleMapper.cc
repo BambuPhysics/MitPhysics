@@ -28,11 +28,9 @@ ParticleMapper::Initialize( const PFCandidateCol &Particles, Double_t DeltaEta, 
   fNumPhiBins   = ceil(2*(TMath::Pi()/DeltaPhi));
   fNumTotBins   = fNumEtaBins * fNumPhiBins;
 
-  Int_t AllocateParticleLocation[fNumParticles];
-  fParticleLocation = AllocateParticleLocation;
+  fParticleLocation = new Int_t[fNumParticles];
 
-  std::vector<Int_t> AllocateBinContents[fNumTotBins];
-  fBinContents = AllocateBinContents;
+  fBinContents = new std::vector<Int_t>[fNumTotBins];
 
   for(Int_t i0 = 0; i0 < fNumParticles; i0++){
     Int_t etaBin;
