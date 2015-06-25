@@ -17,6 +17,7 @@
 #include "MitPhysics/Utils/interface/MetLeptonTools.h"
 #include "MitPhysics/Utils/interface/VertexTools.h"
 #include "MitPhysics/Utils/interface/VertexMVA.h"
+#include "MitPhysics/Utils/interface/ParticleMapper.h"
 #include "MitPhysics/Utils/interface/PUReweighting.h"
 #include "MitPhysics/Utils/interface/PUReweightingMulti.h"
 #include "MitPhysics/Utils/interface/PhotonFix.h"
@@ -73,6 +74,7 @@
 #pragma link C++ class mithep::JetIDMVA;
 #pragma link C++ class mithep::TauIsoMVA;
 #pragma link C++ class mithep::MVAMet;
+#pragma link C++ class mithep::ParticleMapper;
 #pragma link C++ class mithep::PFMetCorrectionTools;
 #pragma link C++ class mithep::MVAVBF;
 #pragma link C++ class mithep::ElectronEnergyRegression;
