@@ -4,8 +4,8 @@
 // This module applies muon identification criteria and exports a pointer to a collection
 // of "good muons" according to the specified ID scheme.
 //
-// See http://indico.cern.ch/contributionDisplay.py?contribId=1&confId=45945
-// See http://indico.cern.ch/getFile.py/access?contribId=1&resId=0&materialId=slides&confId=42229
+//   See http://indico.cern.ch/contributionDisplay.py?contribId=1&confId=45945
+//   See http://indico.cern.ch/getFile.py/access?contribId=1&resId=0&materialId=slides&confId=42229
 //
 // Authors: S.Xie
 //--------------------------------------------------------------------------------------------------
@@ -131,7 +131,7 @@ namespace mithep
   protected:
     void               Process();
     void               SlaveBegin();
-    void               Terminate();
+    void               SlaveTerminate();
 
     Bool_t             fPrintMVADebugInfo;   //print MVA debug information
     TString            fMuonBranchName;      //name of muon collection (input)
@@ -181,6 +181,6 @@ namespace mithep
     UInt_t              fRhoAlgo;
       
     ClassDef(MuonIDMod, 1) // Muon identification module
-      };
+  };
 }
 #endif
