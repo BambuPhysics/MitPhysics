@@ -90,7 +90,7 @@ namespace mithep {
     Bool_t   fApplyConvFilterType2 = kFALSE;   //whether remove conversions using DCotTheta method
     Bool_t   fApplyNExpectedHitsInnerCut = kTRUE;
     Bool_t   fInvertNExpectedHitsInnerCut = kFALSE; //whether to invert NExpectedHitsInner cut
-    Bool_t   fApplySpikeRemoval = kTRUE;      //whether spike removal
+    Bool_t   fApplySpikeRemoval = kFALSE;      //whether spike removal - uses SC seed which can be absent in ged electrons
     Bool_t   fApplyD0Cut = kTRUE;             //whether apply d0 cut
     Bool_t   fApplyDZCut = kTRUE;             //whether apply dz cut
     Bool_t   fChargeFilter = kTRUE;           //whether apply GSF and CFT equal requirement

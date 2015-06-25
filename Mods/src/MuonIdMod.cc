@@ -1,7 +1,6 @@
 #include "MitPhysics/Mods/interface/MuonIdMod.h"
 #include "MitPhysics/Utils/interface/MuonTools.h"
-#include "MitPhysics/Init/interface/ModNames.h"
-#include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
+#include "MitAna/DataTree/interface/Names.h"
 
 ClassImp(mithep::MuonIdMod)
 
@@ -9,6 +8,7 @@ ClassImp(mithep::MuonIdMod)
 mithep::MuonIdMod::MuonIdMod(char const* name/* = "MuonIdMod"*/, char const* title/* = "Muon Identification"*/) :
   IdMod<mithep::Muon>(name, title)
 {
+  fInputName = mithep::Names::gkMuonBrn;
 }
 
 // -------------------------------------------------------------------------
@@ -112,6 +112,7 @@ mithep::MuonIdMod::PassIsolation(mithep::Muon const& muon)
     return MuonTools::PassPFIso(&muon, MuonTools::kPFRadialIso, GetPFNoPileupCandidates());
 
   case MuonTools::kPFIsoBetaPUCorrected:
+  case MuonTools::kPFIsoBetaPUCorrectedTight:
     return MuonTools::PassPFIso(&muon, MuonTools::kPFRadialIso, GetPFNoPileupCandidates(), 0, GetPFPileupCandidates());
 
   case MuonTools::kPFIsoNoL:

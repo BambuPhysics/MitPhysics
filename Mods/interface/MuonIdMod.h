@@ -8,7 +8,9 @@
 #define MITPHYSICS_MODS_MUONIDMOD_H
 
 #include "MitPhysics/Mods/interface/IdMod.h"
+#include "MitPhysics/Utils/interface/MuonTools.h"
 #include "MitAna/DataTree/interface/Muon.h"
+#include "MitAna/DataTree/interface/PileupEnergyDensity.h"
 
 namespace mithep {
 
@@ -49,11 +51,11 @@ namespace mithep {
 
     Bool_t PassIsolation(mithep::Muon const&);
 
-    UInt_t fMuonClassType;
-    Bool_t fApplyD0Cut;          //=true then apply d0 cut (def=1)
-    Bool_t fApplyDZCut;          //=true then apply dz cut (def=1)
-    Int_t  fWhichVertex;         //vertex to use (-2: beamspot, -1: closest in Z)
-    UInt_t fRhoAlgo;
+    UInt_t fMuonClassType = mithep::MuonTools::kGlobal;
+    Bool_t fApplyD0Cut = kTRUE;
+    Bool_t fApplyDZCut = kTRUE;
+    Int_t  fWhichVertex = -1;
+    UInt_t fRhoAlgo = mithep::PileupEnergyDensity::kFixedGridFastjetAll;
 
     ClassDef(MuonIdMod, 0)
   };

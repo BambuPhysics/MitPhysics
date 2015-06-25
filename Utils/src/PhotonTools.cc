@@ -98,9 +98,26 @@ mithep::PhotonTools::PassID(Photon const* pho, EPhIdType type)
   return false;
 }
 
+Bool_t
+mithep::PhotonTools::PassIsoFootprintRhoCorr(Photon const* pho, EPhIsoType isoType, Vertex const* pv, PFCandidateCol const* pfCands, Double_t rho)
+{
+  double chIso = 0.;
+  double nhIso = 0.;
+  double phIso = 0.;
+
+  IsolationTools::PFPhotonIsoFootprintRemoved(pho, pv, pfCands, 0.3, chIso, nhIso, phIso);
+
+  return PassIsoRhoCorr(pho, isoType, rho, chIso, nhIso, phIso);
+}
 
 Bool_t
 mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Double_t rho)
+{
+  return PassIsoRhoCorr(pho, isoType, rho, pho->PFChargedHadronIso(), pho->PFNeutralHadronIso(), pho->PFPhotonIso());
+}
+
+Bool_t
+mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Double_t rho, Double_t chIso, Double_t nhIso, Double_t phIso)
 {
   double scEta = pho->SCluster()->AbsEta();
   bool isEB = scEta < gkPhoEBEtaMax;
@@ -140,9 +157,9 @@ mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Doubl
     break;
   }
 
-  double chIsoCor = TMath::Max(pho->PFChargedHadronIso() - rho * chEA, 0.0);
-  double nhIsoCor = TMath::Max(pho->PFNeutralHadronIso() - rho * nhEA , 0.0);
-  double phIsoCor = TMath::Max(pho->PFPhotonIso() - rho * phEA , 0.0);
+  double chIsoCor = TMath::Max(chIso - rho * chEA, 0.0);
+  double nhIsoCor = TMath::Max(nhIso - rho * nhEA , 0.0);
+  double phIsoCor = TMath::Max(phIso - rho * phEA , 0.0);
   
   if (chIsoCor > chIsoCut)
     return false;

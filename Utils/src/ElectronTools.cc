@@ -620,6 +620,9 @@ mithep::ElectronTools::PassNExpectedHits(Electron const* ele, EElIdType idType, 
 Bool_t
 mithep::ElectronTools::PassD0Cut(const Electron *ele, const VertexCol *vertices, EElIdType idType, Int_t iVertex)
 {
+  if (vertices->GetEntries() == 0)
+    return false;
+
   if (iVertex >= (int)vertices->GetEntries())
     iVertex = vertices->GetEntries() - 1;
 
@@ -740,13 +743,11 @@ mithep::ElectronTools::PassChargeFilter(const Electron *ele)
 Bool_t
 mithep::ElectronTools::PassSpikeRemovalFilter(const Electron *ele)
 {
-  Bool_t passSpikeRemovalFilter = kTRUE;
-  if(ele->SCluster() &&
-     ele->SCluster()->Seed()->Energy() > 5.0 &&
-     ele->SCluster()->Seed()->EMax() / ele->SCluster()->Seed()->E3x3() > 0.95
-    ) {
-    passSpikeRemovalFilter = kFALSE;
-  }
+  if (ele->SCluster() && ele->SCluster()->Seed() &&
+      ele->SCluster()->Seed()->Energy() > 5.0 &&
+      ele->SCluster()->Seed()->EMax() / ele->SCluster()->Seed()->E3x3() > 0.95)
+    return false;
+
 
   // For Now Only use the EMax/E3x3 prescription.
   //   if(ele->SCluster()->Seed()->Energy() > 5.0 &&
@@ -755,7 +756,7 @@ mithep::ElectronTools::PassSpikeRemovalFilter(const Electron *ele)
   //     passSpikeRemovalFilter = kFALSE;
   //   }
 
-  return passSpikeRemovalFilter;
+  return true;
 }
 
 Bool_t

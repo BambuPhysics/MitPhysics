@@ -75,6 +75,8 @@ namespace mithep
 
     static Double_t PFMuonIsolationRhoCorr(Muon const*, Double_t rho, MuonTools::EMuonEffectiveAreaTarget);
 
+    static void PFPhotonIsoFootprintRemoved(Photon const*, Vertex const*, PFCandidateCol const*, Double_t dR, Double_t& chIso, Double_t& nhIso, Double_t& phIso);
+
     static Double_t BetaM(const TrackCol *tracks, const Muon *p, const Vertex *vertex, 
                           Double_t ptMin, Double_t  delta_z, Double_t extRadius,
                           Double_t intRadius);

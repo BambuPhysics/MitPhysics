@@ -1,6 +1,7 @@
 #include "MitPhysics/Mods/interface/ElectronIdMod.h"
 #include "MitPhysics/Utils/interface/ElectronTools.h"
 #include "MitPhysics/Init/interface/Constants.h"
+#include "MitAna/DataTree/interface/Names.h"
 
 ClassImp(mithep::ElectronIdMod)
 
@@ -8,6 +9,7 @@ ClassImp(mithep::ElectronIdMod)
 mithep::ElectronIdMod::ElectronIdMod(const char *name, const char *title) :
   IdMod<mithep::Electron>(name, title)
 {
+  fInputName = mithep::Names::gkElectronBrn;
 }
 
 //--------------------------------------------------------------------------------------------------

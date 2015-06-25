@@ -62,6 +62,7 @@ namespace mithep {
         kPFIso,                             //"PFIso"
         kPFRadialIso,                       //"PFRadialIso"
         kPFIsoBetaPUCorrected,              //"PFISo with PUcorrection using delta Beta
+        kPFIsoBetaPUCorrectedTight,         //"PFISo with PUcorrection using delta Beta, tight cut (0.12)
         kPFIsoEffectiveAreaCorrected,       //"PFIso with EffectiveArea Pileup Correction"
         kPFIsoNoL,                          //"PFIsoNoL"
         kNoIso,                             //"NoIso"
@@ -70,16 +71,17 @@ namespace mithep {
         kIsoDeltaR                          //"BGDT Iso dR"              
       };
       enum EMuClassType {
-        kClassUndef = 0,    //not defined
-        kAll,               //"All"
-        kGlobal,            //"Global"
-        kGlobalorTracker,   //"Global or Tracker Muon"
-        kGlobalTracker,     //"GlobalTracker"
-        kSta,               //"Standalone"
-        kTrackerMuon,       //"TrackerMuon"
-        kCaloMuon,          //"CaloMuon"
-        kTrackerBased,      //"TrackerMuon or CaloMuon"
-        kGlobalOnly         //"GlobalOnly"
+        kClassUndef = 0,
+        kAll,
+        kGlobal,
+        kGlobalorTracker,
+        kGlobalTracker,
+        kSta,
+        kTrackerMuon,
+        kCaloMuon,
+        kTrackerBased,
+        kGlobalOnly,
+        kPFGlobalorTracker
       };
 
       enum ESelType { 

@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: GoodPVFilterMod.h,v 1.6 2011/05/27 14:16:59 bendavid Exp $
-//
 // GoodPVFilterMod
 //
 // This module selects events with a good reconstructed Primary Vertex according to

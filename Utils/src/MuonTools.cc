@@ -454,6 +454,9 @@ mithep::MuonTools::PassClass(const Muon *mu, EMuClassType classType)
   case kGlobalOnly:
     return mu->HasGlobalTrk();
 
+  case kPFGlobalorTracker:
+    return mu->IsPFMuon() && (mu->HasGlobalTrk() || mu->IsTrackerMuon());
+
   default:
     break;
   }
@@ -624,6 +627,10 @@ mithep::MuonTools::PassPFIso(Muon const* mu, EMuIsoType type, PFCandidateCol con
   case kPFIsoBetaPUCorrected:
     // pfCandidates here should be NoPileupCandidates
     return IsolationTools::BetaMwithPUCorrection(pfCandidates, pileupCands, mu, 0.4) < mu->Pt() * 0.2;
+
+  case kPFIsoBetaPUCorrectedTight:
+    // pfCandidates here should be NoPileupCandidates
+    return IsolationTools::BetaMwithPUCorrection(pfCandidates, pileupCands, mu, 0.4) < mu->Pt() * 0.12;
 
   case kPFIsoNoL:
     {

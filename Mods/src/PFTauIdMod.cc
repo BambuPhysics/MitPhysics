@@ -1,11 +1,12 @@
 #include "MitPhysics/Mods/interface/PFTauIdMod.h"
-#include "MitPhysics/Init/interface/ModNames.h"
+#include "MitAna/DataTree/interface/Names.h"
 
 ClassImp(mithep::PFTauIdMod)
 
 mithep::PFTauIdMod::PFTauIdMod(char const* name/* = "PFTauIdMod"*/, char const* title/* = "Tau identification module"*/) :
   IdMod<PFTau>(name, title)
 {
+  fInputName = mithep::Names::gkHPSTauBrn;
 }
 
 Bool_t

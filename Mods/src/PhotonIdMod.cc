@@ -1,11 +1,13 @@
 #include "MitPhysics/Mods/interface/PhotonIdMod.h"
-#include "MitPhysics/Utils/interface/PhotonTools.h" 
+#include "MitPhysics/Utils/interface/PhotonTools.h"
+#include "MitAna/DataTree/interface/Names.h"
 
 ClassImp(mithep::PhotonIdMod)
 
 mithep::PhotonIdMod::PhotonIdMod(char const* name/* = "PhotonIdMod"*/, char const* title/* = "Photon Identification"*/) :
   IdMod<mithep::Photon>(name, title)
 {
+  fInputName = mithep::Names::gkPhotonBrn;
 }
 
 mithep::PhotonIdMod::~PhotonIdMod()
@@ -85,8 +87,9 @@ mithep::PhotonIdMod::PassIsolationCut(Photon const& pho)
   case PhotonTools::kPhys14LooseIso:
   case PhotonTools::kPhys14MediumIso:
   case PhotonTools::kPhys14TightIso:
-    return PhotonTools::PassIsoRhoCorr(&pho, PhotonTools::EPhIsoType(fIsoType),
-                                       GetPileupEnergyDensity()->At(0)->Rho(fRhoAlgo));
+    return PhotonTools::PassIsoFootprintRhoCorr(&pho, PhotonTools::EPhIsoType(fIsoType),
+                                                GetVertices()->At(0), GetPFCandidates(),
+                                                GetPileupEnergyDensity()->At(0)->Rho(fRhoAlgo));
 
   case PhotonTools::kNoIso:
     return true;

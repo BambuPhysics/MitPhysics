@@ -1,9 +1,9 @@
 #include "MitPhysics/Mods/interface/JetIdMod.h"
-#include "MitPhysics/Init/interface/ModNames.h"
-#include "MitAna/DataTree/interface/CaloJet.h"
-#include "MitAna/DataTree/interface/PFJet.h"
 #include "MitPhysics/Utils/interface/JetTools.h"
 #include "MitPhysics/Utils/interface/JetIDMVA.h"
+#include "MitAna/DataTree/interface/CaloJet.h"
+#include "MitAna/DataTree/interface/PFJet.h"
+#include "MitAna/DataTree/interface/Names.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 
 #include "TSystem.h"
@@ -14,6 +14,7 @@ ClassImp(mithep::JetIdMod)
 mithep::JetIdMod::JetIdMod(const char *name, const char *title) :
   IdMod<mithep::Jet>(name, title)
 {
+  fInputName = mithep::Names::gkPFJetBrn;
 }
 
 //--------------------------------------------------------------------------------------------------

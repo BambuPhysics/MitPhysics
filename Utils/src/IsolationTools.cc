@@ -156,10 +156,11 @@ Double_t IsolationTools::PFRadialMuonIsolation(const Muon *p, const PFCandidateC
 }
 
 //--------------------------------------------------------------------------------------------------
-Double_t IsolationTools::PFMuonIsolation(const Muon *p, const PFCandidateCol *PFCands, 
-                                         const Vertex *vertex, Double_t  delta_z, Double_t ptMin,
-                                         Double_t extRadius, Double_t intRadiusGamma,
-                                         Double_t intRadius)
+Double_t
+IsolationTools::PFMuonIsolation(const Muon *p, const PFCandidateCol *PFCands, 
+                                const Vertex *vertex, Double_t  delta_z, Double_t ptMin,
+                                Double_t extRadius, Double_t intRadiusGamma,
+                                Double_t intRadius)
 {
   // Computes the PF Isolation: Summed Transverse Momentum of all PF candidates inside an annulus
   // around the particle seed track.
@@ -1377,4 +1378,66 @@ Double_t IsolationTools::PFNeutralHadronIsolation(const Photon *p, Double_t extR
   }
   
   return iso;
+}
+
+void
+IsolationTools::PFPhotonIsoFootprintRemoved(Photon const* photon, Vertex const* pv, PFCandidateCol const* pfCands, Double_t dR,
+                                            Double_t& chIso, Double_t& nhIso, Double_t& phIso)
+{
+  ThreeVectorC&& caloPosition = photon->SCluster()->Point();
+  ThreeVector phoDir(caloPosition.X() - pv->X(), caloPosition.Y() - pv->Y(), caloPosition.Z() - pv->Z());
+  double phoEta = phoDir.Eta();
+  double phoPhi = phoDir.Phi();
+  double dR2 = dR * dR;
+
+  chIso = 0.;
+  nhIso = 0.;
+  phIso = 0.;
+  for (unsigned iP = 0; iP != pfCands->GetEntries(); ++iP) {
+    PFCandidate const& pf = *pfCands->At(iP);
+
+    switch (pf.PFType()) {
+    case PFCandidate::eHadron:
+    case PFCandidate::eNeutralHadron:
+    case PFCandidate::eGamma:
+      break;
+    default:
+      continue;
+    }
+
+    if (photon->IsInFootprint(&pf))
+      continue;
+    
+    if (MathUtils::DeltaR2(pf.Phi(), pf.Eta(), phoPhi, phoEta) > dR2)
+      continue;
+
+    if (pf.PFType() == PFCandidate::eHadron) {
+      // check pv compatibility
+      auto* trk = pf.BestTrk();
+      if (!trk)
+        continue;
+
+      // in principle track-to-vertex matching by ref is better, but following EGM implementation here
+      double d0 = std::abs(trk->D0Corrected(*pv));
+      if (d0 > 0.1)
+        continue;
+      double dz = std::abs(trk->DzCorrected(*pv));
+      if (dz > 0.2)
+        continue;
+    }
+
+    switch (pf.PFType()) {
+    case PFCandidate::eHadron:
+      chIso += pf.Pt();
+      break;
+    case PFCandidate::eNeutralHadron:
+      nhIso += pf.Pt();
+      break;
+    case PFCandidate::eGamma:
+      phIso += pf.Pt();
+      break;
+    default:
+      break;
+    }
+  }
 }

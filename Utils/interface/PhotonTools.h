@@ -221,6 +221,8 @@ namespace mithep {
     static Double_t PhotonEffectiveArea(EPhotonEffectiveAreaType, Double_t absEta, EPhotonEffectiveAreaTarget);
     static Bool_t PassID(const Photon *ph, EPhIdType idType);
     static Bool_t PassIsoRhoCorr(Photon const*, EPhIsoType, Double_t rho);
+    static Bool_t PassIsoRhoCorr(Photon const*, EPhIsoType, Double_t rho, Double_t chIso, Double_t nhIso, Double_t phIso);
+    static Bool_t PassIsoFootprintRhoCorr(Photon const*, EPhIsoType, Vertex const*, PFCandidateCol const*, Double_t rho);
 
     static const MCParticle *MatchMC(const Particle *ph, const MCParticleCol *c, Bool_t matchElectrons = kFALSE);
     ClassDef(PhotonTools, 1)

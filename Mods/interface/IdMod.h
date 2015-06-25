@@ -58,7 +58,7 @@ namespace mithep {
     void SetInputName(char const* n) { fInputName = n; }
     void SetOutputName(char const* n);
     void SetTriggerObjectsName(const char* n)       { fAuxInputNames[kTrigObjects] = n; }
-    void SetConversionBranchName(const char* n)     { fAuxInputNames[kConversions] = n; }
+    void SetConversionsName(const char* n)          { fAuxInputNames[kConversions] = n; }
     void SetVertexName(const char* n)               { fAuxInputNames[kVertices] = n; }
     void SetBeamSpotName(const char* n)             { fAuxInputNames[kBeamSpot] = n; }
     void SetPFCandidatesName(const char* n)         { fAuxInputNames[kPFCandidates] = n; } 
