@@ -72,8 +72,6 @@ ParticleMapper::GetSurrounding(Int_t index){
   Int_t tempPhiBin;
   Int_t tempBin;
 
-  // Phi can be tricky due to having bins far smaller than the resolution close to +/- Pi
-  
   for(Int_t i0 = -1; i0 < 2; i0++){
     tempEtaBin = etaBin + i0;
     if(tempEtaBin < 0 || tempEtaBin >= fNumEtaBins) continue;
