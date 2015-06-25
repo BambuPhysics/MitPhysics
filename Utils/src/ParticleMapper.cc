@@ -25,7 +25,7 @@ ParticleMapper::Initialize( const PFCandidateCol &Particles, Double_t DeltaEta, 
 
   fNumParticles = Particles.GetEntries();
   fNumEtaBins   = 2*ceil(EtaMax/DeltaEta);
-  fNumPhiBins   = ceil(2*(TMath::Pi()/DeltaPhi));
+  fNumPhiBins   = floor(2*(TMath::Pi()/DeltaPhi));  // The last bin will be larger than DeltaPhi
   fNumTotBins   = fNumEtaBins * fNumPhiBins;
 
   fParticleLocation = new Int_t[fNumParticles];
@@ -38,9 +38,10 @@ ParticleMapper::Initialize( const PFCandidateCol &Particles, Double_t DeltaEta, 
     Double_t eta = Particles.At(i0)->Eta();
     if(abs(eta) > EtaMax) continue;
     Double_t phi = Particles.At(i0)->Phi();
-    if(phi > TMath::Pi()) phi = phi - 2.0*(TMath::Pi());
+    if(phi < 0) phi = phi + 2.0*(TMath::Pi());      // This way's easier so that there's only one bin with weird resolution
     etaBin = floor(eta/DeltaEta) + fNumEtaBins/2;
-    phiBin = floor(phi/DeltaPhi) + fNumPhiBins/2;
+    phiBin = floor(phi/DeltaPhi);
+    if(phiBin == fNumPhiBins) phiBin = phiBin - 1;  // Sticks overflow into last bin
 
     Int_t finalBin = etaBin + phiBin*fNumEtaBins;
     fParticleLocation[i0] = finalBin;
@@ -71,12 +72,15 @@ ParticleMapper::GetSurrounding(Int_t index){
   Int_t tempPhiBin;
   Int_t tempBin;
 
+  // Phi can be tricky due to having bins far smaller than the resolution close to +/- Pi
+  
   for(Int_t i0 = -1; i0 < 2; i0++){
     tempEtaBin = etaBin + i0;
     if(tempEtaBin < 0 || tempEtaBin >= fNumEtaBins) continue;
     for(Int_t i1 = -1; i1 < 2; i1++){
       tempPhiBin = phiBin + i0;
-      if(tempPhiBin < 0 || tempPhiBin >= fNumPhiBins) continue;
+      if(tempPhiBin == -1) tempPhiBin = fNumPhiBins - 1;  // This allows wrapping
+      if(tempPhiBin == fNumPhiBins) tempPhiBin = 0;
       tempBin = tempEtaBin + tempPhiBin*fNumEtaBins;
       tempVec.insert(tempVec.end(),fBinContents[tempBin].begin(),fBinContents[tempBin].end());
     }
