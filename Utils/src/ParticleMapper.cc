@@ -11,7 +11,8 @@ ParticleMapper::ParticleMapper() :
   fNumPhiBins(0),
   fNumTotBins(0),
   fParticleLocation(0),
-  fBinContents(0) { }
+  fBinContents(0) {
+}
 
 //--------------------------------------------------------------------------------------------------
 ParticleMapper::~ParticleMapper(){
@@ -36,13 +37,15 @@ ParticleMapper::Initialize( const PFCandidateCol &Particles, Double_t DeltaEta, 
     Int_t etaBin;
     Int_t phiBin;
     Double_t eta = Particles.At(i0)->Eta();
-    if(abs(eta) > EtaMax) continue;
+    if(fabs(eta) > EtaMax){
+      fParticleLocation[i0] = -1;
+      continue;
+    }
     Double_t phi = Particles.At(i0)->Phi();
     if(phi < 0) phi = phi + 2.0*(TMath::Pi());      // This way's easier so that there's only one bin with weird resolution
     etaBin = floor(eta/DeltaEta) + fNumEtaBins/2;
     phiBin = floor(phi/DeltaPhi);
     if(phiBin == fNumPhiBins) phiBin = phiBin - 1;  // Sticks overflow into last bin
-
     Int_t finalBin = etaBin + phiBin*fNumEtaBins;
     fParticleLocation[i0] = finalBin;
     fBinContents[finalBin].push_back(i0);
@@ -53,7 +56,12 @@ ParticleMapper::Initialize( const PFCandidateCol &Particles, Double_t DeltaEta, 
 //--------------------------------------------------------------------------------------------------
 std::vector<Int_t>
 ParticleMapper::GetInBin(Int_t index){
-
+  
+  if(fParticleLocation[index] < 0){
+    std::vector<Int_t> blankVector;
+    blankVector.resize(0);
+    return blankVector;
+  }
   return fBinContents[fParticleLocation[index]];
   
 }
@@ -61,6 +69,12 @@ ParticleMapper::GetInBin(Int_t index){
 //--------------------------------------------------------------------------------------------------
 std::vector<Int_t>
 ParticleMapper::GetSurrounding(Int_t index){
+
+  if(fParticleLocation[index] < 0){
+    std::vector<Int_t> blankVector;
+    blankVector.resize(0);
+    return blankVector;
+  }
 
   Int_t bin = fParticleLocation[index];
   Int_t etaBin = bin % fNumEtaBins;

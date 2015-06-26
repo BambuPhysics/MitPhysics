@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "MitAna/DataTree/interface/JetCol.h"
 #include "MitPhysics/Mods/interface/PuppiMod.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
@@ -21,9 +23,12 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fPFCandidates(0),
   fRMin(0.02),
   fR0(0.3),
-  fBeta(1.0)
+  fBeta(1.0),
+  fD0Cut(0.03),
+  fDZCut(0.1)
 {
   // Constructor.
+  std::cout << "Hello, this is dog" << std::endl;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -73,7 +78,7 @@ void PuppiMod::Process()
     const PFCandidate *iCandidate = fPFCandidates->At(i0);
     // Determine if the PFCandidate is charged PU. This will help characterize neutral PU.
     if(iCandidate->PFType() == 1 && 
-       ((abs(iCandidate->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) > fDZCut) ||
+       ((fabs(iCandidate->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) > fDZCut) ||
         (MathUtils::AddInQuadrature(iCandidate->SourceVertex().X() - fVertexes->At(0)->Position().X(),
                                     iCandidate->SourceVertex().Y() - fVertexes->At(0)->Position().Y()) > fD0Cut))){
       isChargedPU = 1;
@@ -92,10 +97,10 @@ void PuppiMod::Process()
       if(i0 == i2) continue;                                        // Don't bother comparing a particle to itself
       const PFCandidate *jCandidate = fPFCandidates->At(i2);
       Double_t dRTemp = MathUtils::DeltaR(iCandidate,jCandidate);
-      if(dRTemp > fRMin && dRTemp < fR0){                           // Only look at other particles in this range
+      if(dRTemp > fRMin && dRTemp < fR0){                                          // Only look at other particles in this range
         alphaF[i0] = alphaF[i0] + jCandidate->Pt()/(pow(jCandidate->Pt(),fBeta));  // First do the sum inside the log
-        if(jCandidate->PFType() == 1 &&                             // If charged PV, also add to alphaC
-           (abs(jCandidate->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) < fDZCut) && 
+        if((jCandidate->PFType() == 1) && 
+           (fabs(jCandidate->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) < fDZCut) && 
            (MathUtils::AddInQuadrature(jCandidate->SourceVertex().X() - fVertexes->At(0)->Position().X(),
                                        jCandidate->SourceVertex().Y() - fVertexes->At(0)->Position().Y()) < fD0Cut)){
           alphaC[i0] = alphaC[i0] + jCandidate->Pt()/(pow(jCandidate->Pt(),fBeta));
@@ -139,9 +144,11 @@ void PuppiMod::Process()
 
   Int_t medIndexF = (numCHPU + numFCHPUis0)/2;                       // These are sort of meta, but they are the index of the indices array that refers to the median
   Int_t medIndexC = (numCHPU + numCCHPUis0)/2;                       // Just watch how they are used...
-  if((numCHPU - numFCHPUis0) % 2 == 0) alphaFMed = (alphaFCHPU[IndicesFCHPU[medIndexF - 1]] + alphaFCHPU[IndicesFCHPU[medIndexF]])/2;
+  if(numCHPU == numFCHPUis0) alphaFMed = 0;
+  else if((numCHPU - numFCHPUis0) % 2 == 0) alphaFMed = (alphaFCHPU[IndicesFCHPU[medIndexF - 1]] + alphaFCHPU[IndicesFCHPU[medIndexF]])/2;
   else alphaFMed = alphaFCHPU[IndicesFCHPU[medIndexF]];
-  if((numCHPU - numCCHPUis0) % 2 == 0) alphaCMed = (alphaCCHPU[IndicesCCHPU[medIndexC - 1]] + alphaCCHPU[IndicesCCHPU[medIndexC]])/2;
+  if(numCHPU == numCCHPUis0) alphaCMed = 0;
+  else if((numCHPU - numCCHPUis0) % 2 == 0) alphaCMed = (alphaCCHPU[IndicesCCHPU[medIndexC - 1]] + alphaCCHPU[IndicesCCHPU[medIndexC]])/2;
   else alphaCMed = alphaCCHPU[IndicesCCHPU[medIndexC]];
 
   // Now compute the sigma2s
@@ -182,7 +189,7 @@ void PuppiMod::Process()
   
   // sort according to ptrootcint forward declaration data members ??
   PuppiParticleCol->Sort();
-  
+
   // add to event for other modules to use
   AddObjThisEvt(PuppiParticleCol);
 }
