@@ -54,6 +54,7 @@ namespace mithep
 
       const VertexCol *fVertexes;                 // Vertex branch
       const PFCandidateCol *fPFCandidates;        // Particle flow branch
+      PFCandidateArr *fPuppiParticles;            // The output collection
 
       Double_t fRMin;                             // Minimum dR cut for summing up surrounding particles
       Double_t fR0;                               // Maximum dR cut for summing up surrounding particles
