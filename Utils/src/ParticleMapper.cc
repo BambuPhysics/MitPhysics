@@ -11,8 +11,7 @@ ParticleMapper::ParticleMapper() :
   fNumPhiBins(0),
   fNumTotBins(0),
   fParticleLocation(0),
-  fBinContents(0) {
-}
+  fBinContents(0) { }
 
 //--------------------------------------------------------------------------------------------------
 ParticleMapper::~ParticleMapper(){

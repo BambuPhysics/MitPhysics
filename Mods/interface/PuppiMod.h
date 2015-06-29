@@ -41,6 +41,8 @@ namespace mithep
       void SetD0Cut( Double_t cut )                          { fD0Cut = cut;               }
       void SetDZCut( Double_t cut )                          { fDZCut = cut;               }
 
+      void SetKeepPileup( Bool_t keep )                      { fKeepPileup = keep;         }
+
     protected:
       void                  SlaveBegin();
       void                  SlaveTerminate();
@@ -59,6 +61,8 @@ namespace mithep
 
       Double_t fD0Cut;                            // D0 cut for charged particle vertex matching
       Double_t fDZCut;                            // DZ cut for charged particle vertex matching
+
+      Bool_t fKeepPileup;                         // Keep pileup with zero weight (for debugging)
 
       ClassDef(PuppiMod, 1)                       // met correction module
   };

@@ -9,6 +9,7 @@
 #include "MitAna/DataTree/interface/VertexCol.h"
 
 #include "TLorentzVector.h"
+#include "Math/ProbFunc.h"
 
 using namespace mithep;
 
@@ -25,10 +26,10 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fR0(0.3),
   fBeta(1.0),
   fD0Cut(0.03),
-  fDZCut(0.1)
+  fDZCut(0.1),
+  fKeepPileup(kFALSE)
 {
   // Constructor.
-  std::cout << "Hello, this is dog" << std::endl;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -157,21 +158,6 @@ void PuppiMod::Process()
   for(Int_t i0 = numCCHPUis0; i0 < medIndexC; i0++) sigma2C = sigma2C + pow((alphaCMed-alphaCCHPU[IndicesCCHPU[i0]]),2);
   sigma2C = sigma2C/(medIndexC - numCCHPUis0);
 
-  // Time to compute the chi2 values for each particle and assign the weights
-  Double_t chi2F[numCandidates];                                     // This is alpha(F) of all particles for particle i
-  Double_t chi2C[numCandidates];                                     // This is alpha(C) of charged PV for particle i
-  Double_t weightsF[numCandidates];
-  Double_t weightsC[numCandidates];
-  for(Int_t i0 = 0; i0 < numCandidates; i0++){
-    if(alphaF[i0] < alphaFMed) chi2F[i0] = 0;
-    else chi2F[i0] = pow((alphaF[i0] - alphaFMed),2)/sigma2F;
-    if(alphaC[i0] < alphaCMed) chi2C[i0] = 0;
-    else chi2C[i0] = pow((alphaC[i0] - alphaCMed),2)/sigma2C;
-
-    weightsF[i0] = TMath::Prob(chi2F[i0],1);
-    weightsC[i0] = TMath::Prob(chi2C[i0],1);
-  }  
-
   // prepare the storage array for the PuppiParticles
   PFCandidateOArr *PuppiParticleCol = new PFCandidateOArr;
   PuppiParticleCol->SetOwner(kTRUE);
@@ -179,16 +165,39 @@ void PuppiMod::Process()
 
   for(Int_t i0 = 0; i0 < numCandidates; i0++){
     PFCandidate *PuppiParticle = fPFCandidates->At(i0)->MakeCopy();
-    if(PuppiParticle->PFType() == 6 || PuppiParticle->PFType() == 7)
-      PuppiParticle->SetPtEtaPhiM(PuppiParticle->Pt()*(weightsF[i0]),PuppiParticle->Eta(),PuppiParticle->Phi(),PuppiParticle->Mass()*(weightsF[i0]));
-    else PuppiParticle->SetPtEtaPhiM(PuppiParticle->Pt()*(weightsC[i0]),PuppiParticle->Eta(),PuppiParticle->Phi(),PuppiParticle->Mass()*(weightsC[i0]));
-
+    // Now we are going to assign the weights
+    Double_t chi2 = 0;
+    Double_t weight = 0;
+    Bool_t isPileup = false;
+    if(PuppiParticle->PFType() == 6 || PuppiParticle->PFType() == 7){             // If forward particle, get forward chi2
+      if(alphaF[i0] > alphaFMed) chi2 = pow((alphaF[i0] - alphaFMed),2)/sigma2F;
+      else isPileup = true;
+    }
+    else if(PuppiParticle->PFType() != 1){                                        // If neutral central, get central chi2
+      if(alphaC[i0] > alphaCMed) chi2 = pow((alphaC[i0] - alphaCMed),2)/sigma2C;
+      else isPileup = true;
+    }
+    else if((fabs(PuppiParticle->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) > fDZCut) ||
+            (MathUtils::AddInQuadrature(PuppiParticle->SourceVertex().X() - fVertexes->At(0)->Position().X(),
+                                        PuppiParticle->SourceVertex().Y() - fVertexes->At(0)->Position().Y()) > fD0Cut)){
+      isPileup = true;                      // Charged PU will get weight of zero, but charged PV has no weight change (from 1)
+    }                                       // Skipping all this will not reweight PuppiParticle
+    // If chi2 value was assigned, then make weight and apply it
+    if(chi2 > 0){
+      weight = ROOT::Math::chisquared_cdf(chi2,1);
+      PuppiParticle->SetPtEtaPhiM(PuppiParticle->Pt()*(weight),PuppiParticle->Eta(),PuppiParticle->Phi(),PuppiParticle->Mass()*(weight));
+    }
+    // If not assigned, check for pileup
+    else if(isPileup){
+      if(fKeepPileup) PuppiParticle->SetPtEtaPhiM(0,PuppiParticle->Eta(),PuppiParticle->Phi(),0);
+      else continue;                        // If we're not keeping pileup, throw out PFCandidate!
+    }
     // add PuppiParticle to the collection
     PuppiParticleCol->AddOwned(PuppiParticle);
   }
   
-  // sort according to ptrootcint forward declaration data members ??
-  PuppiParticleCol->Sort();
+  // // sort according to ptrootcint forward declaration data members ?? we might not want this for matching purposes
+  // PuppiParticleCol->Sort();
 
   // add to event for other modules to use
   AddObjThisEvt(PuppiParticleCol);
