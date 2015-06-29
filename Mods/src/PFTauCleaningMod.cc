@@ -1,7 +1,6 @@
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitAna/DataTree/interface/ElectronCol.h"
 #include "MitAna/DataTree/interface/MuonCol.h"
-#include "MitAna/DataTree/interface/PFTauCol.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "MitPhysics/Mods/interface/PFTauCleaningMod.h"
 
@@ -15,11 +14,12 @@ PFTauCleaningMod::PFTauCleaningMod(const char *name, const char *title) :
   fCleanElectronsName(ModNames::gkCleanElectronsName),        
   fCleanMuonsName(ModNames::gkCleanMuonsName),        
   fGoodPFTausName(ModNames::gkGoodPFTausName),        
-  fCleanPFTausName(ModNames::gkCleanPFTausName),
   fMinDeltaRToElectron(0.3),
   fMinDeltaRToMuon(0.3)
 {
   // Constructor.
+  fCleanPFTaus = new PFTauOArr;
+  SetOutputName(ModNames::gkCleanPFTausName);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -28,13 +28,10 @@ void PFTauCleaningMod::Process()
   // Process entries of the tree.
 
   // get input collections
-  const PFTauCol *GoodPFTaus = GetObjThisEvt<PFTauCol>(fGoodPFTausName);
-  const ElectronCol *CleanElectrons = GetObjThisEvt<ElectronCol>(fCleanElectronsName);
-  const MuonCol *CleanMuons = GetObjThisEvt<MuonCol>(fCleanMuonsName);
+  const PFTauCol *GoodPFTaus = GetObject<PFTauCol>(fGoodPFTausName);
+  const ElectronCol *CleanElectrons = GetObject<ElectronCol>(fCleanElectronsName);
+  const MuonCol *CleanMuons = GetObject<MuonCol>(fCleanMuonsName);
 
-  // create output collection
-  PFTauOArr *CleanPFTaus = new PFTauOArr;
-  CleanPFTaus->SetName(fCleanPFTausName);
 
   // remove any Tau that overlaps in eta, phi with an isolated electron.
   UInt_t n = GoodPFTaus->GetEntries();
@@ -77,12 +74,20 @@ void PFTauCleaningMod::Process()
     if (isMuonOverlap)
       continue;
 
-    CleanPFTaus->Add(tau);     
+    fCleanPFTaus->Add(tau);     
   }
 
   // sort according to pt
-  CleanPFTaus->Sort();
+ fCleanPFTaus->Sort();
 
-  // add to event for other modules to use
-  AddObjThisEvt(CleanPFTaus);
+}
+
+void
+PFTauCleaningMod::SlaveBegin () {
+  PublishObj(fCleanPFTaus);
+}
+
+void 
+PFTauCleaningMod::SlaveEnd () {
+	RetractObj(fCleanPFTaus->GetName());
 }
