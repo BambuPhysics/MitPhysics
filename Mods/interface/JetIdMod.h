@@ -22,7 +22,9 @@ namespace mithep {
     JetIdMod(const char* name="JetIdMod",
              const char* title="Jet identification module");
 
-    Bool_t   GetUseJetCorrection() const         { return fUseJetCorrection; }
+    Bool_t   GetUseL1Correction() const          { return fCorrections.TestBit(mithep::Jet::L1); }
+    Bool_t   GetUseL2Correction() const          { return fCorrections.TestBit(mithep::Jet::L2); }
+    Bool_t   GetUseL3Correction() const          { return fCorrections.TestBit(mithep::Jet::L3); }
     Double_t GetJetEEMFractionMinCut() const     { return fJetEEMFractionMinCut; }
     Double_t GetMinChargedHadronFraction() const { return fMinChargedHadronFraction; }
     Double_t GetMaxChargedHadronFraction() const { return fMaxChargedHadronFraction; }
@@ -39,8 +41,10 @@ namespace mithep {
     
     JetIDMVA* GetJetIDMVA() const { return fJetIDMVA; }
 
-    void SetJetUseCorrection(Bool_t b)         { fUseJetCorrection = b; }
-    void SetJetEEMFractionMinCut(Double_t cut) { fJetEEMFractionMinCut = cut; }
+    void SetUseL1Correction(Bool_t b)            { fCorrections.SetBit(mithep::Jet::L1, b); }
+    void SetUseL2Correction(Bool_t b)            { fCorrections.SetBit(mithep::Jet::L2, b); }
+    void SetUseL3Correction(Bool_t b)            { fCorrections.SetBit(mithep::Jet::L3, b); }
+    void SetJetEEMFractionMinCut(Double_t cut)   { fJetEEMFractionMinCut = cut; }
     void SetMinChargedHadronFraction(Double_t m) { fMinChargedHadronFraction = m; }
     void SetMaxChargedHadronFraction(Double_t m) { fMaxChargedHadronFraction = m; }
     void SetMinNeutralHadronFraction(Double_t m) { fMinNeutralHadronFraction = m; }
@@ -84,7 +88,7 @@ namespace mithep {
     Bool_t IsGood(mithep::Jet const&) override;
     void IdBegin() override;
 
-    Bool_t   fUseJetCorrection = kTRUE;        //=true then use corrected energy
+    BitMask8 fCorrections = BitMask8(7); // default = L1 + L2 + L3
     Double_t fJetEEMFractionMinCut = 0.01;  //jet Eem fraction min cut for calo jets
     Double_t fMinChargedHadronFraction = 0.;
     Double_t fMaxChargedHadronFraction = 1.;
