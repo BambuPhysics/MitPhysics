@@ -12,11 +12,16 @@ PhotonCleaningMod::PhotonCleaningMod(const char *name, const char *title) :
   BaseMod(name,title),
   fCleanElectronsName(ModNames::gkCleanElectronsName),        
   fGoodPhotonsName(ModNames::gkGoodPhotonsName),        
+  fCleanPhotons(new PhotonOArr),
   fMinDeltaRToElectron(0.3)
 {
   // Constructor.
-  fCleanPhotons = new PhotonOArr;
   fCleanPhotons->SetName(ModNames::gkCleanPhotonsName);
+}
+
+PhotonCleaningMod::~PhotonCleaningMod()
+{
+  delete fCleanPhotons;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -24,10 +29,11 @@ void PhotonCleaningMod::Process()
 {
   // Process entries of the tree.
 
+  fCleanPhotons->Reset();
+
   // get input collections
   const PhotonCol   *GoodPhotons    = GetObject<PhotonCol>(fGoodPhotonsName);
   const ElectronCol *CleanElectrons = GetObject<ElectronCol>(fCleanElectronsName);
-
 
   // remove any photon that overlaps in eta, phi with an isolated electron.
   UInt_t n = GoodPhotons->GetEntries();
@@ -62,12 +68,14 @@ void PhotonCleaningMod::Process()
 }
 
 void
-PhotonCleaningMod::SlaveBegin () {
+PhotonCleaningMod::SlaveBegin ()
+{
   PublishObj(fCleanPhotons);
 }
 
 void 
-PhotonCleaningMod::SlaveEnd () {
+PhotonCleaningMod::SlaveEnd ()
+{
   RetractObj(fCleanPhotons->GetName());
 }
 

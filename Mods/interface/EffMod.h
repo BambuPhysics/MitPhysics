@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: EffMod.h,v 1.2 2009/06/12 12:40:09 loizides Exp $
-//
 // EffMod
 //
 // This module calculates reconstruction efficiency (and fake rate) between reconstructed

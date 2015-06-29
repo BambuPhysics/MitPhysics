@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: CaloMetCorrectionMod.h,v 1.1 2009/09/08 00:00:30 bendavid Exp $
-//
 // CaloMetCorrectionMod
 //
 // This module applies jet energy corrections to CaloMet on the fly at analysis level, reading

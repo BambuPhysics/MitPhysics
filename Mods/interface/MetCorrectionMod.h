@@ -86,9 +86,6 @@ namespace mithep
       bool                  fIsData;             //flag for data/MC distinction
       bool                  fPrint;              //flag for debug print out
                            
-      const PFMetCol       *fPFMet;              //met branch
-      const PFCandidateCol *fPFCandidates;       //particle flow branch
-
       ClassDef(MetCorrectionMod, 1)              // met correction module
   };
 }

@@ -12,14 +12,19 @@ ClassImp(mithep::PFTauCleaningMod)
 PFTauCleaningMod::PFTauCleaningMod(const char *name, const char *title) : 
   BaseMod(name,title),
   fCleanElectronsName(ModNames::gkCleanElectronsName),        
-  fCleanMuonsName(ModNames::gkCleanMuonsName),        
-  fGoodPFTausName(ModNames::gkGoodPFTausName),        
+  fCleanMuonsName(ModNames::gkCleanMuonsName),
+  fGoodPFTausName(ModNames::gkGoodPFTausName),
+  fCleanPFTaus(new PFTauOArr),
   fMinDeltaRToElectron(0.3),
   fMinDeltaRToMuon(0.3)
 {
   // Constructor.
-  fCleanPFTaus = new PFTauOArr;
   SetOutputName(ModNames::gkCleanPFTausName);
+}
+
+PFTauCleaningMod::~PFTauCleaningMod()
+{
+  delete fCleanPFTaus;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -27,11 +32,12 @@ void PFTauCleaningMod::Process()
 {
   // Process entries of the tree.
 
+  fCleanPFTaus->Reset();
+
   // get input collections
   const PFTauCol *GoodPFTaus = GetObject<PFTauCol>(fGoodPFTausName);
   const ElectronCol *CleanElectrons = GetObject<ElectronCol>(fCleanElectronsName);
   const MuonCol *CleanMuons = GetObject<MuonCol>(fCleanMuonsName);
-
 
   // remove any Tau that overlaps in eta, phi with an isolated electron.
   UInt_t n = GoodPFTaus->GetEntries();
@@ -79,15 +85,16 @@ void PFTauCleaningMod::Process()
 
   // sort according to pt
  fCleanPFTaus->Sort();
-
 }
 
 void
-PFTauCleaningMod::SlaveBegin () {
+PFTauCleaningMod::SlaveBegin ()
+{
   PublishObj(fCleanPFTaus);
 }
 
 void 
-PFTauCleaningMod::SlaveEnd () {
-	RetractObj(fCleanPFTaus->GetName());
+PFTauCleaningMod::SlaveEnd ()
+{
+  RetractObj(fCleanPFTaus->GetName());
 }

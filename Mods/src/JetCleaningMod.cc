@@ -1,5 +1,3 @@
-// $Id: JetCleaningMod.cc,v 1.17 2010/06/28 21:07:06 ceballos Exp $
-
 #include "MitPhysics/Mods/interface/JetCleaningMod.h"
 #include "MitAna/DataTree/interface/PhotonCol.h"
 #include "MitAna/DataTree/interface/MuonCol.h"
@@ -20,7 +18,7 @@ JetCleaningMod::JetCleaningMod(const char *name, const char *title) :
   fCleanPhotonsName(ModNames::gkCleanPhotonsName),        
   fCleanTausName(ModNames::gkCleanTausName),        
   fGoodJetsName(ModNames::gkGoodJetsName),        
-  fCleanJets(0),
+  fCleanJets(new JetOArr),
   fMinDeltaRToElectron(0.3),
   fMinDeltaRToMuon(0.3),
   fMinDeltaRToPhoton(0.3),
@@ -28,15 +26,20 @@ JetCleaningMod::JetCleaningMod(const char *name, const char *title) :
   fApplyPhotonRemoval(kFALSE),
   fApplyTauRemoval(kFALSE)
 {
-  // Constructor.
-  fCleanJets = new JetOArr;
   fCleanJets->SetName(ModNames::gkCleanJetsName);
+}
+
+JetCleaningMod::~JetCleaningMod()
+{
+  delete fCleanJets;
 }
 
 //--------------------------------------------------------------------------------------------------
 void JetCleaningMod::Process()
 {
   // Process entries of the tree.
+  
+  fCleanJets->Reset();
 
   // get input collections
   const JetCol  *GoodJets       = GetObject<JetCol>(fGoodJetsName);
@@ -134,12 +137,14 @@ void JetCleaningMod::Process()
 }
 
 void
-JetCleaningMod::SlaveBegin () {
+JetCleaningMod::SlaveBegin ()
+{
   PublishObj(fCleanJets);
 }
 
 void 
-JetCleaningMod::SlaveEnd () {
+JetCleaningMod::SlaveEnd ()
+{
   RetractObj(fCleanJets->GetName());
 }
 

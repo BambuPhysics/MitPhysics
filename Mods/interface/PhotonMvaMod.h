@@ -48,7 +48,6 @@ namespace mithep
     // setting all the input Names
     void                SetInputPhotonsName(const char *n){ fPhotonBranchName= n;        }
     void                SetPhotonsFromBranch(bool b)      { fPhotonsFromBranch = b;      }
-    void                SetPUDensityName(const char *n)   { fPileUpDenName = n;          }
 
     // get/set the Names for the output Photon Collection
     const char         *GetOutputName()             const { return fGoodPhotonsName;     }   
@@ -78,8 +77,6 @@ namespace mithep
     // private auxiliary methods...
     // Names for the input Collections
     TString                       fPhotonBranchName;
-    TString                       fPileUpDenName;    
-    TString                       fPVName;
 
     TString                       fGoodPhotonsName;      // name of exported "good photon" collection
 
@@ -93,11 +90,6 @@ namespace mithep
     
     // in case there's some PV pre-selection
     Bool_t                        fPhotonsFromBranch;
-    Bool_t                        fPVFromBranch;
-
-    const PhotonCol              *fPhotons;
-    const PileupEnergyDensityCol *fPileUpDen;
-    const VertexCol              *fPV;
 
     // EGEnergyCorrector egcor;
     Bool_t                        fDoRegression;

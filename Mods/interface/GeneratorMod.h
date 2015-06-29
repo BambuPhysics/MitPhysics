@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: GeneratorMod.h,v 1.45 2013/07/15 18:47:15 ceballos Exp $
-//
 // GeneratorMod
 //
 // This module collects interesting generator information and publishes collections
@@ -14,8 +12,6 @@
 
 #include "MitAna/TreeMod/interface/BaseMod.h" 
 #include "MitAna/DataTree/interface/MCParticleFwd.h"
-#include "MitAna/DataTree/interface/MetFwd.h"
-#include "MitAna/DataTree/interface/PFMetCol.h"
 
 class TH1D;
 class TH2D;
@@ -112,7 +108,6 @@ namespace mithep
       Bool_t               fAllowWZEvents;            //=true then allow WZ events  (def=0)
       Bool_t               fAllowZZEvents;            //=true then allow ZZ events  (def=0)
       Bool_t               fFilterBTEvents;           //=true then filter B and T events  (def=0)
-      const MCParticleCol *fParticles;	        //!MCParticle branch
       TH1D                *hDGenPtMin;          //!histo for Pt min for leptons from W/Z
       TH1D                *hDGenMet[10];        //!histos for gen MET
       TH1D                *hDGenLeptons[40];    //!histos for W/Z/H leptons
@@ -140,7 +135,6 @@ namespace mithep
       MCParticleArr       *fGenPhotons;         //!copied owning array for skimming
       MCParticleArr       *fGenRadPhotons;      //!copied owning array for skimming
       MCParticleArr       *fGenISRPhotons;      //!copied owning array for skimming
-      const PFMetCol      *fPFMetStd;
 
     ClassDef(GeneratorMod, 1) // Module to gather generator information
   };

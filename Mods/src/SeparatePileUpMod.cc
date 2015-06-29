@@ -15,9 +15,6 @@ SeparatePileUpMod::SeparatePileUpMod(const char *name, const char *title) :
   fPFNoPileUpName("PFNoPileUp"),
   fAllVertexName(Names::gkPVBrn),
   fVertexName(ModNames::gkGoodVertexesName),
-  fPFCandidates(0),
-  fAllVertices(0),
-  fVertices(0),
   fCheckClosestZVertex(kTRUE),
   fUseAllVertices(kTRUE)
 {
@@ -28,8 +25,7 @@ SeparatePileUpMod::SeparatePileUpMod(const char *name, const char *title) :
 void SeparatePileUpMod::Process()
 {
   // Process entries of the tree. 
-
-  LoadBranch(fPFCandidatesName);
+  auto* pfCandidates = GetObject<PFCandidateCol>(fPFCandidatesName);
 
   PFCandidateOArr *pfPileUp = new PFCandidateOArr;
   pfPileUp->SetName(fPFPileUpName);
@@ -37,19 +33,22 @@ void SeparatePileUpMod::Process()
   PFCandidateOArr *pfNoPileUp = new PFCandidateOArr;
   pfNoPileUp->SetName(fPFNoPileUpName);
 
-  LoadBranch(fAllVertexName);
+  auto* allVertices = GetObject<VertexCol>(fAllVertexName);
   
-  if (fUseAllVertices == kTRUE) fVertices = fAllVertices;
-  else                         fVertices = GetObjThisEvt<VertexOArr>(fVertexName);
+  VertexCol const* vertices = 0;
+  if (fUseAllVertices == kTRUE)
+    vertices = allVertices;
+  else
+    vertices = GetObject<VertexOArr>(fVertexName);
 
-  for (UInt_t i = 0; i < fPFCandidates->GetEntries(); i++) {
-    const PFCandidate *pf = fPFCandidates->At(i);
+  for (UInt_t i = 0; i < pfCandidates->GetEntries(); i++) {
+    const PFCandidate *pf = pfCandidates->At(i);
     assert(pf);
 
     if (pf->PFType() == PFCandidate::eHadron) {
       if (pf->HasTrackerTrk() && 
-         fVertices->At(0)->HasTrack(pf->TrackerTrk()) &&
-         fVertices->At(0)->TrackWeight(pf->TrackerTrk()) > 0)
+         vertices->At(0)->HasTrack(pf->TrackerTrk()) &&
+         vertices->At(0)->TrackWeight(pf->TrackerTrk()) > 0)
       {
         pfNoPileUp->Add(pf);
       }
@@ -58,8 +57,8 @@ void SeparatePileUpMod::Process()
         const Vertex *closestVtx = 0;
         Double_t dzmin = 10000;
 
-	for (UInt_t j = 0; j < fAllVertices->GetEntries(); j++) {
-	  const Vertex *vtx = fAllVertices->At(j);
+	for (UInt_t j = 0; j < allVertices->GetEntries(); j++) {
+	  const Vertex *vtx = allVertices->At(j);
 	  assert(vtx);
 
 	  if (pf->HasTrackerTrk() && 
@@ -79,13 +78,13 @@ void SeparatePileUpMod::Process()
 	if (fCheckClosestZVertex) {
 	  // Fallback: if track is not associated with any vertex,
 	  // associate it with the vertex closest in z
-	  if (vertexFound || closestVtx != fVertices->At(0))
+	  if (vertexFound || closestVtx != vertices->At(0))
 	    pfPileUp->Add(pf);
 	  else
 	    pfNoPileUp->Add(pf);
 	}
 	else {
-	  if (vertexFound && closestVtx != fVertices->At(0))
+	  if (vertexFound && closestVtx != vertices->At(0))
 	    pfPileUp->Add(pf);
 	  else
 	    pfNoPileUp->Add(pf); // Ridiculous but that's how it is
@@ -100,14 +99,4 @@ void SeparatePileUpMod::Process()
   // add to event for other modules to use
   AddObjThisEvt(pfPileUp);  
   AddObjThisEvt(pfNoPileUp);  
-}
-
-//------------------------------------------------------------------------------
-void SeparatePileUpMod::SlaveBegin()
-{
-  // Run startup code on the computer (slave) doing the actual analysis. Here,
-  // we just request the Tau collection branch.
-
-  ReqBranch(fAllVertexName,    fAllVertices);
-  ReqBranch(fPFCandidatesName, fPFCandidates);
 }

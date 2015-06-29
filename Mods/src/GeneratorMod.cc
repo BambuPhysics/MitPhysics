@@ -45,8 +45,7 @@ GeneratorMod::GeneratorMod(const char *name, const char *title) :
   fAllowWWEvents(kTRUE),
   fAllowWZEvents(kFALSE),
   fAllowZZEvents(kFALSE),
-  fFilterBTEvents(kFALSE),
-  fParticles(0)
+  fFilterBTEvents(kFALSE)
 {
   // Constructor
   fGenLeptons = new MCParticleArr();
@@ -134,13 +133,13 @@ void GeneratorMod::Process()
       printf("\n************ Next Event ************\n\n");
 
     // load MCParticle branch
-    LoadEventObject(fMCPartName, fParticles);
+    auto* particles = GetObject<MCParticleCol>(fMCPartName);
     
     unsigned int nGenWMuons = 0;
     unsigned int nGenWElectrons = 0; //for MonoJet generator-level information
     
-    for (UInt_t i=0; i<fParticles->GetEntries(); ++i) {
-      const MCParticle *p = fParticles->At(i);
+    for (UInt_t i=0; i<particles->GetEntries(); ++i) {
+      const MCParticle *p = particles->At(i);
 
       if (fPrintDebug) 
 	p->Print("l");
@@ -253,8 +252,8 @@ void GeneratorMod::Process()
       // qqH, information about the forward jets
       else if (isqqH == kFALSE && p->Is(MCParticle::kH)) {
 	isqqH = kTRUE;
-	const MCParticle *pq1 = fParticles->At(i-1);
-	const MCParticle *pq2 = fParticles->At(i-2);
+	const MCParticle *pq1 = particles->At(i-1);
+	const MCParticle *pq2 = particles->At(i-2);
 	if (!pq1 || !pq2) {
             SendError(kWarning, "Process", "Could not find quark pair!");
 	} else if (pq1->IsQuark()   && pq2->IsQuark()   && 
@@ -745,8 +744,8 @@ void GeneratorMod::Process()
     if (sumV[0] + 4*sumV[1] == 2 || sumV[0] + 4*sumV[1] == 5 || sumV[0] + 4*sumV[1] == 8) {
       MCParticleOArr *GenTempMG1    = new MCParticleOArr;
       Double_t diBosonMass[2] = {0., 0.};
-      for (UInt_t i=0; i<fParticles->GetEntries(); ++i) {
-	const MCParticle *p = fParticles->At(i);
+      for (UInt_t i=0; i<particles->GetEntries(); ++i) {
+	const MCParticle *p = particles->At(i);
 
 	if (p->IsParton() && p->NDaughters() >= 2) {
 	  CompositeParticle *diBoson = new CompositeParticle();
@@ -1654,11 +1653,6 @@ void GeneratorMod::SlaveBegin()
 {
   // Book branch and histograms if wanted.
 
-  if (fIsData == kFALSE) {
-    ReqEventObject(fMCPartName, fParticles, kTRUE);
-  }
-  ReqBranch("PFMet",   fPFMetStd);
-  
   // Publish Arrays For the Output Module
   PublishObj(fGenLeptons);  
   PublishObj(fGenAllLeptons);

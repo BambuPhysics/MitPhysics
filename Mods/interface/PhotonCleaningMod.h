@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: PhotonCleaningMod.h,v 1.5 2009/03/23 14:23:06 loizides Exp $
-//
 // PhotonCleaningMod
 //
 // This Module performs cleaning of jets, ie it removes jets which point 
@@ -22,6 +20,7 @@ namespace mithep
     public:
       PhotonCleaningMod(const char *name="PhotonCleaningMod", 
                         const char *title="Photon cleaning module");
+      ~PhotonCleaningMod();
 
       const char      *GetCleanElectronsName()   const { return fCleanElectronsName;   }
       const char      *GetCleanName()            const { return GetCleanPhotonsName(); }

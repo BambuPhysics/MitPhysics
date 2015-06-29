@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: ElectronCleaningMod.h,v 1.6 2009/03/23 14:23:06 loizides Exp $
-//
 // ElectronCleaningMod
 //
 // This Module performs cleaning of electrons, ie. it removes duplicate objects and good muons 
@@ -22,6 +20,7 @@ namespace mithep
     public:
       ElectronCleaningMod(const char *name="ElectronCleaningMod", 
                           const char *title="Electron cleaning module");
+      ~ElectronCleaningMod();
 
       const char        *GetCleanElectronsName() const { return fCleanElectrons->GetName();     }
       const char        *GetCleanName()          const { return GetCleanElectronsName(); }

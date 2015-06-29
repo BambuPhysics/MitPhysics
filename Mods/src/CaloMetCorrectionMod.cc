@@ -25,7 +25,7 @@ void CaloMetCorrectionMod::Process()
 {
   // Process entries of the tree. 
 
-  const CaloMetCol *inMets = GetColThisEvt<CaloMetCol>(fMetName);
+  const CaloMetCol *inMets = GetObject<CaloMetCol>(fMetName);
   if (!inMets) {
     SendError(kAbortModule, "Process", 
               "Pointer to input met collection %s is null.",
@@ -33,7 +33,7 @@ void CaloMetCorrectionMod::Process()
     return;
   }
 
-  const CaloJetCol *inJets = GetColThisEvt<CaloJetCol>(fCorrectedJetsName);
+  const CaloJetCol *inJets = GetObject<CaloJetCol>(fCorrectedJetsName);
   if (!inJets) {
     SendError(kAbortModule, "Process", 
               "Pointer to input jet collection %s is null.",

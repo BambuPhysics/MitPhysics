@@ -69,9 +69,6 @@ namespace mithep
       Int_t                       fNEvents;       //!number of processed events
       Int_t                       fNAcceped;      //!number of accepted events
       Int_t                       fNFailed;       //!number of failed events
-      const VertexCol            *fVertexes;      //!PV collection
-      const VertexCol            *fGoodVertexes;  //!Good PV collection
-      const PileupInfoCol        *fPileupInfo;         //!      
       TH1F                       *hVertexNTracks;
       TH1F                       *hVertexNDof;
       TH1F                       *hVertexRho;

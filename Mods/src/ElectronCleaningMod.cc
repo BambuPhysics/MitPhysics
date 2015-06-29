@@ -12,17 +12,23 @@ ClassImp(mithep::ElectronCleaningMod)
 ElectronCleaningMod::ElectronCleaningMod(const char *name, const char *title) : 
   BaseMod(name,title),
   fGoodElectronsName(ModNames::gkGoodElectronsName),        
-  fCleanMuonsName(ModNames::gkCleanMuonsName)        
+  fCleanMuonsName(ModNames::gkCleanMuonsName),
+  fCleanElectrons(new ElectronOArr(0))
 {
-  // Constructor.
-	fCleanElectrons = new ElectronOArr;
   fCleanElectrons->SetName(ModNames::gkCleanElectronsName);
+}
+
+ElectronCleaningMod::~ElectronCleaningMod()
+{
+  delete fCleanElectrons;
 }
 
 //--------------------------------------------------------------------------------------------------
 void ElectronCleaningMod::Process()
 {
   // Process entries of the tree. 
+
+  fCleanElectrons->Reset();
 
   // get input collection
   const MuonCol     *CleanMuons    = GetObject<MuonCol>(fCleanMuonsName);
@@ -97,16 +103,18 @@ void ElectronCleaningMod::Process()
   
   for (UInt_t j=0; j<CleanElTemp.size(); ++j) 
     fCleanElectrons->Add(CleanElTemp[j]);
+
   fCleanElectrons->Sort();
-       
 }
 
 void
-ElectronCleaningMod::SlaveBegin () {
+ElectronCleaningMod::SlaveBegin ()
+{
   PublishObj(fCleanElectrons);
 }
 
 void 
-ElectronCleaningMod::SlaveEnd () {
-	RetractObj(fCleanElectrons->GetName());
+ElectronCleaningMod::SlaveEnd ()
+{
+  RetractObj(fCleanElectrons->GetName());
 }

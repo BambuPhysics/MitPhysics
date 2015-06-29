@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: PFTauCleaningMod.h,v 1.3 2009/06/15 15:00:21 loizides Exp $
-//
 // PFTauCleaningMod
 //
 // This Module performs cleaning of taus, ie it removes taus which point 
@@ -22,6 +20,7 @@ namespace mithep
     public:
       PFTauCleaningMod(const char *name="PFTauCleaningMod", 
                         const char *title="Tau cleaning module");
+      ~PFTauCleaningMod();
 
       const char      *GetCleanElectronsName()   const { return fCleanElectronsName;    }
       const char      *GetCleanMuonsName()       const { return fCleanMuonsName;        }
@@ -41,9 +40,9 @@ namespace mithep
       void             SetOutputName(const char *name)          { SetCleanPFTausName(name);   }
 
     protected:
-      void             Process();
-      void 			   SlaveBegin();
-      void     		   SlaveEnd();
+      void Process();
+      void SlaveBegin();
+      void SlaveEnd();
 
       TString          fCleanElectronsName;  //name of clean electrons (input)
       TString          fCleanMuonsName;      //name of clean muons (input)

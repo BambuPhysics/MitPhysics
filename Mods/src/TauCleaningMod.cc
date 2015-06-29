@@ -1,7 +1,6 @@
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitAna/DataTree/interface/ElectronCol.h"
 #include "MitAna/DataTree/interface/MuonCol.h"
-#include "MitAna/DataTree/interface/CaloTauCol.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "MitPhysics/Mods/interface/TauCleaningMod.h"
 
@@ -15,11 +14,16 @@ TauCleaningMod::TauCleaningMod(const char *name, const char *title) :
   fCleanElectronsName(ModNames::gkCleanElectronsName),        
   fCleanMuonsName(ModNames::gkCleanMuonsName),        
   fGoodTausName(ModNames::gkGoodTausName),        
-  fCleanCaloTausName(ModNames::gkCleanTausName),
   fMinDeltaRToElectron(0.3),
-  fMinDeltaRToMuon(0.3)
+  fMinDeltaRToMuon(0.3),
+  fCleanCaloTaus(new CaloTauOArr())
 {
-  // Constructor.
+  fCleanCaloTaus->SetName(ModNames::gkCleanTausName);
+}
+
+TauCleaningMod::~TauCleaningMod()
+{
+  delete fCleanCaloTaus;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -27,14 +31,12 @@ void TauCleaningMod::Process()
 {
   // Process entries of the tree.
 
-  // get input collections
-  const CaloTauCol  *GoodTaus = GetObjThisEvt<CaloTauCol>(fGoodTausName);
-  const ElectronCol *CleanElectrons = GetObjThisEvt<ElectronCol>(fCleanElectronsName);
-  const MuonCol *CleanMuons = GetObjThisEvt<MuonCol>(fCleanMuonsName);
+  fCleanCaloTaus->Reset();
 
-  // create output collection
-  CaloTauOArr *CleanCaloTaus = new CaloTauOArr;
-  CleanCaloTaus->SetName(fCleanCaloTausName);
+  // get input collections
+  auto* GoodTaus = GetObject<CaloTauCol>(fGoodTausName);
+  auto* CleanElectrons = GetObject<ElectronCol>(fCleanElectronsName);
+  auto* CleanMuons = GetObject<MuonCol>(fCleanMuonsName);
 
   // remove any Tau that overlaps in eta, phi with an isolated electron.
   UInt_t n = GoodTaus->GetEntries();
@@ -77,12 +79,21 @@ void TauCleaningMod::Process()
     if (isMuonOverlap)
       continue;
 
-    CleanCaloTaus->Add(tau);     
+    fCleanCaloTaus->Add(tau);     
   }
 
   // sort according to pt
-  CleanCaloTaus->Sort();
+  fCleanCaloTaus->Sort();
+}
 
-  // add to event for other modules to use
-  AddObjThisEvt(CleanCaloTaus);
+void
+TauCleaningMod::SlaveBegin()
+{
+  PublishObj(fCleanCaloTaus);
+}
+
+void
+TauCleaningMod::SlaveTerminate()
+{
+  RetractObj(fCleanCaloTaus->GetName());
 }

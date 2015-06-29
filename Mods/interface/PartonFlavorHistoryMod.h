@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: PartonFlavorHistoryMod.h,v 1.4 2009/06/15 15:00:21 loizides Exp $
-//
 // PartonFlavorHistoryMod
 //
 // This module looks at the generator information and determines the flavor history of partons.
@@ -13,7 +11,6 @@
 #define MITPHYSICS_MODS_PARTONFLAVORHISTORYMOD_H
 
 #include "MitAna/TreeMod/interface/BaseMod.h" 
-#include "MitAna/DataTree/interface/MCParticleFwd.h"
 
 class TH1D;
 class TH2D;
@@ -49,7 +46,6 @@ namespace mithep
       TString              fMCSampleType;             //name of MCSampleType
       Bool_t               fApplyPartonFlavorFilter;  //=true then we apply the filter
       MCType               fMCType;                   //!type of MC 
-      const MCParticleCol *fParticles;	              //!MCParticle branch
       TH1D                *fFlavorClassification;     //!histos for flavor history
 
     ClassDef(PartonFlavorHistoryMod, 1) // Module to gather flavor history information

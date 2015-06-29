@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: MergeLeptonsMod.h,v 1.4 2009/06/15 15:00:21 loizides Exp $
-//
 // MergeLeptonsMod
 //
 // This module merges muon and electron collections. (Note if need be this can easily be
@@ -44,8 +42,6 @@ namespace mithep
       TString                  fElName;        //name of electrons collection (input)
       TString                  fMuName;        //name of muons collection (input)
       TString                  fMergedName;    //name of merged collection (output)
-      const ElectronCol       *fElIn;          //!pointer to electron collection
-      const MuonCol           *fMuIn;          //!pointer to muon collection 
       ParticleOArr            *fColOut;        //!pointer to merged collection
       TH1D*		       fRecoWMuons;
       TH1D*		       fRecoWElectrons;

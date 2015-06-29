@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: TrackingPurityFilterMod.h,v 1.3 2009/12/02 20:27:42 loizides Exp $
-//
 // TrackingPurityFilterMod
 //
 // This module implements the "fraction of high purity tracks" filter to remove

@@ -1,6 +1,4 @@
 //------------------------------------------------------------------------------
-// $Id: HWWKFactorList.h,v 1.1 2009/04/06 10:43:58 ceballos Exp $
-//
 // HWWKFactorList
 //
 // Brief resolution map copied over from CMSSW. 
