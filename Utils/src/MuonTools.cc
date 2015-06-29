@@ -1,9 +1,5 @@
 #include "MitPhysics/Utils/interface/MuonTools.h"
 #include "MitPhysics/Utils/interface/IsolationTools.h"
-#include "MitAna/DataTree/interface/VertexCol.h"
-#include "MitAna/DataTree/interface/BeamSpotCol.h"
-#include "MitAna/DataTree/interface/PFCandidateCol.h"
-#include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
 #include <limits>
 #include <TFile.h>
 

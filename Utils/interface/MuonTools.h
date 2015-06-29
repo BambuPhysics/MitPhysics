@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: MuonTools.h,v 1.22 2012/04/15 12:07:00 sixie Exp $
-//
 // MuonTools
 //
 // This class allows you to classify a given muon according to defined criteria. For this purpose
@@ -19,11 +17,11 @@
 #ifndef MITPHYSICS_UTILS_MUONTOOLS_H
 #define MITPHYSICS_UTILS_MUONTOOLS_H
 
-#include "MitAna/DataTree/interface/MuonFwd.h"
-#include "MitAna/DataTree/interface/VertexFwd.h"
-#include "MitAna/DataTree/interface/BeamSpotFwd.h"
-#include "MitAna/DataTree/interface/PFCandidateFwd.h"
-#include "MitAna/DataTree/interface/ElectronFwd.h"
+#include "MitAna/DataTree/interface/MuonCol.h"
+#include "MitAna/DataTree/interface/VertexCol.h"
+#include "MitAna/DataTree/interface/BeamSpotCol.h"
+#include "MitAna/DataTree/interface/PFCandidateCol.h"
+#include "MitAna/DataTree/interface/ElectronCol.h"
 #include "TH2D.h"
 #include "TFile.h"
 #include "TMath.h"
