@@ -12,11 +12,11 @@ ClassImp(mithep::ElectronCleaningMod)
 ElectronCleaningMod::ElectronCleaningMod(const char *name, const char *title) : 
   BaseMod(name,title),
   fGoodElectronsName(ModNames::gkGoodElectronsName),        
-  fCleanMuonsName(ModNames::gkCleanMuonsName),        
-  fCleanElectrons(0)
+  fCleanMuonsName(ModNames::gkCleanMuonsName)        
 {
   // Constructor.
-  SetCleanElectronsName(ModNames::gkCleanElectronsName);
+	fCleanElectrons = new ElectronOArr;
+  fCleanElectrons->SetName(ModNames::gkCleanElectronsName);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ void ElectronCleaningMod::Process()
 
 void
 ElectronCleaningMod::SlaveBegin () {
-	PublishObj(fCleanElectrons);
+  PublishObj(fCleanElectrons);
 }
 
 void 

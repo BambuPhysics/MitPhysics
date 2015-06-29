@@ -32,8 +32,8 @@ void mithep::MergeLeptonsMod::Process()
 {
   // Merge the two input collections and publish merged collection. 
 
-  fElIn = GetObjThisEvt<ElectronCol>(fElName);
-  fMuIn = GetObjThisEvt<MuonCol>(fMuName);
+  fElIn = GetObject<ElectronCol>(fElName);
+  fMuIn = GetObject<MuonCol>(fMuName);
 
   // determine how many there are in total 
   UInt_t nents = 0;

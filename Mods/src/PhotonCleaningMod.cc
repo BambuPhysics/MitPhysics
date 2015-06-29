@@ -12,11 +12,11 @@ PhotonCleaningMod::PhotonCleaningMod(const char *name, const char *title) :
   BaseMod(name,title),
   fCleanElectronsName(ModNames::gkCleanElectronsName),        
   fGoodPhotonsName(ModNames::gkGoodPhotonsName),        
-  fCleanPhotons(0),
   fMinDeltaRToElectron(0.3)
 {
   // Constructor.
-  SetCleanPhotonsName(ModNames::gkCleanPhotonsName);
+  fCleanPhotons = new PhotonOArr;
+  fCleanPhotons->SetName(ModNames::gkCleanPhotonsName);
 }
 
 //--------------------------------------------------------------------------------------------------

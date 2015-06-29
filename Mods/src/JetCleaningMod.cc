@@ -29,7 +29,8 @@ JetCleaningMod::JetCleaningMod(const char *name, const char *title) :
   fApplyTauRemoval(kFALSE)
 {
   // Constructor.
-  SetCleanJetsName(ModNames::gkCleanJetsName);
+  fCleanJets = new JetOArr;
+  fCleanJets->SetName(ModNames::gkCleanJetsName);
 }
 
 //--------------------------------------------------------------------------------------------------
