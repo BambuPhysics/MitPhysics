@@ -28,10 +28,7 @@ JetCorrectionMod::JetCorrectionMod(const char *name, const char *title) :
 //--------------------------------------------------------------------------------------------------
 JetCorrectionMod::~JetCorrectionMod()
 {
-  if (fJetCorrector) {
-    delete fJetCorrector;
-    fJetCorrector = 0;
-  }
+  delete fJetCorrector;
 }
 
 void
