@@ -28,6 +28,7 @@ namespace mithep
      ~PuppiMod();
 
       Int_t GetParticleType( const PFCandidate *cand );
+      Double_t Chi2fromDZ( Double_t dz );
 
       const char   *GetVertexesName()              const     { return fVertexesName;       }
       const char   *GetInputName()                 const     { return fPFCandidatesName;   }   
@@ -38,6 +39,7 @@ namespace mithep
 
       void SetRMin( Double_t RMin )                          { fRMin = RMin;               }
       void SetR0( Double_t R0 )                              { fR0 = R0;                   }
+      void SetAlpha( Double_t Alpha )                        { fAlpha = Alpha;             }
       void SetBeta( Double_t Beta )                          { fBeta = Beta;               }
       
       void SetD0Cut( Double_t cut )                          { fD0Cut = cut;               }
@@ -49,6 +51,7 @@ namespace mithep
 
       void SetKeepPileup( Bool_t keep )                      { fKeepPileup = keep;         }
       void SetInvert( Bool_t invert )                        { fInvert = invert;           }
+      void SetApplyCHS( Bool_t apply )                       { fApplyCHS = apply;          }
 
     protected:
       void                  SlaveBegin();
@@ -65,6 +68,7 @@ namespace mithep
 
       Double_t fRMin;                             // Minimum dR cut for summing up surrounding particles
       Double_t fR0;                               // Maximum dR cut for summing up surrounding particles
+      Double_t fAlpha;                            // Parameter for weighting pt of surrounding particles
       Double_t fBeta;                             // Parameter for weighting dR of surrounding particles
 
       Double_t fD0Cut;                            // D0 cut for charged particle vertex matching
@@ -76,8 +80,9 @@ namespace mithep
 
       Bool_t fKeepPileup;                         // Keep pileup with zero weight (for debugging)
       Bool_t fInvert;                             // Option to invert weights
+      Bool_t fApplyCHS;                           // This will force weights to 0 or 1 for tracked particles
 
-      ClassDef(PuppiMod, 1)                       // met correction module
+      ClassDef(PuppiMod, 1)                       // Puppi module
   };
 }
 #endif

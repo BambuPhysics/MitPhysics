@@ -25,6 +25,7 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fPuppiParticles(0),
   fRMin(0.02),
   fR0(0.3),
+  fAlpha(1.0),
   fBeta(1.0),
   fD0Cut(0.03),
   fDZCut(0.1),
@@ -32,7 +33,8 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fMinNeutralPt(1.0),
   fMinNeutralPtSlope(0.005),
   fKeepPileup(kFALSE),
-  fInvert(kFALSE)
+  fInvert(kFALSE),
+  fApplyCHS(kTRUE)
 {
   // Constructor.
 }
@@ -41,9 +43,7 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
 PuppiMod::~PuppiMod() {} 
 
 //--------------------------------------------------------------------------------------------------
-Int_t
-PuppiMod::GetParticleType(const PFCandidate *cand){
-
+Int_t PuppiMod::GetParticleType(const PFCandidate *cand){
   if(cand->PFType() == 1){
     if((fabs(cand->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) < fDZCut) &&
        (MathUtils::AddInQuadrature(cand->SourceVertex().X() - fVertexes->At(0)->Position().X(),
@@ -54,15 +54,22 @@ PuppiMod::GetParticleType(const PFCandidate *cand){
   else if(cand->PFType() != 6 && cand->PFType() != 7)
     return 3;                                 // This is neutral particle in the center
   else return 4;                              // This is neutral particle in the forward region
-
   return 0;                                   // This shouldn't really happen
+}
 
+//--------------------------------------------------------------------------------------------------
+Double_t PuppiMod::Chi2fromDZ(Double_t dz){
+  Double_t expSig = 1.0;                      // This is uncertainty of track, consider making it a parameter
+  Double_t probPV = ROOT::Math::normal_cdf_c(fabs(dz),expSig) * 2.0;
+  Double_t probPU = 1 - probPV;
+  if(probPU == 1) probPU = 1 - 1e-16;         // This is a weird thing due to the next function I call
+  Double_t chi = TMath::ChisquareQuantile(probPU,1);
+  return pow(chi,2);
 }
 
 //--------------------------------------------------------------------------------------------------
 void PuppiMod::SlaveBegin()
 {
-
   // ===== load branches ====
   ReqBranch(fVertexesName, fVertexes);
   ReqBranch(fPFCandidatesName, fPFCandidates);
@@ -119,11 +126,12 @@ void PuppiMod::Process()
       if(i0 == i2) continue;                                        // Don't bother comparing a particle to itself
       const PFCandidate *jCandidate = fPFCandidates->At(i2);
       Double_t dRTemp = MathUtils::DeltaR(iCandidate,jCandidate);
-      if(dRTemp > fRMin && dRTemp < fR0){                                            // Only look at other particles in this range
+      if(dRTemp > fRMin && dRTemp < fR0){                                                      // Only look at other particles in this range
         Int_t jParticleType = GetParticleType(jCandidate);
-        alphaF[i0] = alphaF[i0] + jCandidate->Pt()/(pow(jCandidate->Pt(),fBeta));    // First do the sum inside the log (alphaF)
-        if(jParticleType == 1)                                                       // If the particle is charged PV
-          alphaC[i0] = alphaC[i0] + jCandidate->Pt()/(pow(jCandidate->Pt(),fBeta));  // add to alphaC
+        Double_t theAddition = (pow(jCandidate->Pt(),fAlpha))/(pow(dRTemp,fBeta));             // This is the thing we have to add inside the log
+        alphaF[i0] = alphaF[i0] + theAddition;                                                 // First do the sum inside the log (alphaF)
+        if(jParticleType == 1)                                                                 // If the particle is charged PV
+          alphaC[i0] = alphaC[i0] + theAddition;                                               //   add to alphaC
       }
     }
     if(alphaF[i0] == 0) alphaF[i0] = -100;                          // Take the logs and ignore sum == 0 particles
@@ -183,22 +191,22 @@ void PuppiMod::Process()
     Double_t chi2 = 0;
     Double_t weight = 0;
     Int_t CandidateType = GetParticleType(fPFCandidates->At(i0));
-    if(CandidateType == 1) weight = 1;                                                         // If charged PV, the weight is 1
-    else if(CandidateType == 3){                                                               // If neutral central, get central chi2
+    if(fApplyCHS && CandidateType == 1) weight = 1;                                                 // If charged PV with CHS, the weight is 1
+    else if(CandidateType == 3 || (not fApplyCHS && (CandidateType == 1 || CandidateType == 2))){   // If neutral central or not CHS, get central chi2
       if(alphaC[i0] > alphaCMed) chi2 = pow((alphaC[i0] - alphaCMed),2)/sigma2C;
     }
-    else if(CandidateType == 4){                                                               // If forward particle, get forward chi2
+    else if(CandidateType == 4){                                                                    // If forward particle, get forward chi2
       if(alphaF[i0] > alphaFMed) chi2 = pow((alphaF[i0] - alphaFMed),2)/sigma2F;
     }
 
-    if(chi2 > 0){                                                    // If chi2 value was assigned, then make weight and apply it
-      weight = ROOT::Math::chisquared_cdf(chi2,1);
+    if(chi2 > 0){                                                    // If chi2 value was assigned
+      weight = ROOT::Math::chisquared_cdf(chi2,1);                   //   then make the weight
       if(weight < fMinWeightCut) weight = 0;                         // If less than the minimum cut, set weight back to zero
     }
-    
-    if((CandidateType == 3 || CandidateType == 4) && 
+
+    if((CandidateType == 3 || CandidateType == 4) &&                 // If neutral Pt is less than expected for given NPV
        (fPFCandidates->At(i0)->Pt()*(weight) < fMinNeutralPt + fMinNeutralPtSlope * (fVertexes->GetEntries())))
-      weight = 0;                                                    // If neutral Pt is less than expected for given NPV, set weight to zero
+      weight = 0;                                                    //   set weight to zero
     if(fInvert) weight = 1.0 - weight;                               // Invert the weight here if asked for
     if(weight == 0 && not fKeepPileup) continue;                     // Throw out if we're not keeping it
 
@@ -207,9 +215,6 @@ void PuppiMod::Process()
     new (PuppiParticle) PFCandidate(*fPFCandidates->At(i0));
     if(weight < 1)                                                   // Weight the particle if required
       PuppiParticle->SetPtEtaPhiM(PuppiParticle->Pt()*(weight),PuppiParticle->Eta(),PuppiParticle->Phi(),PuppiParticle->Mass()*(weight));
-    
   }
-  
   fPuppiParticles->Trim();
-
 }
