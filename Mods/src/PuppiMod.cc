@@ -1,14 +1,11 @@
 #include <iostream>
+#include <fstream>
 
-#include "MitAna/DataTree/interface/JetCol.h"
 #include "MitPhysics/Mods/interface/PuppiMod.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
-#include "MitAna/DataTree/interface/MetCol.h"
 #include "MitPhysics/Init/interface/ModNames.h"
-#include "MitCommon/DataFormats/interface/Vect3.h"
-#include "MitAna/DataTree/interface/VertexCol.h"
 
-#include "TLorentzVector.h"
+#include "TSystem.h"
 #include "Math/ProbFunc.h"
 
 using namespace mithep;
@@ -18,6 +15,7 @@ ClassImp(mithep::PuppiMod)
 //--------------------------------------------------------------------------------------------------
 PuppiMod::PuppiMod(const char *name, const char *title) : 
   BaseMod(name,title),
+  fEtaConfigName(TString(gSystem->Getenv("CMSSW_BASE")) + "/MitPhysics/config/PuppiEta.cfg"),
   fVertexesName(Names::gkPVBrn),
   fPFCandidatesName(Names::gkPFCandidatesBrn),
   fPuppiParticlesName("PuppiParticles"),
@@ -32,6 +30,9 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fMinWeightCut(0.01),
   fMinNeutralPt(1.0),
   fMinNeutralPtSlope(0.005),
+  fMinPt(0),
+  fMaxEta(5.0),
+  fRMSScaleFactor(1.0),
   fKeepPileup(kFALSE),
   fInvert(kFALSE),
   fApplyCHS(kTRUE)
@@ -74,10 +75,34 @@ void PuppiMod::SlaveBegin()
   ReqBranch(fVertexesName, fVertexes);
   ReqBranch(fPFCandidatesName, fPFCandidates);
 
-  // prepare the storage array for the PuppiParticles
+  // Prepare the storage array for the PuppiParticles
   fPuppiParticles = new PFCandidateArr(16);
   fPuppiParticles->SetName(fPuppiParticlesName);
   PublishObj(fPuppiParticles);
+
+  // Read the configuration file
+  std::ifstream configFile;
+  configFile.open(fEtaConfigName.Data());
+  TString tempMaxEta;
+  TString tempMinPt;
+  TString tempMinNeutralPt;
+  TString tempMinNeutralPtSlope;
+  TString tempRMSEtaSF;
+  TString tempMedEtaSF;
+  TString tempEtaMaxExtrap;
+  while(!configFile.eof()){
+    configFile >> tempMaxEta >> tempMinPt >> tempMinNeutralPt >> tempMinNeutralPtSlope >> tempRMSEtaSF >> tempMedEtaSF >> tempEtaMaxExtrap;
+    // If not blank or commented, store the bins
+    if(tempEtaMaxExtrap != "" && tempMaxEta[0] != '#'){
+      fMaxEtas.push_back(tempMaxEta.Atof());
+      fMinPts.push_back(tempMinPt.Atof());
+      fMinNeutralPts.push_back(tempMinNeutralPt.Atof());
+      fMinNeutralPtSlopes.push_back(tempMinNeutralPtSlope.Atof());
+      fRMSEtaSFs.push_back(tempRMSEtaSF.Atof());
+      fMedEtaSFs.push_back(tempMedEtaSF.Atof());
+      fEtaMaxExtraps.push_back(tempEtaMaxExtrap.Atof());
+    }
+  }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -96,7 +121,7 @@ void PuppiMod::Process()
 
   // This mapper will return particles that are only close in eta, phi space
   ParticleMapper *Mapper = new ParticleMapper();
-  Mapper->Initialize(*fPFCandidates,fR0,fR0);
+  Mapper->Initialize(*fPFCandidates,fR0,fR0,fMaxEta);
 
   const Int_t numCandidates = fPFCandidates->GetEntries();
   Double_t alphaF[numCandidates];                             // This is alpha(F) of all particles for particle i
@@ -111,14 +136,17 @@ void PuppiMod::Process()
 
   for(Int_t i0 = 0; i0 < numCandidates; i0++){
     const PFCandidate *iCandidate = fPFCandidates->At(i0);
-    // Determine if the PFCandidate is charged PU. This will help characterize neutral PU.
-    Int_t iParticleType = GetParticleType(iCandidate);
       
     // Initialize alphas and indices for sorting
     alphaF[i0] = 0;
     alphaC[i0] = 0;
     IndicesF[i0] = i0;
     IndicesC[i0] = i0;
+
+    if(iCandidate->Pt() < fMinPt) continue;                         // If it doesn't meet the Pt cut, we leave alpha at zero and say PU
+
+    // Determine if the PFCandidate is charged PU. This will help characterize neutral PU.
+    Int_t iParticleType = GetParticleType(iCandidate);
     // Mapper is getting nearby PFCandidates
     std::vector<Int_t> nearList = Mapper->GetSurrounding(i0);
     for(UInt_t i1 = 0; i1 < nearList.size(); i1++){
@@ -183,6 +211,9 @@ void PuppiMod::Process()
   sigma2F = sigma2F/(medIndexF - numFCHPUis0);
   for(Int_t i0 = numCCHPUis0; i0 < medIndexC; i0++) sigma2C = sigma2C + pow((alphaCMed-alphaCCHPU[IndicesCCHPU[i0]]),2);
   sigma2C = sigma2C/(medIndexC - numCCHPUis0);
+
+  sigma2F = sigma2F * (fRMSScaleFactor);                             // Scale the sigmas
+  sigma2C = sigma2C * (fRMSScaleFactor);
 
   fPuppiParticles->Delete();
 

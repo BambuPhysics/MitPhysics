@@ -16,8 +16,6 @@
 #include "MitAna/DataCont/interface/Types.h"
 #include "MitPhysics/Utils/interface/ParticleMapper.h"
 
-#include "TFormula.h"
-
 namespace mithep 
 {
   class PuppiMod : public BaseMod
@@ -33,6 +31,7 @@ namespace mithep
       const char   *GetVertexesName()              const     { return fVertexesName;       }
       const char   *GetInputName()                 const     { return fPFCandidatesName;   }   
       const char   *GetOutputName()                const     { return fPuppiParticlesName; }
+      void SetEtaConfigName( const char *name )              { fEtaConfigName = name;      }
       void SetVertexesName( const char *name )               { fVertexesName = name;       }
       void SetInputName( const char *name )                  { fPFCandidatesName = name;   }
       void SetOutputName( const char *name )                 { fPuppiParticlesName = name; }
@@ -49,6 +48,11 @@ namespace mithep
       void SetMinNeutralPt( Double_t pt )                    { fMinNeutralPt = pt;         }
       void SetMinNeutralPtSlope( Double_t slope )            { fMinNeutralPtSlope = slope; }
 
+      void SetMinPt( Double_t min )                          { fMinPt = min;               }
+      void SetMaxEta( Double_t max )                         { fMaxEta = max;              }
+
+      void SetRMSScaleFactor( Double_t fact )                { fRMSScaleFactor = fact;     }
+
       void SetKeepPileup( Bool_t keep )                      { fKeepPileup = keep;         }
       void SetInvert( Bool_t invert )                        { fInvert = invert;           }
       void SetApplyCHS( Bool_t apply )                       { fApplyCHS = apply;          }
@@ -58,6 +62,7 @@ namespace mithep
       void                  SlaveTerminate();
       void                  Process();
       
+      TString               fEtaConfigName;       // Name of the configuration file with eta tables
       TString               fVertexesName;        // Name of vertices collection used for PV
       TString               fPFCandidatesName;    // Name of PFCandidate collection (input)
       TString               fPuppiParticlesName;  // Name of Puppi Particle collection (output)
@@ -78,9 +83,23 @@ namespace mithep
       Double_t fMinNeutralPt;                     // Minimum Pt cut on neutral particles (after weighting)
       Double_t fMinNeutralPtSlope;                // Predicted slope of neutral Pt versus pileup
 
+      Double_t fMinPt;                            // For now, just min pt of particles that we look at
+      Double_t fMaxEta;                           // I guess this isn't a bad idea
+
+      Double_t fRMSScaleFactor;                   // A scale factor for RMS
+
       Bool_t fKeepPileup;                         // Keep pileup with zero weight (for debugging)
       Bool_t fInvert;                             // Option to invert weights
       Bool_t fApplyCHS;                           // This will force weights to 0 or 1 for tracked particles
+
+      // These are parameters that are functions of Eta hopefully we can be more clever some day
+      std::vector<Double_t> fMaxEtas;             // These are the maximum etas for each region of the table
+      std::vector<Double_t> fMinPts;              // Various Pt cuts
+      std::vector<Double_t> fMinNeutralPts;       // Minimum Pt cut on neutral particles (after weighting)
+      std::vector<Double_t> fMinNeutralPtSlopes;  // Predicted slope of neutral particles as function of PU
+      std::vector<Double_t> fRMSEtaSFs;           // Scale factor for RMS as function of Eta
+      std::vector<Double_t> fMedEtaSFs;           // Scale factor for median as a function of Eta
+      std::vector<Double_t> fEtaMaxExtraps;       // I think this is the maximum eta to calculate median alphas?
 
       ClassDef(PuppiMod, 1)                       // Puppi module
   };
