@@ -27,6 +27,8 @@ namespace mithep
                const char *title="Puppi module");
      ~PuppiMod();
 
+      Int_t GetParticleType( const PFCandidate *cand );
+
       const char   *GetVertexesName()              const     { return fVertexesName;       }
       const char   *GetInputName()                 const     { return fPFCandidatesName;   }   
       const char   *GetOutputName()                const     { return fPuppiParticlesName; }
@@ -41,7 +43,12 @@ namespace mithep
       void SetD0Cut( Double_t cut )                          { fD0Cut = cut;               }
       void SetDZCut( Double_t cut )                          { fDZCut = cut;               }
 
+      void SetMinWeightCut( Double_t cut )                   { fMinWeightCut = cut;        }
+      void SetMinNeutralPt( Double_t pt )                    { fMinNeutralPt = pt;         }
+      void SetMinNeutralPtSlope( Double_t slope )            { fMinNeutralPtSlope = slope; }
+
       void SetKeepPileup( Bool_t keep )                      { fKeepPileup = keep;         }
+      void SetInvert( Bool_t invert )                        { fInvert = invert;           }
 
     protected:
       void                  SlaveBegin();
@@ -63,7 +70,12 @@ namespace mithep
       Double_t fD0Cut;                            // D0 cut for charged particle vertex matching
       Double_t fDZCut;                            // DZ cut for charged particle vertex matching
 
+      Double_t fMinWeightCut;                     // Minimum weight to drop it to zero
+      Double_t fMinNeutralPt;                     // Minimum Pt cut on neutral particles (after weighting)
+      Double_t fMinNeutralPtSlope;                // Predicted slope of neutral Pt versus pileup
+
       Bool_t fKeepPileup;                         // Keep pileup with zero weight (for debugging)
+      Bool_t fInvert;                             // Option to invert weights
 
       ClassDef(PuppiMod, 1)                       // met correction module
   };

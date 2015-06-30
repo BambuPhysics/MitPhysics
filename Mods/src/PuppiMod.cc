@@ -28,13 +28,36 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fBeta(1.0),
   fD0Cut(0.03),
   fDZCut(0.1),
-  fKeepPileup(kFALSE)
+  fMinWeightCut(0.01),
+  fMinNeutralPt(1.0),
+  fMinNeutralPtSlope(0.005),
+  fKeepPileup(kFALSE),
+  fInvert(kFALSE)
 {
   // Constructor.
 }
 
 //--------------------------------------------------------------------------------------------------
 PuppiMod::~PuppiMod() {} 
+
+//--------------------------------------------------------------------------------------------------
+Int_t
+PuppiMod::GetParticleType(const PFCandidate *cand){
+
+  if(cand->PFType() == 1){
+    if((fabs(cand->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) < fDZCut) &&
+       (MathUtils::AddInQuadrature(cand->SourceVertex().X() - fVertexes->At(0)->Position().X(),
+                                   cand->SourceVertex().Y() - fVertexes->At(0)->Position().Y()) < fD0Cut))
+      return 1;                               // This is charged PV particle
+    else return 2;                            // This is charged PU particle
+  }
+  else if(cand->PFType() != 6 && cand->PFType() != 7)
+    return 3;                                 // This is neutral particle in the center
+  else return 4;                              // This is neutral particle in the forward region
+
+  return 0;                                   // This shouldn't really happen
+
+}
 
 //--------------------------------------------------------------------------------------------------
 void PuppiMod::SlaveBegin()
@@ -78,18 +101,11 @@ void PuppiMod::Process()
   Int_t IndicesC[numCandidates];
   Int_t numFCHPUis0 = 0;
   Int_t numCCHPUis0 = 0;
-  Int_t isChargedPU = 0;                                      // Bool, but I made it an int in case we want more options
 
   for(Int_t i0 = 0; i0 < numCandidates; i0++){
     const PFCandidate *iCandidate = fPFCandidates->At(i0);
     // Determine if the PFCandidate is charged PU. This will help characterize neutral PU.
-    if(iCandidate->PFType() == 1 && 
-       ((fabs(iCandidate->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) > fDZCut) ||
-        (MathUtils::AddInQuadrature(iCandidate->SourceVertex().X() - fVertexes->At(0)->Position().X(),
-                                    iCandidate->SourceVertex().Y() - fVertexes->At(0)->Position().Y()) > fD0Cut))){
-      isChargedPU = 1;
-    }
-    else isChargedPU = 0;
+    Int_t iParticleType = GetParticleType(iCandidate);
       
     // Initialize alphas and indices for sorting
     alphaF[i0] = 0;
@@ -103,24 +119,21 @@ void PuppiMod::Process()
       if(i0 == i2) continue;                                        // Don't bother comparing a particle to itself
       const PFCandidate *jCandidate = fPFCandidates->At(i2);
       Double_t dRTemp = MathUtils::DeltaR(iCandidate,jCandidate);
-      if(dRTemp > fRMin && dRTemp < fR0){                                          // Only look at other particles in this range
-        alphaF[i0] = alphaF[i0] + jCandidate->Pt()/(pow(jCandidate->Pt(),fBeta));  // First do the sum inside the log
-        if((jCandidate->PFType() == 1) && 
-           (fabs(jCandidate->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) < fDZCut) && 
-           (MathUtils::AddInQuadrature(jCandidate->SourceVertex().X() - fVertexes->At(0)->Position().X(),
-                                       jCandidate->SourceVertex().Y() - fVertexes->At(0)->Position().Y()) < fD0Cut)){
-          alphaC[i0] = alphaC[i0] + jCandidate->Pt()/(pow(jCandidate->Pt(),fBeta));
-        }
+      if(dRTemp > fRMin && dRTemp < fR0){                                            // Only look at other particles in this range
+        Int_t jParticleType = GetParticleType(jCandidate);
+        alphaF[i0] = alphaF[i0] + jCandidate->Pt()/(pow(jCandidate->Pt(),fBeta));    // First do the sum inside the log (alphaF)
+        if(jParticleType == 1)                                                       // If the particle is charged PV
+          alphaC[i0] = alphaC[i0] + jCandidate->Pt()/(pow(jCandidate->Pt(),fBeta));  // add to alphaC
       }
     }
     if(alphaF[i0] == 0) alphaF[i0] = -100;                          // Take the logs and ignore sum == 0 particles
     else alphaF[i0] = TMath::Log(alphaF[i0]);
     if(alphaC[i0] == 0) alphaC[i0] = -100;
     else alphaC[i0] = TMath::Log(alphaC[i0]);
-    if(isChargedPU == 1){
+    if(iParticleType == 2){                                         // If charged PU
       if(alphaF[i0] == -100) numFCHPUis0++;                         // Count particles to ignore when taking the median
       if(alphaC[i0] == -100) numCCHPUis0++;
-      alphaFCHPU[numCHPU] = alphaF[i0];
+      alphaFCHPU[numCHPU] = alphaF[i0];                             // Only intializing particles up to the number of charged PU
       alphaCCHPU[numCHPU] = alphaC[i0];
       numCHPU++;                                                    // Count the total number of charged PU particles
     }
@@ -169,27 +182,32 @@ void PuppiMod::Process()
     // Now we are going to assign the weights
     Double_t chi2 = 0;
     Double_t weight = 0;
-    if(fPFCandidates->At(i0)->PFType() == 6 || fPFCandidates->At(i0)->PFType() == 7){             // If forward particle, get forward chi2
-      if(alphaF[i0] > alphaFMed) chi2 = pow((alphaF[i0] - alphaFMed),2)/sigma2F;
-    }
-    else if(fPFCandidates->At(i0)->PFType() != 1){                                        // If neutral central, get central chi2
+    Int_t CandidateType = GetParticleType(fPFCandidates->At(i0));
+    if(CandidateType == 1) weight = 1;                                                         // If charged PV, the weight is 1
+    else if(CandidateType == 3){                                                               // If neutral central, get central chi2
       if(alphaC[i0] > alphaCMed) chi2 = pow((alphaC[i0] - alphaCMed),2)/sigma2C;
     }
-    else if((fabs(fPFCandidates->At(i0)->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) < fDZCut) &&
-            (MathUtils::AddInQuadrature(fPFCandidates->At(i0)->SourceVertex().X() - fVertexes->At(0)->Position().X(),
-                                        fPFCandidates->At(i0)->SourceVertex().Y() - fVertexes->At(0)->Position().Y()) < fD0Cut)){
-      weight = 1;                 // If charged PV, then weight = 0, otherwise, weight = 0
+    else if(CandidateType == 4){                                                               // If forward particle, get forward chi2
+      if(alphaF[i0] > alphaFMed) chi2 = pow((alphaF[i0] - alphaFMed),2)/sigma2F;
     }
-    // If chi2 value was assigned, then make weight and apply it
-    if(chi2 > 0){
+
+    if(chi2 > 0){                                                    // If chi2 value was assigned, then make weight and apply it
       weight = ROOT::Math::chisquared_cdf(chi2,1);
+      if(weight < fMinWeightCut) weight = 0;                         // If less than the minimum cut, set weight back to zero
     }
-    // If not assigned, check for pileup
-    if(weight == 0 && not fKeepPileup) continue;  // Throw out if we're not keeping it
+    
+    if((CandidateType == 3 || CandidateType == 4) && 
+       (fPFCandidates->At(i0)->Pt()*(weight) < fMinNeutralPt + fMinNeutralPtSlope * (fVertexes->GetEntries())))
+      weight = 0;                                                    // If neutral Pt is less than expected for given NPV, set weight to zero
+    if(fInvert) weight = 1.0 - weight;                               // Invert the weight here if asked for
+    if(weight == 0 && not fKeepPileup) continue;                     // Throw out if we're not keeping it
 
     // add PuppiParticle to the collection
     PFCandidate *PuppiParticle = fPuppiParticles->Allocate();
     new (PuppiParticle) PFCandidate(*fPFCandidates->At(i0));
+    if(weight < 1)                                                   // Weight the particle if required
+      PuppiParticle->SetPtEtaPhiM(PuppiParticle->Pt()*(weight),PuppiParticle->Eta(),PuppiParticle->Phi(),PuppiParticle->Mass()*(weight));
+    
   }
   
   fPuppiParticles->Trim();
