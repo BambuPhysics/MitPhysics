@@ -36,8 +36,6 @@ namespace mithep
       const char       *GetOutputName()                const      { return GetCorrectedJetsName();  }
       void              AddCorrectionFromRelease(const std::string &path);
       void              AddCorrectionFromFile(const std::string &file);    
-      void              ApplyL1FastJetCorrection(float maxEta=2.5, bool useFixedGrid=false); 
-      void              ApplyL1FastJetCorrection(Jet * jet);
       void              SetCorrectedJetsName(const char *name)    { fCorrectedJetsName = name;      }     
       void              SetCorrectedName(const char *name)        { SetCorrectedJetsName(name);     }    
       void              SetInputName(const char *name)            { fJetsName = name;               }
@@ -55,17 +53,11 @@ namespace mithep
       bool              fEnabledL1Correction; //switch on L1 correction
       float             rhoEtaMax; //parameter to choose which rho to use for L1 correction
       FactorizedJetCorrector *fJetCorrector;      //!CMSSW/FWLite jet corrections module
-      TString           fEvtHdrName;	          // name of event header branch
-      const EventHeader *fEventHeader;            // event header for current event
 
       std::vector<std::string> fCorrectionFiles;   //list of jet correction files
-      const PileupEnergyDensityCol *fRho;          // collection of pileup energy density collection
-      const PFCandidateCol         *fPFCandidates; // particle flow candidates collection handle
       
       BitMask8          fEnabledCorrectionMask;    //bitmask of enabled corrections
       std::vector<Jet::ECorr> fEnabledCorrections; //vector of enabled corrections
-
-      bool              fUseFixedGrid;             // flag to use fixed grid method to compute energy density 
 
       unsigned          fRhoAlgo;
 

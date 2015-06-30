@@ -17,12 +17,9 @@ JetCorrectionMod::JetCorrectionMod(const char *name, const char *title) :
   fJetsName(ModNames::gkPubJetsName),
   fCorrectedJetsName(ModNames::gkCorrectedJetsName),  
   fRhoBranchName("Rho"),
-  fPFCandidatesName(Names::gkPFCandidatesBrn),
   fEnabledL1Correction(kFALSE),
   rhoEtaMax(5.0),
   fJetCorrector(0),
-  fEvtHdrName(Names::gkEvtHeaderBrn),
-  fEventHeader(0),
   fRhoAlgo(mithep::PileupEnergyDensity::kHighEta)
 {
   // Constructor.
@@ -74,11 +71,6 @@ void JetCorrectionMod::SlaveBegin()
     correctionParameters.push_back(JetCorrectorParameters(*it));
   }
   
-  //rho for L1 fastjet correction
-  ReqBranch(fRhoBranchName, fRho);
-  ReqBranch(fPFCandidatesName, fPFCandidates);
-  ReqBranch(fEvtHdrName, fEventHeader);
-
   //initialize jet corrector class
   fJetCorrector = new FactorizedJetCorrector(correctionParameters);
 
@@ -115,7 +107,7 @@ void JetCorrectionMod::Process()
 {
   // Process entries of the tree. 
 
-  const JetCol *inJets = GetObjThisEvt<JetCol>(fJetsName);
+  const JetCol *inJets = GetObject<JetCol>(fJetsName);
   if (!inJets) {
     SendError(kAbortModule, "Process", 
               "Pointer to input jet collection %s is null.",
@@ -127,12 +119,8 @@ void JetCorrectionMod::Process()
   CorrectedJets->SetOwner(kTRUE);
   CorrectedJets->SetName(fCorrectedJetsName);
 
-  std::vector<float> corrections;
-
   // get the energy density from the event
-  LoadBranch(fRhoBranchName);
-  LoadBranch(fPFCandidatesName);
-  LoadBranch(fEvtHdrName);
+  auto* rho = GetObject<PileupEnergyDensityCol>(fRhoBranchName);
 
   // loop over jets
   for (UInt_t i=0; i<inJets->GetEntries(); ++i) {
@@ -150,7 +138,7 @@ void JetCorrectionMod::Process()
     fJetCorrector->setJetPt(rawMom.Pt());
     fJetCorrector->setJetPhi(rawMom.Phi());
     fJetCorrector->setJetE(rawMom.E());
-    const PileupEnergyDensity *fR = fRho->At(0);
+    const PileupEnergyDensity *fR = rho->At(0);
 
     Double_t theRho = fR->Rho(fRhoAlgo);
 
@@ -165,7 +153,7 @@ void JetCorrectionMod::Process()
     else {
       fJetCorrector->setJetEMF(-99.0);
     }
-    corrections = fJetCorrector->getSubCorrections();
+    std::vector<float>&& corrections = fJetCorrector->getSubCorrections();
     
     //set and enable correction factors in the output jet
     Double_t cumulativeCorrection = 1.0;
@@ -192,21 +180,6 @@ void JetCorrectionMod::Process()
       //enable corrections after setting them
       jet->EnableCorrection(currentLevel);
     }
-    
-    if (0) {
-      printf("JetCorrectionMod(run/evt/lum/rhoEtaMax): %d %d %d %1f ",
-	     fEventHeader->RunNum(),fEventHeader->EvtNum(),fEventHeader->LumiSec(),rhoEtaMax);
-      printf("In Pt = %5f, Out Pt = %5f ",inJet->Pt(),jet->Pt());
-      printf("In L1 = %5f, Out L1 = %5f ",
-	     inJet->L1OffsetCorrectionScale(),jet->L1OffsetCorrectionScale());
-      printf("In L2 = %5f, Out L2 = %5f ",
-	     inJet->L2RelativeCorrectionScale(),jet->L2RelativeCorrectionScale());
-      printf("In L3 = %5f, Out L3 = %5f ",
-	     inJet->L3AbsoluteCorrectionScale(),jet->L3AbsoluteCorrectionScale());
-      const PileupEnergyDensity *fR = fRho->At(0);
-      printf("Rho(2.5) = %5f, Rho(5.0)  = %5f, Area: %5f\n",
-	     fR->Rho(),fR->RhoHighEta(),jet->JetArea());
-    }
 
     // add corrected jet to collection
     CorrectedJets->AddOwned(jet);             
@@ -218,70 +191,6 @@ void JetCorrectionMod::Process()
   // add to event for other modules to use
   AddObjThisEvt(CorrectedJets);
 }
-
-
-//--------------------------------------------------------------------------------------------------
-void JetCorrectionMod::ApplyL1FastJetCorrection(float maxEta, bool useFixedGrid)
-{
-  fEnabledL1Correction = true;
-  rhoEtaMax = maxEta;
-  fUseFixedGrid = useFixedGrid;
-}
-
-
-//--------------------------------------------------------------------------------------------------
-void JetCorrectionMod::ApplyL1FastJetCorrection(Jet *jet)
-{
-  double rho = 0;
-  
-  if(fUseFixedGrid) {
-    // define 8 eta bins
-    vector<Float_t> etabins;
-    for (Int_t i=0;i<8;++i) etabins.push_back(-rhoEtaMax + 2*rhoEtaMax/7.0*i);
-    //define 10 phi bins
-    vector<Float_t> phibins;
-    for (Int_t i=0;i<10;i++) phibins.push_back(-TMath::Pi()+(2*i+1)*TMath::TwoPi()/20.);
-  
-    Float_t etadist = etabins[1]-etabins[0];
-    Float_t phidist = phibins[1]-phibins[0];
-    Float_t etahalfdist = (etabins[1]-etabins[0])/2.;
-    Float_t phihalfdist = (phibins[1]-phibins[0])/2.;
-
-    vector<Float_t> sumPFNallSMDQ;
-    sumPFNallSMDQ.reserve(80);
-    for (UInt_t ieta=0;ieta<etabins.size();++ieta) {
-      for (UInt_t iphi=0;iphi<phibins.size();++iphi) {
-        Float_t pfniso_ieta_iphi = 0;
-        assert(fPFCandidates);
-        for(UInt_t i=0; i<fPFCandidates->GetEntries(); ++i) {      
-          const PFCandidate *pfcand = fPFCandidates->At(i);
-	  if (fabs(etabins[ieta] - pfcand->Eta()) > etahalfdist) continue;
-	  if (fabs(MathUtils::DeltaPhi((Double_t)phibins[iphi],(Double_t)(pfcand->Phi()))) > phihalfdist) continue;
-	  pfniso_ieta_iphi+=pfcand->Pt();
-        }
-        sumPFNallSMDQ.push_back(pfniso_ieta_iphi);
-      }
-    }
-
-    Float_t evt_smdq = 0;
-    sort(sumPFNallSMDQ.begin(),sumPFNallSMDQ.end());
-  
-    if(sumPFNallSMDQ.size()%2) evt_smdq = sumPFNallSMDQ[(sumPFNallSMDQ.size()-1)/2];
-    else                       evt_smdq = (sumPFNallSMDQ[sumPFNallSMDQ.size()/2]+sumPFNallSMDQ[(sumPFNallSMDQ.size()-2)/2])/2.;
-    rho = evt_smdq/(etadist*phidist);    
-    
-  } else {
-    const PileupEnergyDensity *fR = fRho->At(0);
-
-    rho = fR->Rho(fRhoAlgo);
-  }
-  
-  Double_t l1Scale = (jet->Pt() - rho*jet->JetArea())/jet->Pt();
-  l1Scale = (l1Scale>0) ? l1Scale : 0.0;
-  
-  jet->SetL1OffsetCorrectionScale(l1Scale);
-}
-
 
 //--------------------------------------------------------------------------------------------------
 void JetCorrectionMod::AddCorrectionFromRelease(const std::string &path)
