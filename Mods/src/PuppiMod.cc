@@ -34,7 +34,9 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fKeepPileup(kFALSE),
   fInvert(kFALSE),
   fApplyCHS(kTRUE),
-  fApplyLowPUCorr(kTRUE)
+  fApplyLowPUCorr(kTRUE),
+  fUseEtaForAlgo(kFALSE),
+  fEtaForAlgo(2.5)
 {
   // Constructor.
 }
@@ -44,17 +46,23 @@ PuppiMod::~PuppiMod() {}
 
 //--------------------------------------------------------------------------------------------------
 Int_t PuppiMod::GetParticleType(const PFCandidate *cand){
+  if(fUseEtaForAlgo){
+    Double_t checkEta = fabs(cand->Eta());
+    if(checkEta > fEtaForAlgo){
+      return 4;
+    }
+    else if(cand->PFType() != 1) return 3;
+  }
   if(cand->PFType() == 1){
     if((fabs(cand->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) < fDZCut) &&
        (MathUtils::AddInQuadrature(cand->SourceVertex().X() - fVertexes->At(0)->Position().X(),
-                                   cand->SourceVertex().Y() - fVertexes->At(0)->Position().Y()) < fD0Cut))
-      return 1;                               // This is charged PV particle
-    else return 2;                            // This is charged PU particle
+				   cand->SourceVertex().Y() - fVertexes->At(0)->Position().Y()) < fD0Cut))
+      return 1;                             // This is charged PV particle
+    else return 2;                          // This is charged PU particle
   }
   else if(cand->PFType() != 6 && cand->PFType() != 7)
-    return 3;                                 // This is neutral particle in the center
-  else return 4;                              // This is neutral particle in the forward region
-  return 0;                                   // This shouldn't really happen
+    return 3;                               // This is neutral particle in the center
+  else return 4;                            // This is neutral particle in the forward region
 }
 
 //--------------------------------------------------------------------------------------------------
