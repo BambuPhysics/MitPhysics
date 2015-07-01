@@ -1,4 +1,4 @@
-#include "MitPhysics/Mods/interface/ElectronIDMod.h"
+#include "MitPhysics/Mods/interface/ElectronIDModRun1.h"
 #include "MitAna/DataTree/interface/StableData.h"
 #include "MitAna/DataTree/interface/ElectronFwd.h"
 #include "MitAna/DataTree/interface/MuonFwd.h"
@@ -12,10 +12,10 @@
 
 using namespace mithep;
 
-ClassImp(mithep::ElectronIDMod)
+ClassImp(mithep::ElectronIDModRun1)
 
 //--------------------------------------------------------------------------------------------------
-ElectronIDMod::ElectronIDMod(const char *name, const char *title) : 
+ElectronIDModRun1::ElectronIDModRun1(const char *name, const char *title) : 
   BaseMod(name,title),
   fPrintMVADebugInfo(kFALSE),
   fElectronBranchName(Names::gkElectronBrn),
@@ -36,7 +36,6 @@ ElectronIDMod::ElectronIDMod(const char *name, const char *title) :
   fElectronEtaMax(2.5),
   fIDLikelihoodCut(-999.0),
   fTrackIsolationCut(5.0),
-  fCaloIsolationCut(5.0),
   fEcalJuraIsoCut(5.0),
   fHcalIsolationCut(5.0),
   fCombIsolationCut(0.1),
@@ -53,8 +52,6 @@ ElectronIDMod::ElectronIDMod(const char *name, const char *title) :
   fApplyD0Cut(kTRUE),
   fApplyDZCut(kTRUE),
   fChargeFilter(kTRUE),
-  fD0Cut(0.020),
-  fDZCut(0.10),
   fWhichVertex(-1),
   fApplyTriggerMatching(kFALSE),
   fApplyEcalSeeded(kFALSE),
@@ -84,40 +81,13 @@ ElectronIDMod::ElectronIDMod(const char *name, const char *title) :
   fElectronMVAWeights_Subdet1Pt20ToInf(""),
   fElectronMVAWeights_Subdet2Pt20ToInf(""),
   fPVName(Names::gkPVBeamSpotBrn),
-  fRhoAlgo(mithep::PileupEnergyDensity::kHighEta)
+  fTheRhoType(RhoUtilities::DEFAULT)
 {
   // Constructor.
 }
 
-void
-mithep::ElectronIDMod::SetRhoType(RhoUtilities::RhoType type)
-{
-  // DEPRECATED FUNCTION
-  // Use SetRhoAlgo instead
-
-  switch (type) {
-  case RhoUtilities::MIT_RHO_VORONOI_LOW_ETA:       
-    fRhoAlgo = mithep::PileupEnergyDensity::kLowEta;
-    break;
-  case RhoUtilities::MIT_RHO_VORONOI_HIGH_ETA:
-    fRhoAlgo = mithep::PileupEnergyDensity::kHighEta;
-    break;    
-  case RhoUtilities::MIT_RHO_RANDOM_LOW_ETA:
-    fRhoAlgo = mithep::PileupEnergyDensity::kRandomLowEta;
-    break;    
-  case RhoUtilities::MIT_RHO_RANDOM_HIGH_ETA:       
-    fRhoAlgo = mithep::PileupEnergyDensity::kRandom;
-    break;
-  case RhoUtilities::CMS_RHO_RHOKT6PFJETS:
-    fRhoAlgo = mithep::PileupEnergyDensity::kKt6PFJets;
-    break;
-  default:
-    fRhoAlgo = mithep::PileupEnergyDensity::kHighEta;
-  }
-}
-
 //--------------------------------------------------------------------------------------------------
-Bool_t ElectronIDMod::PassLikelihoodID(const Electron *ele) const
+Bool_t ElectronIDModRun1::PassLikelihoodID(const Electron *ele) const
 {
 
   Double_t LikelihoodValue = ElectronTools::Likelihood(fLH, ele);
@@ -150,7 +120,7 @@ Bool_t ElectronIDMod::PassLikelihoodID(const Electron *ele) const
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t ElectronIDMod::PassMVAID(const Electron *el, ElectronTools::EElIdType idType, 
+Bool_t ElectronIDModRun1::PassMVAID(const Electron *el, ElectronTools::EElIdType idType, 
                                 const Vertex *vertex, const PFCandidateCol *PFCands,
                                 const PileupEnergyDensityCol *PileupEnergyDensity) const
 { 
@@ -253,7 +223,7 @@ Bool_t ElectronIDMod::PassMVAID(const Electron *el, ElectronTools::EElIdType idT
   return kFALSE;
 }
 
-Double_t ElectronIDMod::EvaluateMVAID(const Electron *el, ElectronTools::EElIdType idType, 
+Double_t ElectronIDModRun1::EvaluateMVAID(const Electron *el, ElectronTools::EElIdType idType, 
                                     const Vertex *vertex, const PFCandidateCol *PFCands,
                                     const PileupEnergyDensityCol *PileupEnergyDensity) const
 { 
@@ -285,7 +255,7 @@ Double_t ElectronIDMod::EvaluateMVAID(const Electron *el, ElectronTools::EElIdTy
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t ElectronIDMod::PassIDCut(const Electron *ele, ElectronTools::EElIdType idType, 
+Bool_t ElectronIDModRun1::PassIDCut(const Electron *ele, ElectronTools::EElIdType idType, 
                                 const Vertex *vertex) const
 {
   Bool_t idcut = kFALSE;
@@ -385,17 +355,13 @@ Bool_t ElectronIDMod::PassIDCut(const Electron *ele, ElectronTools::EElIdType id
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t ElectronIDMod::PassIsolationCut(const Electron *ele, ElectronTools::EElIsoType isoType,
+Bool_t ElectronIDModRun1::PassIsolationCut(const Electron *ele, ElectronTools::EElIsoType isoType,
                                        const TrackCol *tracks, const Vertex *vertex, 
 				       const Double_t rho, ElectronTools::EElIdType idType) const
 {
 
   Bool_t isocut = kFALSE;
   switch (isoType) {
-    case ElectronTools::kTrackCalo:
-      isocut = (ele->TrackIsolationDr03() < fTrackIsolationCut) &&
-        (ele->CaloIsolation() < fCaloIsolationCut);
-      break;
     case ElectronTools::kTrackJura:
       isocut = (ele->TrackIsolationDr03() < ele->Pt()*fTrackIsolationCut) &&
                (ele->EcalRecHitIsoDr03()  < ele->Pt()*fEcalJuraIsoCut) &&
@@ -483,20 +449,15 @@ Bool_t ElectronIDMod::PassIsolationCut(const Electron *ele, ElectronTools::EElIs
         isocut = kTRUE;
     }
     break;
-    case ElectronTools::kVBTFWorkingPoint95Iso:
-      isocut = ElectronTools::PassCustomIso(ele, ElectronTools::kVBTFWorkingPoint95Iso, fApplyCombinedIso);
-      break;
-    case ElectronTools::kVBTFWorkingPoint90Iso:
-      isocut = ElectronTools::PassCustomIso(ele, ElectronTools::kVBTFWorkingPoint90Iso, fApplyCombinedIso);
-      break;
-    case ElectronTools::kVBTFWorkingPoint85Iso:
-      isocut = ElectronTools::PassCustomIso(ele, ElectronTools::kVBTFWorkingPoint85Iso, fApplyCombinedIso);
-      break;
-    case ElectronTools::kVBTFWorkingPoint80Iso:
-      isocut = ElectronTools::PassCustomIso(ele, ElectronTools::kVBTFWorkingPoint80Iso, fApplyCombinedIso);
-      break;
-    case ElectronTools::kVBTFWorkingPoint70Iso:
-      isocut = ElectronTools::PassCustomIso(ele, ElectronTools::kVBTFWorkingPoint70Iso, fApplyCombinedIso);
+    case ElectronTools::kVBTFWorkingPoint95IndividualIso:
+    case ElectronTools::kVBTFWorkingPoint90IndividualIso:
+    case ElectronTools::kVBTFWorkingPoint85IndividualIso:
+    case ElectronTools::kVBTFWorkingPoint70IndividualIso:
+    case ElectronTools::kVBTFWorkingPoint95CombinedIso:
+    case ElectronTools::kVBTFWorkingPoint90CombinedIso:
+    case ElectronTools::kVBTFWorkingPoint85CombinedIso:
+    case ElectronTools::kVBTFWorkingPoint70CombinedIso:
+      isocut = ElectronTools::PassCustomIso(ele, isoType);
       break;
     case ElectronTools::kMVAIso_BDTG_IDIsoCombined:
       isocut = (ele->TrackIsolationDr03() < ele->Pt()*0.2) &&
@@ -514,7 +475,9 @@ Bool_t ElectronIDMod::PassIsolationCut(const Electron *ele, ElectronTools::EElIs
       ElectronOArr *tempIsoElectrons = new  ElectronOArr;
       MuonOArr     *tempIsoMuons     = new  MuonOArr;
       Double_t IsoOverPt = IsolationTools::PFElectronIsolation2012(ele, vertex, fPFNoPileUpCands, 
-       fPileupEnergyDensity, ElectronTools::kEleEANoCorr, tempIsoElectrons, tempIsoMuons, 0.4, isDebug);
+                                                                   fPileupEnergyDensity->At(0)->Rho(),
+                                                                   ElectronTools::kEleEANoCorr,
+                                                                   tempIsoElectrons, tempIsoMuons, 0.4, isDebug);
       delete tempIsoElectrons;
       delete tempIsoMuons;
       Double_t eta = ele->SCluster()->AbsEta();
@@ -539,7 +502,9 @@ Bool_t ElectronIDMod::PassIsolationCut(const Electron *ele, ElectronTools::EElIs
       ElectronOArr *tempIsoElectrons = new  ElectronOArr;
       MuonOArr     *tempIsoMuons     = new  MuonOArr;
       Double_t IsoOverPt = IsolationTools::PFElectronIsolation2012LepTag(ele, vertex, fPFNoPileUpCands, 
-									 fPileupEnergyDensity, ElectronTools::kEleEAData2012, tempIsoElectrons, tempIsoMuons, 0.3, isDebug);
+									 fPileupEnergyDensity->At(0)->Rho(),
+                                                                         ElectronTools::kEleEAData2012,
+                                                                         tempIsoElectrons, tempIsoMuons, 0.3, isDebug);
       delete tempIsoElectrons;
       delete tempIsoMuons;
       Double_t eta = ele->SCluster()->AbsEta();
@@ -564,7 +529,10 @@ Bool_t ElectronIDMod::PassIsolationCut(const Electron *ele, ElectronTools::EElIs
       }
       ElectronOArr *tempIsoElectrons = new  ElectronOArr;
       MuonOArr     *tempIsoMuons     = new  MuonOArr;
-      Double_t IsoOverPt = IsolationTools::PFElectronIsolation2012LepTag(ele, vertex, fPFNoPileUpCands,fPileupEnergyDensity, ElectronTools::kEleEAData2012, tempIsoElectrons, tempIsoMuons, 0.3, isDebug);
+      Double_t IsoOverPt = IsolationTools::PFElectronIsolation2012LepTag(ele, vertex, fPFNoPileUpCands,
+                                                                         fPileupEnergyDensity->At(0)->Rho(),
+                                                                         ElectronTools::kEleEAData2012,
+                                                                         tempIsoElectrons, tempIsoMuons, 0.3, isDebug);
       //printf("ming sync check IsoOverPt:%f\n\n",IsoOverPt);
       delete tempIsoElectrons;
       delete tempIsoMuons;
@@ -606,7 +574,7 @@ Bool_t ElectronIDMod::PassIsolationCut(const Electron *ele, ElectronTools::EElIs
 
 
 //--------------------------------------------------------------------------------------------------
-void ElectronIDMod::Process()
+void ElectronIDModRun1::Process()
 {
   // Process entries of the tree. 
   if (fElIdType == ElectronTools::kHggLeptonTagId2012HCP) {
@@ -705,10 +673,32 @@ void ElectronIDMod::Process()
 
     //apply Isolation Cut
     Double_t Rho = 0.0;
-    if (fElIsoType == ElectronTools::kTrackJuraSliding ||
-        fElIsoType == ElectronTools::kCombinedRelativeConeAreaCorrected ||
-        fElIsoType == ElectronTools::kMVAIso_BDTG_IDIsoCombined)
-      Rho = fPileupEnergyDensity->At(0)->Rho(fRhoAlgo);
+    if (fElIsoType == ElectronTools::kTrackJuraSliding
+        || fElIsoType == ElectronTools::kCombinedRelativeConeAreaCorrected 
+        || fElIsoType == ElectronTools::kMVAIso_BDTG_IDIsoCombined 
+     ) {      
+      switch(fTheRhoType) {
+      case RhoUtilities::MIT_RHO_VORONOI_HIGH_ETA:
+	Rho = fPileupEnergyDensity->At(0)->Rho();
+	break;
+      case RhoUtilities::MIT_RHO_VORONOI_LOW_ETA:
+	Rho = fPileupEnergyDensity->At(0)->RhoLowEta();
+	break;
+      case RhoUtilities::MIT_RHO_RANDOM_HIGH_ETA:
+	Rho = fPileupEnergyDensity->At(0)->RhoRandom();
+	break;
+      case RhoUtilities::MIT_RHO_RANDOM_LOW_ETA:
+	Rho = fPileupEnergyDensity->At(0)->RhoRandomLowEta();
+	break;
+      case RhoUtilities::CMS_RHO_RHOKT6PFJETS:
+	Rho = fPileupEnergyDensity->At(0)->RhoKt6PFJets();
+	break;
+      default:
+	// use the old default
+	Rho = fPileupEnergyDensity->At(0)->Rho();
+	break;
+      }
+    }
     
     Bool_t isocut = kFALSE;
     Double_t distVtx = 999.0;
@@ -769,8 +759,8 @@ void ElectronIDMod::Process()
     // apply d0 cut
     if (fApplyD0Cut) {
       Bool_t passD0cut = kTRUE;
-      if (fWhichVertex >= -1) passD0cut = ElectronTools::PassD0Cut(e, fVertices, fD0Cut, fWhichVertex);
-      else                   passD0cut = ElectronTools::PassD0Cut(e, fBeamSpot, fD0Cut);
+      if (fWhichVertex >= -1) passD0cut = ElectronTools::PassD0Cut(e, fVertices, fElIdType, fWhichVertex);
+      else                   passD0cut = ElectronTools::PassD0Cut(e, fBeamSpot, fElIdType);
       if (!passD0cut)
         continue;
     }
@@ -780,7 +770,7 @@ void ElectronIDMod::Process()
  
     // apply dz cut
     if (fApplyDZCut) {
-      Bool_t passDZcut = ElectronTools::PassDZCut(e, fVertices, fDZCut, fWhichVertex);
+      Bool_t passDZcut = ElectronTools::PassDZCut(e, fVertices, fElIdType, fWhichVertex);
       if (!passDZcut)
         continue;
     }
@@ -843,7 +833,7 @@ void ElectronIDMod::Process()
 }
 
 //--------------------------------------------------------------------------------------------------
-void ElectronIDMod::SlaveBegin()
+void ElectronIDModRun1::SlaveBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis. Here,
   // we just request the electron collection branch.
@@ -889,7 +879,7 @@ void ElectronIDMod::SlaveBegin()
 }
 
 //--------------------------------------------------------------------------------------------------
-void ElectronIDMod::Setup()
+void ElectronIDModRun1::Setup()
 {
   // Set all options properly before execution.
 
@@ -969,16 +959,36 @@ void ElectronIDMod::Setup()
     fElIsoType = ElectronTools::kNoIso;
   else if (fElectronIsoType.CompareTo("ZeeIso") == 0 )
     fElIsoType = ElectronTools::kZeeIso;
-  else if (fElectronIsoType.CompareTo("VBTFWorkingPoint95Iso") == 0 )
-    fElIsoType = ElectronTools::kVBTFWorkingPoint95Iso;
-  else if (fElectronIsoType.CompareTo("VBTFWorkingPoint90Iso") == 0 )
-    fElIsoType = ElectronTools::kVBTFWorkingPoint90Iso;
-  else if (fElectronIsoType.CompareTo("VBTFWorkingPoint85Iso") == 0 )
-    fElIsoType = ElectronTools::kVBTFWorkingPoint85Iso;
-  else if (fElectronIsoType.CompareTo("VBTFWorkingPoint80Iso") == 0 )
-    fElIsoType = ElectronTools::kVBTFWorkingPoint80Iso;
-  else if (fElectronIsoType.CompareTo("VBTFWorkingPoint70Iso") == 0 )
-    fElIsoType = ElectronTools::kVBTFWorkingPoint70Iso;
+  else if (fElectronIsoType.CompareTo("VBTFWorkingPoint95Iso") == 0 ) {
+    if (fApplyCombinedIso)
+      fElIsoType = ElectronTools::kVBTFWorkingPoint95CombinedIso;
+    else
+      fElIsoType = ElectronTools::kVBTFWorkingPoint95IndividualIso;
+  }
+  else if (fElectronIsoType.CompareTo("VBTFWorkingPoint90Iso") == 0 ) {
+    if (fApplyCombinedIso)
+      fElIsoType = ElectronTools::kVBTFWorkingPoint90CombinedIso;
+    else
+      fElIsoType = ElectronTools::kVBTFWorkingPoint90IndividualIso;
+  }
+  else if (fElectronIsoType.CompareTo("VBTFWorkingPoint85Iso") == 0 ) {
+    if (fApplyCombinedIso)
+      fElIsoType = ElectronTools::kVBTFWorkingPoint85CombinedIso;
+    else
+      fElIsoType = ElectronTools::kVBTFWorkingPoint85IndividualIso;
+  }
+  else if (fElectronIsoType.CompareTo("VBTFWorkingPoint80Iso") == 0 ) {
+    if (fApplyCombinedIso)
+      fElIsoType = ElectronTools::kVBTFWorkingPoint80CombinedIso;
+    else
+      fElIsoType = ElectronTools::kVBTFWorkingPoint80IndividualIso;
+  }
+  else if (fElectronIsoType.CompareTo("VBTFWorkingPoint70Iso") == 0 ) {
+    if (fApplyCombinedIso)
+      fElIsoType = ElectronTools::kVBTFWorkingPoint70CombinedIso;
+    else
+      fElIsoType = ElectronTools::kVBTFWorkingPoint70IndividualIso;
+  }
   else if (fElectronIsoType.CompareTo("MVA_BDTG_IDIsoCombined") == 0 )
     fElIsoType = ElectronTools::kMVAIso_BDTG_IDIsoCombined;
   else if (fElectronIsoType.CompareTo("PFIso_HWW2012TrigV0") == 0)
@@ -1011,7 +1021,7 @@ void ElectronIDMod::Setup()
                                fElectronMVAWeights_Subdet1Pt20ToInf,
                                fElectronMVAWeights_Subdet2Pt20ToInf,
                                ElectronIDMVA::kNoIPInfo,
-			       fRhoAlgo);
+			       fTheRhoType);
   }
   if (fElIdType == ElectronTools::kMVAID_BDTG_WithIPInfo) {
     fElectronIDMVA = new ElectronIDMVA();
@@ -1023,7 +1033,7 @@ void ElectronIDMod::Setup()
                                fElectronMVAWeights_Subdet1Pt20ToInf,
                                fElectronMVAWeights_Subdet2Pt20ToInf,
                                ElectronIDMVA::kWithIPInfo,
-			       fRhoAlgo);
+			       fTheRhoType);
   }
   if (fElIdType == ElectronTools::kMVAID_BDTG_IDIsoCombined || fElIsoType == ElectronTools::kMVAIso_BDTG_IDIsoCombined) {
     fElectronIDMVA = new ElectronIDMVA();
@@ -1035,7 +1045,7 @@ void ElectronIDMod::Setup()
                                fElectronMVAWeights_Subdet1Pt20ToInf,
                                fElectronMVAWeights_Subdet2Pt20ToInf,
                                ElectronIDMVA::kIDIsoCombined,
-			       fRhoAlgo);
+			       fTheRhoType);
   }
 
   if (fElIdType == ElectronTools::kMVAID_BDTG_IDHWW2012TrigV0) {
@@ -1048,7 +1058,7 @@ void ElectronIDMod::Setup()
                                fElectronMVAWeights_Subdet1Pt20ToInf,
                                fElectronMVAWeights_Subdet2Pt20ToInf,
                                ElectronIDMVA::kIDHWW2012TrigV0,
-			       fRhoAlgo);
+			       fTheRhoType);
   }
 
   if (fElIdType == ElectronTools::kMVAID_BDTG_IDIsoCombinedHWW2012TrigV4
@@ -1062,7 +1072,7 @@ void ElectronIDMod::Setup()
                                fElectronMVAWeights_Subdet1Pt20ToInf,
                                fElectronMVAWeights_Subdet2Pt20ToInf,
                                ElectronIDMVA::kIDIsoCombinedHWW2012TrigV4,
-			       fRhoAlgo);
+			       fTheRhoType);
   }
 
   if (fElIdType == ElectronTools::kHggLeptonTagId2012HCP) {
@@ -1075,13 +1085,13 @@ void ElectronIDMod::Setup()
                                fElectronMVAWeights_Subdet1Pt20ToInf,
                                fElectronMVAWeights_Subdet2Pt20ToInf,
                                ElectronIDMVA::kIDEGamma2012NonTrigV1,
-			       fRhoAlgo);
+			       fTheRhoType);
   }
   
 }
 
 //--------------------------------------------------------------------------------------------------
-void ElectronIDMod::Terminate()
+void ElectronIDModRun1::Terminate()
 {
   // Run finishing code on the computer (slave) that did the analysis
   delete fElectronIDMVA;

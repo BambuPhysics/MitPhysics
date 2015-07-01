@@ -1,13 +1,13 @@
-#include "MitPhysics/Mods/interface/PFTauIDMod.h"
+#include "MitPhysics/Mods/interface/PFTauIDModRun1.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "MitAna/DataTree/interface/PFTauCol.h"
 
 using namespace mithep;
 
-ClassImp(mithep::PFTauIDMod)
+ClassImp(mithep::PFTauIDModRun1)
 
 //--------------------------------------------------------------------------------------------------
-PFTauIDMod::PFTauIDMod(const char *name, const char *title) : 
+PFTauIDModRun1::PFTauIDModRun1(const char *name, const char *title) : 
 BaseMod(name,title),
   fPFTausName(Names::gkPFTauBrn),
   fGoodPFTausName(ModNames::gkGoodPFTausName),
@@ -27,7 +27,7 @@ BaseMod(name,title),
 }
 
 //--------------------------------------------------------------------------------------------------
-void PFTauIDMod::Process()
+void PFTauIDModRun1::Process()
 {
   // Process entries of the tree. 
 
@@ -108,7 +108,7 @@ void PFTauIDMod::Process()
 }
 
 //--------------------------------------------------------------------------------------------------
-void PFTauIDMod::SlaveBegin()
+void PFTauIDModRun1::SlaveBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis. Here, we just request the
   // Tau collection branch.

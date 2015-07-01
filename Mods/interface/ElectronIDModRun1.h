@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------------------
-// ElectronIDMod
+// ElectronIDModRun1
 //
 // This module applies electron identification criteria and exports a pointer to a collection
 // of "good electrons" according to the specified identification scheme.
@@ -9,8 +9,8 @@
 // Authors: S.Xie, C.Loizides
 //--------------------------------------------------------------------------------------------------
 
-#ifndef MITPHYSICS_MODS_ELECTRONIDMOD_H
-#define MITPHYSICS_MODS_ELECTRONIDMOD_H
+#ifndef MITPHYSICS_MODS_ELECTRONIDMODRUN1_H
+#define MITPHYSICS_MODS_ELECTRONIDMODRUN1_H
 
 #include "MitAna/TreeMod/interface/BaseMod.h" 
 #include "MitAna/DataTree/interface/ElectronFwd.h"
@@ -33,10 +33,10 @@
 
 namespace mithep 
 {
-  class ElectronIDMod : public BaseMod
+  class ElectronIDModRun1 : public BaseMod
   {
     public:
-      ElectronIDMod(const char *name="ElectronIDMod", 
+      ElectronIDModRun1(const char *name="ElectronIDModRun1", 
                     const char *title="Electron identification module");
 
       Bool_t              GetApplyConversionFilterType1() const { return fApplyConvFilterType1;	  }
@@ -44,7 +44,6 @@ namespace mithep
       Bool_t              GetApplySpikeRemoval()      	  const { return fApplySpikeRemoval;	  }
       Bool_t              GetApplyD0Cut()             	  const { return fApplyD0Cut;		  }
       Bool_t              GetApplyDZCut()             	  const { return fApplyDZCut;		  }
-      Double_t            GetCaloIsoCut()             	  const { return fCaloIsolationCut;	  }
       Double_t            GetEcalJurIsoCut()          	  const { return fEcalJuraIsoCut;	  }
       Double_t            GetCombIsoCut()             	  const { return fCombIsolationCut;	  }
       Double_t            GetPFIsoCut()             	  const { return fPFIsolationCut;	  }
@@ -83,7 +82,6 @@ namespace mithep
       void                SetApplySpikeRemoval(Bool_t b)         { fApplySpikeRemoval  = b;    }
       void                SetApplyD0Cut(Bool_t b)                { fApplyD0Cut         = b;    }
       void                SetApplyDZCut(Bool_t b)                { fApplyDZCut         = b;    }
-      void                SetCaloIsoCut(Double_t cut)            { fCaloIsolationCut   = cut;  }
       void                SetCombIsoCut(Double_t cut)            { fCombIsolationCut   = cut;  }
       void                SetCombRelativeIsoCut(Double_t cut, Double_t cut_EE = -1.)    { 
 	fCombRelativeIsolationCut = cut; 
@@ -93,8 +91,6 @@ namespace mithep
 	  fCombRelativeIsolationCut_EE = cut_EE;
       }
       void                SetPFIsoCut(Double_t cut)              { fPFIsolationCut     = cut;  }
-      void                SetD0Cut(Double_t cut)                 { fD0Cut = cut;	       }
-      void                SetDZCut(Double_t cut)                 { fDZCut = cut;	       }
       void                SetWhichVertex(Int_t d) 		 { fWhichVertex = d; 	       }
       void                SetEcalJurIsoCut(Double_t cut)         { fEcalJuraIsoCut     = cut;  }
       void                SetGoodElectronsName(const char *n)    { fGoodElectronsName  = n;    }  
@@ -140,8 +136,8 @@ namespace mithep
       void                SetElectronMVAWeightsSubdet2Pt20ToInf(TString s) 
                           { fElectronMVAWeights_Subdet2Pt20ToInf = s; }
 
-      void                SetRhoType(RhoUtilities::RhoType); /* DEPRECATED */
-      void                SetRhoAlgo(UInt_t algo)                { fRhoAlgo = algo;            }
+      void                SetRhoType(RhoUtilities::RhoType type) { fTheRhoType = type; };
+
 
     protected:
       void                Process();
@@ -167,7 +163,6 @@ namespace mithep
       Double_t                  fElectronEtaMax;         //max eta cut
       Double_t                  fIDLikelihoodCut;        //cut value for ID likelihood
       Double_t                  fTrackIsolationCut;      //cut value for track isolation
-      Double_t                  fCaloIsolationCut;       //cut value for calo isolation
       Double_t                  fEcalJuraIsoCut;         //cut value for ecal jurassic isolation
       Double_t                  fHcalIsolationCut;       //cut value for hcal isolation
       Double_t                  fCombIsolationCut;       //cut value for combined isolation
@@ -185,8 +180,6 @@ namespace mithep
       Bool_t                    fApplyD0Cut;             //whether apply d0 cut
       Bool_t                    fApplyDZCut;             //whether apply dz cut
       Bool_t                    fChargeFilter;           //whether apply GSF and CFT equal requirement
-      Double_t                  fD0Cut;                  //max d0
-      Double_t                  fDZCut;                  //max dz
       Int_t                     fWhichVertex;            //vertex to use (-2: beamspot, -1: closest in Z)
       Bool_t                    fApplyTriggerMatching;   //match to hlt electron (default=0)
       Bool_t                    fApplyEcalSeeded;        //require ecal seeded flag
@@ -217,10 +210,10 @@ namespace mithep
       TString                   fElectronMVAWeights_Subdet2Pt20ToInf;
       TString                   fPVName;
 
-      UInt_t                    fRhoAlgo;
+      RhoUtilities::RhoType    fTheRhoType;
 
 
-    ClassDef(ElectronIDMod, 1) // Electron identification module
+    ClassDef(ElectronIDModRun1, 1) // Electron identification module
   };
 }
 #endif

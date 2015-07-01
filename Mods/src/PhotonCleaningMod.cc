@@ -1,6 +1,5 @@
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitAna/DataTree/interface/ElectronCol.h"
-#include "MitAna/DataTree/interface/PhotonCol.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "MitPhysics/Mods/interface/PhotonCleaningMod.h"
 
@@ -13,10 +12,16 @@ PhotonCleaningMod::PhotonCleaningMod(const char *name, const char *title) :
   BaseMod(name,title),
   fCleanElectronsName(ModNames::gkCleanElectronsName),        
   fGoodPhotonsName(ModNames::gkGoodPhotonsName),        
-  fCleanPhotonsName(ModNames::gkCleanPhotonsName),
+  fCleanPhotons(new PhotonOArr),
   fMinDeltaRToElectron(0.3)
 {
   // Constructor.
+  fCleanPhotons->SetName(ModNames::gkCleanPhotonsName);
+}
+
+PhotonCleaningMod::~PhotonCleaningMod()
+{
+  delete fCleanPhotons;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -24,13 +29,11 @@ void PhotonCleaningMod::Process()
 {
   // Process entries of the tree.
 
-  // get input collections
-  const PhotonCol   *GoodPhotons    = GetObjThisEvt<PhotonCol>(fGoodPhotonsName);
-  const ElectronCol *CleanElectrons = GetObjThisEvt<ElectronCol>(fCleanElectronsName);
+  fCleanPhotons->Reset();
 
-  // create output collection
-  PhotonOArr *CleanPhotons = new PhotonOArr;
-  CleanPhotons->SetName(fCleanPhotonsName);
+  // get input collections
+  const PhotonCol   *GoodPhotons    = GetObject<PhotonCol>(fGoodPhotonsName);
+  const ElectronCol *CleanElectrons = GetObject<ElectronCol>(fCleanElectronsName);
 
   // remove any photon that overlaps in eta, phi with an isolated electron.
   UInt_t n = GoodPhotons->GetEntries();
@@ -56,12 +59,24 @@ void PhotonCleaningMod::Process()
     if (isElectronOverlap)
       continue;
 
-    CleanPhotons->Add(ph);     
+    fCleanPhotons->Add(ph);     
   }
 
   // sort according to pt
-  CleanPhotons->Sort();
+  fCleanPhotons->Sort();
 
-  // add to event for other modules to use
-  AddObjThisEvt(CleanPhotons);
 }
+
+void
+PhotonCleaningMod::SlaveBegin ()
+{
+  PublishObj(fCleanPhotons);
+}
+
+void 
+PhotonCleaningMod::SlaveEnd ()
+{
+  RetractObj(fCleanPhotons->GetName());
+}
+
+

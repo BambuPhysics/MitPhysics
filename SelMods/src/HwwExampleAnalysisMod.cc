@@ -242,10 +242,8 @@ void HwwExampleAnalysisMod::Process()
   vector<Jet*> sortedJetsLowPt;
   for(UInt_t i=0; i<CleanJetsNoPtCut->GetEntries(); i++){
     if(CleanJetsNoPtCut->At(i)->RawMom().Pt() <= 7) continue;
-    Jet* jet_a = new Jet(CleanJetsNoPtCut->At(i)->Px(),
-   			 CleanJetsNoPtCut->At(i)->Py(),
-   			 CleanJetsNoPtCut->At(i)->Pz(),
-   			 CleanJetsNoPtCut->At(i)->E() );
+    Jet* jet_a = new Jet;
+    jet_a->SetRawPtEtaPhiM(CleanJetsNoPtCut->At(i)->Pt(), CleanJetsNoPtCut->At(i)->Eta(), CleanJetsNoPtCut->At(i)->Phi(), CleanJetsNoPtCut->At(i)->Mass());
     jet_a->SetMatchedMCFlavor(CleanJetsNoPtCut->At(i)->MatchedMCFlavor());
     jet_a->SetCombinedSecondaryVertexBJetTagsDisc(CleanJetsNoPtCut->At(i)->CombinedSecondaryVertexBJetTagsDisc());
     jet_a->SetCombinedSecondaryVertexMVABJetTagsDisc(CleanJetsNoPtCut->At(i)->CombinedSecondaryVertexMVABJetTagsDisc());
@@ -262,10 +260,8 @@ void HwwExampleAnalysisMod::Process()
   for(UInt_t i=0; i<CleanJetsNoPtCut->GetEntries(); i++){
     if(TMath::Abs(CleanJetsNoPtCut->At(i)->Eta()) < 5.0 &&
        CleanJetsNoPtCut->At(i)->Pt() > 30.0){
-      Jet* jet_b = new Jet(CleanJetsNoPtCut->At(i)->Px(),
-     			   CleanJetsNoPtCut->At(i)->Py(),
-   			   CleanJetsNoPtCut->At(i)->Pz(),
-   			   CleanJetsNoPtCut->At(i)->E() );
+      Jet* jet_b = new Jet;
+      jet_b->SetRawPtEtaPhiM(CleanJetsNoPtCut->At(i)->Pt(), CleanJetsNoPtCut->At(i)->Eta(), CleanJetsNoPtCut->At(i)->Phi(), CleanJetsNoPtCut->At(i)->Mass());
       sortedJets.push_back(jet_b);
     }
   }

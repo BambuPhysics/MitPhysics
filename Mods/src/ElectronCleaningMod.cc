@@ -1,5 +1,4 @@
 #include "MitCommon/MathTools/interface/MathUtils.h"
-#include "MitAna/DataTree/interface/ElectronCol.h"
 #include "MitAna/DataTree/interface/MuonCol.h"
 #include "MitAna/DataTree/interface/Track.h"
 #include "MitPhysics/Init/interface/ModNames.h"
@@ -13,10 +12,15 @@ ClassImp(mithep::ElectronCleaningMod)
 ElectronCleaningMod::ElectronCleaningMod(const char *name, const char *title) : 
   BaseMod(name,title),
   fGoodElectronsName(ModNames::gkGoodElectronsName),        
-  fCleanMuonsName(ModNames::gkCleanMuonsName),        
-  fCleanElectronsName(ModNames::gkCleanElectronsName)
+  fCleanMuonsName(ModNames::gkCleanMuonsName),
+  fCleanElectrons(new ElectronOArr(0))
 {
-  // Constructor.
+  fCleanElectrons->SetName(ModNames::gkCleanElectronsName);
+}
+
+ElectronCleaningMod::~ElectronCleaningMod()
+{
+  delete fCleanElectrons;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -24,9 +28,11 @@ void ElectronCleaningMod::Process()
 {
   // Process entries of the tree. 
 
+  fCleanElectrons->Reset();
+
   // get input collection
-  const MuonCol     *CleanMuons    = GetObjThisEvt<MuonCol>(fCleanMuonsName);
-  const ElectronCol *GoodElectrons = GetObjThisEvt<ElectronCol>(fGoodElectronsName);
+  const MuonCol     *CleanMuons    = GetObject<MuonCol>(fCleanMuonsName);
+  const ElectronCol *GoodElectrons = GetObject<ElectronCol>(fGoodElectronsName);
 
   // Go through all electrons and remove electron overlaps with muons and duplicates.
   std::vector<const Electron*> CleanElTemp;
@@ -94,13 +100,21 @@ void ElectronCleaningMod::Process()
   }
 
   // Fill the electron array with the contents of the vector:
-  ElectronOArr *CleanElectrons = new ElectronOArr;
-  CleanElectrons->SetName(fCleanElectronsName);
-
+  
   for (UInt_t j=0; j<CleanElTemp.size(); ++j) 
-    CleanElectrons->Add(CleanElTemp[j]);
-  CleanElectrons->Sort();
-       
-  // add to event for other modules to use
-  AddObjThisEvt(CleanElectrons);  
+    fCleanElectrons->Add(CleanElTemp[j]);
+
+  fCleanElectrons->Sort();
+}
+
+void
+ElectronCleaningMod::SlaveBegin ()
+{
+  PublishObj(fCleanElectrons);
+}
+
+void 
+ElectronCleaningMod::SlaveEnd ()
+{
+  RetractObj(fCleanElectrons->GetName());
 }

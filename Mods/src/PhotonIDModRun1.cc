@@ -1,17 +1,18 @@
-#include "MitPhysics/Mods/interface/PhotonIDMod.h"
+#include "MitPhysics/Mods/interface/PhotonIDModRun1.h"
 #include "MitAna/DataTree/interface/PhotonCol.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "MitPhysics/Utils/interface/IsolationTools.h"
 #include "MitPhysics/Utils/interface/PhotonTools.h"
 
 #include <TSystem.h>
+#include <cstring>
 
 using namespace mithep;
 
-ClassImp(mithep::PhotonIDMod)
+ClassImp(mithep::PhotonIDModRun1)
   
 //--------------------------------------------------------------------------------------------------
-PhotonIDMod::PhotonIDMod(const char *name, const char *title) : 
+PhotonIDModRun1::PhotonIDModRun1(const char *name, const char *title) : 
   BaseMod(name,title),
   fPhotonBranchName  (Names::gkPhotonBrn),
   fGoodPhotonsName   (ModNames::gkGoodPhotonsName),
@@ -39,8 +40,8 @@ PhotonIDMod::PhotonIDMod(const char *name, const char *title) :
   fApplyConversionId (false),
   fApplyTriggerMatching(false),
   fPhotonR9Min       (0.5),
-  fPhIdType          (kIdUndef),
-  fPhIsoType         (kIsoUndef),
+  fPhIdType          (PhotonTools::kIdUndef),
+  fPhIsoType         (PhotonTools::kIsoUndef),
   fFiduciality       (true),
   fEtaWidthEB        (0.01),
   fEtaWidthEE        (0.028),
@@ -140,14 +141,14 @@ PhotonIDMod::PhotonIDMod(const char *name, const char *title) :
   fBarrelWeights = dataDir + "/TMVAClassificationPhotonID_Barrel_PassPreSel_Variable_10_BDTnCuts2000_BDT.weights.xml";
 }
 
-PhotonIDMod::~PhotonIDMod()
+PhotonIDModRun1::~PhotonIDModRun1()
 {
   delete fTool;
   delete fRng;
 }
 
 //--------------------------------------------------------------------------------------------------
-void PhotonIDMod::Process()
+void PhotonIDModRun1::Process()
 {
   // Process entries of the tree. 
 
@@ -286,7 +287,7 @@ void PhotonIDMod::Process()
 
     // ---------------------------------------------------------------------
     // check if we use the Vgamma2011 Selection. If yes, bypass all the below...
-    if( fPhIdType == kTrivialSelection ) {
+    if( fPhIdType == PhotonTools::kTrivialSelection ) {
       if( ph->Pt() > fPhotonPtMin && ph->SCluster()->AbsEta() <= fAbsEtaMax && ph->SCluster()->AbsEta() >= fAbsEtaMin )
         GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
@@ -294,7 +295,7 @@ void PhotonIDMod::Process()
     
     // ---------------------------------------------------------------------
     // check if we use the Vgamma2011 Selection. If yes, bypass all the below...
-    if( fPhIdType == kVgamma2011Selection ) {
+    if( fPhIdType == PhotonTools::kVgamma2011Selection ) {
       if( ph->Pt() > fPhotonPtMin && ph->SCluster()->AbsEta() <= fAbsEtaMax && ph->SCluster()->AbsEta() >= fAbsEtaMin &&
           PhotonTools::PassVgamma2011Selection(ph, _tRho) )
         GoodPhotons->AddOwned(ph);
@@ -303,20 +304,20 @@ void PhotonIDMod::Process()
 
     // ---------------------------------------------------------------------
     // check if we use the CiC Selection. If yes, bypass all the below...
-    if(fPhIdType == kBaseLineCiC) {
+    if(fPhIdType == PhotonTools::kBaseLineCiC) {
       if( PhotonTools::PassCiCSelection(ph, fPV->At(0), fTracks, fElectrons, fPV, _tRho, fPhotonPtMin, fApplyElectronVeto) )
         GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
     }
     
-    if(fPhIdType == kBaseLineCiCPF) {
+    if(fPhIdType == PhotonTools::kBaseLineCiCPF) {
       if( PhotonTools::PassSinglePhotonPreselPFISO(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),rho2012,fPFCands,fApplyElectronVeto,fInvertElectronVeto) && PhotonTools::PassCiCPFIsoSelection(ph, fPV->At(0), fPFCands, fPV, rho2012, fPhotonPtMin, false,0.,1.,0.,1.) )
         GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
     }    
 
     //add for mono photon: cic id without presel
-    if(fPhIdType == kBaseLineCiCPFNoPresel) {
+    if(fPhIdType == PhotonTools::kBaseLineCiCPFNoPresel) {
       if(PhotonTools::PassCiCPFIsoSelectionWithEleVeto(ph, fElectrons,fConversions,bsp,fPV->At(0), fPFCands, fPV, rho2012, fPhotonPtMin,fApplyElectronVeto,fInvertElectronVeto) )
         GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
@@ -324,14 +325,14 @@ void PhotonIDMod::Process()
     // ---------------------------------------------------------------------
 
     //add for mono photon: egamma medium working point
-    if(fPhIdType == kEgammaMedium) {
+    if(fPhIdType == PhotonTools::kEgammaMedium) {
       if(PhotonTools::PassEgammaMediumSelectionWithEleVeto(ph, fElectrons,fConversions,bsp,fPV->At(0), fPFCands, fPV, theRho, fPhotonPtMin,fApplyElectronVeto,fInvertElectronVeto) )
         GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
     } 
 
     //loose photon preselection for subsequent mva
-    if(fPhIdType == kMITPhSelection ) {
+    if(fPhIdType == PhotonTools::kMITPhSelection ) {
       if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPresel(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),_tRho,fApplyElectronVeto,fInvertElectronVeto) ) {
         GoodPhotons->AddOwned(ph);
       }
@@ -339,7 +340,7 @@ void PhotonIDMod::Process()
     }
 
     //loose photon preselection for subsequent mva
-    if(fPhIdType == kMITPFPhSelection ) {
+    if(fPhIdType == PhotonTools::kMITPFPhSelection ) {
       if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISO(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),theRho,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
         GoodPhotons->AddOwned(ph);
       }
@@ -347,7 +348,7 @@ void PhotonIDMod::Process()
     }    
     
     //loose photon preselection for subsequent mva
-    if(fPhIdType == kMITPFPhSelectionNoEcal) {
+    if(fPhIdType == PhotonTools::kMITPFPhSelectionNoEcal) {
       if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISONoEcal(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),theRho,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
         GoodPhotons->AddOwned(ph);
       }
@@ -355,7 +356,7 @@ void PhotonIDMod::Process()
     }   
     
     //loose photon preselection for subsequent mva
-    if(fPhIdType == kMITPFPhSelection_NoTrigger ) {
+    if(fPhIdType == PhotonTools::kMITPFPhSelection_NoTrigger ) {
       if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPreselPFISO_NoTrigger(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),theRho,fPFCands,fApplyElectronVeto,fInvertElectronVeto) ) {
         GoodPhotons->AddOwned(ph);
       }
@@ -366,7 +367,7 @@ void PhotonIDMod::Process()
     Bool_t isbarrel = ph->SCluster()->AbsEta()<1.5;
     
     // add MingMings MVA ID on single Photon level
-    if(fPhIdType == kMITMVAId ) {
+    if(fPhIdType == PhotonTools::kMITMVAId ) {
       // we compute the bdt val already before, so use it ...
       //if( ph->Pt()>fPhotonPtMin && PhotonTools::PassSinglePhotonPresel(ph,fElectrons,fConversions,bsp,fTracks,fPV->At(0),_tRho,fApplyElectronVeto) && fTool.PassMVASelection(ph, fPV->At(0) ,fTracks, fPV, _t_TRho,fbdtCutBarrel,fbdtCutEndcap, fElectrons, fApplyElectronVeto) ) {
         
@@ -422,13 +423,13 @@ void PhotonIDMod::Process()
 
     Bool_t idcut = false;
     switch (fPhIdType) {
-    case kTight:
+    case PhotonTools::kTight:
       idcut = ph->IsTightPhoton();
       break;
-    case kLoose:
+    case PhotonTools::kLoose:
       idcut = ph->IsLoosePhoton();
       break;
-    case kCustomId:
+    case PhotonTools::kCustomId:
       idcut = true;
     default:
       break;
@@ -439,10 +440,10 @@ void PhotonIDMod::Process()
 
     Bool_t isocut = false;
     switch (fPhIsoType) {      
-    case kNoIso:
+    case PhotonTools::kNoIso:
       isocut = true;
       break;
-    case kCombinedIso:
+    case PhotonTools::kCombinedIso:
       {
         Double_t totalIso = ph->HollowConeTrkIsoDr04()+
           ph->EcalRecHitIsoDr04() +
@@ -451,14 +452,14 @@ void PhotonIDMod::Process()
           isocut = true;
       }
       break;
-    case kCustomIso:
+    case PhotonTools::kCustomIso:
       {
         if ( ph->HollowConeTrkIsoDr04() < (1.5 + 0.001*ph->Pt()) && ph->EcalRecHitIsoDr04()<(2.0+0.006*ph->Pt()) && ph->HcalTowerSumEtDr04()<(2.0+0.0025*ph->Pt()) )
           isocut = true;
       }
       break;
         
-    case kMITPUCorrected:
+    case PhotonTools::kMITPUCorrected:
       {
         // compute the PU corrections only if Rho is available
         // ... otherwise (_tRho = 0.0) it's the std isolation
@@ -490,7 +491,7 @@ void PhotonIDMod::Process()
         break;
       }
 
-    case kPFPUCorrected:
+    case PhotonTools::kPFPUCorrected:
       {
         isocut = kFALSE;
 
@@ -594,7 +595,7 @@ void PhotonIDMod::Process()
 }
 
 //--------------------------------------------------------------------------------------------------
-void PhotonIDMod::SlaveBegin()
+void PhotonIDModRun1::SlaveBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis. Here,
   // we just request the photon collection branch.
@@ -638,58 +639,58 @@ void PhotonIDMod::SlaveBegin()
   fTool->InitializeMVA(idMVAType);
   
   if (fPhotonIDType.CompareTo("Tight") == 0) 
-    fPhIdType = kTight;
+    fPhIdType = PhotonTools::kTight;
   else if (fPhotonIDType.CompareTo("Loose") == 0) 
-    fPhIdType = kLoose;
+    fPhIdType = PhotonTools::kLoose;
   else if (fPhotonIDType.CompareTo("LooseEM") == 0) {
-    throw std::runtime_error("Invalid congiruation LooseEM for PhotonIDMod::PhotonIDType");
+    throw std::runtime_error("Invalid congiruation LooseEM for PhotonIDModRun1::PhotonIDType");
   }
   else if (fPhotonIDType.CompareTo("Custom") == 0)
-    fPhIdType = kCustomId;
+    fPhIdType = PhotonTools::kCustomId;
   else if (fPhotonIDType.CompareTo("BaseLineCiC") == 0) {
-    fPhIdType = kBaseLineCiC;
+    fPhIdType = PhotonTools::kBaseLineCiC;
     fPhotonIsoType = "NoIso";
   }
   else if (fPhotonIDType.CompareTo("BaseLineCiCPF") == 0) {
-    fPhIdType = kBaseLineCiCPF;
+    fPhIdType = PhotonTools::kBaseLineCiCPF;
     fPhotonIsoType = "NoIso";
   } 
   else if (fPhotonIDType.CompareTo("BaseLineCiCPFNoPresel") == 0) {
-    fPhIdType = kBaseLineCiCPFNoPresel;
+    fPhIdType = PhotonTools::kBaseLineCiCPFNoPresel;
     fPhotonIsoType = "NoIso";
   }  
   else if (fPhotonIDType.CompareTo("EgammaMedium") == 0) {
-    fPhIdType = kEgammaMedium;
+    fPhIdType = PhotonTools::kEgammaMedium;
     fPhotonIsoType = "NoIso";
   } 
   else if (fPhotonIDType.CompareTo("MITMVAId") == 0) {
-    fPhIdType = kMITMVAId;
+    fPhIdType = PhotonTools::kMITMVAId;
     fPhotonIsoType = "NoIso";
     // this is now a 'generic' MVAId: set the MVAType using 'SetIdMVAType(const char*)'  (fab)
     //fTool.InitializeMVA(fVariableType,fEndcapWeights,fBarrelWeights);   // moved down for after we know which MVA type to load...
   }
   else if (fPhotonIDType.CompareTo("MITSelection") == 0)  {
-    fPhIdType = kMITPhSelection;
+    fPhIdType = PhotonTools::kMITPhSelection;
     fPhotonIsoType = "NoIso";    
   }
   else if (fPhotonIDType.CompareTo("MITPFSelection") == 0)  {
-    fPhIdType = kMITPFPhSelection;
+    fPhIdType = PhotonTools::kMITPFPhSelection;
     fPhotonIsoType = "NoIso";    
   }
   else if (fPhotonIDType.CompareTo("MITPFSelectionNoEcal") == 0){
-    fPhIdType =       kMITPFPhSelectionNoEcal; 
+    fPhIdType =       PhotonTools::kMITPFPhSelectionNoEcal; 
     fPhotonIsoType = "NoIso";
   }
   else if (fPhotonIDType.CompareTo("MITPFSelection_NoTrigger") == 0)  {
-    fPhIdType = kMITPFPhSelection_NoTrigger;
+    fPhIdType = PhotonTools::kMITPFPhSelection_NoTrigger;
     fPhotonIsoType = "NoIso";
   }
   else if (fPhotonIDType.CompareTo("Vgamma2011Selection") == 0)  {
-    fPhIdType = kVgamma2011Selection;
+    fPhIdType = PhotonTools::kVgamma2011Selection;
     fPhotonIsoType = "NoIso";    
   }
   else if (fPhotonIDType.CompareTo("TrivialSelection") == 0)  {
-    fPhIdType = kTrivialSelection;
+    fPhIdType = PhotonTools::kTrivialSelection;
     fPhotonIsoType = "NoIso";    
   }
   else {
@@ -700,13 +701,13 @@ void PhotonIDMod::SlaveBegin()
   }
 
   if (fPhotonIsoType.CompareTo("NoIso") == 0 )
-    fPhIsoType = kNoIso;
+    fPhIsoType = PhotonTools::kNoIso;
   else if (fPhotonIsoType.CompareTo("CombinedIso") == 0 )
-    fPhIsoType = kCombinedIso;
+    fPhIsoType = PhotonTools::kCombinedIso;
   else if (fPhotonIsoType.CompareTo("Custom") == 0 )
-    fPhIsoType = kCustomIso;
+    fPhIsoType = PhotonTools::kCustomIso;
   else if (fPhotonIsoType.CompareTo("MITPUCorrected") == 0 )
-    fPhIsoType = kMITPUCorrected;
+    fPhIsoType = PhotonTools::kMITPUCorrected;
   else {
     SendError(kAbortAnalysis, "SlaveBegin",
               "The specified photon isolation %s is not defined.",
@@ -725,17 +726,23 @@ void PhotonIDMod::SlaveBegin()
     return;
   }
 
-  fIsoCalcCHEB.Compile();
-  fIsoCalcCHEE.Compile();
-  fIsoCalcNHEB.Compile();
-  fIsoCalcNHEE.Compile();
-  fIsoCalcPhEB.Compile();
-  fIsoCalcPhEE.Compile();
+  if (std::strlen(fIsoCalcCHEB.GetName()) != 0)
+    fIsoCalcCHEB.Compile();
+  if (std::strlen(fIsoCalcCHEE.GetName()) != 0)
+    fIsoCalcCHEE.Compile();
+  if (std::strlen(fIsoCalcNHEB.GetName()) != 0)
+    fIsoCalcNHEB.Compile();
+  if (std::strlen(fIsoCalcNHEE.GetName()) != 0)
+    fIsoCalcNHEE.Compile();
+  if (std::strlen(fIsoCalcPhEB.GetName()) != 0)
+    fIsoCalcPhEB.Compile();
+  if (std::strlen(fIsoCalcPhEE.GetName()) != 0)
+    fIsoCalcPhEE.Compile();
 }
 
 
 //---------------------------------------------------------------------------------------------------
-Int_t PhotonIDMod::FindRunRangeIdx(UInt_t run)
+Int_t PhotonIDModRun1::FindRunRangeIdx(UInt_t run)
 {
   // this routine looks for the idx of the run-range
   Int_t runRange=-1;
@@ -749,7 +756,7 @@ Int_t PhotonIDMod::FindRunRangeIdx(UInt_t run)
 }
 
 //---------------------------------------------------------------------------------------------------
-Double_t PhotonIDMod::GetDataEnCorr(Int_t runRange, PhotonTools::eScaleCats cat)
+Double_t PhotonIDModRun1::GetDataEnCorr(Int_t runRange, PhotonTools::eScaleCats cat)
 {
   switch (cat) {
   case PhotonTools::kEBhighEtaGold:
@@ -774,7 +781,7 @@ Double_t PhotonIDMod::GetDataEnCorr(Int_t runRange, PhotonTools::eScaleCats cat)
 }
 
 //---------------------------------------------------------------------------------------------------
-Double_t PhotonIDMod::GetMCSmearFac(PhotonTools::eScaleCats cat)
+Double_t PhotonIDModRun1::GetMCSmearFac(PhotonTools::eScaleCats cat)
 {
   switch (cat) {
   case PhotonTools::kEBhighEtaGold:

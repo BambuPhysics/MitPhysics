@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: SeparatePileUpMod.h,v 1.3 2012/05/04 20:28:33 ceballos Exp $
-//
 // SeparatePileUpMod
 //
 // This module applies PFNoPU selection
@@ -33,16 +31,12 @@ namespace mithep
 
     protected:
       void                Process();
-      void                SlaveBegin();
 
       TString               fPFCandidatesName;    //name of PF collection (input)
       TString               fPFPileUpName;        //name of exported PFPileUp collection (output)
       TString               fPFNoPileUpName;      //name of exported PFNoPileUp collection (output)
       TString               fAllVertexName;	  //name of all vertex collection
       TString               fVertexName;	  //name of good vertex collection
-      const PFCandidateCol *fPFCandidates;	  //!pfcandidate branch
-      const VertexCol      *fAllVertices;  	  //!all vertices branches
-      const VertexCol      *fVertices;  	  //!good vertices branches
       Bool_t                fCheckClosestZVertex; //boolean to use the closest vertex approach
       Bool_t                fUseAllVertices;      //boolean to use all vertices
 

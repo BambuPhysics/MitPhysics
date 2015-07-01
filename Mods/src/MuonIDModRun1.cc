@@ -1,4 +1,4 @@
-#include "MitPhysics/Mods/interface/MuonIDMod.h"
+#include "MitPhysics/Mods/interface/MuonIDModRun1.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitAna/DataTree/interface/MuonFwd.h"
 #include "MitAna/DataTree/interface/ElectronFwd.h"
@@ -7,10 +7,10 @@
 
 using namespace mithep;
 
-ClassImp(mithep::MuonIDMod)
+ClassImp(mithep::MuonIDModRun1)
 
 //--------------------------------------------------------------------------------------------------
-MuonIDMod::MuonIDMod(const char *name, const char *title)
+MuonIDModRun1::MuonIDModRun1(const char *name, const char *title)
 : BaseMod(name,title),
   fPrintMVADebugInfo(kFALSE),
   fMuonBranchName(Names::gkMuonBrn),
@@ -38,9 +38,9 @@ MuonIDMod::MuonIDMod(const char *name, const char *title)
   fDZCut(0.10),
   fWhichVertex(-1),
   fEtaCut(2.4),
-  fMuIDType(kIdUndef),
-  fMuIsoType(kIsoUndef),
-  fMuClassType(kClassUndef),
+  fMuIDType(MuonTools::kIdUndef),
+  fMuIsoType(MuonTools::kIsoUndef),
+  fMuClassType(MuonTools::kClassUndef),
   fMuons(0),
   fVertices(0),
   fBeamSpot(0),
@@ -62,7 +62,7 @@ MuonIDMod::MuonIDMod(const char *name, const char *title)
 }
 
 void
-mithep::MuonIDMod::SetRhoType(RhoUtilities::RhoType type)
+mithep::MuonIDModRun1::SetRhoType(RhoUtilities::RhoType type)
 {
   /*DEPRECATED FUNCTION*/
   // use SetRhoAlgo instead
@@ -91,7 +91,7 @@ mithep::MuonIDMod::SetRhoType(RhoUtilities::RhoType type)
 }
 
 //--------------------------------------------------------------------------------------------------
-void MuonIDMod::Process()
+void MuonIDModRun1::Process()
 {
   // Process entries of the tree.
 
@@ -102,7 +102,7 @@ void MuonIDMod::Process()
     fVertices = GetObjThisEvt<VertexOArr>(fVertexName);
   }
 
-  if (fMuIsoType != kPFIsoNoL) {
+  if (fMuIsoType != MuonTools::kPFIsoNoL) {
     LoadEventObject(fMuonBranchName, fMuons);
   }
   else {
@@ -111,18 +111,18 @@ void MuonIDMod::Process()
   LoadEventObject(fBeamSpotName, fBeamSpot);
   LoadEventObject(fTrackName, fTracks);
   LoadEventObject(fPFCandidatesName, fPFCandidates);
-  if (fMuIsoType == kTrackCaloSliding ||
-      fMuIsoType == kCombinedRelativeConeAreaCorrected ||
-      fMuIsoType == kPFIsoEffectiveAreaCorrected ||
-      fMuIsoType == kMVAIso_BDTG_IDIso ||
-      fMuIsoType == kIsoRingsV0_BDTG_Iso ||
-      fMuIsoType == kIsoDeltaR
+  if (fMuIsoType == MuonTools::kTrackCaloSliding ||
+      fMuIsoType == MuonTools::kCombinedRelativeConeAreaCorrected ||
+      fMuIsoType == MuonTools::kPFIsoEffectiveAreaCorrected ||
+      fMuIsoType == MuonTools::kMVAIso_BDTG_IDIso ||
+      fMuIsoType == MuonTools::kIsoRingsV0_BDTG_Iso ||
+      fMuIsoType == MuonTools::kIsoDeltaR
       ) {
     LoadEventObject(fPileupEnergyDensityName, fPileupEnergyDensity);
   }
-  if (fMuIsoType == kPFRadialIso ||
-      fMuIsoType == kIsoDeltaR   ||
-      fMuIsoType == kPFIsoBetaPUCorrected) {
+  if (fMuIsoType == MuonTools::kPFRadialIso ||
+      fMuIsoType == MuonTools::kIsoDeltaR   ||
+      fMuIsoType == MuonTools::kPFIsoBetaPUCorrected) {
     fPFNoPileUpCands = GetObjThisEvt<PFCandidateCol>(fPFNoPileUpName);
     fPFPileUpCands   = GetObjThisEvt<PFCandidateCol>(fPFPileUpName);
   }
@@ -137,14 +137,14 @@ void MuonIDMod::Process()
     Double_t pt = 0;  // make sure pt is taken from the correct track!
     Double_t eta = 0; // make sure eta is taken from the correct track!
     switch (fMuClassType) {
-    case kAll:
+    case MuonTools::kAll:
       pass = kTRUE;
       if (mu->HasTrk()) {
         pt  = mu->Pt();
         eta = TMath::Abs(mu->Eta());
       }
       break;
-    case kGlobal:
+    case MuonTools::kGlobal:
       pass = mu->HasGlobalTrk() && mu->IsTrackerMuon();
       if (pass && mu->TrackerTrk()) {
         pt  = mu->TrackerTrk()->Pt();
@@ -155,7 +155,7 @@ void MuonIDMod::Process()
         eta = TMath::Abs(mu->Eta());
       }
       break;
-    case kGlobalorTracker:
+    case MuonTools::kGlobalorTracker:
       pass = mu->HasGlobalTrk() || mu->IsTrackerMuon();
       if (pass && mu->TrackerTrk()) {
         pt = mu->TrackerTrk()->Pt();
@@ -165,7 +165,7 @@ void MuonIDMod::Process()
         pt = mu->Pt();
         eta = TMath::Abs(mu->Eta());
       }
-    case kGlobalTracker:
+    case MuonTools::kGlobalTracker:
       pass = (mu->HasGlobalTrk() && mu->GlobalTrk()->Chi2()/mu->GlobalTrk()->Ndof() < 10 &&
               (mu->NSegments() > 1 || mu->NMatches() > 1) && mu->NValidHits() > 0) ||
         (mu->IsTrackerMuon() &&
@@ -179,14 +179,14 @@ void MuonIDMod::Process()
         eta = TMath::Abs(mu->Eta());
       }
       break;
-    case kSta:
+    case MuonTools::kSta:
       pass = mu->HasStandaloneTrk();
       if (pass) {
         pt  = mu->StandaloneTrk()->Pt();
         eta = TMath::Abs(mu->StandaloneTrk()->Eta());
       }
       break;
-    case kTrackerMuon:
+    case MuonTools::kTrackerMuon:
       pass = mu->HasTrackerTrk() && mu->IsTrackerMuon() &&
         mu->Quality().Quality(MuonQuality::TrackerMuonArbitrated);
       if (pass) {
@@ -194,21 +194,21 @@ void MuonIDMod::Process()
         eta = TMath::Abs(mu->TrackerTrk()->Eta());
       }
       break;
-    case kCaloMuon:
+    case MuonTools::kCaloMuon:
       pass = mu->HasTrackerTrk() && mu->IsCaloMuon();
       if (pass) {
         pt  = mu->TrackerTrk()->Pt();
         eta = TMath::Abs(mu->TrackerTrk()->Eta());
       }
       break;
-    case kTrackerBased:
+    case MuonTools::kTrackerBased:
       pass = mu->HasTrackerTrk();
       if (pass) {
         pt  = mu->TrackerTrk()->Pt();
         eta = TMath::Abs(mu->TrackerTrk()->Eta());
       }
       break;
-    case kGlobalOnly:
+    case MuonTools::kGlobalOnly:
       pass = mu->HasGlobalTrk();
       if (pass && mu->TrackerTrk()) {
         pt  = mu->TrackerTrk()->Pt();
@@ -241,7 +241,7 @@ void MuonIDMod::Process()
     Bool_t idpass = kFALSE;
 
     switch (fMuIDType) {
-    case kWMuId:
+    case MuonTools::kWMuId:
       idpass = mu->BestTrk() != 0 &&
         mu->BestTrk()->NHits() > 10 &&
         RChi2 < 10.0 &&
@@ -249,14 +249,14 @@ void MuonIDMod::Process()
         mu->BestTrk()->NPixelHits() > 0 &&
         mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
       break;
-    case kZMuId:
+    case MuonTools::kZMuId:
       idpass = mu->BestTrk() != 0 &&
 	mu->BestTrk()->NHits() > 10 &&
 	(mu->NSegments() > 1 || mu->NMatches() > 1) &&
 	mu->BestTrk()->NPixelHits() > 0 &&
 	mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
       break;
-    case kLoose:
+    case MuonTools::kLoose:
       idpass = mu->BestTrk() != 0 &&
 	mu->Quality().Quality(MuonQuality::TMOneStationLoose) &&
 	mu->Quality().Quality(MuonQuality::TM2DCompatibilityLoose) &&
@@ -264,14 +264,14 @@ void MuonIDMod::Process()
 	RChi2 < 10.0 &&
 	mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
       break;
-    case kTight:
+    case MuonTools::kTight:
       idpass = mu->BestTrk() != 0 &&
 	mu->NTrkLayersHit() > 5 &&
 	mu->IsPFMuon() == kTRUE &&
 	mu->BestTrk()->NPixelHits() > 0 &&
 	RChi2 < 10.0;
       break;
-    case kmuonPOG2012CutBasedIDTight:
+    case MuonTools::kMuonPOG2012CutBasedIdTight:
       idpass = mu->IsGlobalMuon() &&
 	mu->IsPFMuon() &&
 	mu->GlobalTrk()->RChi2() < 10 &&
@@ -281,7 +281,7 @@ void MuonIDMod::Process()
 	mu->NTrkLayersHit() > 5;
       break;
       // 2012 WW analysis for 42x (there is no PFMuon link)
-    case kWWMuIdV1:
+    case MuonTools::kWWMuIdV1:
       idpass = mu->BestTrk() != 0 &&
 	mu->NTrkLayersHit() > 5 &&
 	mu->BestTrk()->NPixelHits() > 0 &&
@@ -289,14 +289,14 @@ void MuonIDMod::Process()
 	mu->TrkKink() < 20.0;
       break;
       // 2010 WW analysis
-    case kWWMuIdV2:
+    case MuonTools::kWWMuIdV2:
       idpass = mu->BestTrk() != 0 &&
 	mu->BestTrk()->NHits() > 10 &&
 	mu->BestTrk()->NPixelHits() > 0 &&
 	mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1;
       break;
       // 2011 WW analysis
-    case kWWMuIdV3:
+    case MuonTools::kWWMuIdV3:
       idpass = mu->BestTrk() != 0 &&
 	mu->BestTrk()->NHits() > 10 &&
 	mu->BestTrk()->NPixelHits() > 0 &&
@@ -304,7 +304,7 @@ void MuonIDMod::Process()
 	mu->TrkKink() < 20.0;
       break;
       // 2012 WW analysis
-    case kWWMuIdV4:
+    case MuonTools::kWWMuIdV4:
       idpass = mu->BestTrk() != 0 &&
 	mu->NTrkLayersHit() > 5 &&
 	mu->IsPFMuon() == kTRUE &&
@@ -312,14 +312,14 @@ void MuonIDMod::Process()
 	mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
 	mu->TrkKink() < 20.0;
       break;
-    case kMVAID_BDTG_IDIso:
+    case MuonTools::kMVAID_BDTG_IDIso:
       {
 	Bool_t passDenominatorM2 = (mu->BestTrk() != 0 &&
 				    mu->BestTrk()->NHits() > 10 &&
 				    mu->BestTrk()->NPixelHits() > 0 &&
 				    mu->BestTrk()->PtErr()/mu->BestTrk()->Pt() < 0.1 &&
-				    MuonTools::PassD0Cut(mu, fVertices, 0.20, 0) &&
-				    MuonTools::PassDZCut(mu, fVertices, 0.10, 0) &&
+				    MuonTools::PassD0Cut(mu, fVertices, MuonTools::kMVAID_BDTG_IDIso, 0) &&
+				    MuonTools::PassDZCut(mu, fVertices, MuonTools::kMVAID_BDTG_IDIso, 0) &&
 				    mu->TrkKink() < 20.0
                                   );
 	idpass =  passDenominatorM2;
@@ -328,7 +328,7 @@ void MuonIDMod::Process()
 	  idpass = PassMuonMVA_BDTG_IdIso(mu, fVertices->At(0), fPileupEnergyDensity);
       }
       break;
-    case kNoId:
+    case MuonTools::kNoId:
       {
 	idpass = kTRUE;
       }
@@ -351,32 +351,18 @@ void MuonIDMod::Process()
     
     Bool_t isocut = kFALSE;
     switch (fMuIsoType) {
-    case kTrackCalo:
+    case MuonTools::kTrackCalo:
       isocut = (mu->IsoR03SumPt() < fTrackIsolationCut) &&
         (mu->IsoR03EmEt() + mu->IsoR03HadEt() < fCaloIsolationCut);
       break;
-    case kTrackCaloCombined:
+    case MuonTools::kTrackCaloCombined:
       isocut = (1.0 * mu->IsoR03SumPt() +
                 1.0 * mu->IsoR03EmEt()  +
                 1.0 * mu->IsoR03HadEt() < fCombIsolationCut);
       break;
-    case kTrackCaloSliding:
-      {
-        Double_t totalIso =  mu->IsoR03SumPt() + TMath::Max(mu->IsoR03EmEt() + mu->IsoR03HadEt()
-                                                            - Rho * TMath::Pi() * 0.3 * 0.3, 0.0);
-        // trick to change the signal region cut
-        double theIsoCut = fCombIsolationCut;
-        if (theIsoCut < 0.20) {
-          if (mu->Pt() >  20.0)
-            theIsoCut = 0.15;
-          else
-            theIsoCut = 0.10;
-        }
-        if (totalIso < (mu->Pt()*theIsoCut))
-          isocut = kTRUE;
-      }
+
       break;
-    case kTrackCaloSlidingNoCorrection:
+    case MuonTools::kTrackCaloSlidingNoCorrection:
       {
         Double_t totalIso =  1.0 * mu->IsoR03SumPt() +
           1.0 * mu->IsoR03EmEt()  +
@@ -393,7 +379,7 @@ void MuonIDMod::Process()
           isocut = kTRUE;
       }
       break;
-    case kCombinedRelativeConeAreaCorrected:
+    case MuonTools::kCombinedRelativeConeAreaCorrected:
       {
         //const PileupEnergyDensity *rho =  fPileupEnergyDensity->At(0); // Fabian: made Rho customable
         Double_t totalIso =  mu->IsoR03SumPt() + TMath::Max(mu->IsoR03EmEt() + mu->IsoR03HadEt()
@@ -403,7 +389,7 @@ void MuonIDMod::Process()
           isocut = kTRUE;
       }
       break;
-    case kCombinedRelativeEffectiveAreaCorrected:
+    case MuonTools::kCombinedRelativeEffectiveAreaCorrected:
       {
         Double_t tmpRho = Rho;   // Fabian: made the Rho type customable.
         //if (!(TMath::IsNaN(fPileupEnergyDensity->At(0)->Rho()) ||
@@ -416,7 +402,7 @@ void MuonIDMod::Process()
                   ) < (mu->Pt()* 0.40);
       }
       break;
-    case kPFIso:
+    case MuonTools::kPFIso:
       {
         Double_t pfIsoCutValue = 9999;
         if (fPFIsolationCut > 0) {
@@ -445,7 +431,7 @@ void MuonIDMod::Process()
           isocut = kTRUE;
       }
       break;
-    case kPFRadialIso:
+    case MuonTools::kPFRadialIso:
       {
         Double_t pfIsoCutValue = 9999;
         if (fPFIsolationCut > 0) {
@@ -462,7 +448,7 @@ void MuonIDMod::Process()
           isocut = kTRUE;
       }
       break;
-    case kPFIsoBetaPUCorrected:
+    case MuonTools::kPFIsoBetaPUCorrected:
       {
         Double_t pfIsoCutValue = 9999;
         if (fPFIsolationCut > 0) {
@@ -480,7 +466,7 @@ void MuonIDMod::Process()
           isocut = kTRUE;
       }
       break;
-    case kPFIsoEffectiveAreaCorrected:
+    case MuonTools::kPFIsoEffectiveAreaCorrected:
       {
         Double_t pfIsoCutValue = 9999;
         if (fPFIsolationCut > 0) {
@@ -496,7 +482,7 @@ void MuonIDMod::Process()
         isocut = EffectiveAreaCorrectedPFIso < (mu->Pt() * pfIsoCutValue);
         break;
       }
-    case kPFIsoNoL:
+    case MuonTools::kPFIsoNoL:
       {
         fNonIsolatedMuons     = GetObjThisEvt<MuonCol>(fNonIsolatedMuonsName);
         fNonIsolatedElectrons = GetObjThisEvt<ElectronCol>(fNonIsolatedElectronsName);
@@ -527,27 +513,27 @@ void MuonIDMod::Process()
           isocut = kTRUE;
       }
       break;
-    case kMVAIso_BDTG_IDIso:
+    case MuonTools::kMVAIso_BDTG_IDIso:
       {
         Double_t totalIso = IsolationTools::PFMuonIsolation(mu, fPFCandidates, fVertices->At(0),
                                                             0.1, 1.0, 0.3, 0.0, fIntRadius);
         isocut = (totalIso < (mu->Pt()*0.4));
       }
       break;
-    case kIsoRingsV0_BDTG_Iso:
+    case MuonTools::kIsoRingsV0_BDTG_Iso:
       {
         isocut = PassMuonIsoRingsV0_BDTG_Iso(mu, fVertices->At(0), fPileupEnergyDensity);
       }
       break;
-    case kIsoDeltaR:
+    case MuonTools::kIsoDeltaR:
       {
         isocut = PassMuonIsoDeltaR(mu, fVertices->At(0), fPileupEnergyDensity);
       }
       break;
-    case kNoIso:
+    case MuonTools::kNoIso:
       isocut = kTRUE;
       break;
-    case kCustomIso:
+    case MuonTools::kCustomIso:
     default:
       break;
     }
@@ -565,16 +551,16 @@ void MuonIDMod::Process()
           fD0Cut = 0.01;
       }
       if (fWhichVertex >= -1)
-        passD0cut = MuonTools::PassD0Cut(mu, fVertices, fD0Cut, fWhichVertex);
+        passD0cut = MuonTools::PassD0Cut(mu, fVertices, fMuIDType, fWhichVertex);
       else
-        passD0cut = MuonTools::PassD0Cut(mu, fBeamSpot, fD0Cut);
+        passD0cut = MuonTools::PassD0Cut(mu, fBeamSpot, fMuIDType);
       if (!passD0cut)
         continue;
     }
 
     // apply dz cut
     if (fApplyDZCut) {
-      Bool_t passDZcut = MuonTools::PassDZCut(mu, fVertices, fDZCut, fWhichVertex);
+      Bool_t passDZcut = MuonTools::PassDZCut(mu, fVertices, fMuIDType, fWhichVertex);
       if (!passDZcut)
         continue;
     }
@@ -592,7 +578,7 @@ AddObjThisEvt(CleanMuons);
 }
 
 //--------------------------------------------------------------------------------------------------
-void MuonIDMod::SlaveBegin()
+void MuonIDModRun1::SlaveBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis. Here, we just request the
   // muon collection branch.
@@ -623,31 +609,31 @@ void MuonIDMod::SlaveBegin()
 
 
   if (fMuonIDType.CompareTo("WMuId") == 0)
-    fMuIDType = kWMuId;
+    fMuIDType = MuonTools::kWMuId;
   else if (fMuonIDType.CompareTo("ZMuId") == 0)
-    fMuIDType = kZMuId;
+    fMuIDType = MuonTools::kZMuId;
   else if (fMuonIDType.CompareTo("Tight") == 0)
-    fMuIDType = kTight;
+    fMuIDType = MuonTools::kTight;
   else if (fMuonIDType.CompareTo("muonPOG2012CutBasedIDTight") == 0)
-    fMuIDType = kmuonPOG2012CutBasedIDTight;
+    fMuIDType = MuonTools::kMuonPOG2012CutBasedIdTight;
   else if (fMuonIDType.CompareTo("Loose") == 0)
-    fMuIDType = kLoose;
+    fMuIDType = MuonTools::kLoose;
   else if (fMuonIDType.CompareTo("WWMuIdV1") == 0)
-    fMuIDType = kWWMuIdV1;
+    fMuIDType = MuonTools::kWWMuIdV1;
   else if (fMuonIDType.CompareTo("WWMuIdV2") == 0)
-    fMuIDType = kWWMuIdV2;
+    fMuIDType = MuonTools::kWWMuIdV2;
   else if (fMuonIDType.CompareTo("WWMuIdV3") == 0)
-    fMuIDType = kWWMuIdV3;
+    fMuIDType = MuonTools::kWWMuIdV3;
   else if (fMuonIDType.CompareTo("WWMuIdV4") == 0)
-    fMuIDType = kWWMuIdV4;
+    fMuIDType = MuonTools::kWWMuIdV4;
   else if (fMuonIDType.CompareTo("NoId") == 0)
-    fMuIDType = kNoId;
+    fMuIDType = MuonTools::kNoId;
   else if (fMuonIDType.CompareTo("Custom") == 0) {
-    fMuIDType = kCustomId;
+    fMuIDType = MuonTools::kCustomId;
     SendError(kWarning, "SlaveBegin","Custom muon identification is not yet implemented.");
   }
   else if (fMuonIDType.CompareTo("MVA_BDTG_IDIso") == 0)
-    fMuIDType = kMVAID_BDTG_IDIso;
+    fMuIDType = MuonTools::kMVAID_BDTG_IDIso;
   else {
     SendError(kAbortAnalysis,"SlaveBegin","The specified muon identification %s is not defined.",
               fMuonIDType.Data());
@@ -655,39 +641,39 @@ void MuonIDMod::SlaveBegin()
   }
     
   if (fMuonIsoType.CompareTo("TrackCalo") == 0)
-    fMuIsoType = kTrackCalo;
+    fMuIsoType = MuonTools::kTrackCalo;
   else if (fMuonIsoType.CompareTo("TrackCaloCombined") == 0)
-    fMuIsoType = kTrackCaloCombined;
+    fMuIsoType = MuonTools::kTrackCaloCombined;
   else if (fMuonIsoType.CompareTo("TrackCaloSliding") == 0)
-    fMuIsoType = kTrackCaloSliding;
+    fMuIsoType = MuonTools::kTrackCaloSliding;
   else if (fMuonIsoType.CompareTo("TrackCaloSlidingNoCorrection") == 0)
-    fMuIsoType = kTrackCaloSlidingNoCorrection;
+    fMuIsoType = MuonTools::kTrackCaloSlidingNoCorrection;
   else if (fMuonIsoType.CompareTo("CombinedRelativeConeAreaCorrected") == 0)
-    fMuIsoType = kCombinedRelativeConeAreaCorrected;
+    fMuIsoType = MuonTools::kCombinedRelativeConeAreaCorrected;
   else if (fMuonIsoType.CompareTo("CombinedRelativeEffectiveAreaCorrected") == 0)
-    fMuIsoType = kCombinedRelativeEffectiveAreaCorrected;
+    fMuIsoType = MuonTools::kCombinedRelativeEffectiveAreaCorrected;
   else if (fMuonIsoType.CompareTo("PFIso") == 0)
-    fMuIsoType = kPFIso;
+    fMuIsoType = MuonTools::kPFIso;
   else if (fMuonIsoType.CompareTo("PFRadialIso") == 0)
-    fMuIsoType = kPFRadialIso;
+    fMuIsoType = MuonTools::kPFRadialIso;
   else if (fMuonIsoType.CompareTo("PFIsoBetaPUCorrected") == 0)
-    fMuIsoType = kPFIsoBetaPUCorrected;
+    fMuIsoType = MuonTools::kPFIsoBetaPUCorrected;
   else if (fMuonIsoType.CompareTo("PFIsoEffectiveAreaCorrected") == 0)
-    fMuIsoType = kPFIsoEffectiveAreaCorrected;
+    fMuIsoType = MuonTools::kPFIsoEffectiveAreaCorrected;
   else if (fMuonIsoType.CompareTo("PFIsoNoL") == 0)
-    fMuIsoType = kPFIsoNoL;
+    fMuIsoType = MuonTools::kPFIsoNoL;
   else if (fMuonIsoType.CompareTo("NoIso") == 0)
-    fMuIsoType = kNoIso;
+    fMuIsoType = MuonTools::kNoIso;
   else if (fMuonIsoType.CompareTo("Custom") == 0) {
-    fMuIsoType = kCustomIso;
+    fMuIsoType = MuonTools::kCustomIso;
     SendError(kWarning, "SlaveBegin","Custom muon isolation is not yet implemented.");
   }
   else if (fMuonIsoType.CompareTo("MVA_BDTG_IDIso") == 0) 
-    fMuIsoType = kMVAIso_BDTG_IDIso;
+    fMuIsoType = MuonTools::kMVAIso_BDTG_IDIso;
   else if (fMuonIsoType.CompareTo("IsoRingsV0_BDTG_Iso") == 0)
-    fMuIsoType = kIsoRingsV0_BDTG_Iso;
+    fMuIsoType = MuonTools::kIsoRingsV0_BDTG_Iso;
   else if (fMuonIsoType.CompareTo("IsoDeltaR") == 0)
-    fMuIsoType = kIsoDeltaR;
+    fMuIsoType = MuonTools::kIsoDeltaR;
   else {
     SendError(kAbortAnalysis, "SlaveBegin","The specified muon isolation %s is not defined.",
               fMuonIsoType.Data());
@@ -695,23 +681,23 @@ void MuonIDMod::SlaveBegin()
   }
 
   if (fMuonClassType.CompareTo("All") == 0)
-    fMuClassType = kAll;
+    fMuClassType = MuonTools::kAll;
   else if (fMuonClassType.CompareTo("Global") == 0)
-    fMuClassType = kGlobal;
+    fMuClassType = MuonTools::kGlobal;
   else if (fMuonClassType.CompareTo("GlobalTracker") == 0)
-    fMuClassType = kGlobalTracker;
+    fMuClassType = MuonTools::kGlobalTracker;
   else if (fMuonClassType.CompareTo("Standalone") == 0)
-    fMuClassType = kSta;
+    fMuClassType = MuonTools::kSta;
   else if (fMuonClassType.CompareTo("TrackerMuon") == 0)
-    fMuClassType = kTrackerMuon;
+    fMuClassType = MuonTools::kTrackerMuon;
   else if (fMuonClassType.CompareTo("CaloMuon") == 0)
-    fMuClassType = kCaloMuon;
+    fMuClassType = MuonTools::kCaloMuon;
   else if (fMuonClassType.CompareTo("TrackerBased") == 0)
-    fMuClassType = kTrackerBased;
+    fMuClassType = MuonTools::kTrackerBased;
   else if (fMuonClassType.CompareTo("GlobalOnly") == 0)
-    fMuClassType = kGlobalOnly;
+    fMuClassType = MuonTools::kGlobalOnly;
   else if (fMuonClassType.CompareTo("GlobalorTracker") == 0)
-    fMuClassType = kGlobalorTracker;
+    fMuClassType = MuonTools::kGlobalorTracker;
   else {
     SendError(kAbortAnalysis, "SlaveBegin","The specified muon class %s is not defined.",
               fMuonClassType.Data());
@@ -719,7 +705,7 @@ void MuonIDMod::SlaveBegin()
   }
 
   // If we use MVA ID, need to load MVA weights
-  if     (fMuIsoType == kMVAIso_BDTG_IDIso || fMuIDType == kMVAID_BDTG_IDIso) {
+  if     (fMuIsoType == MuonTools::kMVAIso_BDTG_IDIso || fMuIDType == MuonTools::kMVAID_BDTG_IDIso) {
     fMuonTools = new MuonTools();
     fMuonIDMVA = new MuonIDMVA();
     fMuonIDMVA->Initialize("BDTG method",
@@ -732,7 +718,7 @@ void MuonIDMod::SlaveBegin()
                            MuonIDMVA::kIDIsoCombinedDetIso,
                            fRhoAlgo);
   }
-  else if (fMuIsoType == kIsoRingsV0_BDTG_Iso) {
+  else if (fMuIsoType == MuonTools::kIsoRingsV0_BDTG_Iso) {
     std::vector<std::string> muonidiso_weightfiles;
     muonidiso_weightfiles.push_back(string((getenv("MIT_DATA")+string("/MuonMVAWeights/MuonIsoMVA_BDTG_V0_barrel_lowpt.weights.xml"))));
     muonidiso_weightfiles.push_back(string((getenv("MIT_DATA")+string("/MuonMVAWeights/MuonIsoMVA_BDTG_V0_barrel_highpt.weights.xml"))));
@@ -748,7 +734,7 @@ void MuonIDMod::SlaveBegin()
                            muonidiso_weightfiles,
                            fRhoAlgo);
   }
-  else if (fMuIsoType == kIsoDeltaR) {
+  else if (fMuIsoType == MuonTools::kIsoDeltaR) {
     std::vector<std::string> muonidiso_weightfiles;
     muonidiso_weightfiles.push_back(string((getenv("MIT_DATA")+string("/MuonMVAWeights/MuonIsoMVA_santi-V1_LB_BDT.weights.xml"))));
     muonidiso_weightfiles.push_back(string((getenv("MIT_DATA")+string("/MuonMVAWeights/MuonIsoMVA_santi-V1_LE_BDT.weights.xml"))));
@@ -766,7 +752,7 @@ void MuonIDMod::SlaveBegin()
 
 
 //--------------------------------------------------------------------------------------------------
-Bool_t MuonIDMod::PassMuonMVA_BDTG_IdIso(const Muon *mu, const Vertex *vertex,
+Bool_t MuonIDModRun1::PassMuonMVA_BDTG_IdIso(const Muon *mu, const Vertex *vertex,
                                          const PileupEnergyDensityCol *PileupEnergyDensity) const
 {
 
@@ -824,7 +810,7 @@ Bool_t MuonIDMod::PassMuonMVA_BDTG_IdIso(const Muon *mu, const Vertex *vertex,
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t MuonIDMod::PassMuonIsoRingsV0_BDTG_Iso(const Muon *mu, const Vertex *vertex,
+Bool_t MuonIDModRun1::PassMuonIsoRingsV0_BDTG_Iso(const Muon *mu, const Vertex *vertex,
                                               const PileupEnergyDensityCol *PileupEnergyDensity)
   const
 {
@@ -875,7 +861,7 @@ Bool_t MuonIDMod::PassMuonIsoRingsV0_BDTG_Iso(const Muon *mu, const Vertex *vert
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t MuonIDMod::PassMuonIsoDeltaR(const Muon *mu, const Vertex *vertex,
+Bool_t MuonIDModRun1::PassMuonIsoDeltaR(const Muon *mu, const Vertex *vertex,
                                     const PileupEnergyDensityCol *PileupEnergyDensity) const
 {
   const Track *muTrk=0;
@@ -911,9 +897,9 @@ Bool_t MuonIDMod::PassMuonIsoDeltaR(const Muon *mu, const Vertex *vertex,
 }
 
 //--------------------------------------------------------------------------------------------------
-void MuonIDMod::SlaveTerminate()
+void MuonIDModRun1::SlaveTerminate()
 {
-  printf(" MuonIDMod::SlaveTerminate -- enter\n");
+  printf(" MuonIDModRun1::SlaveTerminate -- enter\n");
 
   // Run finishing code on the computer (slave) that did the analysis
   if (fMuonIDMVA)
@@ -921,5 +907,5 @@ void MuonIDMod::SlaveTerminate()
   if (fMuonTools)
     delete fMuonTools;
 
-  printf(" MuonIDMod::SlaveTerminate -- exit\n");
+  printf(" MuonIDModRun1::SlaveTerminate -- exit\n");
 }

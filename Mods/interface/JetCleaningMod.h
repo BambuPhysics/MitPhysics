@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: JetCleaningMod.h,v 1.12 2009/06/15 15:00:21 loizides Exp $
-//
 // JetCleaningMod
 //
 // This Module performs cleaning of jets, ie it removes jets which point 
@@ -13,6 +11,7 @@
 #define MITPHYSICS_MODS_JETCLEANINGMOD_H
 
 #include "MitAna/TreeMod/interface/BaseMod.h" 
+#include "MitAna/DataTree/interface/JetCol.h"
 
 namespace mithep 
 {
@@ -21,10 +20,11 @@ namespace mithep
     public:
       JetCleaningMod(const char *name="JetCleaningMod", 
                      const char *title="Jet cleaning module");
+      ~JetCleaningMod();
 
       const char        *GetCleanElectronsName()  const { return fCleanElectronsName;  }
       const char        *GetCleanMuonsName()      const { return fCleanMuonsName;      }
-      const char        *GetCleanJetsName()       const { return fCleanJetsName;       }
+      const char        *GetCleanJetsName()       const { return fCleanJets->GetName();       }
       const char        *GetCleanName()           const { return GetCleanJetsName();   }
       const char        *GetCleanPhotonsName()    const { return fCleanPhotonsName;    }
       const char        *GetCleanTausName()       const { return fCleanTausName;       }
@@ -36,7 +36,7 @@ namespace mithep
       Bool_t             GetApplyTauRemoval()     const { return fApplyTauRemoval;     }
       const char        *GetOutputName()          const { return GetCleanJetsName();   }
       void               SetCleanElectronsName(const char *name) { fCleanElectronsName  = name; }
-      void               SetCleanJetsName(const char *name)      { fCleanJetsName       = name; }
+      void               SetCleanJetsName(const char *name)      { fCleanJets->SetName(name);   }
       void               SetCleanMuonsName(const char *name)     { fCleanMuonsName      = name; }
       void               SetCleanName(const char *name)          { SetCleanJetsName(name);      }
       void               SetCleanPhotonsName(const char *name)   { fCleanPhotonsName    = name; }
@@ -51,13 +51,15 @@ namespace mithep
 
     protected:
       void               Process();
-
+      void               SlaveBegin();
+      void               SlaveEnd();
+      
       TString            fCleanElectronsName;   //name of clean electrons (input)
       TString            fCleanMuonsName;       //name of clean muons (input)
       TString            fCleanPhotonsName;     //name of clean photons   (input)
       TString            fCleanTausName;        //name of clean taus   (input)
       TString            fGoodJetsName;         //name of good jets       (input)
-      TString            fCleanJetsName;        //name of clean jets      (output)
+      JetOArr*           fCleanJets;        //clean jets      (output)
       Double_t           fMinDeltaRToElectron;  //delta R for separating electrons from jets
       Double_t           fMinDeltaRToMuon;      //delta R for separating muons from jets
       Double_t           fMinDeltaRToPhoton;    //delta R for separating photons from jets

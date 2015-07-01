@@ -13,8 +13,7 @@ CosmicCleaningMod::CosmicCleaningMod(const char *name, const char *title) :
   fCosmicsName("random"),        
   fCleanMuonsName(ModNames::gkCleanMuonsName),        
   fCleanCosmicsName(ModNames::gkCleanCosmicsName),
-  fDeltaR(0.1),
-  fCosmics(0)
+  fDeltaR(0.1)
 {
   // Constructor.
 }
@@ -25,15 +24,15 @@ void CosmicCleaningMod::Process()
   // Process entries of the tree. 
 
   // get input collection
-  const MuonCol     *CleanMuons    = GetObjThisEvt<MuonCol>(fCleanMuonsName);
-  LoadEventObject(fCosmicsName, fCosmics);
+  const MuonCol     *CleanMuons    = GetObject<MuonCol>(fCleanMuonsName);
+  auto* cosmics = GetObject<MuonCol>(fCosmicsName);
 
   // Go through all cosmics and remove cosmic overlaps with collision muons and duplicates.
   std::vector<const Muon*> CleanCosTemp;
   
-  if (fCosmics) {
-    for (UInt_t i=0; i<fCosmics->GetEntries(); ++i) {    
-      const Muon *u = fCosmics->At(i);   
+  if (cosmics) {
+    for (UInt_t i=0; i<cosmics->GetEntries(); ++i) {    
+      const Muon *u = cosmics->At(i);   
 
       FourVectorM mom(u->Mom());
       // Invert the cosmic momentum for fake cosmic cleaning
@@ -74,11 +73,11 @@ void CosmicCleaningMod::Process()
         continue;
         
       // if no overlaps then add to clean cosmics
-      CleanCosTemp.push_back(fCosmics->At(i));   
+      CleanCosTemp.push_back(cosmics->At(i));   
     } 
   }
   else {
-    std::cout << "Warning: fCosmics collection " << fCosmicsName << " was not found." << std::endl;
+    std::cout << "Warning: cosmics collection " << fCosmicsName << " was not found." << std::endl;
   }
 
   // Fill the muon array with the contents of the vector:
@@ -90,10 +89,4 @@ void CosmicCleaningMod::Process()
        
   // add to event for other modules to use
   AddObjThisEvt(CleanCosmics);
-}
-
-//--------------------------------------------------------------------------------------------------
-void CosmicCleaningMod::SlaveBegin()
-{
-  ReqEventObject(fCosmicsName, fCosmics, kTRUE);
 }

@@ -1,7 +1,4 @@
-// $Id: JetCleaningMod.cc,v 1.17 2010/06/28 21:07:06 ceballos Exp $
-
 #include "MitPhysics/Mods/interface/JetCleaningMod.h"
-#include "MitAna/DataTree/interface/JetCol.h"
 #include "MitAna/DataTree/interface/PhotonCol.h"
 #include "MitAna/DataTree/interface/MuonCol.h"
 #include "MitAna/DataTree/interface/ElectronCol.h"
@@ -21,7 +18,7 @@ JetCleaningMod::JetCleaningMod(const char *name, const char *title) :
   fCleanPhotonsName(ModNames::gkCleanPhotonsName),        
   fCleanTausName(ModNames::gkCleanTausName),        
   fGoodJetsName(ModNames::gkGoodJetsName),        
-  fCleanJetsName(ModNames::gkCleanJetsName),
+  fCleanJets(new JetOArr),
   fMinDeltaRToElectron(0.3),
   fMinDeltaRToMuon(0.3),
   fMinDeltaRToPhoton(0.3),
@@ -29,32 +26,37 @@ JetCleaningMod::JetCleaningMod(const char *name, const char *title) :
   fApplyPhotonRemoval(kFALSE),
   fApplyTauRemoval(kFALSE)
 {
-  // Constructor.
+  fCleanJets->SetName(ModNames::gkCleanJetsName);
+}
+
+JetCleaningMod::~JetCleaningMod()
+{
+  delete fCleanJets;
 }
 
 //--------------------------------------------------------------------------------------------------
 void JetCleaningMod::Process()
 {
   // Process entries of the tree.
+  
+  fCleanJets->Reset();
 
   // get input collections
-  const JetCol  *GoodJets       = GetObjThisEvt<JetCol>(fGoodJetsName);
+  const JetCol  *GoodJets       = GetObject<JetCol>(fGoodJetsName);
   const ElectronCol *CleanElectrons = 0;
   if (!fCleanElectronsName.IsNull())
-    CleanElectrons = GetObjThisEvt<ElectronCol>(fCleanElectronsName);
+    CleanElectrons = GetObject<ElectronCol>(fCleanElectronsName);
   const MuonCol *CleanMuons = 0;
   if (!fCleanMuonsName.IsNull())
-    CleanMuons = GetObjThisEvt<MuonCol>(fCleanMuonsName);
+    CleanMuons = GetObject<MuonCol>(fCleanMuonsName);
   const PhotonCol   *CleanPhotons   = 0;
   if (!fCleanPhotonsName.IsNull())
-    CleanPhotons    = GetObjThisEvt<PhotonCol>(fCleanPhotonsName);
+    CleanPhotons    = GetObject<PhotonCol>(fCleanPhotonsName);
   const TauCol   *CleanTaus   = 0;
   if (fApplyTauRemoval && !fCleanTausName.IsNull())
-    CleanTaus    = GetObjThisEvt<TauCol>(fCleanTausName);
+    CleanTaus    = GetObject<TauCol>(fCleanTausName);
 
   // create output collection
-  JetOArr *CleanJets = new JetOArr;
-  CleanJets->SetName(fCleanJetsName);
 
   // remove any jet that overlaps in eta, phi with an isolated electron.    
   for (UInt_t i=0; i<GoodJets->GetEntries(); ++i) {
@@ -126,12 +128,23 @@ void JetCleaningMod::Process()
     if (isTauOverlap)
       continue;
 
-    CleanJets->Add(jet);
+    fCleanJets->Add(jet);
   }
 
   // sort according to pt
-  CleanJets->Sort();
+  fCleanJets->Sort();
 
-  // add to event for other modules to use
-  AddObjThisEvt(CleanJets);
 }
+
+void
+JetCleaningMod::SlaveBegin ()
+{
+  PublishObj(fCleanJets);
+}
+
+void 
+JetCleaningMod::SlaveEnd ()
+{
+  RetractObj(fCleanJets->GetName());
+}
+

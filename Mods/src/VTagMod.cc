@@ -18,7 +18,11 @@ VTagMod::VTagMod(const char *name, const char *title) :
   BaseMod          (name,title),
   fPFCandidatesName(Names::gkPFCandidatesBrn),
   fGoodVTagsName   (ModNames::gkGoodVTagsName),
-  fConeSize        (0.8)
+  fConeSize        (0.8),
+  fPruner(0),
+  fCAJetDef(0),
+  fActiveArea(0),
+  fAreaDefinition(0)
 {
   // Constructor.
 }
@@ -27,15 +31,15 @@ VTagMod::VTagMod(const char *name, const char *title) :
 void VTagMod::Process()
 {
   // Load the branches we want to work with
-  LoadBranch(fPFCandidatesName);
+  auto* pfCandidates = GetObject<PFCandidateCol>(fPFCandidatesName);
 
   // Do not even continue if particle flow candidates are not there
-  assert(fPFCandidates);
+  assert(pfCandidates);
 
   // Push all particle flow candidates into fastjet particle collection
   std::vector<fastjet::PseudoJet> lFJParts;
-  for(UInt_t i=0; i<fPFCandidates->GetEntries(); ++i) {      
-    const PFCandidate *pfCand = fPFCandidates->At(i);
+  for(UInt_t i=0; i<pfCandidates->GetEntries(); ++i) {      
+    const PFCandidate *pfCand = pfCandidates->At(i);
     lFJParts.push_back(fastjet::PseudoJet(pfCand->Px(),pfCand->Py(),pfCand->Pz(),pfCand->E()));
     lFJParts.back().set_user_index(i);
   }
@@ -62,8 +66,6 @@ void VTagMod::SlaveBegin()
   // Run startup code on the computer (slave) doing the actual analysis. Here, we just request the
   // particle flow collection branch.
 
-  ReqEventObject(fPFCandidatesName, fPFCandidates, kTRUE);
-
   //Default pruning parameters
   fPruner          = new fastjet::Pruner(fastjet::cambridge_algorithm,0.1,0.5);       // CMS Default
   
@@ -83,6 +85,10 @@ void VTagMod::SlaveBegin()
 void VTagMod::Terminate()
 {
   // Run finishing code on the computer (slave) that did the analysis
+  delete fPruner;
+  delete fCAJetDef;
+  delete fActiveArea;
+  delete fAreaDefinition;
 }
 
 //--------------------------------------------------------------------------------------------------

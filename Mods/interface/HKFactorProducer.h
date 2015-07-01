@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: HKFactorProducer.h,v 1.9 2012/09/07 10:07:55 ceballos Exp $
-//
 // HKFactorProducer
 //
 // Produces the k factors from LO to NNLO.
@@ -58,8 +56,6 @@ namespace mithep
       Double_t           fMh;                   //fixed Higgs mass
       Double_t           fWidth;                //fixed Higgs width
       Int_t              fBWflag;               //running or fixed width
-      const MCEventInfo *fMCEventInfo;          //!event info branch pointer
-      const EmbedWeightCol *fEmbedWeight;       //!tau embedding weight branch pointer
       TH1D              *hDHKFactor[10];        //!output histograms
       TFile             *fOutputFile; 	        //output file handle
       TString            fOutputName; 	        //output file name

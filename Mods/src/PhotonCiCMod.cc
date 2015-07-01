@@ -21,16 +21,9 @@ PhotonCiCMod::PhotonCiCMod(const char *name, const char *title) :
   fPhotonPtMin      (20.0),
   fApplySpikeRemoval(kFALSE),
   fAbsEtaMax        (999.99),
-  fPhotons          (0),
-  fTracks           (0),
-  fPileUpDen        (0),
-  fElectrons        (0),
   fPVName           (Names::gkPVBeamSpotBrn),
-  fPV               (0),
   fPVFromBranch     (kTRUE),
-  fConversions      (0),
   fConversionName   (Names::gkMvfConversionBrn),
-  fBeamspot         (0),
   fDataEnCorr_EB_hR9(0),
   fDataEnCorr_EB_lR9(0),
   fDataEnCorr_EE_hR9(0),
@@ -44,9 +37,7 @@ PhotonCiCMod::PhotonCiCMod(const char *name, const char *title) :
   fIsData           (false),
   fRnd3             (new TRandom3()),
   fMCParticleName   (Names::gkMCPartBrn),
-  fMCParticles      (0),
-  fPileUpName       ("PileupInfo"),
-  fPileUp           (0)
+  fPileUpName       ("PileupInfo")
 {
   // Constructor.
 }
@@ -61,31 +52,33 @@ void PhotonCiCMod::Process()
 {
   // Process entries of the tree.
 
-  LoadEventObject(fPhotonBranchName,   fPhotons);
+  auto* photons = GetObject<PhotonCol>(fPhotonBranchName);
 
   PhotonOArr *GoodPhotons = new PhotonOArr;
   GoodPhotons->SetName(fGoodPhotonsName);
   GoodPhotons->SetOwner(kTRUE);
 
   Double_t _tRho = 0.;
-  LoadEventObject(fTrackBranchName,    fTracks);
-  LoadEventObject(fPileUpDenName,      fPileUpDen);
-  LoadEventObject(fElectronName,       fElectrons);
-  LoadEventObject(fPVName,             fPV);
-  LoadEventObject(fConversionName,     fConversions);
-  LoadBranch("BeamSpot");
+  auto* tracks = GetObject<TrackCol>(fTrackBranchName);
+  auto* pileupDen = GetObject<PileupEnergyDensityCol>(fPileUpDenName);
+  auto* electrons = GetObject<ElectronCol>(fElectronName);
+  auto* pv = GetObject<VertexCol>(fPVName);
+  auto* conversions = GetObject<DecayParticleCol>(fConversionName);
+  auto* beamspot = GetObject<BeamSpotCol>("BeamSpot");
 
+  MCParticleCol const* mcParticles = 0;
+  PileupInfoCol const* pileup = 0;
   if ( !fIsData ) {
-    LoadBranch(fMCParticleName);
-    LoadBranch(fPileUpName);
+    mcParticles = GetObject<MCParticleCol>(fMCParticleName);
+    pileup = GetObject<PileupInfoCol>(fPileUpName);
   }
 
   Float_t numPU = -1.;
   if ( !fIsData )
-    numPU = (Float_t) fPileUp->At(0)->GetPU_NumInteractions();
+    numPU = (Float_t) pileup->At(0)->GetPU_NumInteractions();
 
-  if (fPileUpDen->GetEntries() > 0)
-    _tRho = (Double_t) fPileUpDen->At(0)->RhoRandomLowEta();
+  if (pileupDen->GetEntries() > 0)
+    _tRho = (Double_t) pileupDen->At(0)->RhoRandomLowEta();
 
   bool doVtxSelection = true;
   bool doMCSmear      = true;
@@ -102,15 +95,15 @@ void PhotonCiCMod::Process()
   Float_t _runNum  = (Float_t) runNumber;
   Float_t _lumiSec = (Float_t) evtHead->LumiSec();
 
-  //unsigned int numVertices = fPV->GetEntries();
+  //unsigned int numVertices = pv->GetEntries();
 
-  const BaseVertex *bsp = dynamic_cast<const BaseVertex*>(fBeamspot->At(0));
+  const BaseVertex *bsp = dynamic_cast<const BaseVertex*>(beamspot->At(0));
 
   PhotonOArr* preselPh  = new PhotonOArr;
 
   // 1. we do the pre-selection; but keep the non-passing photons in a second container...
-  for (UInt_t i=0; i<fPhotons->GetEntries(); ++i) {
-    const Photon *ph = fPhotons->At(i);
+  for (UInt_t i=0; i<photons->GetEntries(); ++i) {
+    const Photon *ph = photons->At(i);
 
     if (ph->SCluster()->AbsEta()>=2.5 || (ph->SCluster()->AbsEta()>=1.4442 && ph->SCluster()->AbsEta()<=1.566))
       continue;
@@ -319,12 +312,12 @@ void PhotonCiCMod::Process()
 
     // store the vertex for this pair
     if (doVtxSelection) {
-      unsigned int iVtx = FindBestVertex(fixPhFst[iPair],fixPhSec[iPair],bsp, print);
-      theVtx[iPair]    =  fPV->At(iVtx);
+      unsigned int iVtx = FindBestVertex(fixPhFst[iPair],fixPhSec[iPair], pv, bsp, conversions, print);
+      theVtx[iPair]    =  pv->At(iVtx);
       theVtxIdx[iPair] =  iVtx;
       if (iPair == 0) theChosenVtx = iVtx;
     } else
-      theVtx[iPair] =  fPV->At(0);
+      theVtx[iPair] =  pv->At(0);
 
 
     // fix the kinematics for both events
@@ -353,13 +346,13 @@ void PhotonCiCMod::Process()
 
     if (iPair != 0) {
       // check if both photons pass the CiC selection
-      bool pass1 = PhotonTools::PassCiCSelection(fixPhFst[iPair], theVtx[iPair], fTracks, fElectrons, fPV, _tRho, 40., true, false);
-      bool pass2 = PhotonTools::PassCiCSelection(fixPhSec[iPair], theVtx[iPair], fTracks, fElectrons, fPV, _tRho, 30., true, false);
+      bool pass1 = PhotonTools::PassCiCSelection(fixPhFst[iPair], theVtx[iPair], tracks, electrons, pv, _tRho, 40., true, false);
+      bool pass2 = PhotonTools::PassCiCSelection(fixPhSec[iPair], theVtx[iPair], tracks, electrons, pv, _tRho, 30., true, false);
       if ( pass1 && pass2 )
         passPairs.push_back(iPair);
     } else {
-      bool pass1 = PhotonTools::PassCiCSelection(fixPhFst[iPair], theVtx[iPair], fTracks, fElectrons, fPV, _tRho, 40., true, false, kinPh1);
-      bool pass2 = PhotonTools::PassCiCSelection(fixPhSec[iPair], theVtx[iPair], fTracks, fElectrons, fPV, _tRho, 30., true, false, kinPh2);
+      bool pass1 = PhotonTools::PassCiCSelection(fixPhFst[iPair], theVtx[iPair], tracks, electrons, pv, _tRho, 40., true, false, kinPh1);
+      bool pass2 = PhotonTools::PassCiCSelection(fixPhSec[iPair], theVtx[iPair], tracks, electrons, pv, _tRho, 30., true, false, kinPh2);
 
       if ( pass1 && pass2 )
         passPairs.push_back(iPair);
@@ -441,7 +434,7 @@ void PhotonCiCMod::Process()
   Float_t _pth    = -100.;
   Float_t _decayZ = -100.;
   if (!fIsData)
-    FindHiggsPtAndZ(_pth, _decayZ);
+    FindHiggsPtAndZ(mcParticles, _pth, _decayZ);
 
   Float_t fillEvent[] = { (float)_tRho,
                           _pth,
@@ -523,19 +516,6 @@ void PhotonCiCMod::SlaveBegin()
   // Run startup code on the computer (slave) doing the actual analysis. Here,
   // we just request the photon collection branch.
 
-  ReqEventObject(fPhotonBranchName,   fPhotons,   kTRUE);
-  ReqEventObject(fTrackBranchName,    fTracks,    kTRUE);
-  ReqEventObject(fElectronName,       fElectrons, kTRUE);
-  ReqEventObject(fPileUpDenName,      fPileUpDen, kTRUE);
-  ReqEventObject(fPVName,             fPV,        fPVFromBranch);
-  ReqEventObject(fConversionName,     fConversions,kTRUE);
-  ReqBranch("BeamSpot",fBeamspot);
-
-  if (!fIsData) {
-    ReqBranch(fPileUpName, fPileUp);
-    ReqBranch(Names::gkMCPartBrn,fMCParticles);
-  }
-
   hCiCTuple = new TNtuple("hCiCTuple","hCiCTuple","rho:higgspt:higgsZ:vtxZ:numPU:mass:ptgg:evtnum1:evtnum2:runnum:lumisec:ivtx:npairs:ph1Cat:ph2Cat:evtCat:ph1Iso1:ph1Iso2:ph1Iso3:ph1Cov:ph1HoE:ph1R9:ph1DR:ph1Pt:ph1Eta:ph1Phi:ph1Eiso3:ph1Eiso4:ph1Hiso4:ph1TisoA:ph1TisoW:ph1Tiso:ph1Et:ph1E:ph1Pass:ph1CatDebug:ph2Iso1:ph2Iso2:ph2Iso3:ph2Cov:ph2HoE:ph2R9:ph2DR:ph2Pt:ph2Eta:ph2Phi:ph2Eiso3:ph2Eiso4:ph2Hiso4:ph2TisoA:ph2TisoW:ph2Tiso:ph2Et:ph2E:ph2Pass:ph2CatDebug:ph1UPt:ph2UPt");
 
   AddOutput(hCiCTuple);
@@ -543,16 +523,16 @@ void PhotonCiCMod::SlaveBegin()
 }
 
 // return the index of the bext vertex
-unsigned int PhotonCiCMod::FindBestVertex(Photon* ph1, Photon* ph2, const BaseVertex *bsp, bool print) {
+unsigned int PhotonCiCMod::FindBestVertex(Photon* ph1, Photon* ph2, VertexCol const* pv, const BaseVertex *bsp, DecayParticleCol const* conversions, bool print) {
 
   // loop over all vertices and assigne the ranks
-  int* ptbal_rank  = new int[fPV->GetEntries()];
-  int* ptasym_rank = new int[fPV->GetEntries()];
-  int* total_rank  = new int[fPV->GetEntries()];
-  double* ptbal = new double[fPV->GetEntries()];
-  double* ptasym = new double[fPV->GetEntries()];
+  int* ptbal_rank  = new int[pv->GetEntries()];
+  int* ptasym_rank = new int[pv->GetEntries()];
+  int* total_rank  = new int[pv->GetEntries()];
+  double* ptbal = new double[pv->GetEntries()];
+  double* ptasym = new double[pv->GetEntries()];
 
-  unsigned int numVertices = fPV->GetEntries();
+  unsigned int numVertices = pv->GetEntries();
 
   double ptgg = 0.;    // stored for later in the conversion
 
@@ -569,7 +549,7 @@ unsigned int PhotonCiCMod::FindBestVertex(Photon* ph1, Photon* ph2, const BaseVe
     if (print)
       std::cout<<std::endl<<"       Vertex #"<<iVtx<<std::endl;
 
-    const Vertex* tVtx = fPV->At(iVtx);
+    const Vertex* tVtx = pv->At(iVtx);
     ptbal [iVtx] = 0.0;
     ptasym[iVtx] = 0.0;
     ptbal_rank [iVtx] = 1;
@@ -710,8 +690,8 @@ unsigned int PhotonCiCMod::FindBestVertex(Photon* ph1, Photon* ph2, const BaseVe
   //return bestIdx;
 
   // check if there's a conversion among the pre-selected photons
-  const DecayParticle* conv1 = PhotonTools::MatchedCiCConversion(ph1, fConversions, 0.1, 0.1, 0.1, print);
-  const DecayParticle* conv2 = PhotonTools::MatchedCiCConversion(ph2, fConversions, 0.1, 0.1, 0.1, print);
+  const DecayParticle* conv1 = PhotonTools::MatchedCiCConversion(ph1, conversions, 0.1, 0.1, 0.1, print);
+  const DecayParticle* conv2 = PhotonTools::MatchedCiCConversion(ph2, conversions, 0.1, 0.1, 0.1, print);
 
   if (print && false) {
     if (conv1) {
@@ -857,7 +837,7 @@ unsigned int PhotonCiCMod::FindBestVertex(Photon* ph1, Photon* ph2, const BaseVe
           std::cout<<"     "<<iVtx<<"   has rank  "<<total_rank[iVtx]<<std::endl;
 
         if (total_rank[iVtx] < maxVertices) {
-          const Vertex* tVtx = fPV->At(iVtx);
+          const Vertex* tVtx = pv->At(iVtx);
           double tDz = TMath::Abs(zconv - tVtx->Z());
           if (print)
             std::cout<<"     is considered with tDz = "<<tDz<<std::endl;
@@ -884,7 +864,7 @@ unsigned int PhotonCiCMod::FindBestVertex(Photon* ph1, Photon* ph2, const BaseVe
         if (print)
           std::cout<<"     "<<iVtx<<"   has rank  "<<total_rank[iVtx]<<std::endl;
 
-        const Vertex* tVtx = fPV->At(iVtx);
+        const Vertex* tVtx = pv->At(iVtx);
         double tDz = TMath::Abs(zconv - tVtx->Z());
         if (print)
           std::cout<<"     is considered with tDz = "<<tDz<<std::endl;
@@ -906,14 +886,14 @@ unsigned int PhotonCiCMod::FindBestVertex(Photon* ph1, Photon* ph2, const BaseVe
   return bestIdx;
 }
 
-void PhotonCiCMod::FindHiggsPtAndZ(Float_t& pt, Float_t& decayZ) {
+void PhotonCiCMod::FindHiggsPtAndZ(MCParticleCol const* mcParticles, Float_t& pt, Float_t& decayZ) {
 
   pt = -999.;
   decayZ = -999.;
 
   // loop over all GEN particles and look for status 1 photons
-  for (UInt_t i=0; i<fMCParticles->GetEntries(); ++i) {
-    const MCParticle* p = fMCParticles->At(i);
+  for (UInt_t i=0; i<mcParticles->GetEntries(); ++i) {
+    const MCParticle* p = mcParticles->At(i);
     if (!(p->Is(MCParticle::kH)))
       continue;
     pt = p->Pt();

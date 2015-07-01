@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: MatchMod.h,v 1.3 2009/06/17 15:32:04 loizides Exp $
-//
 // MatchMod
 // 
 // This module compares two input collections geomatrically, and creates a new 
@@ -8,6 +6,8 @@
 //
 // Authors: C.Loizides
 //--------------------------------------------------------------------------------------------------
+
+// Shouldn't this be in MitAna/PhysicsMods ?? (Y.Iiyama)
 
 #ifndef MITPHYSICS_MODS_MATCHMOD_H
 #define MITPHYSICS_MODS_MATCHMOD_H
@@ -77,8 +77,7 @@ void mithep::MatchMod<ClA,ClB>::Process()
 
   using namespace mithep;
 
-  Collection<ClA> *colA = 
-    GetObjThisEvt<Collection<ClA> >(GetColNameA());
+  auto* colA = GetObject<Collection<ClA> >(GetColNameA());
   if (!colA) {
     this->SendError(kAbortModule, 
                     "Process", 
@@ -86,8 +85,7 @@ void mithep::MatchMod<ClA,ClB>::Process()
     return;
   }
   
-  Collection<ClB> *colB = 
-    GetObjThisEvt<Collection<ClB> >(GetColNameB());
+  auto* colB = GetObject<Collection<ClB> >(GetColNameB());
   if (!colB) {
     this->SendError(kAbortModule, 
                     "Process", 

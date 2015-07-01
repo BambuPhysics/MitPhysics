@@ -1,5 +1,3 @@
-// $Id: GoodPVFilterMod.cc,v 1.10 2013/06/21 13:07:34 mingyang Exp $
-
 #include "MitPhysics/Mods/interface/GoodPVFilterMod.h"
 #include <TFile.h>
 #include <TTree.h>
@@ -22,14 +20,11 @@ GoodPVFilterMod::GoodPVFilterMod(const char *name, const char *title) :
   fMinNDof(5),
   fMaxAbsZ(15.0),
   fMaxRho(2.0),
-  fVertexesName(Names::gkPVBrn),
   fGoodVertexesName(ModNames::gkGoodVertexesName),
   fPileupInfoName("PileupInfo"),
   fNEvents(0),
   fNAcceped(0),
   fNFailed(0),
-  fVertexes(0),
-  fGoodVertexes(0),
   hVertexNTracks(0),
   hVertexRho(0),
   hVertexZ(0)
@@ -74,9 +69,10 @@ const BitMask8 GoodPVFilterMod::FailedCuts(const Vertex *v) const
 //--------------------------------------------------------------------------------------------------
 void GoodPVFilterMod::Process()
 {
-  
-  LoadBranch(fVertexesName);
-  if (fIsMC) LoadBranch(fPileupInfoName);
+  auto* vertices = GetObject<VertexCol>(fVertexesName);
+  PileupInfoCol const* pileupInfo = 0;
+  if (fIsMC)
+    pileupInfo = GetObject<PileupInfoCol>(fPileupInfoName);
   
   VertexOArr *GoodVertexes = new VertexOArr;
   GoodVertexes->SetName(fGoodVertexesName);
@@ -86,8 +82,8 @@ void GoodPVFilterMod::Process()
   ++fNEvents; 
   Bool_t goodVertex = kFALSE;
   
-  for (UInt_t i=0; i<fVertexes->GetEntries(); ++i) {
-    const Vertex *v = fVertexes->At(i);
+  for (UInt_t i=0; i<vertices->GetEntries(); ++i) {
+    const Vertex *v = vertices->At(i);
     BitMask8 failed = FailedCuts(v);
     
     if (failed.NBitsSet() > 1)
@@ -121,12 +117,12 @@ void GoodPVFilterMod::Process()
   }
   
   //fill histograms
-  hNVtx->Fill(fVertexes->GetEntries());
+  hNVtx->Fill(vertices->GetEntries());
   hNGoodVtx->Fill(GoodVertexes->GetEntries());
   if (fIsMC) {
     Int_t npu = -99;
-    for (UInt_t i=0; i<fPileupInfo->GetEntries(); ++i) {
-      const PileupInfo *puinfo = fPileupInfo->At(i);
+    for (UInt_t i=0; i<pileupInfo->GetEntries(); ++i) {
+      const PileupInfo *puinfo = pileupInfo->At(i);
       if (puinfo->GetBunchCrossing()==0) {
         npu = puinfo->GetPU_NumInteractions();
         break;
@@ -158,10 +154,6 @@ void GoodPVFilterMod::Process()
 //--------------------------------------------------------------------------------------------------
 void GoodPVFilterMod::SlaveBegin()
 {
-
-  ReqBranch(fVertexesName, fVertexes);
-  if (fIsMC)   ReqBranch(fPileupInfoName, fPileupInfo);
-  
   hVertexNTracks = new TH1F("hVertexNTracks", "hVertexNTracks", 401, -0.5,400.5);
   AddOutput(hVertexNTracks);
   
@@ -185,8 +177,6 @@ void GoodPVFilterMod::SlaveBegin()
 
   hNPU = new TH1D("hNPU", "hNPU", 51, -0.5, 50.5);
   AddOutput(hNPU);      
-  
-  
 }
 
 //--------------------------------------------------------------------------------------------------
