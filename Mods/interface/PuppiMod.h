@@ -53,6 +53,7 @@ namespace mithep
       void SetKeepPileup( Bool_t keep )                      { fKeepPileup = keep;         }
       void SetInvert( Bool_t invert )                        { fInvert = invert;           }
       void SetApplyCHS( Bool_t apply )                       { fApplyCHS = apply;          }
+      void SetApplyLowPUCorr( Bool_t apply )                 { fApplyLowPUCorr = apply;    }
 
     protected:
       void                  SlaveBegin();
@@ -84,6 +85,7 @@ namespace mithep
       Bool_t fKeepPileup;                         // Keep pileup with zero weight (for debugging)
       Bool_t fInvert;                             // Option to invert weights
       Bool_t fApplyCHS;                           // This will force weights to 0 or 1 for tracked particles
+      Bool_t fApplyLowPUCorr;                     // This will cause a correction when lots of PV particles fall below median
 
       // These are parameters that are functions of Eta hopefully we can be more clever some day
       Int_t fNumEtaBins;                          // This is the number of eta regions we are dividing into
