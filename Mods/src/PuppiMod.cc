@@ -16,7 +16,7 @@ ClassImp(mithep::PuppiMod)
 //--------------------------------------------------------------------------------------------------
 PuppiMod::PuppiMod(const char *name, const char *title) : 
   BaseMod(name,title),
-  fEtaConfigName(TString(gSystem->Getenv("CMSSW_BASE")) + "/src/MitPhysics/data/PuppiEta.cfg"),
+  fEtaConfigName(TString(gSystem->Getenv("CMSSW_BASE")) + "/src/MitPhysics/data/PuppiEta_150701.cfg"),
   fVertexesName(Names::gkPVBrn),
   fPFCandidatesName(Names::gkPFCandidatesBrn),
   fPuppiParticlesName("PuppiParticles"),
