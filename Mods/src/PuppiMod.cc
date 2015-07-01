@@ -15,7 +15,7 @@ ClassImp(mithep::PuppiMod)
 //--------------------------------------------------------------------------------------------------
 PuppiMod::PuppiMod(const char *name, const char *title) : 
   BaseMod(name,title),
-  fEtaConfigName(TString(gSystem->Getenv("CMSSW_BASE")) + "/MitPhysics/config/PuppiEta.cfg"),
+  fEtaConfigName(TString(gSystem->Getenv("CMSSW_BASE")) + "/src/MitPhysics/config/PuppiEta.cfg"),
   fVertexesName(Names::gkPVBrn),
   fPFCandidatesName(Names::gkPFCandidatesBrn),
   fPuppiParticlesName("PuppiParticles"),
@@ -28,11 +28,8 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fD0Cut(0.03),
   fDZCut(0.1),
   fMinWeightCut(0.01),
-  fMinNeutralPt(1.0),
-  fMinNeutralPtSlope(0.005),
-  fMinPt(0),
-  fMaxEta(5.0),
   fRMSScaleFactor(1.0),
+  fTrackUncertainty(1.0),
   fKeepPileup(kFALSE),
   fInvert(kFALSE),
   fApplyCHS(kTRUE)
@@ -59,12 +56,25 @@ Int_t PuppiMod::GetParticleType(const PFCandidate *cand){
 }
 
 //--------------------------------------------------------------------------------------------------
+Int_t PuppiMod::GetEtaBin(const PFCandidate *cand){
+  Int_t etaBin = -1;
+  Double_t checkEta = fabs(cand->Eta());
+  for(Int_t i0 = 0; i0 < fNumEtaBins; i0++){
+    if(checkEta < fMaxEtas[i0]){
+      etaBin = i0;                            // This relies on putting the eta bins
+      break;                                  //   in increasing order
+    }
+  }
+  return etaBin;                              // -1 means we don't care about the particle
+}
+
+//--------------------------------------------------------------------------------------------------
 Double_t PuppiMod::Chi2fromDZ(Double_t dz){
-  Double_t expSig = 1.0;                      // This is uncertainty of track, consider making it a parameter
-  Double_t probPV = ROOT::Math::normal_cdf_c(fabs(dz),expSig) * 2.0;
+  Double_t probPV = ROOT::Math::normal_cdf_c(fabs(dz),fTrackUncertainty) * 2.0;
   Double_t probPU = 1 - probPV;
-  if(probPU == 1) probPU = 1 - 1e-16;         // This is a weird thing due to the next function I call
-  Double_t chi = TMath::ChisquareQuantile(probPU,1);
+  Double_t chi = 0;
+  if(probPU == 1) chi = 100;                  // This doesn't exactly match CMSSW, but I like this better
+  else chi = TMath::ChisquareQuantile(probPU,1);
   return pow(chi,2);
 }
 
@@ -81,6 +91,7 @@ void PuppiMod::SlaveBegin()
   PublishObj(fPuppiParticles);
 
   // Read the configuration file
+  std::cout << fEtaConfigName << std::endl;
   std::ifstream configFile;
   configFile.open(fEtaConfigName.Data());
   TString tempMaxEta;
@@ -92,8 +103,8 @@ void PuppiMod::SlaveBegin()
   TString tempEtaMaxExtrap;
   while(!configFile.eof()){
     configFile >> tempMaxEta >> tempMinPt >> tempMinNeutralPt >> tempMinNeutralPtSlope >> tempRMSEtaSF >> tempMedEtaSF >> tempEtaMaxExtrap;
-    // If not blank or commented, store the bins
-    if(tempEtaMaxExtrap != "" && tempMaxEta[0] != '#'){
+    // If not blank or first line, store the bins
+    if(tempEtaMaxExtrap != "" && tempMaxEta != "MaxEta"){
       fMaxEtas.push_back(tempMaxEta.Atof());
       fMinPts.push_back(tempMinPt.Atof());
       fMinNeutralPts.push_back(tempMinNeutralPt.Atof());
@@ -103,12 +114,14 @@ void PuppiMod::SlaveBegin()
       fEtaMaxExtraps.push_back(tempEtaMaxExtrap.Atof());
     }
   }
+  fNumEtaBins = fMaxEtas.size();
 }
 
 //--------------------------------------------------------------------------------------------------
 void PuppiMod::SlaveTerminate()
 {
   // ===== deallocate memory ====
+  // Or you know, don't
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -121,18 +134,26 @@ void PuppiMod::Process()
 
   // This mapper will return particles that are only close in eta, phi space
   ParticleMapper *Mapper = new ParticleMapper();
-  Mapper->Initialize(*fPFCandidates,fR0,fR0,fMaxEta);
+  Mapper->Initialize(*fPFCandidates,fR0,fR0,fMaxEtas[fNumEtaBins-1]);
 
   const Int_t numCandidates = fPFCandidates->GetEntries();
   Double_t alphaF[numCandidates];                             // This is alpha(F) of all particles for particle i
   Double_t alphaC[numCandidates];                             // This is alpha(C) of charged PV for particle i
-  Int_t numCHPU = 0;                                          // Track the number of particles that are charged PU
-  Double_t alphaFCHPU[numCandidates];                         // This is alphaF for charged PU particles
-  Double_t alphaCCHPU[numCandidates];                         // This is alphaC for charged PU particles
   Int_t IndicesF[numCandidates];                              // A bunch of indices used for sorting
   Int_t IndicesC[numCandidates];
-  Int_t numFCHPUis0 = 0;
-  Int_t numCCHPUis0 = 0;
+  Int_t numCHPU[fNumEtaBins];                                 // Track the number of particles that are charged PU for eta bin
+  Int_t numFCHPUis0[fNumEtaBins];                             // Number of alphas to ignore when finding the median for each
+  Int_t numCCHPUis0[fNumEtaBins];                             //   eta bin
+  Double_t alphaFCHPU[fNumEtaBins][numCandidates];            // This is alphaF for charged PU particles for eta bin
+  Double_t alphaCCHPU[fNumEtaBins][numCandidates];            // This is alphaC for charged PU particles for eta bin
+  Int_t IndicesFCHPU[fNumEtaBins][numCandidates];
+  Int_t IndicesCCHPU[fNumEtaBins][numCandidates];
+
+  for(Int_t i0 = 0; i0 < fNumEtaBins; i0++){                  // Initialize these for counting
+    numCHPU[i0] = 0;
+    numFCHPUis0[i0] = 0;
+    numCCHPUis0[i0] = 0;
+  }
 
   for(Int_t i0 = 0; i0 < numCandidates; i0++){
     const PFCandidate *iCandidate = fPFCandidates->At(i0);
@@ -143,7 +164,9 @@ void PuppiMod::Process()
     IndicesF[i0] = i0;
     IndicesC[i0] = i0;
 
-    if(iCandidate->Pt() < fMinPt) continue;                         // If it doesn't meet the Pt cut, we leave alpha at zero and say PU
+    Int_t etaBin = GetEtaBin(iCandidate);
+    if(etaBin < 0) continue;
+    if(iCandidate->Pt() < fMinPts[etaBin]) continue;                // If it doesn't meet the Pt cut for eta bin, we leave alpha at zero and say PU
 
     // Determine if the PFCandidate is charged PU. This will help characterize neutral PU.
     Int_t iParticleType = GetParticleType(iCandidate);
@@ -166,54 +189,66 @@ void PuppiMod::Process()
     else alphaF[i0] = TMath::Log(alphaF[i0]);
     if(alphaC[i0] == 0) alphaC[i0] = -100;
     else alphaC[i0] = TMath::Log(alphaC[i0]);
-    if(iParticleType == 2){                                         // If charged PU
-      if(alphaF[i0] == -100) numFCHPUis0++;                         // Count particles to ignore when taking the median
-      if(alphaC[i0] == -100) numCCHPUis0++;
-      alphaFCHPU[numCHPU] = alphaF[i0];                             // Only intializing particles up to the number of charged PU
-      alphaCCHPU[numCHPU] = alphaC[i0];
-      numCHPU++;                                                    // Count the total number of charged PU particles
+    if(iParticleType == 2){                                         // If charged PU, we might store it in the proper eta bin
+      Double_t checkEta = fabs(iCandidate->Eta());
+      for(Int_t i1 = 0; i1 < fNumEtaBins; i1++){
+        if(checkEta > fEtaMaxExtraps[i1]) continue;                 // If outside the binning that we are interested in, don't use CHPU
+        if(alphaF[i0] == -100) numFCHPUis0[i1]++;                   // Count particles to ignore when taking the median
+        if(alphaC[i0] == -100) numCCHPUis0[i1]++;
+        alphaFCHPU[i1][numCHPU[i1]] = alphaF[i0];                   // Only intializing particles up to the number of charged PU
+        alphaCCHPU[i1][numCHPU[i1]] = alphaC[i0];
+        numCHPU[i1]++;                                              // Count the total number of charged PU particles
+      }
     }
   }
 
   // Set the indices for sorting for the charged PU alphas
-  Int_t IndicesFCHPU[numCHPU];
-  Int_t IndicesCCHPU[numCHPU];
-
-  for(Int_t i0 = 0; i0 < numCHPU; i0++){
-    IndicesFCHPU[i0] = i0;
-    IndicesCCHPU[i0] = i0;
+  for(Int_t i0 = 0; i0 < fNumEtaBins; i0++){
+    for(Int_t i1 = 0; i1 < numCandidates; i1++){
+      IndicesFCHPU[i0][i1] = i1;
+      IndicesCCHPU[i0][i1] = i1;
+    }
   }
 
   // Sort everything to find the median and drop particles faster
   // This gives back the Indices arrays in ordered form
-  TMath::Sort(numCHPU,alphaFCHPU,IndicesFCHPU,0);
-  TMath::Sort(numCHPU,alphaCCHPU,IndicesCCHPU,0);
   TMath::Sort(numCandidates,alphaF,IndicesF,0);
   TMath::Sort(numCandidates,alphaC,IndicesC,0);
+  for(Int_t i0 = 0; i0 < fNumEtaBins; i0++){
+    TMath::Sort(numCHPU[i0],alphaFCHPU[i0],IndicesFCHPU[i0],0);
+    TMath::Sort(numCHPU[i0],alphaCCHPU[i0],IndicesCCHPU[i0],0);
+  }
 
-  // Now we'll find the median and sigma (left-handed RMS) squared for each event
-  Double_t alphaFMed = 0;
-  Double_t alphaCMed = 0;
-  Double_t sigma2F = 0;
-  Double_t sigma2C = 0;
+  // Now we'll find the median and sigma (left-handed RMS) squared for each event and eta bin
+  Double_t alphaFMed[fNumEtaBins];
+  Double_t alphaCMed[fNumEtaBins];
+  Double_t sigma2F[fNumEtaBins];
+  Double_t sigma2C[fNumEtaBins];
 
-  Int_t medIndexF = (numCHPU + numFCHPUis0)/2;                       // These are sort of meta, but they are the index of the indices array that refers to the median
-  Int_t medIndexC = (numCHPU + numCCHPUis0)/2;                       // Just watch how they are used...
-  if(numCHPU == numFCHPUis0) alphaFMed = 0;
-  else if((numCHPU - numFCHPUis0) % 2 == 0) alphaFMed = (alphaFCHPU[IndicesFCHPU[medIndexF - 1]] + alphaFCHPU[IndicesFCHPU[medIndexF]])/2;
-  else alphaFMed = alphaFCHPU[IndicesFCHPU[medIndexF]];
-  if(numCHPU == numCCHPUis0) alphaCMed = 0;
-  else if((numCHPU - numCCHPUis0) % 2 == 0) alphaCMed = (alphaCCHPU[IndicesCCHPU[medIndexC - 1]] + alphaCCHPU[IndicesCCHPU[medIndexC]])/2;
-  else alphaCMed = alphaCCHPU[IndicesCCHPU[medIndexC]];
+  for(Int_t i0 = 0; i0 < fNumEtaBins; i0++){
+    Int_t medIndexF = (numCHPU[i0] + numFCHPUis0[i0])/2;              // These are sort of meta, but they are the index of the indices array that refers to the median
+    Int_t medIndexC = (numCHPU[i0] + numCCHPUis0[i0])/2;              // Just watch how they are used...
+    if(numCHPU[i0] == numFCHPUis0[i0]) alphaFMed[i0] = 0;
+    else if((numCHPU[i0] - numFCHPUis0[i0]) % 2 == 0) alphaFMed[i0] = (alphaFCHPU[i0][IndicesFCHPU[i0][medIndexF - 1]] + alphaFCHPU[i0][IndicesFCHPU[i0][medIndexF]])/2;
+    else alphaFMed[i0] = alphaFCHPU[i0][IndicesFCHPU[i0][medIndexF]];
+    if(numCHPU[i0] == numCCHPUis0[i0]) alphaCMed[i0] = 0;
+    else if((numCHPU[i0] - numCCHPUis0[i0]) % 2 == 0) alphaCMed[i0] = (alphaCCHPU[i0][IndicesCCHPU[i0][medIndexC - 1]] + alphaCCHPU[i0][IndicesCCHPU[i0][medIndexC]])/2;
+    else alphaCMed[i0] = alphaCCHPU[i0][IndicesCCHPU[i0][medIndexC]];
+    
+    // Now compute the sigma2s
+    sigma2F[i0] = 0;
+    sigma2C[i0] = 0;
+    for(Int_t i1 = numFCHPUis0[i0]; i1 < medIndexF; i1++) sigma2F[i0] = sigma2F[i0] + pow((alphaFMed[i0]-alphaFCHPU[i0][IndicesFCHPU[i0][i1]]),2);
+    sigma2F[i0] = sigma2F[i0]/(medIndexF - numFCHPUis0[i0]);
+    for(Int_t i1 = numCCHPUis0[i0]; i1 < medIndexC; i1++) sigma2C[i0] = sigma2C[i0] + pow((alphaCMed[i0]-alphaCCHPU[i0][IndicesCCHPU[i0][i1]]),2);
+    sigma2C[i0] = sigma2C[i0]/(medIndexC - numCCHPUis0[i0]);
+    
+    alphaFMed[i0] = alphaFMed[i0] * (fMedEtaSFs[i0]);                 // Scale the medians
+    alphaCMed[i0] = alphaCMed[i0] * (fMedEtaSFs[i0]);
 
-  // Now compute the sigma2s
-  for(Int_t i0 = numFCHPUis0; i0 < medIndexF; i0++) sigma2F = sigma2F + pow((alphaFMed-alphaFCHPU[IndicesFCHPU[i0]]),2);
-  sigma2F = sigma2F/(medIndexF - numFCHPUis0);
-  for(Int_t i0 = numCCHPUis0; i0 < medIndexC; i0++) sigma2C = sigma2C + pow((alphaCMed-alphaCCHPU[IndicesCCHPU[i0]]),2);
-  sigma2C = sigma2C/(medIndexC - numCCHPUis0);
-
-  sigma2F = sigma2F * (fRMSScaleFactor);                             // Scale the sigmas
-  sigma2C = sigma2C * (fRMSScaleFactor);
+    sigma2F[i0] = sigma2F[i0] * (fRMSScaleFactor) * (fRMSEtaSFs[i0]); // Scale the sigmas
+    sigma2C[i0] = sigma2C[i0] * (fRMSScaleFactor) * (fRMSEtaSFs[i0]);
+  }
 
   fPuppiParticles->Delete();
 
@@ -222,12 +257,13 @@ void PuppiMod::Process()
     Double_t chi2 = 0;
     Double_t weight = 0;
     Int_t CandidateType = GetParticleType(fPFCandidates->At(i0));
+    Int_t etaBin = GetEtaBin(fPFCandidates->At(i0));
     if(fApplyCHS && CandidateType == 1) weight = 1;                                                 // If charged PV with CHS, the weight is 1
     else if(CandidateType == 3 || (not fApplyCHS && (CandidateType == 1 || CandidateType == 2))){   // If neutral central or not CHS, get central chi2
-      if(alphaC[i0] > alphaCMed) chi2 = pow((alphaC[i0] - alphaCMed),2)/sigma2C;
+      if(alphaC[i0] > alphaCMed[etaBin]) chi2 = pow((alphaC[i0] - alphaCMed[etaBin]),2)/sigma2C[etaBin];
     }
     else if(CandidateType == 4){                                                                    // If forward particle, get forward chi2
-      if(alphaF[i0] > alphaFMed) chi2 = pow((alphaF[i0] - alphaFMed),2)/sigma2F;
+      if(alphaF[i0] > alphaFMed[etaBin]) chi2 = pow((alphaF[i0] - alphaFMed[etaBin]),2)/sigma2F[etaBin];
     }
 
     if(chi2 > 0){                                                    // If chi2 value was assigned
@@ -236,7 +272,7 @@ void PuppiMod::Process()
     }
 
     if((CandidateType == 3 || CandidateType == 4) &&                 // If neutral Pt is less than expected for given NPV
-       (fPFCandidates->At(i0)->Pt()*(weight) < fMinNeutralPt + fMinNeutralPtSlope * (fVertexes->GetEntries())))
+       (fPFCandidates->At(i0)->Pt()*(weight) < fMinNeutralPts[etaBin] + fMinNeutralPtSlopes[etaBin] * (fVertexes->GetEntries())))
       weight = 0;                                                    //   set weight to zero
     if(fInvert) weight = 1.0 - weight;                               // Invert the weight here if asked for
     if(weight == 0 && not fKeepPileup) continue;                     // Throw out if we're not keeping it

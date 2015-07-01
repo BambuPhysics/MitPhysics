@@ -26,6 +26,7 @@ namespace mithep
      ~PuppiMod();
 
       Int_t GetParticleType( const PFCandidate *cand );
+      Int_t GetEtaBin( const PFCandidate *cand );
       Double_t Chi2fromDZ( Double_t dz );
 
       const char   *GetVertexesName()              const     { return fVertexesName;       }
@@ -45,13 +46,9 @@ namespace mithep
       void SetDZCut( Double_t cut )                          { fDZCut = cut;               }
 
       void SetMinWeightCut( Double_t cut )                   { fMinWeightCut = cut;        }
-      void SetMinNeutralPt( Double_t pt )                    { fMinNeutralPt = pt;         }
-      void SetMinNeutralPtSlope( Double_t slope )            { fMinNeutralPtSlope = slope; }
-
-      void SetMinPt( Double_t min )                          { fMinPt = min;               }
-      void SetMaxEta( Double_t max )                         { fMaxEta = max;              }
 
       void SetRMSScaleFactor( Double_t fact )                { fRMSScaleFactor = fact;     }
+      void SetTrackUncertainty( Double_t sig )               { fTrackUncertainty = sig;    }
 
       void SetKeepPileup( Bool_t keep )                      { fKeepPileup = keep;         }
       void SetInvert( Bool_t invert )                        { fInvert = invert;           }
@@ -80,19 +77,16 @@ namespace mithep
       Double_t fDZCut;                            // DZ cut for charged particle vertex matching
 
       Double_t fMinWeightCut;                     // Minimum weight to drop it to zero
-      Double_t fMinNeutralPt;                     // Minimum Pt cut on neutral particles (after weighting)
-      Double_t fMinNeutralPtSlope;                // Predicted slope of neutral Pt versus pileup
-
-      Double_t fMinPt;                            // For now, just min pt of particles that we look at
-      Double_t fMaxEta;                           // I guess this isn't a bad idea
 
       Double_t fRMSScaleFactor;                   // A scale factor for RMS
+      Double_t fTrackUncertainty;                 // The experimental uncertainty in the track fit to vertex distance
 
       Bool_t fKeepPileup;                         // Keep pileup with zero weight (for debugging)
       Bool_t fInvert;                             // Option to invert weights
       Bool_t fApplyCHS;                           // This will force weights to 0 or 1 for tracked particles
 
       // These are parameters that are functions of Eta hopefully we can be more clever some day
+      Int_t fNumEtaBins;                          // This is the number of eta regions we are dividing into
       std::vector<Double_t> fMaxEtas;             // These are the maximum etas for each region of the table
       std::vector<Double_t> fMinPts;              // Various Pt cuts
       std::vector<Double_t> fMinNeutralPts;       // Minimum Pt cut on neutral particles (after weighting)
