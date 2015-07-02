@@ -22,25 +22,29 @@ namespace mithep {
     JetIdMod(const char* name="JetIdMod",
              const char* title="Jet identification module");
 
-    Bool_t   GetUseL1Correction() const          { return fCorrections.TestBit(mithep::Jet::L1); }
-    Bool_t   GetUseL2Correction() const          { return fCorrections.TestBit(mithep::Jet::L2); }
-    Bool_t   GetUseL3Correction() const          { return fCorrections.TestBit(mithep::Jet::L3); }
-    Double_t GetJetEEMFractionMinCut() const     { return fJetEEMFractionMinCut; }
-    Double_t GetMinChargedHadronFraction() const { return fMinChargedHadronFraction; }
-    Double_t GetMaxChargedHadronFraction() const { return fMaxChargedHadronFraction; }
-    Double_t GetMinNeutralHadronFraction() const { return fMinNeutralHadronFraction; }
-    Double_t GetMaxNeutralHadronFraction() const { return fMaxNeutralHadronFraction; }
-    Double_t GetMinChargedEMFraction() const     { return fMinChargedEMFraction; }
-    Double_t GetMaxChargedEMFraction() const     { return fMaxChargedEMFraction; }
-    Double_t GetMinNeutralEMFraction() const     { return fMinNeutralEMFraction; }
-    Double_t GetMaxNeutralEMFraction() const     { return fMaxNeutralEMFraction; }
-    Bool_t   GetApplyBetaCut() const             { return fApplyBetaCut; }
-    Bool_t   GetApplyPFLooseId() const           { return fApplyPFLooseId; }
-    Bool_t   GetApplyMVACut() const              { return fApplyMVACut; }
-    Bool_t   GetApplyMVACHS() const              { return fApplyMVACHS; }
+    Bool_t      GetInputIsCorrected() const         { return fCorrectedInput; }
+    Bool_t      GetUseL1Correction() const          { return fCorrections.TestBit(mithep::Jet::L1); }
+    Bool_t      GetUseL2Correction() const          { return fCorrections.TestBit(mithep::Jet::L2); }
+    Bool_t      GetUseL3Correction() const          { return fCorrections.TestBit(mithep::Jet::L3); }
+    Double_t    GetJetEEMFractionMinCut() const     { return fJetEEMFractionMinCut; }
+    Double_t    GetMinChargedHadronFraction() const { return fMinChargedHadronFraction; }
+    Double_t    GetMaxChargedHadronFraction() const { return fMaxChargedHadronFraction; }
+    Double_t    GetMinNeutralHadronFraction() const { return fMinNeutralHadronFraction; }
+    Double_t    GetMaxNeutralHadronFraction() const { return fMaxNeutralHadronFraction; }
+    Double_t    GetMinChargedEMFraction() const     { return fMinChargedEMFraction; }
+    Double_t    GetMaxChargedEMFraction() const     { return fMaxChargedEMFraction; }
+    Double_t    GetMinNeutralEMFraction() const     { return fMinNeutralEMFraction; }
+    Double_t    GetMaxNeutralEMFraction() const     { return fMaxNeutralEMFraction; }
+    Bool_t      GetApplyBetaCut() const             { return fApplyBetaCut; }
+    Bool_t      GetApplyPFLooseId() const           { return fApplyPFLooseId; }
+    UInt_t      GetMVATrainingSet() const           { return fMVATrainingSet; }
+    UInt_t      GetMVACutWP() const                 { return fMVACutWP; }
+    char const* GetMVAWeightsFile() const           { return fMVAWeightsFile; }
+    char const* GetMVACutsFile() const              { return fMVACutsFile; }
     
     JetIDMVA* GetJetIDMVA() const { return fJetIDMVA; }
 
+    void SetInputIsCorrected(Bool_t b)           { fCorrectedInput = b; }
     void SetUseL1Correction(Bool_t b)            { fCorrections.SetBit(mithep::Jet::L1, b); }
     void SetUseL2Correction(Bool_t b)            { fCorrections.SetBit(mithep::Jet::L2, b); }
     void SetUseL3Correction(Bool_t b)            { fCorrections.SetBit(mithep::Jet::L3, b); }
@@ -53,10 +57,12 @@ namespace mithep {
     void SetMaxChargedEMFraction(Double_t m)     { fMaxChargedEMFraction = m; }
     void SetMinNeutralEMFraction(Double_t m)     { fMinNeutralEMFraction = m; }
     void SetMaxNeutralEMFraction(Double_t m)     { fMaxNeutralEMFraction = m; }
-    void SetApplyBetaCut(Bool_t b)             { fApplyBetaCut = b; }
-    void SetApplyPFLooseId(Bool_t b)           { fApplyPFLooseId = b; }
-    void SetApplyMVACut(Bool_t b)              { fApplyMVACut = b; }
-    void SetApplyMVACHS(Bool_t b)              { fApplyMVACHS = b; }
+    void SetApplyBetaCut(Bool_t b)               { fApplyBetaCut = b; }
+    void SetApplyPFLooseId(Bool_t b)             { fApplyPFLooseId = b; }
+    void SetMVATrainingSet(UInt_t s)             { fMVATrainingSet = s; }
+    void SetMVACutWP(UInt_t w)                   { fMVACutWP = w; }
+    void SetMVAWeightsFile(char const* n)        { fMVAWeightsFile = n; }
+    void SetMVACutsFile(char const* n)           { fMVACutsFile = n; }
 
     void SetJetIDMVA(JetIDMVA* mva) { fJetIDMVA = mva; }
 
@@ -88,6 +94,7 @@ namespace mithep {
     Bool_t IsGood(mithep::Jet const&) override;
     void IdBegin() override;
 
+    Bool_t   fCorrectedInput = kTRUE;
     BitMask8 fCorrections = BitMask8(7); // default = L1 + L2 + L3
     Double_t fJetEEMFractionMinCut = 0.01;  //jet Eem fraction min cut for calo jets
     Double_t fMinChargedHadronFraction = 0.;
@@ -100,8 +107,10 @@ namespace mithep {
     Double_t fMaxNeutralEMFraction = 1.;
     Bool_t   fApplyBetaCut = kFALSE;          //=true then apply beta cut
     Bool_t   fApplyPFLooseId = kFALSE;        //=true then apply PF loose ID
-    Bool_t   fApplyMVACut = kFALSE;           //=true then apply MVA cut
-    Bool_t   fApplyMVACHS = kFALSE;           //=true then apply MVA for CHS
+    UInt_t   fMVATrainingSet = JetIDMVA::nMVATypes; //JetIDMVA::MVAType
+    UInt_t   fMVACutWP = JetIDMVA::kLoose; //JetIDMVA::CutType
+    TString  fMVAWeightsFile = "";
+    TString  fMVACutsFile = "";
 
     JetIDMVA* fJetIDMVA = 0;
 

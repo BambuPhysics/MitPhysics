@@ -6,8 +6,6 @@
 #include "MitAna/DataTree/interface/Names.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 
-#include "TSystem.h"
-
 ClassImp(mithep::JetIdMod)
 
 //--------------------------------------------------------------------------------------------------
@@ -22,26 +20,9 @@ void
 mithep::JetIdMod::IdBegin()
 {
   // If we use MVA Id, need to load MVA weights
-  if (fApplyMVACut && !fJetIDMVA) {
+  if (fMVATrainingSet != JetIDMVA::nMVATypes && !fJetIDMVA) {
     fJetIDMVA = new JetIDMVA();
-    TString dataDir(gSystem->Getenv("MIT_DATA"));
-    if (dataDir.Length() == 0) {
-      SendError(kAbortModule, "SlaveBegin", "MIT_DATA environment is not set.");
-      return;
-    }
-
-    if (fApplyMVACHS)
-      fJetIDMVA->Initialize(JetIDMVA::kLoose,
-                            dataDir + "/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml",
-                            dataDir + "/TMVAClassificationCategory_JetID_53X_chs_Dec2012.weights.xml",
-                            JetIDMVA::k53,
-                            dataDir + "/JetIDMVA_JetIdParams.py");
-    else
-      fJetIDMVA->Initialize(JetIDMVA::kLoose,
-                            dataDir + "/mva_JetID_lowpt.weights.xml",
-                            dataDir + "/mva_JetID_highpt.weights.xml",
-                            JetIDMVA::kBaseline,
-                            dataDir + "/JetIDMVA_JetIdParams.py");
+    fJetIDMVA->Initialize(JetIDMVA::CutType(fMVACutWP), JetIDMVA::MVAType(fMVATrainingSet), fMVAWeightsFile, fMVACutsFile);
   }
 
   if (fJetIDMVA && !fJetIDMVA->IsInitialized())
@@ -72,13 +53,18 @@ mithep::JetIdMod::IsGood(mithep::Jet const& jet)
     return false;
   fCutFlow->Fill(cEta);
 
-  Double_t jetpt = jet.RawMom().Pt();
-  for (unsigned iC = 0; iC != mithep::Jet::nECorrs; ++iC) {
-    if (fCorrections.TestBit(iC)) {
-      if (jet.CorrectionScale(iC) == 0.)
-        Error("JetIdMod::IsGood", "Calling jet correction that is not stored. Returning 0.");
+  Double_t jetpt;
+  if (fCorrectedInput)
+    jetpt = jet.Pt();
+  else {
+    jetpt = jet.RawMom().Pt();
+    for (unsigned iC = 0; iC != mithep::Jet::nECorrs; ++iC) {
+      if (fCorrections.TestBit(iC)) {
+        if (jet.CorrectionScale(iC) == 0.)
+          Error("JetIdMod::IsGood", "Calling jet correction that is not stored. Returning 0.");
 
-      jetpt *= jet.CorrectionScale(iC);
+        jetpt *= jet.CorrectionScale(iC);
+      }
     }
   }
 
@@ -126,7 +112,7 @@ mithep::JetIdMod::IsGood(mithep::Jet const& jet)
       return false;
     fCutFlow->Fill(cBeta);
 
-    if (fApplyMVACut && !fJetIDMVA->pass(pfJet, GetVertices()->At(0), GetVertices()))
+    if (fJetIDMVA && !fJetIDMVA->pass(pfJet, GetVertices()->At(0), GetVertices()))
       return false;
     fCutFlow->Fill(cMVA);
   }
