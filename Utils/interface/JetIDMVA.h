@@ -11,6 +11,7 @@
 #include "MitAna/DataTree/interface/PFJetFwd.h"
 #include "MitAna/DataTree/interface/VertexFwd.h"
 #include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
+#include "MitAna/DataCont/interface/Types.h"
 
 namespace TMVA {
   class Reader;
@@ -42,17 +43,16 @@ namespace mithep {
     };
 
     enum Variable {
-      kNVtx,
-      kJPt1,
-      kJEta1,
-      kJPhi1,
-      kJD01,
-      kJDZ1,
+      kNvtx,
+      kJetPt,
+      kJetEta,
+      kJetPhi,
+      kD0,
+      kDZ,
       kBeta,
       kBetaStar,
       kNCharged,
       kNNeutrals,
-      kNParticles,
       kDRMean,
       kPtD,
       kFrac01,
@@ -64,8 +64,10 @@ namespace mithep {
       nVariables
     };
 
-    JetIDMVA() {}
+    JetIDMVA();
     virtual ~JetIDMVA();
+
+    static BitMask8 fgCorrectionMask;
 
     void Initialize(JetIDMVA::CutType, JetIDMVA::MVAType, TString const& weightsConfig, TString const& cutConfig);
 
@@ -97,6 +99,8 @@ namespace mithep {
     Float_t fDZCut = 0.2;
 
   protected:
+    Bool_t InitializeCuts(TString const& fileName, TString const& cutId, TString const& cutType);
+
     TMVA::Reader* fReader = 0;
     TString       fMethodName = "JetIDMVAHighPt";
     MVAType       fType = nMVATypes;
@@ -105,7 +109,8 @@ namespace mithep {
     Float_t       fRMSCut[4][4] = {};
     Float_t       fBetaStarCut[4][4] = {};
 
-    Float_t      fVariables[nVariables] = {};
+    Float_t       fVariables[nVariables] = {};
+    TString       fVarNames[nVariables]; // initialized in the Ctor
 
     ClassDef(JetIDMVA,0)
   };

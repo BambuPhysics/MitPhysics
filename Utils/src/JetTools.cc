@@ -270,23 +270,23 @@ Double_t JetTools::MtHiggs(const ParticleOArr * leptons,
     eney  = dilepton->Py() + met->Py();
     mll   = dilepton->Mass();
     double metAuxPx[2] = {met->Px() * metFraction[0],
-	    		  met->Px() * (1.0 - metFraction[0])};
+                          met->Px() * (1.0 - metFraction[0])};
     double metAuxPy[2] = {met->Py() * metFraction[1],
-	 		  met->Py() * (1.0 - metFraction[1])};
+                          met->Py() * (1.0 - metFraction[1])};
     double ene = TMath::Sqrt(metAuxPx[0]*metAuxPx[0]+metAuxPy[0]*metAuxPy[0]) +
-		 TMath::Sqrt(metAuxPx[1]*metAuxPx[1]+metAuxPy[1]*metAuxPy[1]);
+                 TMath::Sqrt(metAuxPx[1]*metAuxPx[1]+metAuxPy[1]*metAuxPy[1]);
     double px = metAuxPx[0] + metAuxPx[1];
     double py = metAuxPy[0] + metAuxPy[1];
     mnu = TMath::Sqrt(ene*ene - px*px - py*py);
   }
   else if(nsel == 5){ // Using the optimal met value
     double metAuxPx[2] = {met->Px() * metFraction[0],
-	    		  met->Px() * (1.0 - metFraction[0])};
+                          met->Px() * (1.0 - metFraction[0])};
     double metAuxPy[2] = {met->Py() * metFraction[1],
-	 		  met->Py() * (1.0 - metFraction[1])};
+                          met->Py() * (1.0 - metFraction[1])};
     double ene = leptons->At(0)->Pt() + leptons->At(1)->Pt() +
                  TMath::Sqrt(metAuxPx[0]*metAuxPx[0]+metAuxPy[0]*metAuxPy[0]) +
-		 TMath::Sqrt(metAuxPx[1]*metAuxPx[1]+metAuxPy[1]*metAuxPy[1]);
+                 TMath::Sqrt(metAuxPx[1]*metAuxPx[1]+metAuxPy[1]*metAuxPy[1]);
     double px = leptons->At(0)->Px() + leptons->At(1)->Px() +
                 metAuxPx[0] + metAuxPx[1];
     double py = leptons->At(0)->Py() + leptons->At(1)->Py() +
@@ -463,10 +463,10 @@ Int_t JetTools::JetToPVAssociation(const PFJet *jet, const VertexCol *vertices, 
       double minDZ = delta_z;
       int trackVertexIndex = -1;
       for (UInt_t v=0; v < vertices->GetEntries(); v++){
-	if (minDZ > TMath::Abs(jet->PFCand(i)->BestTrk()->DzCorrected(*vertices->At(v)))) {
-	  minDZ = TMath::Abs(jet->PFCand(i)->BestTrk()->DzCorrected(*vertices->At(v)));
-	  trackVertexIndex = v;
-	}
+        if (minDZ > TMath::Abs(jet->PFCand(i)->BestTrk()->DzCorrected(*vertices->At(v)))) {
+          minDZ = TMath::Abs(jet->PFCand(i)->BestTrk()->DzCorrected(*vertices->At(v)));
+          trackVertexIndex = v;
+        }
       }
       if (trackVertexIndex < 0) continue;
       verticesPt2[trackVertexIndex]+= jet->PFCand(i)->BestTrk()->Pt()*jet->PFCand(i)->BestTrk()->Pt();
@@ -556,7 +556,7 @@ Double_t JetTools::betaStar(const PFJet *iJet,const Vertex *iVertex,const Vertex
     for(unsigned int i1 = 0; i1 < iVertices->GetEntries(); i1++) {
       const Vertex *pV = iVertices->At(i1);
       if(pV->Ndof() < 4 ||
-	 (pV->Position() - iVertex->Position()).R() < 0.02 ) continue;
+         (pV->Position() - iVertex->Position()).R() < 0.02 ) continue;
       pDZMin = TMath::Min(pDZMin,fabs(pTrack->DzCorrected(*pV)));
     }
     if(pDZPV > 0.2 && pDZMin < 0.2) lPileup += pTrack->Pt(); 
@@ -579,7 +579,7 @@ Double_t JetTools::betaStarClassic(const PFJet *iJet,const Vertex *iVertex,const
       const Vertex *pV = iVertices->At(i1);
       if(isOtherV || isPV) continue;
       if(pV->Ndof() < 4 ||
-	 (pV->Position() - iVertex->Position()).R() < 0.02 ) continue;
+         (pV->Position() - iVertex->Position()).R() < 0.02 ) continue;
       isOtherV    = pV->HasTrack(pPF->TrackerTrk());
     }
     if(!isPV && isOtherV) lPileup += pTrack->Pt(); 
@@ -588,14 +588,25 @@ Double_t JetTools::betaStarClassic(const PFJet *iJet,const Vertex *iVertex,const
   return lPileup/(lTotal);
 }
 Bool_t  JetTools::passPFLooseId(const PFJet *iJet) { 
-  if(iJet->RawMom().E()                              == 0)       return false;
-  if(iJet->NeutralHadronEnergy()/iJet->RawMom().E()  >  0.99)    return false;
-  if(iJet->NeutralEmEnergy()/iJet->RawMom().E()      >  0.99)    return false;
-  if(iJet->NConstituents()                           <  2)	 return false;
-  if(iJet->ChargedHadronEnergy()/iJet->RawMom().E()  <= 0     && fabs(iJet->Eta()) < 2.4 ) return false;
-  if(iJet->ChargedEmEnergy()/iJet->RawMom().E()      >  0.99  && fabs(iJet->Eta()) < 2.4 ) return false;
-  if(iJet->ChargedMultiplicity()                     < 1      && fabs(iJet->Eta()) < 2.4 ) return false;
-  //if(fabs(iJet->Eta())                               > 4.99) return false;
+  double energy = iJet->RawMom().E();
+  std::cout << energy << std::endl;
+  if(energy                              == 0)       return false;
+  std::cout << iJet->NeutralHadronEnergy()/energy << std::endl;
+  if(iJet->NeutralHadronEnergy()/energy  >  0.99)    return false;
+  std::cout << iJet->NeutralEmEnergy()/energy << std::endl;
+  if(iJet->NeutralEmEnergy()/energy      >  0.99)    return false;
+  std::cout << iJet->NConstituents() << std::endl;
+  if(iJet->NConstituents()               <  2)   return false;
+  double absEta = iJet->AbsEta();
+  std::cout << absEta << std::endl;
+  if(absEta > 2.4) return true;
+  //if(absEta                            > 4.99) return false;
+  std::cout << iJet->ChargedHadronEnergy()/energy << std::endl;
+  if(iJet->ChargedHadronEnergy()/energy  <= 0   ) return false;
+  std::cout << iJet->ChargedEmEnergy()/energy << std::endl;
+  if(iJet->ChargedEmEnergy()/energy      >  0.99) return false;
+  std::cout << iJet->ChargedMultiplicity() << std::endl;
+  if(iJet->ChargedMultiplicity()         < 1    ) return false;
   return true;
 }
 //Jet Width Variables
@@ -704,10 +715,10 @@ double* JetTools::subStructure(const PFJet *iJet) {
       if(i1 == 2) internalId_.prunedmass_ = jetcorr.M();
       if(i1 == 2) internalId_.prunedarea_ = transformedJet.area();
       if (transformedJet.constituents().size() > 1 && i1 == 2 ) {
-	std::vector<fastjet::PseudoJet> subjets = transformedJet.associated_cluster_sequence()->exclusive_subjets(transformedJet,2);
-	internalId_.nsubjets_     = subjets.size();
-	internalId_.massdrop_     = subjets.at(0).m()/transformedJet.m();
-	internalId_.massdropcorr_ = subjets.at(0).m()/internalId_.prunedmass_;
+        std::vector<fastjet::PseudoJet> subjets = transformedJet.associated_cluster_sequence()->exclusive_subjets(transformedJet,2);
+        internalId_.nsubjets_     = subjets.size();
+        internalId_.massdrop_     = subjets.at(0).m()/transformedJet.m();
+        internalId_.massdropcorr_ = subjets.at(0).m()/internalId_.prunedmass_;
       }
     }
     internalId_.tau1_ = routine.getTau(1, out_jets.at(i0).constituents());
