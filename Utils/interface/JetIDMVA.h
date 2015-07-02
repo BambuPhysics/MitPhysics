@@ -3,102 +3,89 @@
 //
 // Helper Class for Jet Id MVA
 //
-// Authors: P. Harris
+// Authors: P. Harris, Y.Iiyama
 //--------------------------------------------------------------------------------------------------
 #ifndef MITPHYSICS_UTILS_JetIDMVA_H
 #define MITPHYSICS_UTILS_JetIDMVA_H
 
 #include "MitAna/DataTree/interface/PFJetFwd.h"
 #include "MitAna/DataTree/interface/VertexFwd.h"
-#include "MitAna/DataTree/interface/TrackFwd.h"
-#include "MitAna/DataTree/interface/PFJet.h"
-#include "MitAna/DataTree/interface/PFJetCol.h"
-#include "MitAna/DataTree/interface/PFCandidateCol.h"
 #include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
-#include "MitCommon/MathTools/interface/MathUtils.h"
 
-class FactorizedJetCorrector;
-
-class TRandom3;
 namespace TMVA {
   class Reader;
 }
 
 namespace mithep {
+
   class JetIDMVA {
   public:
-    JetIDMVA();
-    virtual ~JetIDMVA(); 
-
     enum MVAType {
-      kBaseline  = 0,
-      k42        = 1,
-      k52        = 2,
-      kCut       = 3,
-      kQGP       = 4,
-      k53        = 5,
-      k53MET     = 6,
-      k53METFull = 7
+      kBaseline,
+      k42,
+      k52,
+      kCut,
+      kQGP,
+      k53,
+      k53CHS,
+      k53MET,
+      k53METFull,
+      nMVATypes
     };
 
     enum CutType {
-      kTight     = 0,
-      kMedium    = 1,
-      kLoose     = 2,
-      kMET       = 3
+      kTight,
+      kMedium,
+      kLoose,
+      kMET,
+      nCutTypes
     };
 
-    void     Initialize(JetIDMVA::CutType iCutType,
-                        TString           iLowPtWeights ="",
-                        TString           iHighPtWeights="",
-                        JetIDMVA::MVAType iType=kBaseline,
-                        TString           iCutFileName  ="",
-                        bool i42=false);
-    
-    Bool_t   IsInitialized() const { return fIsInitialized; }
-    Double_t MVAValue(    
-                      Float_t iNPV    ,
-                      Float_t iJPt1   ,
-                      Float_t iJEta1  ,
-                      Float_t iJPhi1  ,
-                      Float_t iJD01   ,
-                      Float_t iJDZ1   ,
-                      Float_t iBeta   ,
-                      Float_t iBetaStar,
-                      Float_t iNCharged,
-                      Float_t iNNeutrals,
-                      Float_t iDRMean  ,
-                      Float_t iFrac01  ,
-                      Float_t iFrac02  ,
-                      Float_t iFrac03  ,
-                      Float_t iFrac04  ,
-                      Float_t iFrac05  ,
-                      Float_t iDR2Mean ,
-                      Float_t iPtD
-                          );
-    //Cut Based
-    Bool_t passCut(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices);
+    enum Variable {
+      kNVtx,
+      kJPt1,
+      kJEta1,
+      kJPhi1,
+      kJD01,
+      kJDZ1,
+      kBeta,
+      kBetaStar,
+      kNCharged,
+      kNNeutrals,
+      kNParticles,
+      kDRMean,
+      kPtD,
+      kFrac01,
+      kFrac02,
+      kFrac03,
+      kFrac04,
+      kFrac05,
+      kDR2Mean,
+      nVariables
+    };
 
-    Bool_t passPt(const PFJet *iJet, FactorizedJetCorrector *iJetCorrector=0,
-                  const PileupEnergyDensityCol *iPileupEnergyDensity=0,
-                  UInt_t = mithep::PileupEnergyDensity::nAllAlgos);
-    //UNcorrected Jets
-    Bool_t   pass(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices,
-                  FactorizedJetCorrector *iJetCorrector,
-                  const PileupEnergyDensityCol *iPileupEnergyDensity,
-                  UInt_t = mithep::PileupEnergyDensity::nAllAlgos);
+    JetIDMVA() {}
+    virtual ~JetIDMVA();
+
+    void Initialize(JetIDMVA::CutType, JetIDMVA::MVAType, TString const& weightsConfig, TString const& cutConfig);
+
+    // obsolete
+    void Initialize(JetIDMVA::CutType,
+                    TString const& iLowPtWeights = "",
+                    TString const& iHighPtWeights = "",
+                    JetIDMVA::MVAType = kBaseline,
+                    TString const& iCutFileName = "");
+
+    Bool_t IsInitialized() const { return fIsInitialized; }
+
+    //Cut Based
+    Bool_t passCut(PFJet const*, Vertex const*, VertexCol const*);
 
     //Corrected Jets
-    Bool_t   pass(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices);
-                                        
-    //Uncorrected Jets
-    Double_t MVAValue(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices,
-                      FactorizedJetCorrector *iJetCorrector,
-                      const PileupEnergyDensityCol *iPileupEnergyDensity,
-                      Bool_t printDebug=false);
+    Bool_t pass(PFJet const*, Vertex const*, VertexCol const*);
 
+    //What is this function? (Y.I. 2015.07.01)
     Double_t* QGValue(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices, //Vertex here is the PV
-                      FactorizedJetCorrector *iJetCorrector,
                       const PileupEnergyDensityCol *iPileupEnergyDensity,
                       Bool_t printDebug);
 
@@ -106,47 +93,19 @@ namespace mithep {
     Double_t MVAValue(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices,
                       Bool_t printDebug=false);
 
+    Float_t fJetPtMin = 0.;
+    Float_t fDZCut = 0.2;
 
-    double  correctedPt(const PFJet *iJet, FactorizedJetCorrector *iJetCorrector,
-                        const PileupEnergyDensityCol *iPUEnergyDensity,
-                        UInt_t = mithep::PileupEnergyDensity::nAllAlgos,
-                        int iId=-1);
+  protected:
+    TMVA::Reader* fReader = 0;
+    TString       fMethodName = "JetIDMVAHighPt";
+    MVAType       fType = nMVATypes;
+    Bool_t        fIsInitialized = kFALSE;
+    Float_t       fMVACut[4][4] = {}; //Fix the cut array
+    Float_t       fRMSCut[4][4] = {};
+    Float_t       fBetaStarCut[4][4] = {};
 
-    Float_t                  fJetPtMin;
-    Float_t                  fDZCut;
-    Bool_t                   f42;
-
-  protected:      
-    TMVA::Reader            *fReader;
-    TMVA::Reader            *fLowPtReader;
-    TString                  fLowPtMethodName;
-    TString                  fHighPtMethodName;
-    MVAType                  fType;
-    CutType                  fCutType;
-    Bool_t                   fIsInitialized;
-    Float_t                  fMVACut[4][4]; //Fix the cut array
-    Float_t                  fRMSCut[4][4];
-    Float_t                  fBetaStarCut[4][4];
-
-    Float_t fNVtx     ;
-    Float_t fJPt1     ;
-    Float_t fJEta1    ;
-    Float_t fJPhi1    ;
-    Float_t fJD01     ;
-    Float_t fJDZ1     ;
-    Float_t fBeta     ;
-    Float_t fBetaStar ;
-    Float_t fNCharged ;
-    Float_t fNNeutrals;
-    Float_t fNParticles;
-    Float_t fDRMean   ;
-    Float_t fPtD      ;
-    Float_t fFrac01   ;
-    Float_t fFrac02   ;
-    Float_t fFrac03   ;
-    Float_t fFrac04   ;
-    Float_t fFrac05   ;
-    Float_t fDR2Mean  ;
+    Float_t      fVariables[nVariables] = {};
 
     ClassDef(JetIDMVA,0)
   };

@@ -22,7 +22,6 @@
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitPhysics/Utils/interface/JetIDMVA.h"
 
-class TRandom3;
 class GBRForest;
 
 namespace mithep {
@@ -41,15 +40,7 @@ namespace mithep {
       kOld42       = 4
     };
 
-    //void    setVariables(TMVA::Reader *iReader,bool iScale);
-    //void    Initialize( TString iU1MethodName="U1MVA",
-    //                    TString iPhiMethodName="PhiMVA",
-    //                  TString iJetMVAFile="",
-    //                  TString iU1Weights="",
-    //                  TString iPhiWeights="",
-    //                  MVAType iType=kBaseline);
-    void    Initialize( 
-                       TString iJetLowPtFile = "",
+    void    Initialize(TString iJetLowPtFile = "",
                        TString iJetHighPtFile= "",
                        TString iJetCutFile   = "",
                        TString iU1Weights    = "",
@@ -95,33 +86,8 @@ namespace mithep {
                         Float_t iPtQ  ,Float_t iPhiQ  ,Float_t iSumEtQ,
                         const PFMet            *iMet  ,
                         const PFCandidateCol   *iCands,
-                        const Vertex *iVertex,const VertexCol *iVertices,
-                        const PFJetCol         *iJets ,
-                        FactorizedJetCorrector *iJetCorrector,
-                        const PileupEnergyDensityCol *iPileupEnergyDensity,
-                        int iNPV,
-                        Bool_t hasPhotons=false,
-                        Bool_t printDebug=false);
-
-    Met GetMet(         Bool_t iPhi,
-                        Float_t iPtVis,Float_t iPhiVis,Float_t iSumEtVis,
-                        Float_t iPtQ  ,Float_t iPhiQ  ,Float_t iSumEtQ,
-                        const PFMet            *iMet  ,
-                        const PFCandidateCol   *iCands,
                         const Vertex *iVertex,const VertexCol *iVertices,Double_t iRho,
                         const PFJetCol         *iJets ,
-                        int iNPV,
-                        Bool_t printDebug=false);
-
-    Met GetMet(         Bool_t iPhi,
-                        Float_t iPt1,Float_t iPhi1,Float_t iEta1,Float_t iChargedFrac1,
-                        Float_t iPt2,Float_t iPhi2,Float_t iEta2,Float_t iChargedFrac2,
-                        const PFMet            *iMet  ,
-                        const PFCandidateCol   *iCands,
-                        const Vertex *iVertex,const VertexCol *iVertices,
-                        const PFJetCol         *iJets ,
-                        FactorizedJetCorrector *iJetCorrector,
-                        const PileupEnergyDensityCol *iPUEnergyDensity,
                         int iNPV,
                         Bool_t printDebug=false);
 
@@ -134,18 +100,6 @@ namespace mithep {
                         const PFJetCol         *iJets ,
                         int iNPV,
                         Bool_t printDebug=false);
-
-    Met GetMet(const MuonCol        *iMuons,const ElectronCol *iElectrons,const PFTauCol *iTaus,
-               const PFCandidateCol *iCands,const PFJetCol  *iJets,const Vertex *iPV,const VertexCol *iVertices,const PFMetCol *iPFMet,
-               FactorizedJetCorrector *iJetCorrector,const PileupEnergyDensityCol* iPUEnergyDensity);
-
-    Met GetMet(const PhotonCol        *iPhotons,
-               const PFCandidateCol *iCands,const PFJetCol  *iJets,const Vertex *iPV,const VertexCol *iVertices,const PFMetCol *iPFMet,
-               FactorizedJetCorrector *iJetCorrector,const PileupEnergyDensityCol* iPUEnergyDensity);
-
-    Met GetMet(const MuonCol *iMuons,const ElectronCol *iElectrons,const PFTauCol *iTaus,const PhotonCol *iPhotons,
-               const PFCandidateCol *iCands,const PFJetCol  *iJets,const Vertex *iPV,const VertexCol *iVertices,const PFMetCol *iPFMet,
-               FactorizedJetCorrector *iJetCorrector,const PileupEnergyDensityCol* iPUEnergyDensity, Bool_t printDebug=false);
 
     TMatrixD*   GetMetCovariance() { return fCov;         }
     Float_t     GetSignificance () { return fSignificance;}
