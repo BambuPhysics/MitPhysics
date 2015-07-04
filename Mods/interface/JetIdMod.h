@@ -41,6 +41,7 @@ namespace mithep {
     UInt_t      GetMVACutWP() const                 { return fMVACutWP; }
     char const* GetMVAWeightsFile() const           { return fMVAWeightsFile; }
     char const* GetMVACutsFile() const              { return fMVACutsFile; }
+    Bool_t      GetUseClassicBetaForMVA() const     { return fUseClassicBetaForMVA; }
     
     JetIDMVA* GetJetIDMVA() const { return fJetIDMVA; }
 
@@ -63,6 +64,7 @@ namespace mithep {
     void SetMVACutWP(UInt_t w)                   { fMVACutWP = w; }
     void SetMVAWeightsFile(char const* n)        { fMVAWeightsFile = n; }
     void SetMVACutsFile(char const* n)           { fMVACutsFile = n; }
+    void SetUseClassicBetaForMVA(Bool_t b)       { fUseClassicBetaForMVA = b; }
 
     void SetJetIDMVA(JetIDMVA* mva) { fJetIDMVA = mva; }
 
@@ -111,6 +113,7 @@ namespace mithep {
     UInt_t   fMVACutWP = JetIDMVA::kLoose; //JetIDMVA::CutType
     TString  fMVAWeightsFile = "";
     TString  fMVACutsFile = "";
+    Bool_t   fUseClassicBetaForMVA = kFALSE; //set to true to replicate CMSSW PU jet ID on MiniAOD
 
     JetIDMVA* fJetIDMVA = 0;
 

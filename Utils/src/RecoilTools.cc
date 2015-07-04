@@ -243,8 +243,6 @@ Met RecoilTools::NoPUMet(const PFJetCol *iJets, const PFCandidateCol *iCands,
     const PFJet *pJet = iJets->At(i0);
     if (!filter(pJet,iPhi1,iEta1,iPhi2,iEta2))
       continue;
-    if (pJet->Pt() < fJetIDMVA->fJetPtMin)
-      continue; 
     if (!fJetIDMVA->pass(pJet,iVertex,iVertices))
       continue;
     addNeut(pJet,lVec,lSumEt,iRho);
@@ -314,8 +312,6 @@ Met RecoilTools::PUCMet( const PFJetCol       *iJets,const PFCandidateCol *iCand
     const PFJet *pJet = iJets->At(i0);
     if (!JetTools::passPFLooseId(pJet))
       continue;
-    if (pJet->Pt() < fJetIDMVA->fJetPtMin)
-      continue;
     if (fJetIDMVA->pass(pJet,iVertex,iVertices))
       continue;
     if (!filter(pJet,iPhi1,iEta1,iPhi2,iEta2))
@@ -373,8 +369,6 @@ Met RecoilTools::PUMet(const PFJetCol *iJets, const PFCandidateCol *iCands,const
   for (UInt_t i0 = 0; i0 < iJets->GetEntries(); i0++) {
     const PFJet *pJet = iJets->At(i0);
     if (!JetTools::passPFLooseId(pJet))
-      continue;
-    if (pJet->Pt() < fJetIDMVA->fJetPtMin)
       continue;
     if (!filter(pJet,iPhi1,iEta1,iPhi2,iEta2))
       continue; //Quick cleaning

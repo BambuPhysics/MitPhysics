@@ -113,7 +113,6 @@ void MVAMet::Initialize(TString iJetLowPtFile,
   fOld42         = (iMETType == kOld42);
   bool lUseRho   = true; if(iMETType == kUseType1Rho || iMETType == kUseRho) lUseRho = false; 
   fRecoilTools = new RecoilTools(iJetLowPtFile,iJetHighPtFile,iJetCutFile,(iMETType == kOld42),fType,lUseRho);
-  if(f42) fRecoilTools->fJetIDMVA->fJetPtMin = 1.;
 
   // Is this necessary? (Y.I. Apr 2 2015)
   //  ROOT::Cintex::Cintex::Enable();   

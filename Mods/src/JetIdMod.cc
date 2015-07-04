@@ -28,6 +28,9 @@ mithep::JetIdMod::IdBegin()
   if (fJetIDMVA && !fJetIDMVA->IsInitialized())
     SendError(kAbortModule, "SlaveBegin", "Jet ID MVA is not initialized.");
 
+  if (fUseClassicBetaForMVA)
+    fJetIDMVA->fDZCut = -1.; // negative dz cut triggers classic beta calculation
+
   fCutFlow->SetBins(nCuts, 0., double(nCuts));
   TAxis* xaxis = fCutFlow->GetXaxis();
   xaxis->SetBinLabel(cAll + 1, "All");

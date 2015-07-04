@@ -193,13 +193,10 @@ JetIDMVA::pass(const PFJet *iJet, const Vertex *iVertex, const VertexCol *iVerti
   if (lEta > 4.99)
     return false;
 
-  double lPt = iJet->Pt();
-  if (lPt < fJetPtMin)
-    return false;
-
   if(!JetTools::passPFLooseId(iJet))
     return false;
 
+  double lPt = iJet->Pt(); // use corrected Pt
   int lPtId = 0;
   if (lPt > 10. && lPt < 20.)
     lPtId = 1;
@@ -257,8 +254,14 @@ JetIDMVA::MVAValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is th
   fVariables[kJetPhi]    = iJet->Phi();
   fVariables[kD0]        = JetTools::impactParameter(iJet, iVertex);
   fVariables[kDZ]        = JetTools::impactParameter(iJet, iVertex, true);
-  fVariables[kBeta]      = JetTools::Beta(iJet, iVertex, fDZCut);
-  fVariables[kBetaStar]  = JetTools::betaStar(iJet, iVertex, iVertices, fDZCut);
+  if (fDZCut > 0.) {
+    fVariables[kBeta]      = JetTools::Beta(iJet, iVertex, fDZCut);
+    fVariables[kBetaStar]  = JetTools::betaStar(iJet, iVertex, iVertices, fDZCut);
+  }
+  else {
+    fVariables[kBeta]      = JetTools::BetaClassic(iJet, iVertex);
+    fVariables[kBetaStar]  = JetTools::betaStarClassic(iJet, iVertex, iVertices);
+  }
   fVariables[kNCharged]  = iJet->ChargedMultiplicity();
   fVariables[kNNeutrals] = iJet->NeutralMultiplicity();
   fVariables[kPtD]       = JetTools::W(iJet, -1, 0);
@@ -312,8 +315,14 @@ JetIDMVA::QGValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is the
   fVariables[kJetPhi]    = iJet->RawMom().Phi();
   fVariables[kD0]        = JetTools::impactParameter(iJet,iVertex);
   fVariables[kDZ]        = JetTools::impactParameter(iJet,iVertex,true);
-  fVariables[kBeta]      = JetTools::Beta(iJet,iVertex,fDZCut);
-  fVariables[kBetaStar]  = JetTools::betaStar(iJet,iVertex,iVertices,fDZCut);
+  if (fDZCut > 0.) {
+    fVariables[kBeta]      = JetTools::Beta(iJet, iVertex, fDZCut);
+    fVariables[kBetaStar]  = JetTools::betaStar(iJet, iVertex, iVertices, fDZCut);
+  }
+  else {
+    fVariables[kBeta]      = JetTools::BetaClassic(iJet, iVertex);
+    fVariables[kBetaStar]  = JetTools::betaStarClassic(iJet, iVertex, iVertices);
+  }
   fVariables[kNCharged]  = iJet->ChargedMultiplicity();
   fVariables[kNNeutrals] = iJet->NeutralMultiplicity();
   fVariables[kPtD]       = JetTools::W(iJet,-1,0);

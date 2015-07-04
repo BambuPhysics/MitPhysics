@@ -317,53 +317,62 @@ Double_t JetTools::MtHiggs(const ParticleOArr * leptons,
   return mtHiggs;
 }
 
-Double_t JetTools::Beta(const TrackCol *tracks, Jet *jet, const Vertex *vertex, Double_t  delta_z, Double_t delta_cone){  
+Double_t JetTools::Beta(const PFJet *jet, const Vertex *vertex, Double_t delta_z){
+  // (sum pt of jet tracks associated to PV) / (sum of pt of jet tracks)
+  // association is defined by |dZ| < delta_z
 
-  if(tracks->GetEntries() <= 0) return 1.0;
+  double Pt_jets= 0.;
+  double Pt_jetsTot = 0.;
 
-  double Pt_jets_X = 0. ;
-  double Pt_jets_Y = 0. ;
-  double Pt_jets_X_tot = 0. ;
-  double Pt_jets_Y_tot = 0. ;
+  for(UInt_t i=0;i<jet->NPFCands();i++){
+    auto* cand = jet->PFCand(i);
+    if(cand->TrackerTrk()){
+      //      Pt_jetsTot += cand->TrackerTrk()->Pt();
+      Pt_jetsTot += cand->Pt(); // cand pT used in CMSSW (RecoJets/JetProducers/src/PileupJetIdAlgo.cc)
 
-  for(int i=0;i<int(tracks->GetEntries());i++){
-    if(MathUtils::DeltaR(tracks->At(i)->Mom(),jet->Mom()) < delta_cone){
-      Pt_jets_X_tot += tracks->At(i)->Px();
-      Pt_jets_Y_tot += tracks->At(i)->Py();  
-      double pDz = TMath::Abs(tracks->At(i)->DzCorrected(*vertex));
+      Pt_jets += cand->Pt();
+
+      double pDz = TMath::Abs(cand->TrackerTrk()->DzCorrected(*vertex));
       if(pDz < delta_z){
-        Pt_jets_X += tracks->At(i)->Px();
-        Pt_jets_Y += tracks->At(i)->Py();   
+        //        Pt_jets += cand->TrackerTrk()->Pt();
+        Pt_jets += cand->Pt();
       }
     }
   }
 
-  if(sqrt(Pt_jets_X_tot*Pt_jets_X_tot + Pt_jets_Y_tot*Pt_jets_Y_tot) > 0)
-    return sqrt(Pt_jets_X*Pt_jets_X + Pt_jets_Y*Pt_jets_Y) / sqrt(Pt_jets_X_tot*Pt_jets_X_tot + Pt_jets_Y_tot*Pt_jets_Y_tot);
-
-  return 1.0;
+  if (Pt_jetsTot > 0)
+    return Pt_jets/Pt_jetsTot;
+  else
+    return 0.;
 }
 
+Double_t JetTools::BetaClassic(const PFJet *jet, const Vertex *vertex){
+  // (sum pt of jet tracks associated to PV) / (sum of pt of jet tracks)
+  // association is defined by the track being used in vertex fitting (weight > 0)
 
-Double_t JetTools::Beta(const PFJet *jet, const Vertex *vertex, Double_t  delta_z){  
-  double Pt_jets= 0. ;
-  double Pt_jetsTot = 0. ;
+  double Pt_jets= 0.;
+  double Pt_jetsTot = 0.;
+
+  std::map<Track const*, double> pvTracks;
+  for (unsigned iT = 0; iT != vertex->NTracks(); ++iT)
+    pvTracks.emplace(vertex->Trk(iT), vertex->TrackWeight(iT));
   
   for(UInt_t i=0;i<jet->NPFCands();i++){
-    if(jet->PFCand(i)->TrackerTrk()){ 
-      Pt_jetsTot += jet->PFCand(i)->TrackerTrk()->Pt();
-      double pDz = TMath::Abs(jet->PFCand(i)->TrackerTrk()->DzCorrected(*vertex));
-      if(pDz < delta_z){
-        Pt_jets += jet->PFCand(i)->TrackerTrk()->Pt();
-      }
+    auto* cand = jet->PFCand(i);
+    if(cand->TrackerTrk()){
+      //      Pt_jetsTot += cand->TrackerTrk()->Pt();
+      Pt_jetsTot += cand->Pt(); // cand pT used in CMSSW (RecoJets/JetProducers/src/PileupJetIdAlgo.cc)
+
+      auto itr = pvTracks.find(cand->TrackerTrk());
+      if (itr != pvTracks.end() && itr->second > 0.)
+        Pt_jets += cand->Pt();
     }
   }
 
-  Double_t beta = 0.;
   if (Pt_jetsTot > 0)
-    beta = Pt_jets/Pt_jetsTot;
-
-  return beta;
+    return Pt_jets/Pt_jetsTot;
+  else
+    return 0.;
 }
 
 Double_t JetTools::Beta2(const PFJet *jet, const Vertex *vertex, Double_t  delta_z){  
@@ -371,11 +380,13 @@ Double_t JetTools::Beta2(const PFJet *jet, const Vertex *vertex, Double_t  delta
   double Pt_jetsTot = 0. ;
 
   for(UInt_t i=0;i<jet->NPFCands();i++){
-    if(jet->PFCand(i)->BestTrk()){
-      Pt_jetsTot += jet->PFCand(i)->BestTrk()->Pt()*jet->PFCand(i)->BestTrk()->Pt();
-      double pDz = TMath::Abs(jet->PFCand(i)->BestTrk()->DzCorrected(*vertex));
+    auto* cand = jet->PFCand(i);
+    if(cand->BestTrk()){
+      //      Pt_jetsTot += cand->BestTrk()->Pt()*cand->BestTrk()->Pt();
+      Pt_jetsTot += cand->Pt()*cand->Pt();
+      double pDz = TMath::Abs(cand->BestTrk()->DzCorrected(*vertex));
       if(pDz < delta_z){
-        Pt_jets += jet->PFCand(i)->BestTrk()->Pt()*jet->PFCand(i)->BestTrk()->Pt();
+        Pt_jets += cand->Pt()*cand->Pt();
       }
     }
   }
@@ -543,69 +554,97 @@ Double_t JetTools::frac(const PFJet *iJet,Double_t iDRMax,Double_t iDRMin,Int_t 
   return lFrac;
 }
 Double_t JetTools::betaStar(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVertices,Double_t iDZCut) {
+  // (sum pt of jet tracks associated to non-primary vertices) / (sum pt of jet tracks)
+  // association is defined by |dZ| < iDZCut
   Double_t lTotal = 0;  
   Double_t lPileup = 0;
-  for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) {
-    const PFCandidate* pPF   = iJet->PFCand(i0);
-    const Track* pTrack      = pPF->TrackerTrk();
-    //if(pPF->GsfTrk()) pTrack = pPF->GsfTrk(); ==> not used in CMSSW
-    if(pTrack == 0) continue;
-    lTotal += pTrack->Pt();
-    double pDZPV  = fabs(pTrack->DzCorrected(*iVertex));
-    double pDZMin = pDZPV;
-    for(unsigned int i1 = 0; i1 < iVertices->GetEntries(); i1++) {
-      const Vertex *pV = iVertices->At(i1);
-      if(pV->Ndof() < 4 ||
-         (pV->Position() - iVertex->Position()).R() < 0.02 ) continue;
-      pDZMin = TMath::Min(pDZMin,fabs(pTrack->DzCorrected(*pV)));
-    }
-    if(pDZPV > 0.2 && pDZMin < 0.2) lPileup += pTrack->Pt(); 
+
+  std::vector<Vertex const*> goodVertices;
+  for (unsigned iV = 0; iV != iVertices->GetEntries(); ++iV) {
+    Vertex const* pV = iVertices->At(iV);
+    if(pV->Ndof() >= 4 && (pV->Position() - iVertex->Position()).R() > 0.02)
+      goodVertices.push_back(pV);
   }
-  if(lTotal == 0) lTotal = 1;
-  return lPileup/(lTotal);
+
+  // if the PV is the only good vertex, beta* is by definition 0.
+  if (goodVertices.size() == 0)
+    return 0.;
+
+  for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) {
+    const PFCandidate* pPF = iJet->PFCand(i0);
+    const Track* pTrack = pPF->TrackerTrk();
+    if(pTrack == 0)
+      continue;
+    //    lTotal += pTrack->Pt();
+    lTotal += pPF->Pt(); // cand pT used in CMSSW (RecoJets/JetProducers/src/PileupJetIdAlgo.cc)
+
+    double pDZPV  = std::abs(pTrack->DzCorrected(*iVertex));
+    double pDZMin = pDZPV;
+    for (Vertex const* vtx : goodVertices)
+      pDZMin = TMath::Min(pDZMin, std::abs(pTrack->DzCorrected(*vtx)));
+
+    //       if(pDZPV > 0.2 && pDZMin < 0.2) lPileup += pTrack->Pt(); 
+    if(pDZPV > 0.2 && pDZMin < 0.2)
+      lPileup += pPF->Pt(); 
+  }
+  if (lTotal == 0.)
+    lTotal = 1.;
+
+  return lPileup / lTotal;
 }
+
 Double_t JetTools::betaStarClassic(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVertices) {
   Double_t lTotal = 0;  
   Double_t lPileup = 0;
+
+  // in CMSSW (RecoJets/JetProducers/src/PileupJetIdAlgo), "associated to non-primary vertex"
+  // is implemented as weight of the track for the PV <= 0 under the condition that there exists
+  // at least one more good vertex. I'm not sure if this is the right way to calculate beta*
+  // (should be weight > 0 for some other vertex?) but following it for now (Y.I. 2015.07.04)
+
+  // if the PV is the only good vertex, beta* is by definition 0
+  unsigned iV = 0;
+  for (; iV != iVertices->GetEntries(); ++iV) {
+    Vertex const* pV = iVertices->At(iV);
+    if(pV->Ndof() >= 4 && (pV->Position() - iVertex->Position()).R() > 0.02)
+      break;
+  }
+  if (iV == iVertices->GetEntries())
+    return 0.;
+
+  std::map<Track const*, double> pvTracks;
+  for (unsigned iT = 0; iT != iVertex->NTracks(); ++iT)
+    pvTracks.emplace(iVertex->Trk(iT), iVertex->TrackWeight(iT));
+
   for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) {
     const PFCandidate* pPF   = iJet->PFCand(i0);
     const Track* pTrack      = pPF->TrackerTrk();
     //if(pPF->GsfTrk()) pTrack = pPF->GsfTrk(); ==> not used in CMSSW
     if(pTrack == 0) continue;
-    lTotal += pTrack->Pt();
-    bool isPV    = iVertex->HasTrack(pPF->TrackerTrk());
-    bool isOtherV = false;
-    for(unsigned int i1 = 0; i1 < iVertices->GetEntries(); i1++) {
-      const Vertex *pV = iVertices->At(i1);
-      if(isOtherV || isPV) continue;
-      if(pV->Ndof() < 4 ||
-         (pV->Position() - iVertex->Position()).R() < 0.02 ) continue;
-      isOtherV    = pV->HasTrack(pPF->TrackerTrk());
-    }
-    if(!isPV && isOtherV) lPileup += pTrack->Pt(); 
+    //    lTotal += pTrack->Pt();
+    lTotal += pPF->Pt(); // cand PF used in CMSSW
+
+    auto itr = pvTracks.find(pTrack);
+    if (itr == pvTracks.end() || itr->second <= 0.)
+      lPileup += pTrack->Pt(); 
   }
-  if(lTotal == 0) lTotal = 1;
-  return lPileup/(lTotal);
+  if (lTotal == 0)
+    lTotal = 1.;
+
+  return lPileup / lTotal;
 }
+
 Bool_t  JetTools::passPFLooseId(const PFJet *iJet) { 
   double energy = iJet->RawMom().E();
-  std::cout << energy << std::endl;
   if(energy                              == 0)       return false;
-  std::cout << iJet->NeutralHadronEnergy()/energy << std::endl;
   if(iJet->NeutralHadronEnergy()/energy  >  0.99)    return false;
-  std::cout << iJet->NeutralEmEnergy()/energy << std::endl;
   if(iJet->NeutralEmEnergy()/energy      >  0.99)    return false;
-  std::cout << iJet->NConstituents() << std::endl;
   if(iJet->NConstituents()               <  2)   return false;
   double absEta = iJet->AbsEta();
-  std::cout << absEta << std::endl;
   if(absEta > 2.4) return true;
   //if(absEta                            > 4.99) return false;
-  std::cout << iJet->ChargedHadronEnergy()/energy << std::endl;
   if(iJet->ChargedHadronEnergy()/energy  <= 0   ) return false;
-  std::cout << iJet->ChargedEmEnergy()/energy << std::endl;
   if(iJet->ChargedEmEnergy()/energy      >  0.99) return false;
-  std::cout << iJet->ChargedMultiplicity() << std::endl;
   if(iJet->ChargedMultiplicity()         < 1    ) return false;
   return true;
 }

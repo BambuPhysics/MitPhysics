@@ -95,8 +95,9 @@ namespace mithep {
     Double_t MVAValue(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices,
                       Bool_t printDebug=false);
 
-    Float_t fJetPtMin = 0.;
-    Float_t fDZCut = 0.2;
+    Float_t fDZCut = 0.2;             // dZ cut used in beta and beta* calculation to define association to PV
+                                      // fDZCut <= 0. switches the beta and beta* definitions to the "classic"
+                                      // versions, where vertex-track association in terms of fit weights is used.
 
   protected:
     Bool_t InitializeCuts(TString const& fileName, TString const& cutId, TString const& cutType);
