@@ -72,6 +72,7 @@ JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
     lCutId = "full_53x_wp";
     break;
   case k53CHS:
+  case k53BDTCHSFullPlusRMS:
     lCutId = "full_53x_chs_wp";
     break;
   case k53MET:
@@ -136,6 +137,11 @@ JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
     variables = {kNvtx, kDZ, kBeta, kBetaStar, kNCharged, kNNeutrals, kDR2Mean, kPtD,
                  kFrac01, kFrac02, kFrac03, kFrac04, kFrac05};
     spectators = {kJetPt, kJetEta, kJetPhi};
+    break;
+  case k53BDTCHSFullPlusRMS:
+    variables = {kFrac01, kFrac02, kFrac03, kFrac04, kFrac05, kDR2Mean, kNvtx, kNNeutrals,
+                 kBeta, kBetaStar, kDZ, kNCharged};
+    spectators = {kJetPt, kJetEta};
     break;
   case k53MET:
     variables = {kNvtx, kJetPt, kJetEta, kJetPhi, kDZ, kBeta, kBetaStar, kNCharged, kNNeutrals,

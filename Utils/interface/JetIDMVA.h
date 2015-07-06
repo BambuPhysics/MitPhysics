@@ -29,6 +29,7 @@ namespace mithep {
       kQGP,
       k53,
       k53CHS,
+      k53BDTCHSFullPlusRMS,
       k53MET,
       k53METFull,
       nMVATypes
