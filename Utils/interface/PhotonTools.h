@@ -78,6 +78,13 @@ namespace mithep {
       kPhoEANoCorr,
       kPhoEAPhys14
     };
+
+    enum EElectronVetoType {
+      kPixelVeto,
+      kElectronVeto,
+      kCSafeElectronVeto,
+      nElectronVetoTypes
+    };
   
     enum DiphotonR9EtaCats {
       kCat1 = 0,       //barrel-barrel highr9/highr9
