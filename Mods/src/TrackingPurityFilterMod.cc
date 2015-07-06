@@ -45,15 +45,15 @@ void TrackingPurityFilterMod::Process()
 {
   // Increment counters and stop further processing of an event if current run is excluded
 
-  LoadBranch(fTracksName);
+  auto* tracks = GetObject<TrackCol>(fTracksName);
 
   ++fNEvents; 
   
   UInt_t nTracks = 0;
   UInt_t nHighPurityTracks = 0;
   
-  for (UInt_t i=0; i<fTracks->GetEntries(); ++i) {
-    const Track *t = fTracks->At(i);
+  for (UInt_t i=0; i<tracks->GetEntries(); ++i) {
+    const Track *t = tracks->At(i);
     ++nTracks;
     if (t->Quality().Quality(TrackQuality::highPurity))
       ++nHighPurityTracks;
@@ -91,9 +91,6 @@ void TrackingPurityFilterMod::Process()
 //--------------------------------------------------------------------------------------------------
 void TrackingPurityFilterMod::SlaveBegin()
 {
-
-  ReqBranch(fTracksName, fTracks);
-  
   hNTracksBefore = new TH1F("hNTracksBefore", "hNTracksBefore", 401, -0.5,400.5);
   AddOutput(hNTracksBefore);
   

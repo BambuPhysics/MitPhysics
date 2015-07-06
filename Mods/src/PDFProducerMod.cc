@@ -19,8 +19,7 @@ PDFProducerMod::PDFProducerMod(const char *name, const char *title) :
   fMCEvInfoName(Names::gkMCEvtInfoBrn),
   fPDFName("cteq65.LHgrid"),
   fRunPDF(kFALSE),
-  fIsData(kFALSE),
-  fMCEventInfo(0)
+  fIsData(kFALSE)
 {
   // Constructor
 }
@@ -35,15 +34,15 @@ void PDFProducerMod::Process()
   FArrDouble *PDFArr = new FArrDouble(nmembers);
 
   if (fIsData == kFALSE) {
-    LoadBranch(fMCEvInfoName);
+    auto* mcEvInfo = GetObject<MCEventInfo>(fMCEvInfoName);
 
-    Double_t Q    = fMCEventInfo->Scale();
-    Int_t    id1  = fMCEventInfo->Id1();
-    Double_t x1   = fMCEventInfo->X1();
-    Double_t pdf1 = fMCEventInfo->Pdf1();
-    Int_t    id2  = fMCEventInfo->Id2();
-    Double_t x2   = fMCEventInfo->X2();
-    Double_t pdf2 = fMCEventInfo->Pdf2();
+    Double_t Q    = mcEvInfo->Scale();
+    Int_t    id1  = mcEvInfo->Id1();
+    Double_t x1   = mcEvInfo->X1();
+    Double_t pdf1 = mcEvInfo->Pdf1();
+    Int_t    id2  = mcEvInfo->Id2();
+    Double_t x2   = mcEvInfo->X2();
+    Double_t pdf2 = mcEvInfo->Pdf2();
 
     if (GetFillHist()) {
       hDPDFHisto[0]->Fill(TMath::Min(Q,999.999));
@@ -98,10 +97,6 @@ void PDFProducerMod::SlaveBegin()
   LHAPDF::setVerbosity(LHAPDF::SILENT);
   LHAPDF::initPDFSet(fPDFName.Data());
   LHAPDF::getDescription();
-
-  if (fIsData == kFALSE) {
-    ReqBranch(fMCEvInfoName, fMCEventInfo);
-  }
 
   if (GetFillHist()) {
     char sb[1024];

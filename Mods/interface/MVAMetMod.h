@@ -38,12 +38,6 @@ namespace mithep
       TString             fPFMetName ;
       TString             fRhoName   ;
 
-      const JetCol                 *fJets;
-      const PFCandidateCol         *fCands;
-      const VertexCol              *fVertices;
-      const PFMetCol               *fPFMet;
-      const PileupEnergyDensityCol *fRhoCol;
-
       MVAMet         *fMVAMet;
       ClassDef(MVAMetMod, 1) // Jet identification module
   };

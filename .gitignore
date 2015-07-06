@@ -1,6 +1,6 @@
 *.pyc
 Utils/python/__init__.py
-data/
+data
 *_LinkDefDict.*
 *_ReflexDict.*
 *~

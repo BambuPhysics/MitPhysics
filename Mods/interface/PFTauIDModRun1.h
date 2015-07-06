@@ -1,7 +1,5 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: PFTauIDMod.h,v 1.4 2011/03/09 14:56:26 dkralph Exp $
-//
-// PFTauIDMod
+// PFTauIDModRun1Run1
 //
 // This module applies tau identification criteria and exports a pointer to a collection
 // of "good Taus" according to the specified identification scheme.
@@ -9,18 +7,18 @@
 // Authors: G.Ceballos
 //--------------------------------------------------------------------------------------------------
 
-#ifndef MITPHYSICS_MODS_PFTauIDMod_H
-#define MITPHYSICS_MODS_PFTauIDMod_H
+#ifndef MITPHYSICS_MODS_PFTauIDModRun1Run1_H
+#define MITPHYSICS_MODS_PFTauIDModRun1Run1_H
 
 #include "MitAna/TreeMod/interface/BaseMod.h" 
 #include "MitAna/DataTree/interface/PFTauFwd.h"
 
 namespace mithep 
 {
-  class PFTauIDMod : public BaseMod
+  class PFTauIDModRun1 : public BaseMod
   {
     public:
-      PFTauIDMod(const char *name="PFTauIDMod", 
+      PFTauIDModRun1(const char *name="PFTauIDModRun1", 
                const char *title="Tau identification module");
 
       const char         *GetPFTausName()          	    const { return fPFTausName; 		  }
@@ -63,7 +61,7 @@ namespace mithep
       TString             fHPSIso;                       //isolation tightness: "tight", "medium", "loose"
       const PFTauCol     *fPFTaus;                       //!tau branch
     
-    ClassDef(PFTauIDMod, 1) // Tau identification module
+    ClassDef(PFTauIDModRun1, 1) // Tau identification module
   };
 }
 #endif

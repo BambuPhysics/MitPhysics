@@ -20,13 +20,9 @@ MVAMetMod::MVAMetMod(const char *name, const char *title) :
   fVertexName(ModNames::gkGoodVertexesName),
   fPFMetName ("PFMet"),
   fRhoName   ("Rho"),
-  fJets(0),
-  fCands(0),
-  fVertices(0),
-  fPFMet(0),
-  fRhoCol(0),
   fMVAMet(0)
 {
+  throw std::runtime_error("Broken Mod: MVAMetMod and Utils/MVAMet needs a major rework.");
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -34,14 +30,14 @@ void MVAMetMod::Process()
 {
   // Process entries of the tree. 
 
-  fJets = GetObjThisEvt<JetCol> (fJetsName); //corrected Jets
+  auto* jets = GetObject<JetCol>(fJetsName); //corrected Jets
   //LoadBranch(fJetsName);
-  LoadBranch(fPFCandName);
-  fVertices = GetObjThisEvt<VertexOArr>(fVertexName);
-  LoadBranch(fPFMetName);
-  LoadBranch(fRhoName);
+  auto* cands = GetObject<PFCandidateCol>(fPFCandName);
+  auto* vertices = GetObject<VertexOArr>(fVertexName);
+  auto* met = GetObject<PFMetCol>(fPFMetName);
+  auto* rhoCol = GetObject<PileupEnergyDensityCol>(fRhoName);
 
-  if (!fJets || !fCands || !fVertices || !fPFMet) {
+  if (!jets || !cands || !vertices || !met) {
     SendError(kAbortModule, "Process", 
               "Pointer to input jet collection %s is null.",
               fJetsName.Data());
@@ -63,18 +59,18 @@ void MVAMetMod::Process()
   MVAMet->SetName(fMVAMetName);
   
   PFJetOArr *thePFJets = new PFJetOArr; 
-  for(UInt_t i=0; i<fJets->GetEntries(); i++) {
-    const PFJet *ptJet = dynamic_cast<const PFJet*>(fJets->At(i));
+  for(UInt_t i=0; i<jets->GetEntries(); i++) {
+    const PFJet *ptJet = dynamic_cast<const PFJet*>(jets->At(i));
     thePFJets->Add(ptJet);
   }
 
   Met lMVAMet = fMVAMet->GetMet(  false,
                                   lPt0,lPhi0,lEta0,
                                   lPt1,lPhi1,lEta1,
-                                  fPFMet->At(0),
-                                  fCands,fVertices->At(0),fVertices,fRhoCol->At(0)->Rho(),
+                                  met->At(0),
+                                  cands,vertices->At(0),vertices,rhoCol->At(0)->Rho(),
                                   thePFJets,
-                                  int(fVertices->GetEntries()));
+                                  int(vertices->GetEntries()));
 
   MVAMet->Add(&lMVAMet);
 
@@ -103,11 +99,6 @@ void MVAMetMod::SlaveBegin()
     SendError(kAbortModule, "SlaveBegin", "MIT_DATA environment is not set.");
     return;
   }
-
-  //ReqBranch(fJetsName,   fJets);
-  ReqBranch(fPFCandName, fCands);
-  ReqBranch(fPFMetName,  fPFMet);
-  ReqBranch(fRhoName,    fRhoCol);
 
   fMVAMet    = new MVAMet();
   fMVAMet->Initialize(dataDir + "/mva_JetID_lowpt.weights.xml",

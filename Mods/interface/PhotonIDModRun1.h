@@ -7,8 +7,8 @@
 // Authors: S.Xie, C.Loizides
 //--------------------------------------------------------------------------------------------------
 
-#ifndef MITPHYSICS_MODS_PHOTONIDMOD_H
-#define MITPHYSICS_MODS_PHOTONIDMOD_H
+#ifndef MITPHYSICS_MODS_PHOTONIDMODRun1_H
+#define MITPHYSICS_MODS_PHOTONIDMODRun1_H
 
 #include "MitAna/TreeMod/interface/BaseMod.h" 
 #include "MitAna/DataTree/interface/PhotonFwd.h"
@@ -32,12 +32,12 @@
 
 namespace mithep 
 {
-  class PhotonIDMod : public BaseMod
+  class PhotonIDModRun1 : public BaseMod
   {
   public:
-    PhotonIDMod(const char *name="PhotonIDMod", 
+    PhotonIDModRun1(const char *name="PhotonIDModRun1", 
                 const char *title="Photon identification module");
-    ~PhotonIDMod();
+    ~PhotonIDModRun1();
 
     Bool_t              GetApplySpikeRemoval()      const { return fApplySpikeRemoval;   }
     Bool_t              GetApplyPixelSeed()         const { return fApplyPixelSeed;      }
@@ -172,34 +172,6 @@ namespace mithep
 
     void                SetRhoType(RhoUtilities::RhoType); /*DEPRECATED*/
     void                SetRhoAlgo(UInt_t algo) { fRhoAlgo = algo; }
-    
-    enum EPhIdType {
-      kIdUndef = 0,       //not defined
-      kTight,             //"Tight"
-      kLoose,             //"Loose"
-      kLooseEM,           //"LooseEM"
-      kBaseLineCiC,          //"2011" Hgg BaseLine CiC
-      kBaseLineCiCPF,        //"2012" Hgg BaseLine CiC
-      kBaseLineCiCPFNoPresel,//"2012" Hgg BaseLine CiC plus eleveto -- for mono photon
-      kMITMVAId,             // MingMing MVA ID
-      kMITPhSelection,       //MIT loose preselection (for mva)
-      kMITPFPhSelection,     //MIT loose preselection (for mva)
-      kMITPFPhSelectionNoEcal,
-      kMITPFPhSelection_NoTrigger,    //MIT loose preselection (for mva, no Trigger)
-      kVgamma2011Selection,  // Vgamma 2011 Photon ID
-      kTrivialSelection,     // only pt & eta cuts
-      kEgammaMedium,
-      kCustomId             //"Custom"
-    };
-
-    enum EPhIsoType {
-      kIsoUndef = 0,      //not defined        
-      kNoIso,             //"NoIso"
-      kCombinedIso,       //"CombinedIso"
-      kCustomIso,         //"Custom"
-      kMITPUCorrected,     //PileUp Corrected Hgg Isolation
-      kPFPUCorrected
-    };
 
   protected:
     void                Process();
@@ -234,8 +206,8 @@ namespace mithep
     Bool_t              fApplyConversionId;    //=true then apply conversion id cuts
     Bool_t              fApplyTriggerMatching;   //match to hlt photon (default=0)      
     Double_t            fPhotonR9Min;          //min R9 value
-    EPhIdType           fPhIdType;             //!identification scheme
-    EPhIsoType          fPhIsoType;            //!isolation scheme
+    PhotonTools::EPhIdType           fPhIdType;             //!identification scheme
+    PhotonTools::EPhIsoType          fPhIsoType;            //!isolation scheme
     Bool_t              fFiduciality;          //=true then apply fiducual requirement
 
     Double_t            fEtaWidthEB;  	 //max Eta Width in ECAL Barrel
@@ -334,7 +306,7 @@ namespace mithep
 
     UInt_t    fRhoAlgo;
 
-    ClassDef(PhotonIDMod, 1) // Photon identification module
+    ClassDef(PhotonIDModRun1, 1) // Photon identification module
   };
 }
 #endif

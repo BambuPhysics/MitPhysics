@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: PhotonCiCMod.h,v 1.4 2011/07/03 11:04:50 fabstoec Exp $
-//
 // PhotonCiCMod
 //
 // This module applies photon identification criteria and exports a pointer to a collection
@@ -61,12 +59,12 @@ namespace mithep
 
       void                SetMCSmearFactors(Double_t _EB_hR9, Double_t _EB_lR9,
 					    Double_t _EE_hR9, Double_t _EE_lR9);
-      void                FindHiggsPtAndZ(Float_t&, Float_t&);
+      void                FindHiggsPtAndZ(MCParticleCol const*, Float_t&, Float_t&);
 
     protected:
       void                Process();
       void                SlaveBegin();
-      unsigned int        FindBestVertex(Photon* ph1, Photon* ph2, const BaseVertex* bsp, bool print=false);
+      unsigned int        FindBestVertex(Photon* ph1, Photon* ph2, VertexCol const*, const BaseVertex* bsp, DecayParticleCol const*, bool print=false);
 			     
       TString                 fPhotonBranchName;     //name of photon collection (input)
       TString                 fGoodPhotonsName;      //name of exported "good photon" collection
@@ -76,19 +74,9 @@ namespace mithep
       Double_t                fPhotonPtMin;          //min pt cut
       Bool_t                  fApplySpikeRemoval;    //whether apply spike removal
       Double_t                fAbsEtaMax;            //max Abs Eta
-      const PhotonCol        *fPhotons;              //!photon branch
-      const TrackCol         *fTracks;               //!track branch
-      const PileupEnergyDensityCol *fPileUpDen;  //!rho branch
-      const ElectronCol      *fElectrons;            //!electron branch
-
       TString                 fPVName;
-      const VertexCol        *fPV;
       Bool_t                  fPVFromBranch;
-
-      const DecayParticleCol *fConversions;
       TString                 fConversionName;
-
-      const BeamSpotCol      *fBeamspot;
 
       std::vector<Double_t>   fDataEnCorr_EB_hR9;
       std::vector<Double_t>   fDataEnCorr_EB_lR9;
@@ -110,10 +98,8 @@ namespace mithep
       TRandom3*               fRnd3;
 
       TString                 fMCParticleName;
-      const MCParticleCol    *fMCParticles;
 
       TString                 fPileUpName;
-      const PileupInfoCol    *fPileUp;
 
     ClassDef(PhotonCiCMod, 1) // Photon identification module
   };

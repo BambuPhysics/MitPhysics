@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: PDFProducerMod.h,v 1.2 2010/03/13 20:50:01 ceballos Exp $
-//
 // PDFProducerMod
 //
 // Computes PDFs from LHAPDF based on input from MCEventInfo.
@@ -40,7 +38,6 @@ namespace mithep
       TString            fPDFName;          //PDF name
       Bool_t             fRunPDF;           //=true run PDFs
       Bool_t             fIsData;           //=true then it does nothing (def=0)
-      const MCEventInfo *fMCEventInfo;      //!event info branch pointer
       TH1D              *hDPDFHisto[10];    //!output histograms
 
     ClassDef(PDFProducerMod, 1) // Module to produce PDFs

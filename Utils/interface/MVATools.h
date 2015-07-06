@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id $
-//
 // MVATools
 //
 // Helper Class for photon Identification decisions.
@@ -11,21 +9,17 @@
 #ifndef MITPHYSICS_UTILS_MVATOOLS_H
 #define MITPHYSICS_UTILS_MVATOOLS_H
 
-#include "MitAna/DataTree/interface/Photon.h"
-#include "MitAna/DataTree/interface/PhotonCol.h"
-#include "MitAna/DataTree/interface/TrackCol.h"
-#include "MitAna/DataTree/interface/Electron.h"
-#include "MitAna/DataTree/interface/ElectronCol.h"
-#include "MitAna/DataTree/interface/BaseVertex.h"
-#include "MitAna/DataTree/interface/DecayParticleCol.h"
-#include "MitAna/DataTree/interface/VertexCol.h"
-#include "MitAna/DataTree/interface/BeamSpotCol.h"
-#include "MitAna/DataTree/interface/TriggerObjectCol.h"
-#include "MitAna/DataTree/interface/MCParticleCol.h"
-#include "MitAna/DataTree/interface/SuperCluster.h"
-#include "MitAna/DataTree/interface/SuperClusterCol.h"
+#include "MitAna/DataTree/interface/PhotonFwd.h"
+#include "MitAna/DataTree/interface/TrackFwd.h"
+#include "MitAna/DataTree/interface/ElectronFwd.h"
+#include "MitAna/DataTree/interface/DecayParticleFwd.h"
+#include "MitAna/DataTree/interface/VertexFwd.h"
+#include "MitAna/DataTree/interface/BeamSpotFwd.h"
+#include "MitAna/DataTree/interface/TriggerObjectFwd.h"
+#include "MitAna/DataTree/interface/MCParticleFwd.h"
+#include "MitAna/DataTree/interface/SuperClusterFwd.h"
+#include "MitAna/DataTree/interface/PFCandidateFwd.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
-#include "MitAna/DataTree/interface/PFCandidateCol.h"
 
 class TRandom3;
 namespace TMVA {//MVA

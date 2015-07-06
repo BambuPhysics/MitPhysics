@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------------------
-// JetIDMod
+// JetIDModRun1
 //
 // This module applies jet identification criteria and exports a pointer to a collection
 // of "good jet" according to the specified identification scheme.
@@ -7,8 +7,8 @@
 // Authors: S.Xie, Y.Iiyama
 //--------------------------------------------------------------------------------------------------
 
-#ifndef MITPHYSICS_MODS_JETIDMOD_H
-#define MITPHYSICS_MODS_JETIDMOD_H
+#ifndef MITPHYSICS_MODS_JETIDMODRUN1_H
+#define MITPHYSICS_MODS_JETIDMODRUN1_H
 
 #include "MitAna/TreeMod/interface/BaseMod.h" 
 #include "MitAna/DataTree/interface/VertexCol.h"
@@ -17,10 +17,10 @@ namespace mithep
 {
   class JetIDMVA;
 
-  class JetIDMod : public BaseMod
+  class JetIDModRun1 : public BaseMod
   {
     public:
-      JetIDMod(const char *name="JetIDMod", 
+      JetIDModRun1(const char *name="JetIDModRun1", 
                const char *title="Jet identification module");
 
       const char       *GetInputName()                 const { return fJetsName;            }
@@ -33,10 +33,12 @@ namespace mithep
       Double_t          GetJetEEMFractionMinCut()      const { return fJetEEMFractionMinCut;}
       Bool_t            GetApplyBetaCut()              const { return fApplyBetaCut;        }
       Bool_t            GetApplyMVACut()               const { return fApplyMVACut;         }
+
       void              SetGoodJetsName(const char *name)    { fGoodJetsName = name;       }
       void              SetGoodName(const char *name)        { SetGoodJetsName(name);      }
       void              SetInputName(const char *name)       { fJetsName = name;           }
       void              SetOutputName(const char *name)      { SetGoodJetsName(name);      }
+
       void              SetMinNJets(UInt_t n)                { fMinNJets = n;              }
       void              SetPtCut(Double_t cut)               { fJetPtCut = cut;            }
       void              SetUseCorrection(Bool_t b)           { fUseJetCorrection = b;      }
@@ -82,7 +84,7 @@ namespace mithep
       Bool_t            fApplyMVACHS;           //=true then apply MVA for CHS
 
       JetIDMVA         *fJetIDMVA;
-      ClassDef(JetIDMod, 1) // Jet identification module
+      ClassDef(JetIDModRun1, 1) // Jet identification module
   };
 }
 #endif

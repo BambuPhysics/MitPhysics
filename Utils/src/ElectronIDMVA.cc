@@ -1121,9 +1121,10 @@ Double_t ElectronIDMVA::MVAValue(const Electron *ele, const Vertex *vertex,
                                  const PFCandidateCol *PFCands, 
                                  const PileupEnergyDensityCol *PileupEnergyDensity,
                                  ElectronTools::EElectronEffectiveAreaTarget EffectiveAreaTarget,
-                                 const ElectronCol *goodElectrons,
-                                 const MuonCol *goodMuons,
-                                 Bool_t printDebug) {
+                                 const ElectronCol *goodElectrons/* = 0*/,
+                                 const MuonCol *goodMuons/* = 0*/,
+                                 Bool_t printDebug/* = kFALSE*/)
+{
   
   if (!fIsInitialized) { 
     std::cout << "Error: ElectronIDMVA not properly initialized.\n"; 

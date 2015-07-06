@@ -15,8 +15,6 @@ mithep::MergeLeptonsMod::MergeLeptonsMod(const char *name, const char *title) :
   fElName(ModNames::gkCleanElectronsName),
   fMuName(ModNames::gkCleanMuonsName),
   fMergedName(ModNames::gkMergedLeptonsName),
-  fElIn(0),
-  fMuIn(0),
   fColOut(0)
 {
   // Constructor.
@@ -32,23 +30,23 @@ void mithep::MergeLeptonsMod::Process()
 {
   // Merge the two input collections and publish merged collection. 
 
-  fElIn = GetObjThisEvt<ElectronCol>(fElName);
-  fMuIn = GetObjThisEvt<MuonCol>(fMuName);
+  auto* elIn = GetObject<ElectronCol>(fElName);
+  auto* muIn = GetObject<MuonCol>(fMuName);
 
   // determine how many there are in total 
   UInt_t nents = 0;
-  if (fElIn) 
-    nents += fElIn->GetEntries();
-  if (fMuIn) 
-    nents += fMuIn->GetEntries();
+  if (elIn) 
+    nents += elIn->GetEntries();
+  if (muIn) 
+    nents += muIn->GetEntries();
 
   // book collection with right length
   fColOut = new mithep::ParticleOArr(nents, GetMergedName());
 
-  if (fElIn)
-    fColOut->Add(fElIn);
-  if (fMuIn)
-    fColOut->Add(fMuIn);
+  if (elIn)
+    fColOut->Add(elIn);
+  if (muIn)
+    fColOut->Add(muIn);
 
   // sort according to pt
   fColOut->Sort();
@@ -57,11 +55,11 @@ void mithep::MergeLeptonsMod::Process()
   AddObjThisEvt(fColOut);
 
   // fill histograms
-  if (fElIn)
-    fRecoWElectrons->Fill(fElIn->GetEntries());
+  if (elIn)
+    fRecoWElectrons->Fill(elIn->GetEntries());
 
-  if (fMuIn)
-    fRecoWMuons->Fill(fMuIn->GetEntries());
+  if (muIn)
+    fRecoWMuons->Fill(muIn->GetEntries());
 }
 
 //--------------------------------------------------------------------------------------------------

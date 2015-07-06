@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: $
-//
 // VTagMod
 //
 // This module analyzes input jets and tries to identify them as jets corresponding to Vector
@@ -57,9 +55,6 @@ namespace mithep
       TString                       fJetsBranchName;        //(i) name of jet collection to analyze
       TString                       fPFCandidatesName;      //(i) name of PF candidates colleciont
       TString                       fGoodVTagsName;         //(o) name of VTags collection
-
-      // Bambu inputs needed
-      const PFCandidateCol         *fPFCandidates;          //Particle Flow candidates
 
       // Objects/configs from fastjet we want to use
       double                        fConeSize;

@@ -1,5 +1,3 @@
-// $Id: GenFakeableObjsMod.cc,v 1.15 2011/02/17 13:44:54 bendavid Exp $
-
 #include "MitPhysics/FakeMods/interface/GenFakeableObjsMod.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitAna/DataUtil/interface/Debug.h"
@@ -13,7 +11,6 @@
 #include "MitAna/DataTree/interface/StableData.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "MitPhysics/Utils/interface/IsolationTools.h"
-#include "MitPhysics/Mods/interface/ElectronIDMod.h"
 
 using namespace mithep;
 
@@ -104,15 +101,6 @@ void GenFakeableObjsMod::SlaveBegin()
               fMuonFOType.Data());
     return;
   }
-
-  electronID = new ElectronIDMod();
-  electronID->SetApplyConversionFilterType1(kFALSE);
-  electronID->SetApplyConversionFilterType1(fApplyConvFilter);    
-  electronID->SetNWrongHitsMax(fNWrongHitsMax);    
-  electronID->SetApplyD0Cut(fApplyD0Cut);    
-  electronID->SetChargeFilter(fChargeFilter);    
-  electronID->SetD0Cut(fD0Cut);
-
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -274,7 +262,10 @@ void GenFakeableObjsMod::Process()
       //****************************************************************************************
       // D0 Cut        
       //****************************************************************************************
-      Bool_t passD0Cut = ElectronTools::PassD0Cut(tmpEle,fVertices, kTRUE);
+      // what was kTRUE supposed to mean? PassD0Cut has been using Double_t for the third argument for a long time..
+      // (is now changed to ID type)
+      //      Bool_t passD0Cut = ElectronTools::PassD0Cut(tmpEle,fVertices, kTRUE);
+      Bool_t passD0Cut = ElectronTools::PassD0Cut(tmpEle,fVertices, ElectronTools::kIdUndef);
       
       //****************************************************************************************
       // Make denominator object cuts
@@ -361,7 +352,10 @@ void GenFakeableObjsMod::Process()
       //****************************************************************************************
       // D0 Cut        
       //****************************************************************************************
-      Bool_t passD0Cut = ElectronTools::PassD0Cut(tmpEle,fVertices, kTRUE);
+      // what was kTRUE supposed to mean? PassD0Cut has been using Double_t for the third argument for a long time..
+      // (is now changed to ID type)
+      //      Bool_t passD0Cut = ElectronTools::PassD0Cut(tmpEle,fVertices, kTRUE);
+      Bool_t passD0Cut = ElectronTools::PassD0Cut(tmpEle,fVertices, ElectronTools::kIdUndef);
       
       //****************************************************************************************
       // Make denominator object cuts

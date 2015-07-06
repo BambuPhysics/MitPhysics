@@ -31,9 +31,7 @@ ClassImp(mithep::MetCorrectionMod)
     fExprShiftMCPx  ("+1.62861e-01 - 2.38517e-02*x"),
     fExprShiftMCPy  ("+3.60860e-01 - 1.30335e-01*x"),
     fIsData(kTRUE),
-    fPrint(kFALSE),
-    fPFMet(0),      
-    fPFCandidates(0)
+    fPrint(kFALSE)
 {
   // Constructor.
 }
@@ -52,11 +50,6 @@ void MetCorrectionMod::SlaveBegin()
   fFormulaShiftDataPy = new TFormula("formulaShiftDataPy", fExprShiftDataPy);
   fFormulaShiftMCPx   = new TFormula("formulaShiftMCPx",   fExprShiftMCPx);
   fFormulaShiftMCPy   = new TFormula("formulaShiftMCPy",   fExprShiftMCPy);
-
-  // ===== load PFMET and PFCandidates branches ====
-  ReqBranch(fMetName, fPFMet);
-  ReqBranch(fPFCandidatesName, fPFCandidates);
-
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -76,9 +69,9 @@ void MetCorrectionMod::Process()
 {
   // Process entries of the tree. 
 
-  LoadBranch(fMetName);
-  const VertexCol *inVertices          = GetObjThisEvt<VertexCol>(fVertexName);
-  if (!fPFMet) {
+  auto* metCol = GetObject<PFMetCol>(fMetName);
+  auto* inVertices = GetObject<VertexCol>(fVertexName);
+  if (!metCol) {
     SendError(kAbortModule, "Process", 
               "Pointer to input met %s is null.",
               fMetName.Data());
@@ -97,13 +90,13 @@ void MetCorrectionMod::Process()
   CorrectedMetCol->SetName(fCorrectedMetName);
 
   // initialize the corrected met to the uncorrected one
-  Met *CorrectedMet = fPFMet->At(0)->MakeCopy();
+  Met *CorrectedMet = metCol->At(0)->MakeCopy();
   
   // ===== Type 0 corrections, to mitigate pileup ====
   // https://hypernews.cern.ch/HyperNews/CMS/get/JetMET/1473/1.html  
   if (fApplyType0) {
-    LoadBranch(fPFCandidatesName);
-    if (!fPFCandidates) {
+    auto* pfCandidates = GetObject<PFCandidateCol>(fPFCandidatesName);
+    if (!pfCandidates) {
       SendError(kAbortModule, "Process","Pointer to input PFCandidates %s is null.",
                 fPFCandidatesName.Data());
       return;
@@ -114,9 +107,9 @@ void MetCorrectionMod::Process()
     // get the Z position of the PV
     Double_t ZofPV = inVertices->At(0)->Z();
 
-    for (UInt_t i=0; i<fPFCandidates->GetEntries(); ++i) {      
+    for (UInt_t i=0; i<pfCandidates->GetEntries(); ++i) {      
 
-      const PFCandidate *pfcand = fPFCandidates->At(i);
+      const PFCandidate *pfcand = pfCandidates->At(i);
       // exclude non PU candidates
       if (fabs(pfcand->SourceVertex().Z() - ZofPV) < fMinDz)
 	continue;
@@ -157,7 +150,7 @@ void MetCorrectionMod::Process()
       std::cout << "Final sumPUMom Phi    : " << sumPUPhi << std::endl;
       std::cout << "Final sumPUMom Px Corr: " << sumPUPxCorr << std::endl;
       std::cout << "Final sumPUMom Py Corr: " << sumPUPyCorr << std::endl;
-      std::cout << "raw Met Pt            : " << fPFMet->At(0)->Pt() << std::endl;
+      std::cout << "raw Met Pt            : " << metCol->At(0)->Pt() << std::endl;
       std::cout << "cor Met Pt            : " << CorrectedMet->Pt() << std::endl;
       std::cout << "+++++++ End of type 0 correction scope +++++++\n\n" << std::endl;
     }
@@ -168,8 +161,8 @@ void MetCorrectionMod::Process()
   // https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMetAnalysis#Type_I_Correction
   if (fApplyType1) {
     
-    const JetCol *inJets     = GetObjThisEvt<JetCol>(fJetsName);
-    const JetCol *inCorrJets = GetObjThisEvt<JetCol>(fCorrectedJetsName);
+    const JetCol *inJets     = GetObject<JetCol>(fJetsName);
+    const JetCol *inCorrJets = GetObject<JetCol>(fCorrectedJetsName);
     if (!inJets) {
       SendError(kAbortModule, "Process", 
                 "Pointer to input jet collection %s is null.",
@@ -223,7 +216,7 @@ void MetCorrectionMod::Process()
     if (fPrint) {
       std::cout << "\n" << std::endl;
       std::cout << "Final type1 cor Pt: " << type1Mom.Pt() << std::endl;
-      std::cout << "raw Met Pt        : " << fPFMet->At(0)->Pt() << std::endl;
+      std::cout << "raw Met Pt        : " << metCol->At(0)->Pt() << std::endl;
       std::cout << "cor Met Pt        : " << CorrectedMet->Pt() << std::endl;
       std::cout << "+++++++ End of type 1 correction scope +++++++\n\n" << std::endl;
     }
@@ -254,7 +247,7 @@ void MetCorrectionMod::Process()
     // debug
     if (fPrint) {
       std::cout << "XY shift cor Pt: " << sqrt(xyShiftCorrX*xyShiftCorrX + xyShiftCorrY*xyShiftCorrY) << std::endl;
-      std::cout << "raw Met Pt     : " << fPFMet->At(0)->Pt() << std::endl;
+      std::cout << "raw Met Pt     : " << metCol->At(0)->Pt() << std::endl;
       std::cout << "cor Met Pt     : " << CorrectedMet->Pt() << std::endl;
       std::cout << "+++++++ End of XY shift correction scope +++++++\n\n" << std::endl;
     }

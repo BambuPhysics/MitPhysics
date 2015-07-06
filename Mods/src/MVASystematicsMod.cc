@@ -31,12 +31,6 @@ MVASystematicsMod::MVASystematicsMod(const char *name, const char *title) :
   fEBSCName      (Names::gkBarrelSuperClusterBrn),
   fEESCName      (Names::gkEndcapSuperClusterBrn),  
   // -----------------------------------
-  // collections.
-  fMCParticles   (0),
-  fPV            (0),
-  fEBSC          (0),
-  fEESC          (0),
-  // --------------------------------------
   fMCR9ScaleEB   (1.0),
   fMCR9ScaleEE   (1.0),
   fIsData        (false),
@@ -55,15 +49,16 @@ void MVASystematicsMod::Begin()
 void MVASystematicsMod::Process()
 {  
   IncNEventsProcessed();
+  MCParticleCol* mcParticles = 0;
   if (!fIsData)
-    LoadBranch(fMCParticleName);
+    mcParticles = GetObject<MCParticleCol>(fMCParticleName);
 
-  LoadBranch(fPVName);
-  LoadBranch(fEBSCName);
-  LoadBranch(fEESCName);
+  auto* pv = GetObject<VertexCol>(fPVName);
+  auto* ebSC = GetObject<SuperClusterCol>(fEBSCName);
+  auto* eeSC = GetObject<SuperClusterCol>(fEESCName);
   
   const Vertex *vtx = 0;
-  if (fPV->GetEntries()>0) vtx = fPV->At(0);
+  if (pv->GetEntries()>0) vtx = pv->At(0);
   
   const MCParticle *h = 0;
   const MCParticle *p1 = 0;
@@ -75,7 +70,7 @@ void MVASystematicsMod::Process()
   Float_t _pth    = -100.;
   Float_t _y      = -100.;
   Float_t _genmass = -100.;
-  if( !fIsData ) h = FindHiggsPtAndY(_pth, _y, _genmass);  
+  if( !fIsData ) h = FindHiggsPtAndY(_pth, _y, _genmass, mcParticles);
 
   if (h && h->NDaughters()>=2) {
     p1 = h->Daughter(0);
@@ -106,14 +101,14 @@ void MVASystematicsMod::Process()
     pt1 = p1->Pt();
     eta1 = p1->Eta();
     phi1 = p1->Phi();
-    sc1 = MatchSC(p1,iseb1);
+    sc1 = MatchSC(p1,iseb1, ebSC, eeSC);
   }
 
   if (p2) {
     pt2 = p2->Pt();
     eta2 = p2->Eta();
     phi2 = p2->Phi();
-    sc2 = MatchSC(p2,iseb2);
+    sc2 = MatchSC(p2,iseb2, ebSC, eeSC);
   }
   
   if (sc1) {
@@ -180,12 +175,6 @@ void MVASystematicsMod::SlaveBegin()
   // we typically initialize histograms and other analysis objects and request
   // branches or objects created by earlier modules.
 
-  if (!fIsData)
-    ReqBranch(fMCParticleName,fMCParticles);
-  ReqBranch(fPVName,fPV);
-  ReqBranch(fEBSCName,fEBSC);
-  ReqBranch(fEESCName,fEESC);
-
   hMVAtuple = new TNtuple(fTupleName.Data(),fTupleName.Data(),
 			  "hpt:hy:hm:pt1:eta1:phi1:pt2:eta2:phi2:scet1:sceta1:scphi1:scr91:scet2:sceta2:scphi2:scr92");
 
@@ -206,7 +195,7 @@ void MVASystematicsMod::Terminate()
 }
 
 //--------------------------------------------------------------------------------------------------
-const MCParticle *MVASystematicsMod::FindHiggsPtAndY(Float_t& pt, Float_t& Y, Float_t& mass)
+const MCParticle *MVASystematicsMod::FindHiggsPtAndY(Float_t& pt, Float_t& Y, Float_t& mass, MCParticleCol const* mcParticles)
 {
   const MCParticle *h = 0;
   
@@ -215,8 +204,8 @@ const MCParticle *MVASystematicsMod::FindHiggsPtAndY(Float_t& pt, Float_t& Y, Fl
   mass = -999.;
 
   // loop over all GEN particles and look for status 1 photons
-  for (UInt_t i=0; i<fMCParticles->GetEntries(); ++i) {
-    const MCParticle* p = fMCParticles->At(i);
+  for (UInt_t i=0; i<mcParticles->GetEntries(); ++i) {
+    const MCParticle* p = mcParticles->At(i);
     if (p->Is(MCParticle::kH)) {
       pt=p->Pt();
       Y = p->Rapidity();
@@ -230,20 +219,20 @@ const MCParticle *MVASystematicsMod::FindHiggsPtAndY(Float_t& pt, Float_t& Y, Fl
 }
 
 //--------------------------------------------------------------------------------------------------
-const SuperCluster *MVASystematicsMod::MatchSC(const MCParticle *p, bool &iseb)
+const SuperCluster *MVASystematicsMod::MatchSC(const MCParticle *p, bool &iseb, SuperClusterCol const* ebSC, SuperClusterCol const* eeSC)
 {
 
   iseb = kFALSE;
   
-  for (UInt_t i=0; i<fEBSC->GetEntries(); ++i) {
+  for (UInt_t i=0; i<ebSC->GetEntries(); ++i) {
     iseb = kTRUE;
-    const SuperCluster *sc = fEBSC->At(i);
+    const SuperCluster *sc = ebSC->At(i);
     if (MathUtils::DeltaR(sc,p)<0.2) return sc;
   }
 
-  for (UInt_t i=0; i<fEESC->GetEntries(); ++i) {
+  for (UInt_t i=0; i<eeSC->GetEntries(); ++i) {
     iseb = kFALSE;
-    const SuperCluster *sc = fEESC->At(i);
+    const SuperCluster *sc = eeSC->At(i);
     if (MathUtils::DeltaR(sc,p)<0.2) return sc;
   }
 

@@ -1,5 +1,3 @@
-// $Id: HKFactorProducer.cc,v 1.18 2012/09/24 12:23:15 ceballos Exp $
-
 #include "MitPhysics/Mods/interface/HKFactorProducer.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitAna/DataTree/interface/MCParticleCol.h"
@@ -28,8 +26,6 @@ HKFactorProducer::HKFactorProducer(const char *name, const char *title) :
   fMh(0),
   fWidth(0),
   fBWflag(0),
-  fMCEventInfo(0),
-  fEmbedWeight(0),
   fOutputFile(0),
   fOutputName("ntuple.root")
 {
@@ -50,9 +46,9 @@ void HKFactorProducer::Process()
 
   if(fIsData == kFALSE){
     // get the bosons
-    MCParticleCol *GenBosons = GetObjThisEvt<MCParticleCol>(fMCBosonsName);
+    MCParticleCol *GenBosons = GetObject<MCParticleCol>(fMCBosonsName);
 
-    LoadBranch(fMCEvInfoName);
+    auto* mcEventInfo = GetObject<MCEventInfo>(fMCEvInfoName);
 
     // only accept the exact process id
     if (fMh > 0 && fWidth > 0 && fBWflag >=0) { 
@@ -83,13 +79,13 @@ void HKFactorProducer::Process()
       }
     }
     else if (fProcessID == 999){ // for MCatNLO we care about positive or negative weights
-      theWeight = fMCEventInfo->Weight();
+      theWeight = mcEventInfo->Weight();
       if (GetFillHist()) hDHKFactor[3]->Fill(TMath::Max(TMath::Min(theWeight,5.999),-3.999));
       theWeight = theWeight/fabs(theWeight);
       if (GetFillHist()) hDHKFactor[0]->Fill(0.5,theWeight);
     }
     else if (fProcessID == 998){ // for other samples we care about the actual weights
-      theWeight = fMCEventInfo->Weight();
+      theWeight = mcEventInfo->Weight();
       if (GetFillHist()) hDHKFactor[3]->Fill(TMath::Max(TMath::Min(theWeight,5.999),-3.999));
       if (GetFillHist()) hDHKFactor[0]->Fill(0.5,theWeight);
     }
@@ -97,23 +93,23 @@ void HKFactorProducer::Process()
       if (GetFillHist()) hDHKFactor[0]->Fill(0.5,1.0);
     }
     // process id distribution
-    if (GetFillHist()) hDHKFactor[4]->Fill(TMath::Min((Double_t)fMCEventInfo->ProcessId(),999.499));
+    if (GetFillHist()) hDHKFactor[4]->Fill(TMath::Min((Double_t)mcEventInfo->ProcessId(),999.499));
 
     if (fMakePDFNtuple == kTRUE){
-      fTreeVariables[0] = fMCEventInfo->Weight();
-      fTreeVariables[1] = fMCEventInfo->Scale();
-      fTreeVariables[2] = fMCEventInfo->Id1();
-      fTreeVariables[3] = fMCEventInfo->X1();
-      fTreeVariables[4] = fMCEventInfo->Pdf1();
-      fTreeVariables[5] = fMCEventInfo->Id2();
-      fTreeVariables[6] = fMCEventInfo->X2();
-      fTreeVariables[7] = fMCEventInfo->Pdf2();
+      fTreeVariables[0] = mcEventInfo->Weight();
+      fTreeVariables[1] = mcEventInfo->Scale();
+      fTreeVariables[2] = mcEventInfo->Id1();
+      fTreeVariables[3] = mcEventInfo->X1();
+      fTreeVariables[4] = mcEventInfo->Pdf1();
+      fTreeVariables[5] = mcEventInfo->Id2();
+      fTreeVariables[6] = mcEventInfo->X2();
+      fTreeVariables[7] = mcEventInfo->Pdf2();
       fTree->Fill();
     }
   }
   else if (fProcessID == 997){ // for tau embedding samples
-    LoadBranch(fEmbedWeightName);
-    theWeight = fEmbedWeight->At(fEmbedWeight->GetEntries()-1)->GenWeight();
+    auto* embedWeight = GetObject<EmbedWeightCol>(fEmbedWeightName);
+    theWeight = embedWeight->At(embedWeight->GetEntries()-1)->GenWeight();
     if (GetFillHist()) hDHKFactor[3]->Fill(TMath::Max(TMath::Min(theWeight,5.999),-3.999));
     if (GetFillHist()) hDHKFactor[0]->Fill(0.5,theWeight);
   }
@@ -126,13 +122,6 @@ void HKFactorProducer::Process()
 void HKFactorProducer::SlaveBegin()
 {
   // Book branch and histograms if wanted.
-
-  if(fIsData == kFALSE){
-    ReqBranch(fMCEvInfoName, fMCEventInfo);
-  }
-  if(fProcessID == 997){
-    ReqBranch(fEmbedWeightName, fEmbedWeight);
-  }
 
   if (GetFillHist()) {
     char sb[1024];

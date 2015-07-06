@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: MuonTools.h,v 1.22 2012/04/15 12:07:00 sixie Exp $
-//
 // MuonTools
 //
 // This class allows you to classify a given muon according to defined criteria. For this purpose
@@ -19,11 +17,14 @@
 #ifndef MITPHYSICS_UTILS_MUONTOOLS_H
 #define MITPHYSICS_UTILS_MUONTOOLS_H
 
-#include "MitAna/DataTree/interface/Muon.h"
+#include "MitAna/DataTree/interface/MuonCol.h"
 #include "MitAna/DataTree/interface/VertexCol.h"
 #include "MitAna/DataTree/interface/BeamSpotCol.h"
-#include "MitCommon/MathTools/interface/MathUtils.h"
+#include "MitAna/DataTree/interface/PFCandidateCol.h"
+#include "MitAna/DataTree/interface/ElectronCol.h"
 #include "TH2D.h"
+#include "TFile.h"
+#include "TMath.h"
 
 namespace mithep {
   class MuonTools {
@@ -31,6 +32,55 @@ namespace mithep {
       MuonTools(const char *mutemp="$MIT_DATA/MuonCaloTemplate.root", 
                 const char *pitemp="$MIT_DATA/PionCaloTemplate.root");
       virtual ~MuonTools();
+
+      enum EMuIdType {
+        kIdUndef = 0,       //not defined
+        kWMuId,             //"WMuId"
+        kZMuId,             //"ZMuId"
+        kTight,             //"Tight"
+        kMuonPOG2012CutBasedIdTight,             //"muonPOG2012CutBasedIDTight"
+        kLoose,             //"Loose"
+        kWWMuIdV1,          //"WWMuIdV1"
+        kWWMuIdV2,          //"WWMuIdV2"
+        kWWMuIdV3,          //"WWMuIdV3"
+        kWWMuIdV4,          //"WWMuIdV4"
+        kNoId,              //"NoId"        
+        kCustomId,          //"Custom"
+        kMVAID_BDTG_IDIso   //"BDTG ID + Iso03, Iso04 Combined"
+      };
+      enum EMuIsoType {
+        kIsoUndef = 0,                      //"not defined"
+        kTrackCalo,                         //"TrackCalo"
+        kTrackCaloCombined,                 //"TrackCaloCombined"
+        kTrackCaloSliding,                  //"TrackCaloSliding"
+        kTrackCaloSlidingNoCorrection,      //"TrackCaloSlidingNoCorrection"
+        kCombinedRelativeConeAreaCorrected, //"CombinedRelativeConeAreaCorrected"        
+        kCombinedRelativeEffectiveAreaCorrected,
+        kCustomIso,                         //"Custom"
+        kPFIso,                             //"PFIso"
+        kPFRadialIso,                       //"PFRadialIso"
+        kPFIsoBetaPUCorrected,              //"PFISo with PUcorrection using delta Beta
+        kPFIsoBetaPUCorrectedTight,         //"PFISo with PUcorrection using delta Beta, tight cut (0.12)
+        kPFIsoEffectiveAreaCorrected,       //"PFIso with EffectiveArea Pileup Correction"
+        kPFIsoNoL,                          //"PFIsoNoL"
+        kNoIso,                             //"NoIso"
+        kMVAIso_BDTG_IDIso,                 //"BDTG ID + Iso03, Iso04 Combined"
+        kIsoRingsV0_BDTG_Iso,               //"BDTG Iso Rings"
+        kIsoDeltaR                          //"BGDT Iso dR"              
+      };
+      enum EMuClassType {
+        kClassUndef = 0,
+        kAll,
+        kGlobal,
+        kGlobalorTracker,
+        kGlobalTracker,
+        kSta,
+        kTrackerMuon,
+        kCaloMuon,
+        kTrackerBased,
+        kGlobalOnly,
+        kPFGlobalorTracker
+      };
 
       enum ESelType { 
         kAllArbitrated,          //All arbitration (DT/CSC/RPC Hits) put on at least one 
@@ -47,38 +97,38 @@ namespace mithep {
       };
 
       enum EMuonEffectiveAreaType {
-	kMuTrkIso03, 
-	kMuEcalIso03, 
-	kMuHcalIso03, 
-	kMuTrkIso05, 
-	kMuEcalIso05, 
-	kMuHcalIso05, 
-	kMuChargedIso03, 
-	kMuGammaIso03, 
-	kMuNeutralHadronIso03, 
-	kMuGammaAndNeutralHadronIso03,
-	kMuGammaIso03Tight, 
-	kMuNeutralHadronIso03Tight, 
-	kMuGammaAndNeutralHadronIso03Tight,
-	kMuChargedIso04, 
-	kMuGammaIso04, 
-	kMuNeutralHadronIso04, 
-	kMuGammaAndNeutralHadronIso04,
-	kMuGammaIso04Tight, 
-	kMuNeutralHadronIso04Tight, 
-	kMuGammaAndNeutralHadronIso04Tight,
-	kMuGammaIsoDR0p0To0p1,
-	kMuGammaIsoDR0p1To0p2,
-	kMuGammaIsoDR0p2To0p3,
-	kMuGammaIsoDR0p3To0p4,
-	kMuGammaIsoDR0p4To0p5,
-	kMuNeutralHadronIsoDR0p0To0p1,
-	kMuNeutralHadronIsoDR0p1To0p2,
-	kMuNeutralHadronIsoDR0p2To0p3,
-	kMuNeutralHadronIsoDR0p3To0p4,
-	kMuNeutralHadronIsoDR0p4To0p5,
-	kMuGammaIso05,
-	kMuNeutralIso05,
+        kMuTrkIso03, 
+        kMuEcalIso03, 
+        kMuHcalIso03, 
+        kMuTrkIso05, 
+        kMuEcalIso05, 
+        kMuHcalIso05, 
+        kMuChargedIso03, 
+        kMuGammaIso03, 
+        kMuNeutralHadronIso03, 
+        kMuGammaAndNeutralHadronIso03,
+        kMuGammaIso03Tight, 
+        kMuNeutralHadronIso03Tight, 
+        kMuGammaAndNeutralHadronIso03Tight,
+        kMuChargedIso04, 
+        kMuGammaIso04, 
+        kMuNeutralHadronIso04, 
+        kMuGammaAndNeutralHadronIso04,
+        kMuGammaIso04Tight, 
+        kMuNeutralHadronIso04Tight, 
+        kMuGammaAndNeutralHadronIso04Tight,
+        kMuGammaIsoDR0p0To0p1,
+        kMuGammaIsoDR0p1To0p2,
+        kMuGammaIsoDR0p2To0p3,
+        kMuGammaIsoDR0p3To0p4,
+        kMuGammaIsoDR0p4To0p5,
+        kMuNeutralHadronIsoDR0p0To0p1,
+        kMuNeutralHadronIsoDR0p1To0p2,
+        kMuNeutralHadronIsoDR0p2To0p3,
+        kMuNeutralHadronIsoDR0p3To0p4,
+        kMuNeutralHadronIsoDR0p4To0p5,
+        kMuGammaIso05,
+        kMuNeutralIso05,
         kMuNeutralIso03, 
         kMuNeutralIso04, 
         kMuHadEnergy, 
@@ -94,11 +144,11 @@ namespace mithep {
       };
 
       enum EMuonEffectiveAreaTarget {
-	kMuEANoCorr,
-	kMuEAData2011,
-	kMuEASummer11MC,
-	kMuEAFall11MC,
-	kMuEAData2012
+        kMuEANoCorr,
+        kMuEAData2011,
+        kMuEASummer11MC,
+        kMuEAFall11MC,
+        kMuEAData2012
       };
 
       Bool_t          Init(const char *mutemp, const char *pitemp);
@@ -106,13 +156,26 @@ namespace mithep {
       Double_t        GetCaloCompatability(const mithep::Muon *iMuon,
                                          Bool_t iEMSpecial, Bool_t iCorrectedHCAL) const; 
       Double_t        GetSegmentCompatability(const mithep::Muon *iMuon)             const;
-      static Bool_t   PassD0Cut(const Muon *mu, const VertexCol *vertices, Double_t fD0Cut, Int_t nVertex = 0); 
-      static Bool_t   PassD0Cut(const Muon *mu, const BeamSpotCol *beamspots, Double_t fD0Cut);
-      static Bool_t   PassDZCut(const Muon *mu, const VertexCol *vertices, Double_t fDZCut, Int_t nVertex = 0);
+      static Bool_t   PassD0Cut(const Muon *mu, const VertexCol *vertices, EMuIdType, Int_t iVertex = 0);
+      static Bool_t   PassD0Cut(const Muon *mu, const BeamSpotCol *beamspots, EMuIdType);
+      static Bool_t   PassD0Cut(const Muon *mu, Double_t d0, EMuIdType);
+      static Bool_t   PassDZCut(const Muon *mu, const VertexCol *vertices, EMuIdType, Int_t iVertex = 0);
+      static Bool_t   PassDZCut(const Muon *mu, Double_t dz, EMuIdType);
       static Bool_t   PassSoftMuonCut(const Muon *mu, const VertexCol *vertices, const Double_t fDZCut = 0.2,
                                     const Bool_t applyIso = kTRUE);
       static Double_t MuonEffectiveArea(EMuonEffectiveAreaType type, Double_t Eta, 
                                         EMuonEffectiveAreaTarget EffectiveAreaTarget = kMuEAData2011);
+      // added 2015:
+      static Bool_t     PassId(Muon const*, EMuIdType);
+      static Bool_t     PassIso(Muon const*, EMuIsoType);
+      static Bool_t     PassIsoRhoCorr(Muon const*, EMuIsoType, Double_t rho, PFCandidateCol const* = 0, Vertex const* = 0);
+      static Bool_t     PassPFIso(Muon const*, EMuIsoType, PFCandidateCol const*,
+                                  Vertex const* = 0,
+                                  PFCandidateCol const* pileupCands = 0,
+                                  ElectronCol const* = 0,
+                                  MuonCol const* = 0);
+      static Bool_t     PassClass(Muon const*, EMuClassType classType);
+      static void       MuonPtEta(Muon const*, EMuClassType classType, Double_t& pt, Double_t& absEta);
 
     protected:
       void        DeleteHistos();

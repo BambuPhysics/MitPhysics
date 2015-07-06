@@ -36,13 +36,11 @@ namespace mithep
 
     protected:
       void               Process();
-      void               SlaveBegin();
 
       TString            fCosmicsName;      //name of cosmics (input)
       TString            fCleanMuonsName;   //name of clean muons (input)
       TString            fCleanCosmicsName; //name of clean cosmics (output)
       Double_t           fDeltaR;           //delta R for separating cosmics from collision muons
-      const MuonCol     *fCosmics;          //muon cosmics collection (input)
     
       ClassDef(CosmicCleaningMod, 2) // Cosmic cleaning module
   };

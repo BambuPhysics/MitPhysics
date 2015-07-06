@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: GenFakeableObjsMod.h,v 1.11 2011/01/23 19:00:09 sixie Exp $
-//
 // GenFakeableObjsMod
 //
 // This Module generates a collection of Electron and Muon Fakeable Objects. The exact definition
@@ -15,7 +13,6 @@
 
 #include "MitAna/TreeMod/interface/BaseMod.h" 
 #include "MitAna/DataTree/interface/CollectionsFwd.h"
-#include "MitPhysics/Mods/interface/ElectronIDMod.h"
 
 namespace mithep 
 {
@@ -147,7 +144,6 @@ namespace mithep
       const JetCol           *fJets;                  //!Jet branch
       const VertexCol        *fVertices;              //!Vertex branch
       const DecayParticleCol *fConversions;           //!conversion collection       
-      ElectronIDMod          *electronID;             //!electron ID object
 
       ClassDef(GenFakeableObjsMod, 1) // Fakeable objects generation module
   };

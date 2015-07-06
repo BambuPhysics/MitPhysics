@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: MetCorrectionMod.h,v 1.3 2013/09/26 23:38:59 dimatteo Exp $
-//
 // MetCorrectionMod
 //
 // This module applies Type0/1 and XY shift MET corrections on the fly at analysis level.
@@ -88,9 +86,6 @@ namespace mithep
       bool                  fIsData;             //flag for data/MC distinction
       bool                  fPrint;              //flag for debug print out
                            
-      const PFMetCol       *fPFMet;              //met branch
-      const PFCandidateCol *fPFCandidates;       //particle flow branch
-
       ClassDef(MetCorrectionMod, 1)              // met correction module
   };
 }

@@ -27,8 +27,8 @@ void EffMod::Process()
 {
   // Process entries of the tree.
 
-  const BaseCollection *col1 = GetObjThisEvt<BaseCollection>(fCol1Name);
-  const BaseCollection *col2 = GetObjThisEvt<BaseCollection>(fCol2Name);
+  const BaseCollection *col1 = GetObject<BaseCollection>(fCol1Name);
+  const BaseCollection *col2 = GetObject<BaseCollection>(fCol2Name);
 
   UInt_t ents1 = 0;
   if (col1)

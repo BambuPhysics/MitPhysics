@@ -1,11 +1,11 @@
-// $Id: PhotonTools.cc,v 1.45 2013/12/13 01:06:00 bendavid Exp $
-
 #include "MitPhysics/Utils/interface/PhotonTools.h"
 #include "MitPhysics/Utils/interface/ElectronTools.h"
 #include "MitPhysics/Utils/interface/IsolationTools.h"
+#include "MitPhysics/Init/interface/Constants.h"
 #include "MitAna/DataTree/interface/StableData.h"
-#include <TFile.h>
 #include <TRandom3.h>
+
+#include <limits>
 
 ClassImp(mithep::PhotonTools)
 
@@ -15,6 +15,160 @@ using namespace mithep;
 PhotonTools::PhotonTools()  
 {
   // Constructor.
+}
+
+Double_t
+mithep::PhotonTools::PhotonEffectiveArea(EPhotonEffectiveAreaType type, Double_t SCEta, EPhotonEffectiveAreaTarget target)
+{
+  if (target == kPhoEANoCorr)
+    return 0.;
+
+  double etaBinning1[] = {0., 1., 1.479, 2., 2.2, 2.3, 2.4, std::numeric_limits<double>::max()};
+
+  double* etaBinning = etaBinning1;
+  std::vector<double> areas;
+
+  switch (target) {
+  case kPhoEAPhys14:
+    switch (type) {
+    case kPhoChargedHadron03:
+      areas = {0.0234, 0.0189, 0.0171, 0.0129, 0.011, 0.0074, 0.0034};
+      break;
+    case kPhoNeutralHadron03:
+      areas = {0.0053, 0.0103, 0.0057, 0.007, 0.0152, 0.0232, 0.1709};
+      break;
+    case kPhoPhoton03:
+      areas = {0.078, 0.0629, 0.0264, 0.0462, 0.074, 0.0924, 0.1484};
+      break;
+    default:
+      return 0.;
+    }
+  default:
+    return 0.;
+  }
+
+  double absEta = std::abs(SCEta);
+  unsigned etaBin = 0;
+  while (absEta >= etaBinning[etaBin + 1])
+    ++etaBin;
+  return areas.at(etaBin);
+}
+
+Bool_t
+mithep::PhotonTools::PassID(Photon const* pho, EPhIdType type)
+{
+  if (type == kPhys14Tight || type == kPhys14Medium || type == kPhys14Loose) {
+    double hOverECut, sigmaIEtaIEtaCut;
+    bool isEB = pho->SCluster()->AbsEta() < gkPhoEBEtaMax;
+
+    switch (type) {
+    case kPhys14Loose:
+      hOverECut        = isEB ? 0.028  : 0.093;
+      sigmaIEtaIEtaCut = isEB ? 0.0107 : 0.0272;
+      break;
+    case kPhys14Medium:
+      hOverECut        = isEB ? 0.012  : 0.023;
+      sigmaIEtaIEtaCut = isEB ? 0.0100 : 0.0267;
+      break;
+    case kPhys14Tight:
+      hOverECut        = isEB ? 0.010  : 0.015;
+      sigmaIEtaIEtaCut = isEB ? 0.0100 : 0.0265;
+      break;
+    default:
+      break;
+    }
+
+    if (pho->HadOverEm() > hOverECut)
+      return false;
+
+    //This is for backwards compatibility
+    double ietaieta = -1;
+    if (pho->CoviEtaiEta5x5() < 0) 
+      ietaieta = pho->CoviEtaiEta();
+    else 
+      ietaieta = pho->CoviEtaiEta5x5();
+
+    //check the cut
+    if (ietaieta > sigmaIEtaIEtaCut)
+      return false;
+
+    return true;
+  }
+
+  return false;
+}
+
+Bool_t
+mithep::PhotonTools::PassIsoFootprintRhoCorr(Photon const* pho, EPhIsoType isoType, Vertex const* pv, PFCandidateCol const* pfCands, Double_t rho)
+{
+  double chIso = 0.;
+  double nhIso = 0.;
+  double phIso = 0.;
+
+  IsolationTools::PFPhotonIsoFootprintRemoved(pho, pv, pfCands, 0.3, chIso, nhIso, phIso);
+
+  return PassIsoRhoCorr(pho, isoType, rho, chIso, nhIso, phIso);
+}
+
+Bool_t
+mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Double_t rho)
+{
+  return PassIsoRhoCorr(pho, isoType, rho, pho->PFChargedHadronIso(), pho->PFNeutralHadronIso(), pho->PFPhotonIso());
+}
+
+Bool_t
+mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Double_t rho, Double_t chIso, Double_t nhIso, Double_t phIso)
+{
+  double scEta = pho->SCluster()->AbsEta();
+  bool isEB = scEta < gkPhoEBEtaMax;
+  double pEt = pho->Et();
+
+  double chEA = 0.;
+  double nhEA = 0.;
+  double phEA = 0.;
+
+  if (isoType == kPhys14TightIso || isoType == kPhys14MediumIso || isoType == kPhys14LooseIso) {
+    chEA = PhotonEffectiveArea(kPhoChargedHadron03, scEta, kPhoEAPhys14);
+    nhEA = PhotonEffectiveArea(kPhoNeutralHadron03, scEta, kPhoEAPhys14);
+    phEA = PhotonEffectiveArea(kPhoPhoton03, scEta, kPhoEAPhys14);
+  }
+
+  double chIsoCut = 0.;
+  double nhIsoCut = 0.;
+  double phIsoCut = 0.;
+
+  switch (isoType){
+  case kPhys14LooseIso:
+    chIsoCut = isEB ? 2.67 : 1.79;
+    nhIsoCut = isEB ? (7.23 + TMath::Exp(0.0028 * pEt + 0.5408)) : (8.89 + 0.01725 * pEt);
+    phIsoCut = isEB ? (2.11 + 0.0014 * pEt) : (3.09 + 0.0091 * pEt);
+    break;
+  case kPhys14MediumIso:
+    chIsoCut = isEB ? 1.79 : 1.09;
+    nhIsoCut = isEB ? (0.16 + TMath::Exp(0.0028 * pEt + 0.5408)) : (4.31 + 0.0172 * pEt);
+    phIsoCut = isEB ? (1.90 + 0.0014 * pEt) : (1.90 + 0.0091 * pEt);
+    break;
+  case kPhys14TightIso:
+    chIsoCut = isEB ? 1.66 : 1.04;
+    nhIsoCut = isEB ? (0.14 + TMath::Exp(0.0028 * pEt + 0.5408)) : (3.89 + 0.0172 * pEt);
+    phIsoCut = isEB ? (1.40 + 0.0014 * pEt) : (1.40 + 0.0091 * pEt);
+    break;
+  default:
+    break;
+  }
+
+  double chIsoCor = TMath::Max(chIso - rho * chEA, 0.0);
+  double nhIsoCor = TMath::Max(nhIso - rho * nhEA , 0.0);
+  double phIsoCor = TMath::Max(phIso - rho * phEA , 0.0);
+  
+  if (chIsoCor > chIsoCut)
+    return false;
+  if (nhIsoCor > nhIsoCut)
+    return false;
+  if (phIsoCor > phIsoCut)
+    return false;
+
+  return true;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -226,10 +380,10 @@ Double_t PhotonTools::ElectronVetoCiC(const Photon *p, const ElectronCol *els) {
     if (e->SCluster()==p->SCluster() ) {
       //if( e->GsfTrk()->NExpectedHitsInner()==0 && e->GsfTrk()->Pt() > 2.5 ) {
       if( e->GsfTrk()->NExpectedHitsInner()==0 ) {
-	double dEta = e->DeltaEtaSuperClusterTrackAtVtx();
-	double dPhi = e->DeltaPhiSuperClusterTrackAtVtx();
-	double dR = TMath::Sqrt(dEta*dEta+dPhi*dPhi);
-	return dR;
+        double dEta = e->DeltaEtaSuperClusterTrackAtVtx();
+        double dPhi = e->DeltaPhiSuperClusterTrackAtVtx();
+        double dR = TMath::Sqrt(dEta*dEta+dPhi*dPhi);
+        return dR;
       }
     }
   }  
@@ -245,7 +399,7 @@ Bool_t PhotonTools::PassElectronVetoConvRecovery(const Photon *p, const Electron
 
     // HACVK to match CMSSW bug...
     if (e->SCluster()==p->SCluster() && e->GsfTrk()->NExpectedHitsInner()==0 && ElectronTools::PassConversionFilter(e, conversions, 
-														    v, 0, 0., 1e-6, kTRUE, kFALSE) ) {
+                                                                                                                    v, 0, 0., 1e-6, kTRUE, kFALSE) ) {
       //                                                         v, 0, 1e-6, 2.0, kFALSE, kFALSE) ) {
       pass = kFALSE;
     }
@@ -379,12 +533,12 @@ PhotonTools::CiCBaseLineCats PhotonTools::CiCBaseLineCat(const Photon *p) {
 
 //--------------------------------------------------------------------------------------------------
 const DecayParticle *PhotonTools::MatchedCiCConversion(const Photon *p, const DecayParticleCol *conversions, 
-						       Double_t dPhiMin,
-						       Double_t dEtaMin,
-						       Double_t dRMin,
-						       bool     print,
-						       int*                 numLegs,
-						       int*                 convIdx) {
+                                                       Double_t dPhiMin,
+                                                       Double_t dEtaMin,
+                                                       Double_t dRMin,
+                                                       bool     print,
+                                                       int*                 numLegs,
+                                                       int*                 convIdx) {
   
   // if there are no conversons, return
   if ( !p || !conversions)  return NULL;
@@ -419,7 +573,7 @@ const DecayParticle *PhotonTools::MatchedCiCConversion(const Photon *p, const De
       matchIdx = (int) i;
 
       if(print) {
-	std::cout<<" conv "<<i+1<<" matches with dR   = "<<minDR<<std::endl;
+        std::cout<<" conv "<<i+1<<" matches with dR   = "<<minDR<<std::endl;
       }
     } 
   }
@@ -438,12 +592,12 @@ const DecayParticle *PhotonTools::MatchedCiCConversion(const Photon *p, const De
 }
 
 bool PhotonTools::PassCiCSelection(const Photon* ph, const Vertex* vtx, 
-				   const TrackCol* trackCol,
-				   const ElectronCol* eleCol,
-				   const VertexCol* vtxCol,
-				   double rho, double ptmin, 
-				   bool applyEleVeto,
-				   bool print, float* kin) {
+                                   const TrackCol* trackCol,
+                                   const ElectronCol* eleCol,
+                                   const VertexCol* vtxCol,
+                                   double rho, double ptmin, 
+                                   bool applyEleVeto,
+                                   bool print, float* kin) {
 
   
   // these values are taken from the H2GGlobe code... (actually from Marco/s mail)
@@ -547,15 +701,15 @@ bool PhotonTools::PassCiCSelection(const Photon* ph, const Vertex* vtx,
   if ( ph->Pt()     <= ptmin      ) passCuts = -1.;
 
   // not needed anymore, do in pre-selection...
-  //if (  ph->SCluster()->AbsEta()>=2.5 || (ph->SCluster()->AbsEta()>=1.4442 && ph->SCluster()->AbsEta()<=1.566)) passCuts = -1.;
+  //if (  ph->SCluster()->AbsEta()>=2.5 || (ph->SCluster()->AbsEta()>=gkPhoEBEtaMax && ph->SCluster()->AbsEta()<=1.566)) passCuts = -1.;
   
   if(   ! (    tIso1                          < cic4_allcuts_temp_sublead[_tCat-1+0*4]
-	       && tIso2                       < cic4_allcuts_temp_sublead[_tCat-1+1*4]
-	       && tIso3                       < cic4_allcuts_temp_sublead[_tCat-1+2*4]
-	       && covIEtaIEta                 < cic4_allcuts_temp_sublead[_tCat-1+3*4]
-	       && HoE                         < cic4_allcuts_temp_sublead[_tCat-1+4*4]
-	       && R9                          > cic4_allcuts_temp_sublead[_tCat-1+5*4]
-	       && ( dRTrack > cic4_allcuts_temp_sublead[_tCat-1+6*4] || !applyEleVeto ) ) )   passCuts = -1.;
+               && tIso2                       < cic4_allcuts_temp_sublead[_tCat-1+1*4]
+               && tIso3                       < cic4_allcuts_temp_sublead[_tCat-1+2*4]
+               && covIEtaIEta                 < cic4_allcuts_temp_sublead[_tCat-1+3*4]
+               && HoE                         < cic4_allcuts_temp_sublead[_tCat-1+4*4]
+               && R9                          > cic4_allcuts_temp_sublead[_tCat-1+5*4]
+               && ( dRTrack > cic4_allcuts_temp_sublead[_tCat-1+6*4] || !applyEleVeto ) ) )   passCuts = -1.;
   
   if(print) std::cout<<"   ---> "<<passCuts<<std::endl;
 
@@ -569,12 +723,12 @@ bool PhotonTools::PassCiCSelection(const Photon* ph, const Vertex* vtx,
 }
 
 bool PhotonTools::PassCiCPFIsoSelection(const Photon* ph, 
-					const Vertex* vtx, 
-					const PFCandidateCol*    pfCol,
-					const VertexCol*   vtxCol,
-					double rho, double ptmin,bool dor9rescale, double p0b, double p1b,double p0e, double p1e, 
-					std::vector<double>* kin  // store variables for debugging...
-					) {
+                                        const Vertex* vtx, 
+                                        const PFCandidateCol*    pfCol,
+                                        const VertexCol*   vtxCol,
+                                        double rho, double ptmin,bool dor9rescale, double p0b, double p1b,double p0e, double p1e, 
+                                        std::vector<double>* kin  // store variables for debugging...
+                                        ) {
   
   // these values are taken from the H2GGlobe code... (actually from Marco/s mail)
   float cic4_allcuts_temp_sublead[] = { 
@@ -653,7 +807,7 @@ bool PhotonTools::PassCiCPFIsoSelection(const Photon* ph,
   if ( ph->Pt()     <= ptmin      ) passCuts = -1.;
 
   // not needed anymore, do in pre-selection...
-  //if (  ph->SCluster()->AbsEta()>=2.5 || (ph->SCluster()->AbsEta()>=1.4442 && ph->SCluster()->AbsEta()<=1.566)) passCuts = -1.;
+  //if (  ph->SCluster()->AbsEta()>=2.5 || (ph->SCluster()->AbsEta()>=gkPhoEBEtaMax && ph->SCluster()->AbsEta()<=1.566)) passCuts = -1.;
   
   if(   ! (    tIso1                          < cic4_allcuts_temp_sublead[_tCat-1+0*4]
                && tIso2                       < cic4_allcuts_temp_sublead[_tCat-1+1*4]
@@ -669,15 +823,15 @@ bool PhotonTools::PassCiCPFIsoSelection(const Photon* ph,
 
 //for mono photon: cic photon id with conversion safe eleveto
 bool PhotonTools::PassCiCPFIsoSelectionWithEleVeto(const Photon* ph, 
-						   const ElectronCol *els,
-						   const DecayParticleCol *conversions, const BaseVertex *bs,
-						   const Vertex* vtx, 
-						   const PFCandidateCol*    pfCol,
-						   const VertexCol*   vtxCol,
-						   double rho, double ptmin,
-						   Bool_t applyElectronVeto, Bool_t invertElectronVeto,
-						   std::vector<double>* kin  // store variables for debugging...
-						   ) {
+                                                   const ElectronCol *els,
+                                                   const DecayParticleCol *conversions, const BaseVertex *bs,
+                                                   const Vertex* vtx, 
+                                                   const PFCandidateCol*    pfCol,
+                                                   const VertexCol*   vtxCol,
+                                                   double rho, double ptmin,
+                                                   Bool_t applyElectronVeto, Bool_t invertElectronVeto,
+                                                   std::vector<double>* kin  // store variables for debugging...
+                                                   ) {
 
   Bool_t PassEleVetoRaw = PhotonTools::PassElectronVetoConvRecovery(ph, els, conversions, bs);  
   Bool_t PassEleVeto = (!applyElectronVeto && !invertElectronVeto) || (applyElectronVeto && !invertElectronVeto && PassEleVetoRaw) || (!applyElectronVeto && invertElectronVeto && !PassEleVetoRaw);
@@ -754,7 +908,7 @@ bool PhotonTools::PassCiCPFIsoSelectionWithEleVeto(const Photon* ph,
   if ( ph->Pt()     <= ptmin      ) passCuts = -1.;
 
   // not needed anymore, do in pre-selection...
-  //if (  ph->SCluster()->AbsEta()>=2.5 || (ph->SCluster()->AbsEta()>=1.4442 && ph->SCluster()->AbsEta()<=1.566)) passCuts = -1.;
+  //if (  ph->SCluster()->AbsEta()>=2.5 || (ph->SCluster()->AbsEta()>=gkPhoEBEtaMax && ph->SCluster()->AbsEta()<=1.566)) passCuts = -1.;
   
   if(   ! (    tIso1                          < cic4_allcuts_temp_sublead[_tCat-1+0*4]
                && tIso2                       < cic4_allcuts_temp_sublead[_tCat-1+1*4]
@@ -939,7 +1093,7 @@ Bool_t  PhotonTools::PassSinglePhotonPresel(const Photon *p,const ElectronCol *e
   float AbsTrackIsoCIC=IsolationTools::CiCTrackIsolation(p,vtx, 0.3, 0.02, 0.0, 0.0, 0.1, 1.0,trackCol, NULL, NULL, (!applyElectronVeto ? els : NULL) );
   float HcalEcalPUCorr=EcalIsoDr03+HcalIsoDr03-0.17*rho;
 
-  if(fabs(ScEta)<1.4442){IsBarrel=kTRUE;}
+  if(fabs(ScEta)<gkPhoEBEtaMax){IsBarrel=kTRUE;}
   if(fabs(ScEta)>1.566 && fabs(ScEta)<2.5){IsEndcap=kTRUE;}
   if((!IsBarrel) && (!IsEndcap)){
     return kFALSE;
@@ -971,7 +1125,7 @@ Bool_t  PhotonTools::PassSinglePhotonPreselPFISO_NoTrigger(const Photon *p,const
   Bool_t PassEleVetoRaw = PhotonTools::PassElectronVetoConvRecovery(p, els, conversions, bs);  
   Bool_t PassEleVeto = (!applyElectronVeto && !invertElectronVeto) || (applyElectronVeto && !invertElectronVeto && PassEleVetoRaw) || (!applyElectronVeto && invertElectronVeto && !PassEleVetoRaw);
   float ChargedIso_selvtx_DR002To0p02=IsolationTools::PFChargedIsolation(p,vtx, 0.2, 0.,fPFCands);
-  if(fabs(ScEta)<1.4442){IsBarrel=kTRUE;}
+  if(fabs(ScEta)<gkPhoEBEtaMax){IsBarrel=kTRUE;}
   if(fabs(ScEta)>1.566 && fabs(ScEta)<2.5){IsEndcap=kTRUE;}
   if((!IsBarrel) && (!IsEndcap)){
     return kFALSE;
@@ -1010,7 +1164,7 @@ Bool_t  PhotonTools::PassSinglePhotonPreselPFISO(const Photon *p,const ElectronC
   Bool_t PassEleVetoRaw = PhotonTools::PassElectronVetoConvRecovery(p, els, conversions, bs);  
   Bool_t PassEleVeto = (!applyElectronVeto && !invertElectronVeto) || (applyElectronVeto && !invertElectronVeto && PassEleVetoRaw) || (!applyElectronVeto && invertElectronVeto && !PassEleVetoRaw);
   float ChargedIso_selvtx_DR002To0p02=IsolationTools::PFChargedIsolation(p,vtx, 0.2, 0.,fPFCands);
-  if(fabs(ScEta)<1.4442){IsBarrel=kTRUE;}
+  if(fabs(ScEta)<gkPhoEBEtaMax){IsBarrel=kTRUE;}
   if(fabs(ScEta)>1.566 && fabs(ScEta)<2.5){IsEndcap=kTRUE;}
   if((!IsBarrel) && (!IsEndcap)){
     return kFALSE;
@@ -1039,11 +1193,11 @@ bool PhotonTools::PassVgamma2011Selection(const Photon* ph, double rho) {
   if (ph->HadOverEm()            > 0.05)                            return false;
   if (ph->CoviEtaiEta()          > (isEB ? 0.011 : 0.03) )          return false;
   if (ph->HollowConeTrkIsoDr04() > ( 2.0 + 0.001 *ph->Pt() + 
-				     (isEB ? 0.0167 : 0.032)*rho )) return false; 
+                                     (isEB ? 0.0167 : 0.032)*rho )) return false; 
   if (ph->EcalRecHitIsoDr04()    > ( 4.2 + 0.006 *ph->Pt() + 
-				     (isEB ? 0.183  : 0.090)*rho )) return false; 
+                                     (isEB ? 0.183  : 0.090)*rho )) return false; 
   if (ph->HcalTowerSumEtDr04()   > ( 2.2 + 0.0025*ph->Pt() + 
-				     (isEB ? 0.062  : 0.180)*rho )) return false; 
+                                     (isEB ? 0.062  : 0.180)*rho )) return false; 
 
   // spike cleaning...
   if ( ph->CoviEtaiEta() < 0.001 && TMath::Sqrt(TMath::Abs(ph->SCluster()->Seed()->CoviPhiiPhi())) < 0.001)
@@ -1073,7 +1227,7 @@ Bool_t  PhotonTools::PassSinglePhotonPreselPFISONoEcal(const Photon *p,const Ele
   Bool_t PassEleVetoRaw = PhotonTools::PassElectronVetoConvRecovery(p, els, conversions, bs);  
   Bool_t PassEleVeto = (!applyElectronVeto && !invertElectronVeto) || (applyElectronVeto && !invertElectronVeto && PassEleVetoRaw) || (!applyElectronVeto && invertElectronVeto && !PassEleVetoRaw);
   float ChargedIso_selvtx_DR002To0p02=IsolationTools::PFChargedIsolation(p,vtx, 0.2, 0.,fPFCands);
-  if(fabs(ScEta)<1.4442){IsBarrel=kTRUE;}
+  if(fabs(ScEta)<gkPhoEBEtaMax){IsBarrel=kTRUE;}
   if(fabs(ScEta)>1.566 && fabs(ScEta)<2.5){IsEndcap=kTRUE;}
   if((!IsBarrel) && (!IsEndcap)){
     return kFALSE;
@@ -1114,7 +1268,7 @@ Bool_t  PhotonTools::PassSinglePhotonPreselPFISONoEcalNoPFChargedIso(const Photo
   Bool_t PassEleVetoRaw = PhotonTools::PassElectronVetoConvRecovery(p, els, conversions, bs);  
   Bool_t PassEleVeto = (!applyElectronVeto && !invertElectronVeto) || (applyElectronVeto && !invertElectronVeto && PassEleVetoRaw) || (!applyElectronVeto && invertElectronVeto && !PassEleVetoRaw);
  
-  if(fabs(ScEta)<1.4442){IsBarrel=kTRUE;}
+  if(fabs(ScEta)<gkPhoEBEtaMax){IsBarrel=kTRUE;}
   if(fabs(ScEta)>1.566 && fabs(ScEta)<2.5){IsEndcap=kTRUE;}
   if((!IsBarrel) && (!IsEndcap)){
     return kFALSE;
@@ -1163,7 +1317,7 @@ void PhotonTools::ScalePhotonShowerShapes(Photon* p, PhotonTools::ShowerShapeSca
     else  p->SetPhiWidth(0.99*p->PhiWidth());
     break;
     
-  case k2012ShowerShape:	
+  case k2012ShowerShape:        
     //R9
     if (p->SCluster()->AbsEta()<1.5) p->SetR9(1.0045*p->R9()+0.001);
     else  p->SetR9(1.0086*p->R9()-0.0007);

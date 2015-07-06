@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: MVASystematicsMod.h,v 1.1 2011/12/13 21:13:22 bendavid Exp $
-//
 // MVASystematicsMod
 //
 // This module compues photon eff from Z->mumugamma
@@ -42,8 +40,8 @@ namespace mithep
     // setting all the input Names
     void                SetIsData(bool b) { fIsData = b; }
     void                SetTupleName(const char* c)    { fTupleName = c; }
-    const MCParticle   *FindHiggsPtAndY(Float_t& pt, Float_t& Y, Float_t& mass);
-    const SuperCluster *MatchSC(const MCParticle *p, bool &iseb);
+    const MCParticle   *FindHiggsPtAndY(Float_t& pt, Float_t& Y, Float_t& mass, MCParticleCol const*);
+    const SuperCluster *MatchSC(const MCParticle *p, bool &iseb, SuperClusterCol const*, SuperClusterCol const*);
     
     void                SetMCR9Scale(Double_t ebscale, Double_t eescale) { fMCR9ScaleEB = ebscale; fMCR9ScaleEE = eescale; }
     
@@ -62,10 +60,6 @@ namespace mithep
     TString             fEBSCName;
     TString             fEESCName;
     
-    const MCParticleCol          *fMCParticles;
-    const VertexCol              *fPV;
-    const SuperClusterCol        *fEBSC;
-    const SuperClusterCol        *fEESC;
    // is it Data or MC?
     Double_t fMCR9ScaleEB;
     Double_t fMCR9ScaleEE;

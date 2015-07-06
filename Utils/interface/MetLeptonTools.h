@@ -1,28 +1,20 @@
 #ifndef MITPHYSICS_UTILS_METLEPTONTOOLS_H
 #define MITPHYSICS_UTILS_METLEPTONTOOLS_H
 
-#include <TMatrixD.h>
-#include "MitAna/DataTree/interface/PFJetFwd.h"
-#include "MitAna/DataTree/interface/VertexFwd.h"
-#include "MitAna/DataTree/interface/TrackFwd.h"
-#include "MitAna/DataTree/interface/MuonCol.h"
-#include "MitAna/DataTree/interface/PFTauCol.h"
-#include "MitAna/DataTree/interface/ElectronCol.h"
-#include "MitAna/DataTree/interface/PhotonCol.h"
-#include "MitAna/DataTree/interface/Met.h"
-#include "MitAna/DataTree/interface/PFMet.h"
-#include "MitAna/DataTree/interface/PFMetCol.h"
-#include "MitAna/DataTree/interface/PFJet.h"
-#include "MitAna/DataTree/interface/PFJetCol.h"
-#include "MitAna/DataTree/interface/PFCandidateCol.h"
-#include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
-#include "MitPhysics/Utils/interface/TauIsoMVA.h"
-#include "MitCommon/MathTools/interface/MathUtils.h"
+#include "Rtypes.h"
 
-#include <TVector3.h>
-#include <TLorentzVector.h>
+#include "MitAna/DataTree/interface/VertexFwd.h"
+#include "MitAna/DataTree/interface/PFCandidateFwd.h"
+#include "MitAna/DataTree/interface/PileupEnergyDensityFwd.h"
 
 namespace mithep {
+  class PFTau;
+  class Electron;
+  class Muon;
+  class Photon;
+  class ChargedParticle;
+  class TauIsoMVA;
+
   class MetLeptonTools {
   public:
     MetLeptonTools();

@@ -19,8 +19,7 @@ PartonFlavorHistoryMod::PartonFlavorHistoryMod(const char *name, const char *tit
   fMCPartName(Names::gkMCPartBrn),
   fMCSampleType("NotSet"),
   fApplyPartonFlavorFilter(kFALSE),
-  fMCType(kMCTypeUndef),
-  fParticles(0)
+  fMCType(kMCTypeUndef)
 {
   // Constructor.
 }
@@ -31,7 +30,7 @@ void PartonFlavorHistoryMod::Process()
   // Process entries of the tree.
 
   // load MCParticle branch
-  LoadBranch(fMCPartName);
+  auto* particles = GetObject<MCParticleCol>(fMCPartName);
 
   //**************************************
   //Parton Flavor Classification For WJets
@@ -39,8 +38,8 @@ void PartonFlavorHistoryMod::Process()
   MCParticleOArr *ClassificationPartons = new MCParticleOArr;
   vector<string> FlavorSources;
   vector<MCParticle*> SisterPartons;
-  for (UInt_t i=0; i<fParticles->GetEntries(); ++i) {
-    const MCParticle *p = fParticles->At(i);
+  for (UInt_t i=0; i<particles->GetEntries(); ++i) {
+    const MCParticle *p = particles->At(i);
     string FlavorSource = "NULL";  
     Bool_t FoundProgenitor = kFALSE;
 
@@ -76,8 +75,8 @@ void PartonFlavorHistoryMod::Process()
       // loop over all parents of the quark.
       for (UInt_t j=0; j<parents->GetEntries(); ++j) {
         Int_t parentIndex = -1;
-        for (UInt_t k=0; k<fParticles->GetEntries(); ++k) {
-          if (fParticles->At(k) == parents->At(j)) {
+        for (UInt_t k=0; k<particles->GetEntries(); ++k) {
+          if (particles->At(k) == parents->At(j)) {
             parentIndex = k;
             break;
           }
@@ -322,8 +321,6 @@ void PartonFlavorHistoryMod::Process()
 void PartonFlavorHistoryMod::SlaveBegin()
 {
   // Book branch and histograms if wanted.
-
-  ReqBranch(fMCPartName, fParticles);
 
   AddTH1(fFlavorClassification ,"hFlavorClassification",";FlavorClassification;Number of Events",
          12,-0.5,11.5);
