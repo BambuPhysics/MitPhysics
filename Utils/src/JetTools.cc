@@ -330,8 +330,6 @@ Double_t JetTools::Beta(const PFJet *jet, const Vertex *vertex, Double_t delta_z
       //      Pt_jetsTot += cand->TrackerTrk()->Pt();
       Pt_jetsTot += cand->Pt(); // cand pT used in CMSSW (RecoJets/JetProducers/src/PileupJetIdAlgo.cc)
 
-      Pt_jets += cand->Pt();
-
       double pDz = TMath::Abs(cand->TrackerTrk()->DzCorrected(*vertex));
       if(pDz < delta_z){
         //        Pt_jets += cand->TrackerTrk()->Pt();
