@@ -634,16 +634,22 @@ Double_t JetTools::betaStarClassic(const PFJet *iJet,const Vertex *iVertex,const
 
 Bool_t  JetTools::passPFLooseId(const PFJet *iJet) { 
   double energy = iJet->RawMom().E();
-  if(energy                              == 0)       return false;
-  if(iJet->NeutralHadronEnergy()/energy  >  0.99)    return false;
-  if(iJet->NeutralEmEnergy()/energy      >  0.99)    return false;
-  if(iJet->NConstituents()               <  2)   return false;
+  if (energy                               == 0. ||
+      iJet->NeutralHadronEnergy() / energy >  0.99 ||
+      iJet->NeutralEmEnergy() / energy     >  0.99 ||
+      iJet->NConstituents()                <  2 ||
+      iJet->MuonEnergy() / energy          >  0.8)
+    return false;
+
   double absEta = iJet->AbsEta();
-  if(absEta > 2.4) return true;
-  //if(absEta                            > 4.99) return false;
-  if(iJet->ChargedHadronEnergy()/energy  <= 0   ) return false;
-  if(iJet->ChargedEmEnergy()/energy      >  0.99) return false;
-  if(iJet->ChargedMultiplicity()         < 1    ) return false;
+  if (absEta > 2.4)
+    return true;
+
+  if (iJet->ChargedHadronEnergy() / energy <= 0. ||
+      iJet->ChargedEmEnergy() / energy     >  0.99 ||
+      iJet->ChargedMultiplicity()          <  1)
+    return false;
+
   return true;
 }
 //Jet Width Variables
