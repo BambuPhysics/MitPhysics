@@ -39,8 +39,10 @@ namespace mithep {
 
     char const* GetInputName() const { return fInputName; }
     char const* GetOutputName() const;
+
     char const* GetTriggerObjectsName() const       { return fAuxInputNames[kTrigObjects]; }
-    char const* GetConversionBranchName() const     { return fAuxInputNames[kConversions]; }
+    char const* GetConversionsName() const          { return fAuxInputNames[kConversions]; }
+    char const* GetElectronsName() const            { return fAuxInputNames[kElectrons]; }
     char const* GetVerticesName() const             { return fAuxInputNames[kVertices]; }
     char const* GetBeamSpotName() const             { return fAuxInputNames[kBeamSpot]; }
     char const* GetPFCandidatesName() const         { return fAuxInputNames[kPFCandidates]; }
@@ -57,8 +59,10 @@ namespace mithep {
 
     void SetInputName(char const* n) { fInputName = n; }
     void SetOutputName(char const* n);
+
     void SetTriggerObjectsName(const char* n)       { fAuxInputNames[kTrigObjects] = n; }
     void SetConversionsName(const char* n)          { fAuxInputNames[kConversions] = n; }
+    void SetElectronsName(const char* n)            { fAuxInputNames[kElectrons] = n; }
     void SetVertexName(const char* n)               { fAuxInputNames[kVertices] = n; }
     void SetBeamSpotName(const char* n)             { fAuxInputNames[kBeamSpot] = n; }
     void SetPFCandidatesName(const char* n)         { fAuxInputNames[kPFCandidates] = n; } 
@@ -85,6 +89,7 @@ namespace mithep {
     enum AuxInput {
       kTrigObjects,
       kConversions,
+      kElectrons,
       kVertices,
       kBeamSpot,
       kPFCandidates,
@@ -102,6 +107,8 @@ namespace mithep {
     { return GetAuxInput<mithep::TriggerObjectCol>(kTrigObjects); }
     mithep::DecayParticleCol const* GetConversions()
     { return GetAuxInput<mithep::DecayParticleCol>(kConversions); }
+    mithep::ElectronCol const* GetElectrons()
+    { return GetAuxInput<mithep::ElectronCol>(kElectrons); }
     mithep::VertexCol const* GetVertices()
     { return GetAuxInput<mithep::VertexCol>(kVertices); }
     mithep::BeamSpotCol const* GetBeamSpot()
@@ -147,6 +154,7 @@ namespace mithep {
     fFlags(32, TString(name) + "Flags")
   {
     fAuxInputNames[kConversions] = Names::gkMvfConversionBrn;
+    fAuxInputNames[kElectrons] = Names::gkElectronBrn;
     fAuxInputNames[kVertices] = ModNames::gkGoodVertexesName;
     fAuxInputNames[kBeamSpot] = Names::gkBeamSpotBrn;
     fAuxInputNames[kPFCandidates] = Names::gkPFCandidatesBrn;
