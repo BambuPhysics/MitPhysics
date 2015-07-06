@@ -56,22 +56,8 @@ mithep::JetIdMod::IsGood(mithep::Jet const& jet)
     return false;
   fCutFlow->Fill(cEta);
 
-  Double_t jetpt;
-  if (fCorrectedInput)
-    jetpt = jet.Pt();
-  else {
-    jetpt = jet.RawMom().Pt();
-    for (unsigned iC = 0; iC != mithep::Jet::nECorrs; ++iC) {
-      if (fCorrections.TestBit(iC)) {
-        if (jet.CorrectionScale(iC) == 0.)
-          Error("JetIdMod::IsGood", "Calling jet correction that is not stored. Returning 0.");
-
-        jetpt *= jet.CorrectionScale(iC);
-      }
-    }
-  }
-
-  if (jetpt < fPtMin)
+  // Must use corrected jets as input
+  if (jet.Pt() < fPtMin)
     return false;
   fCutFlow->Fill(cPt);
 
