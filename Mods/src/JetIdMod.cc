@@ -23,6 +23,8 @@ mithep::JetIdMod::IdBegin()
   if (fMVATrainingSet != JetIDMVA::nMVATypes && !fJetIDMVA) {
     fJetIDMVA = new JetIDMVA();
     fJetIDMVA->Initialize(JetIDMVA::CutType(fMVACutWP), JetIDMVA::MVAType(fMVATrainingSet), fMVAWeightsFile, fMVACutsFile);
+
+    fOwnJetIDMVA = true;
   }
 
   if (fJetIDMVA && !fJetIDMVA->IsInitialized())
@@ -44,6 +46,15 @@ mithep::JetIdMod::IdBegin()
   xaxis->SetBinLabel(cPFLooseId + 1, "PFLooseId");
   xaxis->SetBinLabel(cBeta + 1, "Beta");
   xaxis->SetBinLabel(cMVA + 1, "MVA");
+}
+
+void
+mithep::JetIdMod::IdTerminate()
+{
+  if (fOwnJetIDMVA) {
+    delete fJetIDMVA;
+    fJetIDMVA = 0;
+  }
 }
 
 //--------------------------------------------------------------------------------------------------

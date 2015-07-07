@@ -13,6 +13,7 @@
 #include "MitPhysics/Utils/interface/PhotonTools.h"
 #include "MitPhysics/Utils/interface/RecoilTools.h"
 #include "MitPhysics/Utils/interface/JetTools.h"
+#include "MitPhysics/Utils/interface/JetCorrector.h"
 #include "MitPhysics/Utils/interface/MetLeptonTools.h"
 #include "MitPhysics/Utils/interface/VertexTools.h"
 #include "MitPhysics/Utils/interface/VertexMVA.h"
@@ -58,6 +59,7 @@
 #pragma link C++ class mithep::PhotonTools;
 #pragma link C++ class mithep::RecoilTools;
 #pragma link C++ class mithep::JetTools;
+#pragma link C++ class mithep::JetCorrector;
 #pragma link C++ class mithep::MetLeptonTools;
 #pragma link C++ class mithep::VertexTools;
 #pragma link C++ class mithep::VertexMVA;

@@ -1,100 +1,103 @@
-#include "MitAna/DataTree/interface/JetCol.h"
 #include "MitPhysics/Mods/interface/MetCorrectionMod.h"
-#include "MitCommon/MathTools/interface/MathUtils.h"
-#include "MitAna/DataTree/interface/MetCol.h"
-#include "MitPhysics/Init/interface/ModNames.h"
-#include "MitCommon/DataFormats/interface/Vect3.h"
-#include "MitAna/DataTree/interface/VertexCol.h"
 
-#include "TLorentzVector.h"
+#include "MitAna/DataTree/interface/JetCol.h"
+#include "MitAna/DataTree/interface/MetCol.h"
+#include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
+#include "MitAna/DataTree/interface/VertexCol.h"
+#include "MitAna/DataTree/interface/PFCandidateCol.h"
+#include "MitAna/DataTree/interface/PFJet.h"
+#include "MitAna/DataTree/interface/Muon.h"
+
+#include "TVector2.h"
+#include <cstring>
 
 using namespace mithep;
 
 ClassImp(mithep::MetCorrectionMod)
 
-//--------------------------------------------------------------------------------------------------
-  MetCorrectionMod::MetCorrectionMod(const char *name, const char *title) : 
-    BaseMod(name,title),
-    fMetName("PFMet"),
-    fCorrectedMetName("PFMetT0T1Shift"),
-    fJetsName(ModNames::gkPubJetsName),
-    fCorrectedJetsName(ModNames::gkCorrectedJetsName),  
-    fPFCandidatesName(Names::gkPFCandidatesBrn),
-    fVertexName(ModNames::gkGoodVertexesName),
-    fMinDz(0.2),
-    fApplyType0(kTRUE),
-    fApplyType1(kTRUE),
-    fApplyShift(kTRUE),
-    fExprType0("-(-0.703151*x)*(1.0 + TMath::Erf(-0.0303531*TMath::Power(x, 0.909209)))"),
-    fExprShiftDataPx("+4.83642e-02 + 2.48870e-01*x"),
-    fExprShiftDataPy("-1.50135e-01 - 8.27917e-02*x"),
-    fExprShiftMCPx  ("+1.62861e-01 - 2.38517e-02*x"),
-    fExprShiftMCPy  ("+3.60860e-01 - 1.30335e-01*x"),
-    fIsData(kTRUE),
-    fPrint(kFALSE)
+MetCorrectionMod::MetCorrectionMod(char const* name, char const* title) :
+  BaseMod(name, title)
 {
-  // Constructor.
+  fOutput.SetOwner(true);
 }
 
 //--------------------------------------------------------------------------------------------------
-MetCorrectionMod::~MetCorrectionMod() {} 
-
-//--------------------------------------------------------------------------------------------------
-void MetCorrectionMod::SlaveBegin()
+void
+MetCorrectionMod::SlaveBegin()
 {
-  // ===== initialize the formulae ====  
-  //type0 formula: function of Pt of vectorial sum of PU particles
-  fFormulaType0       = new TFormula("formulaType0",       fExprType0);
-  //XY shift formula: function of nVtx
-  fFormulaShiftDataPx = new TFormula("formulaShiftDataPx", fExprShiftDataPx);
-  fFormulaShiftDataPy = new TFormula("formulaShiftDataPy", fExprShiftDataPy);
-  fFormulaShiftMCPx   = new TFormula("formulaShiftMCPx",   fExprShiftMCPx);
-  fFormulaShiftMCPy   = new TFormula("formulaShiftMCPy",   fExprShiftMCPy);
+  if (fApplyType0) {
+    //type0 formula: function of Pt of vectorial sum of PU particles
+    if (!fFormulaType0)
+      MakeFormula(0);
+  }
+
+  if (fApplyType1) {
+    MakeJetCorrector();
+    fJetCorrector->Initialize();
+
+    auto& levels(fJetCorrector->GetLevels());
+    if (levels.size() != 3 || levels.back() < Jet::L3)
+      SendError(kAbortModule, "SlaveBegin", "JetCorrector not set up with proper set of parameters.");
+  }
+
+  if (fApplyShift) {
+    //XY shift formula: function of nVtx
+    if (!fFormulaShiftPx)
+      MakeFormula(1);
+    if (!fFormulaShiftPy)
+      MakeFormula(2);
+  }
+
+  PublishObj(&fOutput);
 }
 
 //--------------------------------------------------------------------------------------------------
-void MetCorrectionMod::SlaveTerminate()
+void
+MetCorrectionMod::SlaveTerminate()
 {
-  // ===== deallocate memory ====
-  delete fFormulaType0;
-  delete fFormulaShiftDataPx;
-  delete fFormulaShiftDataPy;
-  delete fFormulaShiftMCPx;
-  delete fFormulaShiftMCPy;
-
+  if (fOwnJetCorrector) {
+    delete fJetCorrector;
+    fJetCorrector = 0;
+  }
+  RetractObj(fOutput.GetName());
 }
 
 //--------------------------------------------------------------------------------------------------
-void MetCorrectionMod::Process()
+void
+MetCorrectionMod::Process()
 {
-  // Process entries of the tree. 
+  // Process entries of the tree.
 
-  auto* metCol = GetObject<PFMetCol>(fMetName);
-  auto* inVertices = GetObject<VertexCol>(fVertexName);
+  auto* metCol = GetObject<MetCol>(fMetName);
   if (!metCol) {
-    SendError(kAbortModule, "Process", 
+    SendError(kAbortModule, "Process",
               "Pointer to input met %s is null.",
               fMetName.Data());
     return;
   }
-  if (!inVertices) {
-    SendError(kAbortModule, "Process", 
-              "Pointer to input vertices %s is null.",
-              fVertexName.Data());
-    return;
-  }    
+
+  VertexCol* inVertices = 0;
+  if (fApplyType0 || fApplyShift) {
+    inVertices = GetObject<VertexCol>(fVertexName);
+    if (!inVertices) {
+      SendError(kAbortModule, "Process",
+                "Pointer to input vertices %s is null.",
+                fVertexName.Data());
+      return;
+    }
+  }
 
   // prepare the storage array for the corrected MET
-  MetOArr *CorrectedMetCol = new MetOArr;
-  CorrectedMetCol->SetOwner(kTRUE);
-  CorrectedMetCol->SetName(fCorrectedMetName);
+  fOutput.Reset();
 
-  // initialize the corrected met to the uncorrected one
-  Met *CorrectedMet = metCol->At(0)->MakeCopy();
-  
+  TVector2 metCorrection[3] = {};
+  double sumEtCorrection[3] = {};
+
   // ===== Type 0 corrections, to mitigate pileup ====
-  // https://hypernews.cern.ch/HyperNews/CMS/get/JetMET/1473/1.html  
+  // https://hypernews.cern.ch/HyperNews/CMS/get/JetMET/1473/1.html
+  // !!! Not checked prior to Run 2 - use at your own risk
   if (fApplyType0) {
+
     auto* pfCandidates = GetObject<PFCandidateCol>(fPFCandidatesName);
     if (!pfCandidates) {
       SendError(kAbortModule, "Process","Pointer to input PFCandidates %s is null.",
@@ -102,12 +105,14 @@ void MetCorrectionMod::Process()
       return;
     }
     // prepare the 4-mom sum of the charged PU candidates
-    TLorentzVector sumPUMom(0,0,0,0);
+    double puX = 0.;
+    double puY = 0.;
+    double puSum = 0.;
 
     // get the Z position of the PV
     Double_t ZofPV = inVertices->At(0)->Z();
 
-    for (UInt_t i=0; i<pfCandidates->GetEntries(); ++i) {      
+    for (UInt_t i=0; i<pfCandidates->GetEntries(); ++i) {
 
       const PFCandidate *pfcand = pfCandidates->At(i);
       // exclude non PU candidates
@@ -118,106 +123,134 @@ void MetCorrectionMod::Process()
           pfcand->PFType() != PFCandidate::eElectron &&
           pfcand->PFType() != PFCandidate::eMuon)
 	continue;
-      TLorentzVector thisMom(0,0,0,0);
-      thisMom.SetPtEtaPhiE(pfcand->Mom().Pt(),pfcand->Mom().Eta(),pfcand->Mom().Phi(),
-			   pfcand->Mom().E());
-      sumPUMom += thisMom;
+
+      puX += pfcand->Px();
+      puY += pfcand->Py();
+      puSum += pfcand->Pt();
 
       // debug
       if (fPrint) {
         std::cout << "PFCand index " << i << " :: this Vtx dZ: "
                   << fabs(pfcand->SourceVertex().Z() - ZofPV) << std::endl;
-        std::cout << "PFCand index " << i << " :: sumPUMom Pt: " << sumPUMom.Pt() << std::endl;
+        std::cout << "PFCand index " << i << " :: sumPUMom Pt: " << std::sqrt(puX * puX + puY * puY) << std::endl;
       }
-            
+
     }
-    
+
     // compute the MET Type 0 correction
-    Double_t sumPUPt  = sumPUMom.Pt();
-    Double_t sumPUPhi = sumPUMom.Phi();
+    Double_t sumPUPt  = std::sqrt(puX * puX + puY * puY);
     Double_t sumPUPtCorr = fFormulaType0->Eval(sumPUPt);
-    Double_t sumPUPxCorr = TMath::Cos(sumPUPhi)*sumPUPtCorr;
-    Double_t sumPUPyCorr = TMath::Sin(sumPUPhi)*sumPUPtCorr;
+    Double_t sumPUPxCorr = puX * sumPUPtCorr / sumPUPt;
+    Double_t sumPUPyCorr = puY * sumPUPtCorr / sumPUPt;
+    Double_t sumPUSumEtCorr = puSum * sumPUPtCorr / sumPUPt;
 
     // correct the MET
-    CorrectedMet->SetMex(CorrectedMet->Mex() + sumPUPxCorr);
-    CorrectedMet->SetMey(CorrectedMet->Mey() + sumPUPyCorr);
+    metCorrection[0].Set(sumPUPxCorr, sumPUPyCorr);
+    sumEtCorrection[0] -= sumPUSumEtCorr;
 
     // debug
     if (fPrint) {
       std::cout << "\n" << std::endl;
       std::cout << "Final sumPUMom Pt Corr: " << sumPUPtCorr << std::endl;
-      std::cout << "Final sumPUMom Phi    : " << sumPUPhi << std::endl;
       std::cout << "Final sumPUMom Px Corr: " << sumPUPxCorr << std::endl;
       std::cout << "Final sumPUMom Py Corr: " << sumPUPyCorr << std::endl;
-      std::cout << "raw Met Pt            : " << metCol->At(0)->Pt() << std::endl;
-      std::cout << "cor Met Pt            : " << CorrectedMet->Pt() << std::endl;
       std::cout << "+++++++ End of type 0 correction scope +++++++\n\n" << std::endl;
     }
-    
+
   } // end Type 0 correction scope
 
   // ===== Type 1 corrections, to propagate JEC to MET ====
   // https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMetAnalysis#Type_I_Correction
   if (fApplyType1) {
-    
-    const JetCol *inJets     = GetObject<JetCol>(fJetsName);
-    const JetCol *inCorrJets = GetObject<JetCol>(fCorrectedJetsName);
+
+    auto* inJets = GetObject<JetCol>(fJetsName);
     if (!inJets) {
-      SendError(kAbortModule, "Process", 
+      SendError(kAbortModule, "Process",
                 "Pointer to input jet collection %s is null.",
                 fJetsName.Data());
       return;
     }
-    if (!inJets) {
-      SendError(kAbortModule, "Process", 
-                "Pointer to input corrected jet collection %s is null.",
-                fCorrectedJetsName.Data());
-      return;
-    }
-    if (inJets->GetEntries() != inCorrJets->GetEntries())  {
-      SendError(kAbortModule, "Process", 
-                "Input corrected and uncorrected jet collections have different size.");
+
+    auto* inRho = GetObject<PileupEnergyDensityCol>(Names::gkPileupEnergyDensityBrn);
+    if (!inRho) {
+      SendError(kAbortModule, "Process",
+                "Pointer to input rho collection is null.");
       return;
     }
 
-    // prepare the 4-mom for the Type1 correction
-    TLorentzVector type1Mom(0,0,0,0);
+    double rho = inRho->At(0)->Rho(fRhoAlgo);
 
-    for (UInt_t i=0; i<inJets->GetEntries(); ++i) {
-      const Jet *inJet = inJets->At(i);      
-      const Jet *inCorrJet = inCorrJets->At(i);      
+    for (unsigned iJ = 0; iJ != inJets->GetEntries(); ++iJ) {
+      auto& inJet = *inJets->At(iJ);
+      auto&& inJetRawMom(inJet.RawMom());
+
+      if (fMaxEMFraction > 0.) {
+        if (inJet.ObjType() == kPFJet) {
+          auto& inPFJet = static_cast<PFJet const&>(inJet);
+          if ((inPFJet.ChargedEmEnergy() + inPFJet.NeutralEmEnergy()) / inJetRawMom.E() > fMaxEMFraction)
+            continue;
+        }
+        else
+          SendError(kWarning, "Process", "MaxEMFraction is set but the input jet correction is not PF.");
+      }
+
+      if (fSkipMuons) {
+        if (inJet.ObjType() == kPFJet) {
+          auto& inPFJet = static_cast<PFJet const&>(inJet);
+          for (unsigned iC = 0; iC != inPFJet.NConstituents(); ++iC) {
+            auto* cand = inPFJet.PFCand(iC);
+            if (cand->Mu() && (cand->Mu()->IsGlobalMuon() || cand->Mu()->IsStandaloneMuon()))
+              inJetRawMom -= cand->Mom();
+          }
+        }
+        else
+          SendError(kWarning, "Process", "SkipMuons is set but the input jet correction is not PF.");
+      }
+
+      auto currentMax = fJetCorrector->GetMaxCorrLevel();
+      fJetCorrector->SetMaxCorrLevel(Jet::L3);
+
+      double fullCorr;
+      double offsetCorr;
+      if (inJet.AbsEta() < 9.9) {
+        std::vector<float>&& corr(fJetCorrector->CorrectionFactors(inJet, rho));
+        fullCorr = corr.back();
+        offsetCorr = corr.front();
+      }
+      else {
+        auto* modJet = inJet.MakeCopy();
+        modJet->SetRawPtEtaPhiM(inJetRawMom.Pt(), inJet.Eta() / inJet.AbsEta() * 9.9, inJetRawMom.Phi(), inJetRawMom.M());
+        std::vector<float>&& corr(fJetCorrector->CorrectionFactors(*modJet, rho));
+        fullCorr = corr.back();
+        offsetCorr = corr.front();
+      }
+
+      fJetCorrector->SetMaxCorrLevel(currentMax);
+
+      auto fullCorrMom = inJetRawMom * fullCorr;
 
       // do not propagate JEC for soft jets
-      if (inCorrJet->Mom().Pt() < 10.) continue;      
-      TLorentzVector thisJetMom(0,0,0,0);
-      thisJetMom.SetPtEtaPhiE(inJet->Mom().Pt(),inJet->Mom().Eta(),inJet->Mom().Phi(),
-			      inJet->Mom().E());
-      TLorentzVector thisCorrJetMom(0,0,0,0);
-      thisCorrJetMom.SetPtEtaPhiE(inCorrJet->Mom().Pt(),inCorrJet->Mom().Eta(),
-				  inCorrJet->Mom().Phi(),inCorrJet->Mom().E());
+      if (fullCorrMom.Pt() < 10.) continue;
+
+      auto offsetCorrMom = inJetRawMom * offsetCorr;
 
       // compute the MET Type 1 correction
-      type1Mom = type1Mom + thisJetMom - thisCorrJetMom;
-      
+      metCorrection[1] -= TVector2(fullCorrMom.Px() - offsetCorrMom.Px(), fullCorrMom.Py() - offsetCorrMom.Py());
+      sumEtCorrection[1] += (fullCorrMom.Et() - offsetCorrMom.Et());
+
       // debug
       if (fPrint) {
-        std::cout << "Jet index " << i << " :: raw jet Pt:   " << inJet->Mom().Pt() << std::endl;
-        std::cout << "Jet index " << i << " :: cor jet Pt:   " << inCorrJet->Mom().Pt() << std::endl;
-        std::cout << "Jet index " << i << " :: type1 cor Pt: " << type1Mom.Pt() << std::endl;
+        std::cout << "Jet index " << iJ << " :: raw jet Pt:   " << inJetRawMom.Pt() << std::endl;
+        std::cout << "Jet index " << iJ << " :: cor jet Pt:   " << fullCorrMom.Pt() << std::endl;
+        std::cout << "Jet index " << iJ << " :: offset cor Pt: " << offsetCorrMom.Pt() << std::endl;
       }
     }
-    
-    // correct the MET
-    CorrectedMet->SetMex(CorrectedMet->Mex() + type1Mom.Px());
-    CorrectedMet->SetMey(CorrectedMet->Mey() + type1Mom.Py());
 
     // debug
     if (fPrint) {
       std::cout << "\n" << std::endl;
-      std::cout << "Final type1 cor Pt: " << type1Mom.Pt() << std::endl;
+      std::cout << "Final type1 cor Pt: " << metCorrection[1].Mod() << std::endl;
       std::cout << "raw Met Pt        : " << metCol->At(0)->Pt() << std::endl;
-      std::cout << "cor Met Pt        : " << CorrectedMet->Pt() << std::endl;
       std::cout << "+++++++ End of type 1 correction scope +++++++\n\n" << std::endl;
     }
   }
@@ -231,34 +264,100 @@ void MetCorrectionMod::Process()
     // number of vertices in Double format: to be used in the correction formula
     Double_t nVtx = inVertices->GetEntries() * 1.;
     // compute the XY Shift correction
-    if (fIsData) {
-      xyShiftCorrX = fFormulaShiftDataPx->Eval(nVtx) * -1.;
-      xyShiftCorrY = fFormulaShiftDataPy->Eval(nVtx) * -1.;
-    }
-    else {
-      xyShiftCorrX = fFormulaShiftMCPx->Eval(nVtx) * -1.;
-      xyShiftCorrY = fFormulaShiftMCPy->Eval(nVtx) * -1.;
-    }
+      xyShiftCorrX = fFormulaShiftPx->Eval(nVtx) * -1.;
+      xyShiftCorrY = fFormulaShiftPy->Eval(nVtx) * -1.;
 
-    // correct the MET
-    CorrectedMet->SetMex(CorrectedMet->Mex() + xyShiftCorrX);
-    CorrectedMet->SetMey(CorrectedMet->Mey() + xyShiftCorrY);
+    metCorrection[2].Set(xyShiftCorrX, xyShiftCorrY);
 
     // debug
     if (fPrint) {
-      std::cout << "XY shift cor Pt: " << sqrt(xyShiftCorrX*xyShiftCorrX + xyShiftCorrY*xyShiftCorrY) << std::endl;
+      std::cout << "XY shift cor Pt: " << metCorrection[2].Mod() << std::endl;
       std::cout << "raw Met Pt     : " << metCol->At(0)->Pt() << std::endl;
-      std::cout << "cor Met Pt     : " << CorrectedMet->Pt() << std::endl;
       std::cout << "+++++++ End of XY shift correction scope +++++++\n\n" << std::endl;
     }
   }
 
+  // initialize the corrected met to the uncorrected one
+  Met* original = metCol->At(0);
+  Met* corrected = original->MakeCopy();
+  double mex = original->Mex();
+  double mey = original->Mey();
+  double sumEt = original->SumEt();
+  for (unsigned iC = 0; iC != 3; ++iC) {
+    mex += metCorrection[iC].X();
+    mey += metCorrection[iC].Y();
+    sumEt += sumEtCorrection[iC];
+  }
+  corrected->SetMex(mex);
+  corrected->SetMey(mey);
+  corrected->SetSumEt(sumEt);
+
   // add corrected met to collection
-  CorrectedMetCol->AddOwned(CorrectedMet);
-  
-  // sort according to ptrootcint forward declaration data members
-  CorrectedMetCol->Sort();
-  
-  // add to event for other modules to use
-  AddObjThisEvt(CorrectedMetCol);
+  fOutput.AddOwned(corrected);
+}
+
+void
+MetCorrectionMod::AddJetCorrectionFromFile(char const* file)
+{
+  MakeJetCorrector();
+  fJetCorrector->AddParameterFile(file);
+}
+
+void
+MetCorrectionMod::SetJetCorrector(JetCorrector* corr)
+{
+  if (fJetCorrector && fOwnJetCorrector) {
+    SendError(kAbortAnalysis, "SetJetCorrector", "Corrector already created");
+  }
+  else {
+    fJetCorrector = corr;
+  }
+}
+
+void
+MetCorrectionMod::MakeJetCorrector()
+{
+  if (!fJetCorrector) {
+    fJetCorrector = new JetCorrector;
+    fOwnJetCorrector = true;
+  }
+}
+
+void
+MetCorrectionMod::MakeFormula(UInt_t idx, char const* expr/* = ""*/)
+{
+  // idx is only used internally, so no enum is defined.
+  switch (idx) {
+  case 0:
+    delete fFormulaType0;
+    if (std::strlen(expr) == 0)
+      expr = "-(-0.703151*x)*(1.0 + TMath::Erf(-0.0303531*TMath::Power(x, 0.909209)))";
+    fFormulaType0 = new TFormula("formulaType0", expr);
+    break;
+
+  case 1:
+    delete fFormulaShiftPx;
+    if (std::strlen(expr) == 0) {
+      if (fIsData)
+        expr = "+4.83642e-02 + 2.48870e-01*x";
+      else
+        expr = "+1.62861e-01 - 2.38517e-02*x";
+    }
+    fFormulaShiftPx = new TFormula("formulaShiftPx", expr);
+    break;
+
+  case 2:
+    delete fFormulaShiftPy;
+    if (std::strlen(expr) == 0) {
+      if (fIsData)
+        expr = "-1.50135e-01 - 8.27917e-02*x";
+      else
+        expr = "+3.60860e-01 - 1.30335e-01*x";
+    }
+    fFormulaShiftPy = new TFormula("formulaShiftPy", expr);
+    break;
+
+  default:
+    break;
+  }
 }
