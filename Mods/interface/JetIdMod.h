@@ -87,6 +87,7 @@ namespace mithep {
 
     Bool_t IsGood(mithep::Jet const&) override;
     void IdBegin() override;
+    void IdTerminate() override;
 
     Double_t fJetEEMFractionMinCut = 0.01;  //jet Eem fraction min cut for calo jets
     Double_t fMinChargedHadronFraction = 0.;
@@ -105,6 +106,7 @@ namespace mithep {
     TString  fMVACutsFile = "";
     Bool_t   fUseClassicBetaForMVA = kFALSE; //set to true to replicate CMSSW PU jet ID on MiniAOD
 
+    Bool_t    fOwnJetIDMVA = kFALSE;
     JetIDMVA* fJetIDMVA = 0;
 
     ClassDef(JetIdMod, 0) // Jet identification module
