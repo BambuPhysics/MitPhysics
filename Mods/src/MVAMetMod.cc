@@ -47,7 +47,7 @@ void MVAMetMod::Process()
   Float_t lPt0 = 0; Float_t lEta0 = 0; Float_t lPhi0 = 0;
   Float_t lPt1 = 0; Float_t lEta1 = 0; Float_t lPhi1 = 0;
 
-  ParticleOArr *leptons = GetObjThisEvt<ParticleOArr>(ModNames::gkMergedLeptonsName);
+  ParticleOArr *leptons = GetObject<ParticleOArr>(ModNames::gkMergedLeptonsName);
   if(leptons->GetEntries() >= 1){
     lPt0 = leptons->At(0)->Pt();  lEta0 = leptons->At(0)->Eta(); lPhi0 = leptons->At(0)->Phi();
   }

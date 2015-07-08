@@ -43,7 +43,7 @@ void mithep::PhotonPlusIsoTrackSelMod::Process()
 
   fNAccCounters->Fill(0);
 
-  fPhotonCol = GetObjThisEvt<Collection<Photon> >(GetPhotonColName());
+  fPhotonCol = GetObject<Collection<Photon> >(GetPhotonColName());
   if (!fPhotonCol ) {
     this->SendError(kAbortModule, "Process", 
                     "Could not obtain collection with name %s!", GetPhotonColName());

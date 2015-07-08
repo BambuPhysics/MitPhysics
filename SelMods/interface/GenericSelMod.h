@@ -84,7 +84,7 @@ void mithep::GenericSelMod<T>::Process()
 
   fNAccCounters->Fill(0);
 
-  fCol = GetObjThisEvt<Collection<T> >(GetColName());
+  fCol = GetObject<Collection<T> >(GetColName());
   if (!fCol) {
     this->SendError(kAbortModule, "Process", 
                     "Could not obtain collection with name %s!", GetColName());

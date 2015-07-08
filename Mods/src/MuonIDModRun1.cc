@@ -99,14 +99,14 @@ void MuonIDModRun1::Process()
     LoadEventObject(fPVName,fVertices);
   }
   else{
-    fVertices = GetObjThisEvt<VertexOArr>(fVertexName);
+    fVertices = GetObject<VertexOArr>(fVertexName);
   }
 
   if (fMuIsoType != MuonTools::kPFIsoNoL) {
     LoadEventObject(fMuonBranchName, fMuons);
   }
   else {
-    fMuons = GetObjThisEvt<MuonOArr>(fMuonBranchName);
+    fMuons = GetObject<MuonOArr>(fMuonBranchName);
   }
   LoadEventObject(fBeamSpotName, fBeamSpot);
   LoadEventObject(fTrackName, fTracks);
@@ -123,8 +123,8 @@ void MuonIDModRun1::Process()
   if (fMuIsoType == MuonTools::kPFRadialIso ||
       fMuIsoType == MuonTools::kIsoDeltaR   ||
       fMuIsoType == MuonTools::kPFIsoBetaPUCorrected) {
-    fPFNoPileUpCands = GetObjThisEvt<PFCandidateCol>(fPFNoPileUpName);
-    fPFPileUpCands   = GetObjThisEvt<PFCandidateCol>(fPFPileUpName);
+    fPFNoPileUpCands = GetObject<PFCandidateCol>(fPFNoPileUpName);
+    fPFPileUpCands   = GetObject<PFCandidateCol>(fPFPileUpName);
   }
 
   MuonOArr *CleanMuons = new MuonOArr;
@@ -484,8 +484,8 @@ void MuonIDModRun1::Process()
       }
     case MuonTools::kPFIsoNoL:
       {
-        fNonIsolatedMuons     = GetObjThisEvt<MuonCol>(fNonIsolatedMuonsName);
-        fNonIsolatedElectrons = GetObjThisEvt<ElectronCol>(fNonIsolatedElectronsName);
+        fNonIsolatedMuons     = GetObject<MuonCol>(fNonIsolatedMuonsName);
+        fNonIsolatedElectrons = GetObject<ElectronCol>(fNonIsolatedElectronsName);
         
         Double_t pfIsoCutValue = 9999;
         if (fPFIsolationCut > 0) {

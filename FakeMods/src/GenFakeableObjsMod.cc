@@ -115,7 +115,7 @@ void GenFakeableObjsMod::Process()
   LoadBranch(fEndcapSuperClusterBranchName);
   LoadBranch(fConversionBranchName);
 
-  fVertices = GetObjThisEvt<VertexOArr>(fVertexName);
+  fVertices = GetObject<VertexOArr>(fVertexName);
 
   //Load Trigger Objects
   const TriggerObjectCol *triggerObjects = GetHLTObjects(fTriggerObjectsName);
@@ -131,10 +131,10 @@ void GenFakeableObjsMod::Process()
   //get input MC collections
   const MCParticleCol *GenLeptons = 0;
   if (!fMCLeptonsName.IsNull())
-    GenLeptons = GetObjThisEvt<MCParticleCol>(fMCLeptonsName);
+    GenLeptons = GetObject<MCParticleCol>(fMCLeptonsName);
   const MCParticleCol *GenTaus = 0;
   if (!fMCTausName.IsNull())
-    GenTaus = GetObjThisEvt<MCParticleCol>(fMCTausName);
+    GenTaus = GetObject<MCParticleCol>(fMCTausName);
   ObjArray<MCParticle> *GenLeptonsAndTaus = new ObjArray<MCParticle>;
   for (UInt_t i=0; i<GenLeptons->GetEntries(); i++)
     GenLeptonsAndTaus->Add(GenLeptons->At(i));

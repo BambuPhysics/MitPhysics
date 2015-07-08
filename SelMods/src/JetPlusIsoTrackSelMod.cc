@@ -43,7 +43,7 @@ void mithep::JetPlusIsoTrackSelMod::Process()
 
   fNAccCounters->Fill(0);
 
-  fJetCol = GetObjThisEvt<Collection<Jet> >(GetJetColName());
+  fJetCol = GetObject<Collection<Jet> >(GetJetColName());
   if (!fJetCol ) {
     this->SendError(kAbortModule, "Process", 
                     "Could not obtain collection with name %s!", GetJetColName());

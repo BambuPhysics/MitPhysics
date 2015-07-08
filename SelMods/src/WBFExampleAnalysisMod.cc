@@ -77,7 +77,7 @@ void WBFExampleAnalysisMod::Process()
      (FindObjThisEvt(ModNames::gkMergedLeptonsName));
   ObjArray<Jet> *CleanJets = dynamic_cast<ObjArray<Jet>* >
     (FindObjThisEvt(fCleanJetsName.Data()));
-  TParameter<Double_t> *NNLOWeight = GetObjThisEvt<TParameter<Double_t> >("NNLOWeight");
+  TParameter<Double_t> *NNLOWeight = GetObject<TParameter<Double_t> >("NNLOWeight");
 
   if (CleanJets->GetEntries() < 2)
     return;
