@@ -133,14 +133,14 @@ void HwwExampleAnalysisMod::Process()
   LoadBranch(fPFJetName0);
 
   //Obtain all the good objects from the event cleaning module
-  fVertices = GetObjThisEvt<VertexOArr>(fVertexName);
+  fVertices = GetObject<VertexOArr>(fVertexName);
   ObjArray<Muon> *CleanMuons = dynamic_cast<ObjArray<Muon>* >(FindObjThisEvt(ModNames::gkCleanMuonsName));
   ObjArray<Electron> *CleanElectrons = dynamic_cast<ObjArray<Electron>* >(FindObjThisEvt(ModNames::gkCleanElectronsName));
   ParticleOArr *CleanLeptons = dynamic_cast<mithep::ParticleOArr*>
     (FindObjThisEvt(ModNames::gkMergedLeptonsName));
   ObjArray<Jet> *CleanJetsNoPtCut = dynamic_cast<ObjArray<Jet>* >
     (FindObjThisEvt(fCleanJetsNoPtCutName.Data()));
-  TParameter<Double_t> *NNLOWeight = GetObjThisEvt<TParameter<Double_t> >("NNLOWeight");
+  TParameter<Double_t> *NNLOWeight = GetObject<TParameter<Double_t> >("NNLOWeight");
 
   MetCol *met = dynamic_cast<ObjArray<Met>* >(FindObjThisEvt(fMetName));
   const Met *stdMet = 0;

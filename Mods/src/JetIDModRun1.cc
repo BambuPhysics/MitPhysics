@@ -40,12 +40,12 @@ mithep::JetIDModRun1::Process()
 {
   // Process entries of the tree. 
 
-  mithep::JetCol const* inJets = GetObjThisEvt<JetCol>(fJetsName);
+  mithep::JetCol const* inJets = GetObject<JetCol>(fJetsName);
   if (!inJets) {
     SendError(kAbortModule, "Process","Pointer to input jet collection %s null.", fJetsName.Data());
     return;
   }
-  mithep::VertexCol const* inVertices = GetObjThisEvt<VertexOArr>(fVertexName);
+  mithep::VertexCol const* inVertices = GetObject<VertexOArr>(fVertexName);
   if (!inVertices) {
     SendError(kAbortModule, "Process","Pointer to input jet collection %s null.", fVertexName.Data());
     return;

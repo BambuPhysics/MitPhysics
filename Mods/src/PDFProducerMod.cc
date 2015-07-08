@@ -56,7 +56,7 @@ void PDFProducerMod::Process()
     }
 
     if (fRunPDF == kTRUE) {
-      ParticleOArr *leptons = GetObjThisEvt<ParticleOArr>(ModNames::gkMergedLeptonsName);
+      ParticleOArr *leptons = GetObject<ParticleOArr>(ModNames::gkMergedLeptonsName);
       if (leptons->GetEntries() >= 2) { // Nlep >= 2 to fill it
 	if (fPrintDebug) 
       std::cout << "Start loop over PDF members:" << std::endl;

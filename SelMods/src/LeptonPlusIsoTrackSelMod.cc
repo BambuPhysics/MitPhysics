@@ -43,7 +43,7 @@ void mithep::LeptonPlusIsoTrackSelMod::Process()
 
   fNAccCounters->Fill(0);
 
-  fLeptonCol = GetObjThisEvt<Collection<Particle> >(GetLeptonColName());
+  fLeptonCol = GetObject<Collection<Particle> >(GetLeptonColName());
   if (!fLeptonCol) {
     this->SendError(kAbortModule, "Process", 
                     "Could not obtain collection with name %s!", GetLeptonColName());

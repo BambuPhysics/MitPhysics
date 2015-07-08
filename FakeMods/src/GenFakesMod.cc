@@ -56,24 +56,24 @@ void GenFakesMod::Process()
   // get input Fakeable object collections
    const ElectronCol *ElFakeableObjs = 0;
    if (!fElFakeableObjsName.IsNull())
-     ElFakeableObjs = GetObjThisEvt<ElectronCol>(fElFakeableObjsName);
+     ElFakeableObjs = GetObject<ElectronCol>(fElFakeableObjsName);
    const MuonCol *MuFakeableObjs = 0;
    if (!fMuFakeableObjsName.IsNull())
-     MuFakeableObjs = GetObjThisEvt<MuonCol>(fMuFakeableObjsName);
+     MuFakeableObjs = GetObject<MuonCol>(fMuFakeableObjsName);
 
   const JetCol      *CleanJets       = 0;
   if (!fCleanJetsName.IsNull())
-    CleanJets = GetObjThisEvt<JetCol>(fCleanJetsName);
+    CleanJets = GetObject<JetCol>(fCleanJetsName);
   mithep::ParticleOArr *CleanLeptons = dynamic_cast<mithep::ParticleOArr*>
     (FindObjThisEvt(ModNames::gkMergedLeptonsName));
 
   //get monte carlo collections
   const MCParticleCol *GenLeptons = 0;
   if (!fMCLeptonsName.IsNull())
-    GenLeptons = GetObjThisEvt<MCParticleCol>(fMCLeptonsName);
+    GenLeptons = GetObject<MCParticleCol>(fMCLeptonsName);
   const MCParticleCol *GenTaus = 0;
   if (!fMCTausName.IsNull())
-    GenTaus = GetObjThisEvt<MCParticleCol>(fMCTausName);
+    GenTaus = GetObject<MCParticleCol>(fMCTausName);
   ObjArray<MCParticle> *GenLeptonsAndTaus = new ObjArray<MCParticle>;
   if (GenLeptons) {
     for (UInt_t i=0; i<GenLeptons->GetEntries(); i++)
