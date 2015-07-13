@@ -25,7 +25,4 @@ fi
 # Generate ROOT dictionaries for classes defined in this module
 $CMSSW_BASE/src/MitCommon/bin/genDict.sh MitPhysics/{FakeMods,Init,Mods,SelMods,Skim,Utils,Validation}
 
-# check for existing qjets directory or install it  
-$CMSSW_BASE/src/MitPhysics/bin/installQjets.sh
-
 exit 0
