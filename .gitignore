@@ -1,5 +1,5 @@
 *.pyc
-Utils/python/__init__.py
+*__init__.py
 data
 *_LinkDefDict.*
 *_ReflexDict.*

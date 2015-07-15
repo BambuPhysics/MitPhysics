@@ -23,7 +23,7 @@ mithep::MuonIdMod::IsGood(mithep::Muon const& muon)
   fCutFlow->Fill(cAll);
 
   // Using bool PassClass
-  if (MuonTools::PassClass(&muon, MuonTools::EMuClassType(fMuonClassType)))
+  if (!MuonTools::PassClass(&muon, MuonTools::EMuClassType(fMuonClassType)))
     return false;
 
   fCutFlow->Fill(cMuonClass);
