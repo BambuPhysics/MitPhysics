@@ -1,5 +1,4 @@
 #include "MitPhysics/Mods/interface/PhotonIdMod.h"
-#include "MitPhysics/Utils/interface/PhotonTools.h"
 #include "MitAna/DataTree/interface/Names.h"
 
 ClassImp(mithep::PhotonIdMod)
@@ -17,36 +16,47 @@ mithep::PhotonIdMod::~PhotonIdMod()
 Bool_t
 mithep::PhotonIdMod::IsGood(mithep::Photon const& photon)
 {
-  fCutFlow->Fill(cAll); 
-  
-  if (photon.Pt() < fPtMin)
-    return false; 
+  fCutFlow->Fill(cAll);
 
-  fCutFlow->Fill(cPt); 
+  if (photon.Pt() < fPtMin)
+    return false;
+
+  fCutFlow->Fill(cPt);
 
   if (photon.AbsEta() > fEtaMax)
     return false;
 
-  fCutFlow->Fill(cEta); 
-    
-  //apply trigger matching      
+  fCutFlow->Fill(cEta);
+
+  if (GetApplyPixelVeto() && photon.HasPixelSeed())
+    return false;
+
+  if (GetApplyElectronVeto() && !PhotonTools::PassElectronVeto(&photon, GetElectrons()))
+    return false;
+
+  if (GetApplyCSafeElectronVeto() && !PhotonTools::PassElectronVetoConvRecovery(&photon, GetElectrons(), GetConversions(), GetBeamSpot()->At(0)))
+    return false;
+
+  fCutFlow->Fill(cElectronVeto);
+
+  //apply trigger matching
   if (fApplyTriggerMatching &&
       !PhotonTools::PassTriggerMatching(&photon, GetTrigObjects()))
-    return false; 
+    return false;
 
-  fCutFlow->Fill(cTriggerMatching);   
+  fCutFlow->Fill(cTriggerMatching);
 
-  //apply id cut 
+  //apply id cut
   if (!PassIdCut(photon))
-    return false;         
+    return false;
 
-  fCutFlow->Fill(cId); 
+  fCutFlow->Fill(cId);
 
-  //apply Isolation Cut 
+  //apply Isolation Cut
   if (!PassIsolationCut(photon))
     return false;
 
-  fCutFlow->Fill(cIsolation); 
+  fCutFlow->Fill(cIsolation);
 
   return true;
 }
@@ -54,18 +64,19 @@ mithep::PhotonIdMod::IsGood(mithep::Photon const& photon)
 void
 mithep::PhotonIdMod::IdBegin()
 {
-  fCutFlow->SetBins(nCuts, 0., double(nCuts)); 
-  TAxis* xaxis = fCutFlow->GetXaxis(); 
+  fCutFlow->SetBins(nCuts, 0., double(nCuts));
+  TAxis* xaxis = fCutFlow->GetXaxis();
   xaxis->SetBinLabel(cAll + 1, "All");
   xaxis->SetBinLabel(cPt + 1,  "Pt");
   xaxis->SetBinLabel(cEta + 1, "Eta");
+  xaxis->SetBinLabel(cElectronVeto + 1, "ElectronVeto");
   xaxis->SetBinLabel(cTriggerMatching + 1, "TriggerMatching");
-  xaxis->SetBinLabel(cId + 1,  "Id"); 
+  xaxis->SetBinLabel(cId + 1,  "Id");
   xaxis->SetBinLabel(cIsolation + 1, "Isolation");
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t 
+Bool_t
 mithep::PhotonIdMod::PassIdCut(Photon const& pho)
 {
   switch (fIdType) {
@@ -83,7 +94,7 @@ mithep::PhotonIdMod::PassIdCut(Photon const& pho)
 Bool_t
 mithep::PhotonIdMod::PassIsolationCut(Photon const& pho)
 {
-  switch (fIsoType) { 
+  switch (fIsoType) {
   case PhotonTools::kPhys14LooseIso:
   case PhotonTools::kPhys14MediumIso:
   case PhotonTools::kPhys14TightIso:

@@ -38,9 +38,11 @@ namespace mithep {
     ~IdMod();
 
     char const* GetInputName() const { return fInputName; }
-    char const* GetOutputName() const;
+    char const* GetOutputName() const { return fOutputName; }
+
     char const* GetTriggerObjectsName() const       { return fAuxInputNames[kTrigObjects]; }
-    char const* GetConversionBranchName() const     { return fAuxInputNames[kConversions]; }
+    char const* GetConversionsName() const          { return fAuxInputNames[kConversions]; }
+    char const* GetElectronsName() const            { return fAuxInputNames[kElectrons]; }
     char const* GetVerticesName() const             { return fAuxInputNames[kVertices]; }
     char const* GetBeamSpotName() const             { return fAuxInputNames[kBeamSpot]; }
     char const* GetPFCandidatesName() const         { return fAuxInputNames[kPFCandidates]; }
@@ -56,9 +58,11 @@ namespace mithep {
     Double_t GetEtaMax() const { return fEtaMax; }
 
     void SetInputName(char const* n) { fInputName = n; }
-    void SetOutputName(char const* n);
+    void SetOutputName(char const* n) { fOutputName = n; }
+
     void SetTriggerObjectsName(const char* n)       { fAuxInputNames[kTrigObjects] = n; }
     void SetConversionsName(const char* n)          { fAuxInputNames[kConversions] = n; }
+    void SetElectronsName(const char* n)            { fAuxInputNames[kElectrons] = n; }
     void SetVertexName(const char* n)               { fAuxInputNames[kVertices] = n; }
     void SetBeamSpotName(const char* n)             { fAuxInputNames[kBeamSpot] = n; }
     void SetPFCandidatesName(const char* n)         { fAuxInputNames[kPFCandidates] = n; } 
@@ -85,6 +89,7 @@ namespace mithep {
     enum AuxInput {
       kTrigObjects,
       kConversions,
+      kElectrons,
       kVertices,
       kBeamSpot,
       kPFCandidates,
@@ -102,6 +107,8 @@ namespace mithep {
     { return GetAuxInput<mithep::TriggerObjectCol>(kTrigObjects); }
     mithep::DecayParticleCol const* GetConversions()
     { return GetAuxInput<mithep::DecayParticleCol>(kConversions); }
+    mithep::ElectronCol const* GetElectrons()
+    { return GetAuxInput<mithep::ElectronCol>(kElectrons); }
     mithep::VertexCol const* GetVertices()
     { return GetAuxInput<mithep::VertexCol>(kVertices); }
     mithep::BeamSpotCol const* GetBeamSpot()
@@ -127,6 +134,7 @@ namespace mithep {
     TH1D* fCutFlow = 0;
 
     TString        fInputName = ""; // input collection of objects to be Id'ed
+    TString        fOutputName = ""; // input collection of objects to be Id'ed
     TString        fAuxInputNames[nAuxInputs] = {};
     TObject const* fAuxInputs[nAuxInputs] = {};
 
@@ -147,6 +155,7 @@ namespace mithep {
     fFlags(32, TString(name) + "Flags")
   {
     fAuxInputNames[kConversions] = Names::gkMvfConversionBrn;
+    fAuxInputNames[kElectrons] = Names::gkElectronBrn;
     fAuxInputNames[kVertices] = ModNames::gkGoodVertexesName;
     fAuxInputNames[kBeamSpot] = Names::gkBeamSpotBrn;
     fAuxInputNames[kPFCandidates] = Names::gkPFCandidatesBrn;
@@ -159,34 +168,16 @@ namespace mithep {
   }
 
   template<class O>
-  char const*
-  mithep::IdMod<O>::GetOutputName() const
-  {
-    if (fIsFilterMode)
-      return fGoodObjects.GetName();
-    else
-      return fFlags.GetName();
-  }
-
-  template<class O>
-  void
-  mithep::IdMod<O>::SetOutputName(char const* n)
-  {
-    if (fIsFilterMode)
-      return fGoodObjects.SetName(n);
-    else
-      return fFlags.SetName(n);
-  }
-
-  template<class O>
   void
   mithep::IdMod<O>::SlaveBegin()
   {
     if (fIsFilterMode) {
+      fGoodObjects.SetName(fOutputName);
       if (!PublishObj(&fGoodObjects))
         SendError(kAbortAnalysis, "SlaveBegin", "Cannot publish output");
     }
     else {
+      fFlags.SetName(fOutputName);
       if (!PublishObj(&fFlags))
         SendError(kAbortAnalysis, "SlaveBegin", "Cannot publish output");
     }

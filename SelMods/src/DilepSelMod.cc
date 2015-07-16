@@ -44,7 +44,7 @@ void DilepSelMod::Process()
 
   if (GetFillHist()) fNAccCounters->Fill(0);
 
-  const ParticleCol *leptons = GetObjThisEvt<ParticleCol>(fCleanLeptonsName);
+  const ParticleCol *leptons = GetObject<ParticleCol>(fCleanLeptonsName);
   if (!leptons) {
     SkipEvent();
     return;

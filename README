@@ -7,12 +7,17 @@ Package for more specific MitPhysics tools
 
  - this package also relies on some data that are not stored in GITHUB
    as they are too large and on some packages as fastjet and its
-   contributions
- - please bootstrap this package, therefore do:
+   contributions. The environment variable MIT_DATA should point
+   to the directory where such static big data are located. By default
+   it should point to /cvmfs/cvmfs.cmsaf.mit.edu/hidsk0001/cmsprod/cms/MitPhysics/data.
 
-   git clone -b $MIT_TAG https://github.com/cpausmit/MitPhysics.git
-   ./MitPhysics/bin/setup.sh
+Documentation for specific modules
+==================================
 
- - data will be pulled in and are automatically unpacked in the expected
-   directory: MitPhysics/data
- - $CMSSW_BASE/config/toolbox/... will be updated
+[JetIdMod]
+Input file names for PU jet Id parameters (MVA weights and cuts) must be provided.
+The default configuration is as follows:
+MVA weights:
+ - Pre-run2 AK4PF -> MIT_DATA/TMVAClassificationCategory_JetID_MET_53X_Dec2012.weights.xml
+ - Pre-run2 AK4PFCHS -> MIT_DATA/TMVAClassification_5x_BDT_chsFullPlusRMS.weights.xml
+Cuts: MIT_DATA/jetIDCuts_121221.dat

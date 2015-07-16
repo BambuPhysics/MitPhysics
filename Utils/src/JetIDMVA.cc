@@ -1,637 +1,443 @@
-#include "FWCore/PythonParameterSet/interface/MakeParameterSets.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
 #include "MitPhysics/Utils/interface/JetIDMVA.h"
 #include "MitPhysics/Utils/interface/JetTools.h"
-#include "MitAna/DataTree/interface/StableData.h"
-#include <TFile.h>
-#include <TRandom3.h>
-#include <TSystem.h>
+
 #include "TMVA/Tools.h"
 #include "TMVA/Reader.h"
 
+#include <stdexcept>
 
 ClassImp(mithep::JetIDMVA)
 
 using namespace mithep;
 
-//--------------------------------------------------------------------------------------------------
+BitMask8 JetIDMVA::fgCorrectionMask(Long64_t(0x7)); // L1+L2+L3
+
 JetIDMVA::JetIDMVA() :
-  fJetPtMin(0.)  , //We need to lower this
-  fDZCut   (0.2),
-  fLowPtMethodName ("JetIDMVALowPt" ),
-  fHighPtMethodName("JetIDMVAHighPt"),
-  fIsInitialized(kFALSE),
-  fNVtx     (0),
-  fJPt1     (0),
-  fJEta1    (0),
-  fJPhi1    (0),
-  fJD01     (0),
-  fJDZ1     (0),
-  fBeta     (0),
-  fBetaStar (0),
-  fNCharged (0),
-  fNNeutrals(0),
-  fDRMean   (0),
-  fPtD      (0),
-  fFrac01   (0),
-  fFrac02   (0),
-  fFrac03   (0),
-  fFrac04   (0),
-  fFrac05   (0),
-  fDR2Mean  (0)
-{    
-  fReader = 0;
+  fVarNames{   // don't really need to have this member variable, but is convenient
+    "nvtx",
+    "jetPt",
+    "jetEta",
+    "jetPhi",
+    "d0",
+    "dZ",
+    "beta",
+    "betaStar",
+    "nCharged",
+    "nNeutrals",
+    "dRMean",
+    "ptD",
+    "frac01",
+    "frac02",
+    "frac03",
+    "frac04",
+    "frac05",
+    "dR2Mean"
+  }
+{
+  assert(fVarNames[nVariables - 1] != ""); // checking for missing lines
 }
-//--------------------------------------------------------------------------------------------------
-JetIDMVA::~JetIDMVA() {
 
+JetIDMVA::~JetIDMVA()
+{
   delete fReader;
-  delete fLowPtReader;
 }
 
-//--------------------------------------------------------------------------------------------------
-void JetIDMVA::Initialize( JetIDMVA::CutType iCutType,
-			   TString iLowPtWeights,
-			   TString iHighPtWeights, 
-			   JetIDMVA::MVAType iType,
-			   TString iCutFileName,bool i42) 
-{ 
-  if (iLowPtWeights.Length() == 0 || iHighPtWeights.Length() == 0 || iCutFileName.Length() == 0) {
-    // default
-    TString dataDir(gSystem->Getenv("MIT_DATA"));
-    if (dataDir.Length() == 0)
-      throw std::runtime_error("MIT_DATA environment is not set.");
+void
+JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
+                     TString const& weightsConfig, TString const& cutConfig)
+{
+  if (weightsConfig.Length() == 0 || cutConfig.Length() == 0)
+    throw std::runtime_error("JetIDMVA missing necessary input files");
 
-    if (iLowPtWeights.Length() == 0)
-      iLowPtWeights = dataDir + "/mva_JetID_lowpt.weights.xml";
-    if (iHighPtWeights.Length() == 0)
-      iHighPtWeights = dataDir + "/mva_JetID_highpt.weights.xml";
-    if (iCutFileName.Length() == 0)
-      iCutFileName = dataDir + "/JetIDMVA_JetIdParams.py";
+  if (fIsInitialized)
+    throw std::runtime_error("Attempting to initialize JetIDMVA twice");
+
+  fType = mvaType;
+
+  TString lCutId;
+  switch (fType) {
+  case kBaseline:
+    lCutId = "Baseline";
+    break;
+  case k42:
+    lCutId = "PuJetIdOptMVA_wp";
+    break;
+  case k52:
+    lCutId = "full_5x_wp";
+    break;
+  case kCut:
+    lCutId = "PuJetIdCutBased_wp";
+    break;
+  case k53:
+    lCutId = "full_53x_wp";
+    break;
+  case k53CHS:
+  case k53BDTCHSFullPlusRMS:
+    lCutId = "full_53x_chs_wp";
+    break;
+  case k53MET:
+    lCutId = "met_53x_wp";
+    break;
+  case k53METFull:
+    lCutId = "metfull_53x_wp";
+    break;
+  default:
+     lCutId = "default";
+    break;
   }
-  
-  fIsInitialized = kTRUE;
-  fType          = iType;
-  fCutType       = iCutType;
-  f42            = i42;
 
-  std::string lCutId = "JetIdParams";
-  if(fType == k42)     lCutId = "PuJetIdOptMVA_wp";
-  if(fType == k52)     lCutId = "full_5x_wp";
-  if(fType == kCut)    lCutId = "PuJetIdCutBased_wp";
-  if(fType == k53)     lCutId = "full_53x_wp";
-  if(fType == k53MET)  lCutId = "met_53x_wp";
-
- //Load Cut Matrix
-  edm::ParameterSet lDefConfig = edm::readPSetsFrom(iCutFileName.Data())->getParameter<edm::ParameterSet>("JetIdParams");
-  edm::ParameterSet lConfig    = edm::readPSetsFrom(iCutFileName.Data())->getParameter<edm::ParameterSet>(lCutId);
-  std::string lCutType = "Tight";
-  if(fCutType == kMedium) lCutType = "Medium";
-  if(fCutType == kLoose ) lCutType = "Loose";
-  if(fCutType == kMET   ) lCutType = "MET";
-  if(fType != kCut) { 
-    std::string lLowPtCut = "MET";
-    std::vector<double> lPt010  = lDefConfig.getParameter<std::vector<double> >(("Pt010_" +lLowPtCut).c_str());
-    std::vector<double> lPt1020 = lConfig.getParameter<std::vector<double> >(("Pt1020_"+lCutType).c_str());
-    std::vector<double> lPt2030 = lConfig.getParameter<std::vector<double> >(("Pt2030_"+lCutType).c_str());
-    std::vector<double> lPt3050 = lConfig.getParameter<std::vector<double> >(("Pt3050_"+lCutType).c_str());
-    for(int i0 = 0; i0 < 4; i0++) fMVACut[0][i0] = lPt010 [i0];
-    for(int i0 = 0; i0 < 4; i0++) fMVACut[1][i0] = lPt1020[i0];
-    for(int i0 = 0; i0 < 4; i0++) fMVACut[2][i0] = lPt2030[i0];
-    for(int i0 = 0; i0 < 4; i0++) fMVACut[3][i0] = lPt3050[i0];
+  TString lCutType;
+  switch (cutType) {
+  case kTight:
+    lCutType = "Tight";
+    break;
+  case kMedium:
+    lCutType = "Medium";
+    break;
+  case kLoose:
+    lCutType = "Loose";
+    break;
+  case kMET:
+    lCutType = "MET";
+    break;
+  default:
+    break;
   }
-  if(fType == kCut) { 
-    for(int i0 = 0; i0 < 2; i0++) { 
-      std::string lFullCutType = lCutType;
-      if(i0 == 0) lFullCutType = "BetaStar"+ lCutType; 
-      if(i0 == 1) lFullCutType = "RMS"     + lCutType; 
-      std::vector<double> pt010  = lConfig.getParameter<std::vector<double> >(("Pt010_" +lFullCutType).c_str());
-      std::vector<double> pt1020 = lConfig.getParameter<std::vector<double> >(("Pt1020_"+lFullCutType).c_str());
-      std::vector<double> pt2030 = lConfig.getParameter<std::vector<double> >(("Pt2030_"+lFullCutType).c_str());
-      std::vector<double> pt3050 = lConfig.getParameter<std::vector<double> >(("Pt3050_"+lFullCutType).c_str());
-      if(i0 == 0) { 
-        for(int i2 = 0; i2 < 4; i2++) fBetaStarCut[0][i2] = pt010 [i2];
-        for(int i2 = 0; i2 < 4; i2++) fBetaStarCut[1][i2] = pt1020[i2];
-        for(int i2 = 0; i2 < 4; i2++) fBetaStarCut[2][i2] = pt2030[i2];
-        for(int i2 = 0; i2 < 4; i2++) fBetaStarCut[3][i2] = pt3050[i2];
-      }
-      if(i0 == 1) { 
-        for(int i2 = 0; i2 < 4; i2++) fRMSCut[0][i2] = pt010 [i2];
-        for(int i2 = 0; i2 < 4; i2++) fRMSCut[1][i2] = pt1020[i2];
-        for(int i2 = 0; i2 < 4; i2++) fRMSCut[2][i2] = pt2030[i2];
-        for(int i2 = 0; i2 < 4; i2++) fRMSCut[3][i2] = pt3050[i2];
-      }
-    }
+
+  if (!InitializeCuts(cutConfig, lCutId, lCutType))
+    throw std::runtime_error("JetIDMVA cut values not set!");
+
+  if (fType == kCut) {
+    fIsInitialized = kTRUE;
     return;
   }
-  
-  
-  fLowPtReader   = 0;
-  fLowPtReader   = new TMVA::Reader( "!Color:!Silent:Error" );  
-  fLowPtReader->AddVariable( "nvtx"     , &fNVtx      ); 
-  if(fType != k53) fLowPtReader->AddVariable( "jetPt"    , &fJPt1      );  
-  if(fType != k53) fLowPtReader->AddVariable( "jetEta"   , &fJEta1     );
-  if(fType != k53) fLowPtReader->AddVariable( "jetPhi"   , &fJPhi1     );             
-  fLowPtReader->AddVariable( "dZ"       , &fJDZ1      );
-  if(fType != k53 && fType != k53MET) fLowPtReader->AddVariable( "d0"       , &fJD01      );
-  fLowPtReader->AddVariable( "beta"     , &fBeta      );
-  fLowPtReader->AddVariable( "betaStar" , &fBetaStar  );
-  fLowPtReader->AddVariable( "nCharged" , &fNCharged  );
-  fLowPtReader->AddVariable( "nNeutrals", &fNNeutrals );
-  if(fType != k53 && fType != k53MET) fLowPtReader->AddVariable( "dRMean"   , &fDRMean    );
-  if(fType == k53 || fType == k53MET) fLowPtReader->AddVariable( "dR2Mean"  , &fDR2Mean   );
-  if(fType == k53 || fType == k53MET) fLowPtReader->AddVariable( "ptD"      , &fPtD       );
-  fLowPtReader->AddVariable( "frac01"   , &fFrac01    );
-  fLowPtReader->AddVariable( "frac02"   , &fFrac02    );
-  fLowPtReader->AddVariable( "frac03"   , &fFrac03    );
-  fLowPtReader->AddVariable( "frac04"   , &fFrac04    );
-  fLowPtReader->AddVariable( "frac05"   , &fFrac05    );
-  if(fType == k53) fLowPtReader->AddSpectator( "jetPt"   , &fJPt1      );  
-  if(fType == k53) fLowPtReader->AddSpectator( "jetEta"  , &fJEta1     );
-  if(fType == k53) fLowPtReader->AddSpectator( "jetPhi"  , &fJPhi1     );  
-  
-  fReader        = 0;
-  fReader        = new TMVA::Reader( "!Color:!Silent:Error" );  
-  if (fType == kBaseline) {
-    fReader->AddVariable( "nvtx"     , &fNVtx      ); 
-    fReader->AddVariable( "jetPt"    , &fJPt1      );  
-    fReader->AddVariable( "jetEta"   , &fJEta1     );
-    fReader->AddVariable( "jetPhi"   , &fJPhi1     );             
-    fReader->AddVariable( "dZ"       , &fJDZ1      );
-    fReader->AddVariable( "d0"       , &fJD01      );
-    fReader->AddVariable( "beta"     , &fBeta      );
-    fReader->AddVariable( "betaStar" , &fBetaStar  );
-    fReader->AddVariable( "nCharged" , &fNCharged  );
-    fReader->AddVariable( "nNeutrals", &fNNeutrals );
-    fReader->AddVariable( "dRMean"   , &fDRMean    );
-    fReader->AddVariable( "frac01"   , &fFrac01    );
-    fReader->AddVariable( "frac02"   , &fFrac02    );
-    fReader->AddVariable( "frac03"   , &fFrac03    );
-    fReader->AddVariable( "frac04"   , &fFrac04    );
-    fReader->AddVariable( "frac05"   , &fFrac05    );
-  }
-  if (fType == k42) {
-    fReader->AddVariable( "frac01"   , &fFrac01    );
-    fReader->AddVariable( "frac02"   , &fFrac02    );
-    fReader->AddVariable( "frac03"   , &fFrac03    );
-    fReader->AddVariable( "frac04"   , &fFrac04    );
-    fReader->AddVariable( "frac05"   , &fFrac05    );
-    fReader->AddVariable( "nvtx"     , &fNVtx      ); 
-    fReader->AddVariable( "nNeutrals", &fNNeutrals );
-    fReader->AddVariable( "beta"     , &fBeta      );
-    fReader->AddVariable( "betaStar" , &fBetaStar  );
-    fReader->AddVariable( "dZ"       , &fJDZ1      );
-    fReader->AddVariable( "nCharged" , &fNCharged  );
-    fReader->AddSpectator( "jetPt"    , &fJPt1      );  
-    fReader->AddSpectator( "jetEta"   , &fJEta1     );
-  }
-  if (fType == k52) {
-    fReader->AddVariable( "frac01"   , &fFrac01    );
-    fReader->AddVariable( "frac02"   , &fFrac02    );
-    fReader->AddVariable( "frac03"   , &fFrac03    );
-    fReader->AddVariable( "frac04"   , &fFrac04    );
-    fReader->AddVariable( "frac05"   , &fFrac05    );
-    fReader->AddVariable( "dR2Mean"  , &fDR2Mean   );
-    fReader->AddVariable( "nvtx"     , &fNVtx      ); 
-    fReader->AddVariable( "nNeutrals", &fNNeutrals );
-    fReader->AddVariable( "beta"     , &fBeta      );
-    fReader->AddVariable( "betaStar" , &fBetaStar  );
-    fReader->AddVariable( "dZ"       , &fJDZ1      );
-    fReader->AddVariable( "nCharged" , &fNCharged  );
-    fReader->AddSpectator( "jetPt"    , &fJPt1      );  
-    fReader->AddSpectator( "jetEta"   , &fJEta1     );
-  }
-  if (fType == k53) {
-    fReader->AddVariable( "nvtx"     , &fNVtx      ); 
-    fReader->AddVariable( "dZ"       , &fJDZ1      );
-    fReader->AddVariable( "beta"     , &fBeta      );
-    fReader->AddVariable( "betaStar" , &fBetaStar  );
-    fReader->AddVariable( "nCharged" , &fNCharged  );
-    fReader->AddVariable( "nNeutrals", &fNNeutrals );
-    fReader->AddVariable( "dR2Mean"  , &fDR2Mean   );
-    fReader->AddVariable( "ptD"      , &fPtD       );
-    fReader->AddVariable( "frac01"   , &fFrac01    );
-    fReader->AddVariable( "frac02"   , &fFrac02    );
-    fReader->AddVariable( "frac03"   , &fFrac03    );
-    fReader->AddVariable( "frac04"   , &fFrac04    );
-    fReader->AddVariable( "frac05"   , &fFrac05    );
-    fReader->AddSpectator( "jetPt"   , &fJPt1      );  
-    fReader->AddSpectator( "jetEta"  , &fJEta1     );
-    fReader->AddSpectator( "jetPhi"  , &fJPhi1     );  
-  } 
-  if (fType == k53MET) {
-    fReader->AddVariable( "nvtx"     , &fNVtx      ); 
-    fReader->AddVariable( "jetPt"    , &fJPt1      );  
-    fReader->AddVariable( "jetEta"   , &fJEta1     );
-    fReader->AddVariable( "jetPhi"   , &fJPhi1     );  
-    fReader->AddVariable( "dZ"       , &fJDZ1      );
-    fReader->AddVariable( "beta"     , &fBeta      );
-    fReader->AddVariable( "betaStar" , &fBetaStar  );
-    fReader->AddVariable( "nCharged" , &fNCharged  );
-    fReader->AddVariable( "nNeutrals", &fNNeutrals );
-    fReader->AddVariable( "dR2Mean"  , &fDR2Mean   );
-    fReader->AddVariable( "ptD"      , &fPtD       );
-    fReader->AddVariable( "frac01"   , &fFrac01    );
-    fReader->AddVariable( "frac02"   , &fFrac02    );
-    fReader->AddVariable( "frac03"   , &fFrac03    );
-    fReader->AddVariable( "frac04"   , &fFrac04    );
-    fReader->AddVariable( "frac05"   , &fFrac05    );
-  } 
-  if (fType == kQGP) {
-    fReader->AddVariable( "nvtx"      , &fNVtx       ); 
-    fReader->AddVariable( "jetPt"     , &fJPt1       );  
-    fReader->AddVariable( "jetEta"    , &fJEta1      );
-    fReader->AddVariable( "jetPhi"    , &fJPhi1      );             
-    fReader->AddVariable( "beta"      , &fBeta      );
-    fReader->AddVariable( "betaStar"  , &fBetaStar  );
-    fReader->AddVariable( "nParticles", &fNNeutrals );
-    fReader->AddVariable( "nCharged"  , &fNCharged  );
-    fReader->AddVariable( "dRMean"    , &fDRMean    );
-    fReader->AddVariable( "ptD"       , &fPtD       );
-    fReader->AddVariable( "frac01"    , &fFrac01    );
-    fReader->AddVariable( "frac02"    , &fFrac02    );
-    fReader->AddVariable( "frac03"    , &fFrac03    );
-    fReader->AddVariable( "frac04"    , &fFrac04    );
-    fReader->AddVariable( "frac05"    , &fFrac05    );
+
+  fReader        = new TMVA::Reader("!Color:!Silent:Error" );
+
+  std::vector<unsigned> variables;
+  std::vector<unsigned> spectators;
+    
+  switch (fType) {
+  case kBaseline:
+    variables = {kNvtx, kJetPt, kJetEta, kJetPhi, kDZ, kD0, kBeta, kBetaStar,
+                 kNCharged, kNNeutrals, kDRMean, kFrac01, kFrac02, kFrac03, kFrac04, kFrac05};
+    break;
+  case k42:
+    variables = {kFrac01, kFrac02, kFrac03, kFrac04, kFrac05, kNvtx, kNNeutrals,
+                 kBeta, kBetaStar, kDZ, kNCharged};
+    spectators = {kJetPt, kJetEta};
+    break;
+  case k52:
+    variables = {kFrac01, kFrac02, kFrac03, kFrac04, kFrac05, kDR2Mean, kNvtx, kNNeutrals,
+                 kBeta, kBetaStar, kDZ, kNCharged};
+    spectators = {kJetPt, kJetEta};
+    break;
+  case k53:
+  case k53CHS:
+    variables = {kNvtx, kDZ, kBeta, kBetaStar, kNCharged, kNNeutrals, kDR2Mean, kPtD,
+                 kFrac01, kFrac02, kFrac03, kFrac04, kFrac05};
+    spectators = {kJetPt, kJetEta, kJetPhi};
+    break;
+  case k53BDTCHSFullPlusRMS:
+    variables = {kFrac01, kFrac02, kFrac03, kFrac04, kFrac05, kDR2Mean, kNvtx, kNNeutrals,
+                 kBeta, kBetaStar, kDZ, kNCharged};
+    spectators = {kJetPt, kJetEta};
+    break;
+  case k53MET:
+    variables = {kNvtx, kJetPt, kJetEta, kJetPhi, kDZ, kBeta, kBetaStar, kNCharged, kNNeutrals,
+                 kDR2Mean, kPtD, kFrac01, kFrac02, kFrac03, kFrac04, kFrac05};
+    break;
+  case kQGP:
+    variables = {kNvtx, kJetPt, kJetEta, kJetPhi, kBeta, kBetaStar, kNCharged, kNNeutrals,
+                 kDR2Mean, kPtD, kFrac01, kFrac02, kFrac03, kFrac04, kFrac05};
+    break;
+  default:
+    break;
   }
 
-  fLowPtReader->BookMVA(fLowPtMethodName  , iLowPtWeights );
-  fReader->BookMVA(fHighPtMethodName , iHighPtWeights );
-  std::cout << "Jet ID MVA Initialization\n";
-  std::cout << "MethodName : " << fLowPtMethodName << " , type == " << fType << std::endl;
+  for (auto iV : variables)
+    fReader->AddVariable(fVarNames[iV], fVariables + iV);
+  for (auto iS : spectators)
+    fReader->AddSpectator(fVarNames[iS], fVariables + iS);
 
+  fReader->BookMVA(fMethodName, weightsConfig);
+
+  fIsInitialized = kTRUE;
 }
 
 //--------------------------------------------------------------------------------------------------
-Double_t JetIDMVA::MVAValue(    
-			    Float_t iNPV    ,
-			    Float_t iJPt1   ,
-			    Float_t iJEta1  ,
-			    Float_t iJPhi1  ,
-			    Float_t iJD01   ,
-			    Float_t iJDZ1   ,
-			    Float_t iBeta   ,
-			    Float_t iBetaStar,
-			    Float_t iNCharged,
-			    Float_t iNNeutrals,
-			    Float_t iDRMean  ,
-			    Float_t iFrac01  ,
-			    Float_t iFrac02  ,
-			    Float_t iFrac03  ,
-			    Float_t iFrac04  ,
-			    Float_t iFrac05  ,
-			    Float_t iDR2Mean ,
-			    Float_t iPtD
-			    ){
-  
-  if(!fIsInitialized) { 
-    std::cout << "Error: JetIDMVA not properly initialized.\n"; 
-    return -9999;
-  }
-  
-  fNVtx      = iNPV;
-  fJPt1      = iJPt1;
-  fJEta1     = iJEta1;
-  fJPhi1     = fJPhi1;
-  fJD01      = iJD01;
-  fJDZ1      = iJDZ1;
-  fBeta      = iBeta;
-  fBetaStar  = iBetaStar;
-  fNCharged  = iNCharged;
-  fNNeutrals = iNNeutrals;
-  fDRMean    = iDRMean;
-  fPtD       = iPtD;
-  fFrac01    = iFrac01;
-  fFrac02    = iFrac02;
-  fFrac03    = iFrac03;
-  fFrac04    = iFrac04;
-  fFrac05    = iFrac05;
-  fDR2Mean   = iDR2Mean;
+void
+JetIDMVA::Initialize(JetIDMVA::CutType iCutType,
+                     TString const& iLowPtWeights,
+                     TString const& iHighPtWeights,
+                     JetIDMVA::MVAType iType,
+                     TString const& iCutFileName)
+{
+  Initialize(iCutType, iType, iHighPtWeights, iCutFileName);
+}
 
-  Double_t lMVA = -9999;  
-  if(iJPt1 < 10) lMVA = fLowPtReader->EvaluateMVA( fLowPtMethodName  );
-  if(iJPt1 > 10) lMVA = fReader->EvaluateMVA( fHighPtMethodName );
-  return lMVA;
-}
 //--------------------------------------------------------------------------------------------------
-Bool_t JetIDMVA::passPt(const PFJet *iJet, FactorizedJetCorrector *iJetCorrector,
-			const PileupEnergyDensityCol *iPileupEnergyDensity,
-			UInt_t algo) { 
-  if(iJetCorrector == 0) return (iJet->Pt() > fJetPtMin);
-  double lPt  = correctedPt(iJet,                  iJetCorrector,iPileupEnergyDensity,algo);
-  if(lPt < fJetPtMin)                         return false; 
-  return true;
+Bool_t
+JetIDMVA::passCut(const PFJet *iJet, const Vertex *iVertex, const VertexCol *iVertices)
+{
+  MVAType currentType = fType;
+  fType = kCut;
+  Bool_t res = pass(iJet, iVertex, iVertices);
+  fType = currentType;
+  return res;
 }
+
 //--------------------------------------------------------------------------------------------------
-Bool_t JetIDMVA::pass(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices,
-		      FactorizedJetCorrector *iJetCorrector,
-		      const PileupEnergyDensityCol *iPileupEnergyDensity,
-		      UInt_t algo) { 
-  
-  if(!JetTools::passPFLooseId(iJet))                 return false;
-  if(fabs(iJet->Eta()) > 4.99)                       return false;
-  
-  double lMVA = MVAValue   (iJet,iVertex,iVertices,iJetCorrector,iPileupEnergyDensity);
-  double lPt  = correctedPt(iJet,                  iJetCorrector,iPileupEnergyDensity,algo);
-  if(lPt < fJetPtMin)                         return false; 
-  
-  int lPtId = 0; 
-  if(lPt > 10 && lPt < 20) lPtId = 1;
-  if(lPt > 20 && lPt < 30) lPtId = 2;
-  if(lPt > 30                   ) lPtId = 3;
-  
+Bool_t
+JetIDMVA::pass(const PFJet *iJet, const Vertex *iVertex, const VertexCol *iVertices)
+{
+  // A PF Jet with L1+L2+L3 corrections is expected.
+  if (iJet->Corrections() != fgCorrectionMask)
+    throw std::runtime_error("JetIDMVA works only with L1+L2+L3 corrected jets");
+
+  double lEta = iJet->AbsEta();
+  if (lEta > 4.99)
+    return false;
+
+  if(!JetTools::passPFLooseId(iJet))
+    return false;
+
+  double lPt = iJet->Pt(); // use corrected Pt
+  int lPtId = 0;
+  if (lPt > 10. && lPt < 20.)
+    lPtId = 1;
+  else if (lPt < 30.)
+    lPtId = 2;
+  else
+    lPtId = 3;
+
   int lEtaId = 0;
-  if(fabs(iJet->Eta()) > 2.5  && fabs(iJet->Eta()) < 2.75) lEtaId = 1; 
-  if(fabs(iJet->Eta()) > 2.75 && fabs(iJet->Eta()) < 3.0 ) lEtaId = 2; 
-  if(fabs(iJet->Eta()) > 3.0  && fabs(iJet->Eta()) < 5.0 ) lEtaId = 3; 
-  
-  double lMVACut = fMVACut[lPtId][lEtaId];
-  if(lMVA < lMVACut) return false;
-  return true;
-}
-//--------------------------------------------------------------------------------------------------
-Bool_t JetIDMVA::passCut(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices) { 
-  if(!JetTools::passPFLooseId(iJet))                 return false;
-  if(iJet->Pt()        < fJetPtMin) return false; 
-  if(fabs(iJet->Eta()) > 4.99)      return false;
-  //if(fType == kCut) passCut(iJet,iVertex,iVertices);
+  if (lEta > 2.5 && lEta < 2.75)
+    lEtaId = 1;
+  else if (lEta < 3.)
+    lEtaId = 2;
+  else
+    lEtaId = 3;
 
-  double lPt = iJet->Pt();
-  int lPtId = 0; 
-  if(lPt > 10 && lPt < 20) lPtId = 1;
-  if(lPt > 20 && lPt < 30) lPtId = 2;
-  if(lPt > 30                   ) lPtId = 3;
-  
-  int lEtaId = 0;
-  if(fabs(iJet->Eta()) > 2.5  && fabs(iJet->Eta()) < 2.75) lEtaId = 1; 
-  if(fabs(iJet->Eta()) > 2.75 && fabs(iJet->Eta()) < 3.0 ) lEtaId = 2; 
-  if(fabs(iJet->Eta()) > 3.0  && fabs(iJet->Eta()) < 5.0 ) lEtaId = 3; 
-  float betaStarModified = JetTools::betaStarClassic(iJet,iVertex,iVertices)/log(iVertices ->GetEntries()-0.64);
-  float dR2Mean          = JetTools::dR2Mean(iJet,-1);
-  
-  if(betaStarModified < fBetaStarCut[lPtId][lEtaId] && 
-     dR2Mean          < fRMSCut     [lPtId][lEtaId]
-     ) return true;
-  
+  if (fType == kCut) {
+    float betaStarModified = JetTools::betaStarClassic(iJet,iVertex,iVertices)/log(iVertices ->GetEntries()-0.64);
+    float dR2Mean          = JetTools::dR2Mean(iJet,-1);
+
+    if(betaStarModified < fBetaStarCut[lPtId][lEtaId] &&
+       dR2Mean          < fRMSCut[lPtId][lEtaId])
+      return true;
+  }
+  else {
+    double lMVA = MVAValue(iJet, iVertex, iVertices);
+    double lMVACut = fMVACut[lPtId][lEtaId];
+    if (lMVA > lMVACut)
+      return true;
+  }
+
   return false;
 }
+
 //--------------------------------------------------------------------------------------------------
-Bool_t JetIDMVA::pass(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices) { 
-  if(!JetTools::passPFLooseId(iJet))                 return false;
-  if(iJet->Pt()        < fJetPtMin) return false; 
-  if(fabs(iJet->Eta()) > 4.99)      return false;
-  if(fType == kCut) return passCut(iJet,iVertex,iVertices);
-  double lMVA = MVAValue(iJet,iVertex,iVertices);
-  
-  int lPtId = 0; 
-  if(iJet->Pt() > 10 && iJet->Pt() < 20) lPtId = 1;
-  if(iJet->Pt() > 20 && iJet->Pt() < 30) lPtId = 2;
-  if(iJet->Pt() > 30                   ) lPtId = 3;
-  
-  int lEtaId = 0;
-  if(fabs(iJet->Eta()) > 2.5  && fabs(iJet->Eta()) < 2.75) lEtaId = 1; 
-  if(fabs(iJet->Eta()) > 2.75 && fabs(iJet->Eta()) < 3.0 ) lEtaId = 2; 
-  if(fabs(iJet->Eta()) > 3.0  && fabs(iJet->Eta()) < 5.0 ) lEtaId = 3; 
-  
-  double lMVACut = fMVACut[lPtId][lEtaId];
-  if(lMVA < lMVACut) return false;
-  return true;
-  //if(lMVA < -0.8)                            return false;
-  //if(lMVA < -0.5 && fabs(iJet->Eta()) > 3.0) return false;
-  //if(iJet->Pt() < fJetPtMin && iJet->TrackCountingHighEffBJetTagsDisc() == -100) return false; //This line is a bug in the Met training
-  //if( fabs(JetTools::impactParameter(iJet,iVertex,true)) < 0.2) return true;
-}
-//--------------------------------------------------------------------------------------------------
-Double_t JetIDMVA::MVAValue(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices, //Vertex here is the PV
-			    FactorizedJetCorrector *iJetCorrector,
-			    const PileupEnergyDensityCol *iPileupEnergyDensity,
-			    Bool_t printDebug) {
-  
-  if (!fIsInitialized) { 
-    std::cout << "Error: JetIDMVA not properly initialized.\n"; 
-    return -9999;
-  }
-  if(!JetTools::passPFLooseId(iJet)) return -2.;
+Double_t
+JetIDMVA::MVAValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is the PV
+                   const VertexCol *iVertices,
+                   Bool_t printDebug)
+{
+  if (!fIsInitialized)
+    throw std::runtime_error("Error: JetIDMVA not properly initialized.");
+
+  // A PF Jet with L1+L2+L3 corrections is expected.
+  if (iJet->Corrections() != fgCorrectionMask)
+    throw std::runtime_error("JetIDMVA works only with L1+L2+L3 corrected jets");
+
+  if (!JetTools::passPFLooseId(iJet))
+    return -2.;
 
   //set all input variables
-  fNVtx      = iVertices->GetEntries();
-  fJPt1      = correctedPt(iJet,iJetCorrector,iPileupEnergyDensity);
-  fJEta1     = iJet->RawMom().Eta();
-  fJPhi1     = iJet->RawMom().Phi();
-  fJD01      = JetTools::impactParameter(iJet,iVertex);  
-  fJDZ1      = JetTools::impactParameter(iJet,iVertex,true);
-  fBeta      = JetTools::Beta(iJet,iVertex,fDZCut);
-  fBetaStar  = JetTools::betaStar(iJet,iVertex,iVertices,fDZCut);
-  fNCharged  = iJet->ChargedMultiplicity();
-  fNNeutrals = iJet->NeutralMultiplicity();
-
-  fDRMean    = JetTools::dRMean(iJet,-1);
-  fDR2Mean   = JetTools::dR2Mean(iJet,-1);
-  fPtD       = JetTools::W(iJet,-1,0);  
-  fFrac01    = JetTools::frac  (iJet,0.1,0. ,-1);
-  fFrac02    = JetTools::frac  (iJet,0.2,0.1,-1);
-  fFrac03    = JetTools::frac  (iJet,0.3,0.2,-1);
-  fFrac04    = JetTools::frac  (iJet,0.4,0.3,-1);
-  fFrac05    = JetTools::frac  (iJet,0.5,0.4,-1);
+  fVariables[kNvtx]      = iVertices->GetEntries();
+  fVariables[kJetPt]     = iJet->Pt();
+  fVariables[kJetEta]    = iJet->Eta();
+  fVariables[kJetPhi]    = iJet->Phi();
+  fVariables[kD0]        = JetTools::impactParameter(iJet, iVertex);
+  fVariables[kDZ]        = JetTools::impactParameter(iJet, iVertex, true);
+  if (fDZCut > 0.) {
+    fVariables[kBeta]      = JetTools::Beta(iJet, iVertex, fDZCut);
+    fVariables[kBetaStar]  = JetTools::betaStar(iJet, iVertex, iVertices, fDZCut);
+  }
+  else {
+    fVariables[kBeta]      = JetTools::BetaClassic(iJet, iVertex);
+    fVariables[kBetaStar]  = JetTools::betaStarClassic(iJet, iVertex, iVertices);
+  }
+  fVariables[kNCharged]  = iJet->ChargedMultiplicity();
+  fVariables[kNNeutrals] = iJet->NeutralMultiplicity();
+  fVariables[kPtD]       = JetTools::W(iJet, -1, 0);
+  fVariables[kDRMean]    = JetTools::dRMean(iJet, -1);
+  fVariables[kDR2Mean]   = JetTools::dR2Mean(iJet, -1);
+  fVariables[kFrac01]    = JetTools::frac(iJet, 0.1, 0.,  -1);
+  fVariables[kFrac02]    = JetTools::frac(iJet, 0.2, 0.1, -1);
+  fVariables[kFrac03]    = JetTools::frac(iJet, 0.3, 0.2, -1);
+  fVariables[kFrac04]    = JetTools::frac(iJet, 0.4, 0.3, -1);
+  fVariables[kFrac05]    = JetTools::frac(iJet, 0.5, 0.4, -1);
 
   double lMVA = 0;
-  if(fJPt1 < 10) lMVA = fLowPtReader->EvaluateMVA( fLowPtMethodName  );
-  if(fJPt1 > 10) lMVA = fReader->EvaluateMVA( fHighPtMethodName );
-  if (printDebug == kTRUE) {
-    std::cout << "Debug Jet MVA: "
-	      << fNVtx      << " "
-	      << fJPt1      << " "
-	      << fJEta1     << " "
-	      << fJPhi1     << " "
-	      << fJD01      << " "
-	      << fJDZ1      << " "
-	      << fBeta      << " "
-	      << fBetaStar  << " "
-	      << fNCharged  << " "
-	      << fNNeutrals << " "
-	      << fDRMean    << " "
-	      << fPtD       << " "
-	      << fFrac01    << " "
-	      << fFrac02    << " "
-	      << fFrac03    << " "
-	      << fFrac04    << " "
-	      << fFrac05    << " "
-	      << fDR2Mean    
-              << " === : === "
-              << lMVA << " "    
-              << " -----> raw pt " << iJet->Pt() << std::endl;
-  }
-  //std::cout << " === " << iJet->Pt() << " -- " << iJet->Eta() << " -- "  << fPtD << " -- " << lMVA << std::endl;
-  return lMVA;
-}
-Double_t JetIDMVA::MVAValue(const PFJet *iJet,const Vertex *iVertex, const VertexCol *iVertices,//Vertex here is the PV
-			    Bool_t printDebug) {
-  
-  if (!fIsInitialized) { 
-    std::cout << "Error: JetIDMVA not properly initialized.\n"; 
-    return -9999;
-  }
-  if(!JetTools::passPFLooseId(iJet)) return -2.;
+  lMVA = fReader->EvaluateMVA(fMethodName);
 
-  //set all input variables
-  fNVtx      = iVertices->GetEntries();
-  fJPt1      = iJet->Pt();
-  fJEta1     = iJet->RawMom().Eta();
-  fJPhi1     = iJet->RawMom().Phi();
-  fJD01      = JetTools::impactParameter(iJet,iVertex);  
-  fJDZ1      = JetTools::impactParameter(iJet,iVertex,true);
-  fBeta      = JetTools::Beta(iJet,iVertex,fDZCut);
-  fBetaStar  = JetTools::betaStar(iJet,iVertex,iVertices,fDZCut);
-  fNCharged  = iJet->ChargedMultiplicity();
-  fNNeutrals = iJet->NeutralMultiplicity();
-  fPtD       = JetTools::W(iJet,-1,0);  
-  fDRMean    = JetTools::dRMean (iJet,-1);
-  fDR2Mean   = JetTools::dR2Mean(iJet,-1);
-  fFrac01    = JetTools::frac   (iJet,0.1,0. ,-1);
-  fFrac02    = JetTools::frac   (iJet,0.2,0.1,-1);
-  fFrac03    = JetTools::frac   (iJet,0.3,0.2,-1);
-  fFrac04    = JetTools::frac   (iJet,0.4,0.3,-1);
-  fFrac05    = JetTools::frac   (iJet,0.5,0.4,-1);
-
-  double lMVA = 0;
-  if(fJPt1 < 10) lMVA = fLowPtReader->EvaluateMVA( fLowPtMethodName  );
-  if(fJPt1 > 10) lMVA = fReader     ->EvaluateMVA( fHighPtMethodName );
-  
-  if (printDebug == kTRUE) {
-    std::cout << "Debug Jet MVA: "
-	      << fNVtx      << " "
-	      << fJPt1      << " "
-	      << fJEta1     << " "
-	      << fJPhi1     << " "
-	      << fJD01      << " "
-	      << fJDZ1      << " "
-	      << fBeta      << " "
-	      << fBetaStar  << " "
-	      << fNCharged  << " "
-	      << fNNeutrals << " "
-	      << fDRMean    << " "
-	      << fPtD       << " "
-	      << fFrac01    << " "
-	      << fFrac02    << " "
-	      << fFrac03    << " "
-	      << fFrac04    << " "
-	      << fFrac05    << " "
-	      << fDR2Mean    
-              << " === : === "
-              << lMVA << " "    
-              << std::endl;
+  if (printDebug) {
+    std::cout << "Debug Jet MVA:" << std::endl;
+    for (unsigned iV = 0; iV != nVariables; ++iV)
+      std::cout << fVarNames[iV] << " = " << fVariables[iV] << std::endl;
+    std::cout << "=== : === " << std::endl;
+    std::cout << "MVA value " << lMVA << std::endl;
   }
 
   return lMVA;
 }
-//--------------------------------------------------------------------------------------------------
-Double_t* JetIDMVA::QGValue(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices, //Vertex here is the PV
-			    FactorizedJetCorrector *iJetCorrector,
-			    const PileupEnergyDensityCol *iPileupEnergyDensity,
-			    Bool_t printDebug) {
 
-  Double_t *lId = new double[3]; 
-  lId[0] = -2; 
+//--------------------------------------------------------------------------------------------------
+Double_t*
+JetIDMVA::QGValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is the PV
+                  const VertexCol *iVertices,
+                  const PileupEnergyDensityCol *iPileupEnergyDensity,
+                  Bool_t printDebug)
+{
+  Double_t *lId = new double[3];
+  lId[0] = -2;
   lId[1] = -2;
   lId[2] = -2;
-  if (!fIsInitialized) { 
-    std::cout << "Error: JetIDMVA not properly initialized.\n"; 
+  if (!fIsInitialized) {
+    std::cout << "Error: JetIDMVA not properly initialized.\n";
     return lId;
   }
-  if(!JetTools::passPFLooseId(iJet)) return lId;
+  if (!JetTools::passPFLooseId(iJet))
+    return lId;
 
-  fJPt1       = correctedPt(iJet,iJetCorrector,iPileupEnergyDensity);
-  if(fJPt1 < 20) return lId;
+  fVariables[kJetPt]       = iJet->Pt();
+  if (fVariables[kJetPt] < 20)
+    return lId;
 
   //set all input variables
-  fNVtx       = iVertices->GetEntries();
-  fJEta1      = iJet->RawMom().Eta();
-  fJPhi1      = iJet->RawMom().Phi();
-  fJD01       = JetTools::impactParameter(iJet,iVertex);  
-  fJDZ1       = JetTools::impactParameter(iJet,iVertex,true);
-  fBeta       = JetTools::Beta(iJet,iVertex,fDZCut);
-  fBetaStar   = JetTools::betaStar(iJet,iVertex,iVertices,fDZCut);
-  fNCharged   = iJet->ChargedMultiplicity();
-  fNNeutrals  = iJet->NeutralMultiplicity();
-  fNParticles = fNCharged+fNNeutrals;
-  fPtD        = JetTools::W(iJet,-1,0);  
-
-  fDRMean    = JetTools::dRMean(iJet,-1);
-  fDR2Mean   = JetTools::dR2Mean(iJet,-1);
-  fFrac01    = JetTools::frac  (iJet,0.1,0. ,-1);
-  fFrac02    = JetTools::frac  (iJet,0.2,0.1,-1);
-  fFrac03    = JetTools::frac  (iJet,0.3,0.2,-1);
-  fFrac04    = JetTools::frac  (iJet,0.4,0.3,-1);
-  fFrac05    = JetTools::frac  (iJet,0.5,0.4,-1);
+  fVariables[kNvtx]      = iVertices->GetEntries();
+  fVariables[kJetEta]    = iJet->RawMom().Eta();
+  fVariables[kJetPhi]    = iJet->RawMom().Phi();
+  fVariables[kD0]        = JetTools::impactParameter(iJet,iVertex);
+  fVariables[kDZ]        = JetTools::impactParameter(iJet,iVertex,true);
+  if (fDZCut > 0.) {
+    fVariables[kBeta]      = JetTools::Beta(iJet, iVertex, fDZCut);
+    fVariables[kBetaStar]  = JetTools::betaStar(iJet, iVertex, iVertices, fDZCut);
+  }
+  else {
+    fVariables[kBeta]      = JetTools::BetaClassic(iJet, iVertex);
+    fVariables[kBetaStar]  = JetTools::betaStarClassic(iJet, iVertex, iVertices);
+  }
+  fVariables[kNCharged]  = iJet->ChargedMultiplicity();
+  fVariables[kNNeutrals] = iJet->NeutralMultiplicity();
+  fVariables[kPtD]       = JetTools::W(iJet,-1,0);
+  fVariables[kDRMean]    = JetTools::dRMean(iJet,-1);
+  fVariables[kDR2Mean]   = JetTools::dR2Mean(iJet,-1);
+  fVariables[kFrac01]    = JetTools::frac(iJet,0.1,0., -1);
+  fVariables[kFrac02]    = JetTools::frac(iJet,0.2,0.1,-1);
+  fVariables[kFrac03]    = JetTools::frac(iJet,0.3,0.2,-1);
+  fVariables[kFrac04]    = JetTools::frac(iJet,0.4,0.3,-1);
+  fVariables[kFrac05]    = JetTools::frac(iJet,0.5,0.4,-1);
 
   double lMVA = 0;
-  lId[0] = fReader->EvaluateMulticlass( fHighPtMethodName )[0];
-  lId[1] = fReader->EvaluateMulticlass( fHighPtMethodName )[1];
-  lId[2] = fReader->EvaluateMulticlass( fHighPtMethodName )[2];
-  if (printDebug == kTRUE) {
-    std::cout << "Debug Jet MVA: "
-	      << fNVtx      << " "
-	      << fJPt1      << " "
-	      << fJEta1     << " "
-	      << fJPhi1     << " "
-	      << fJD01      << " "
-	      << fJDZ1      << " "
-	      << fBeta      << " "
-	      << fBetaStar  << " "
-	      << fNCharged  << " "
-	      << fNNeutrals << " "
-	      << fDRMean    << " "
-	      << fFrac01    << " "
-	      << fFrac02    << " "
-	      << fFrac03    << " "
-	      << fFrac04    << " "
-	      << fFrac05    << " "
-	      << fDRMean    
-              << " === : === "
-              << lMVA << " "    
-              << std::endl;
+  lId[0] = fReader->EvaluateMulticlass(fMethodName)[0];
+  lId[1] = fReader->EvaluateMulticlass(fMethodName)[1];
+  lId[2] = fReader->EvaluateMulticlass(fMethodName)[2];
+  if (printDebug) {
+    std::cout << "Debug Jet MVA:" << std::endl;
+    for (unsigned iV = 0; iV != nVariables; ++iV)
+      std::cout << fVarNames[iV] << " = " << fVariables[iV] << std::endl;
+    std::cout << "=== : === " << std::endl;
+    std::cout << "MVA value " << lMVA << std::endl;
   }
   return lId;
 }
-Double_t JetIDMVA::correctedPt(const PFJet *iJet, FactorizedJetCorrector *iJetCorrector,
-                               const PileupEnergyDensityCol *iPUEnergyDensity,
-			       UInt_t algo,
-                               int iId) { 
-  if (algo == mithep::PileupEnergyDensity::nAllAlgos) {
-    if (f42)
-      algo = mithep::PileupEnergyDensity::kRandom;
-    else
-      algo = mithep::PileupEnergyDensity::kHighEta;
+
+Bool_t
+JetIDMVA::InitializeCuts(TString const& fileName, TString const& cutId, TString const& cutType)
+{
+  //Load Cut Matrix
+  std::ifstream cutFile(fileName);
+
+  //flag cuts being set. for fType == kCut we need two sets of cuts
+  bool cutsSet[2] = {false, fType != kCut};
+
+  while (true) {
+    std::string line;
+    std::getline(cutFile, line);
+    if (!cutFile.good())
+      break;
+
+    // restream the line into words
+    std::stringstream ss;
+    ss.str(line);
+    std::string word;
+
+    // first word: cut ID (e.g. full_53x_wp)
+    ss >> word;
+    if (word != cutId)
+      continue;
+
+    // second word: cut type (e.g. Tight)
+    ss >> word;
+    if (word.find(cutType) == std::string::npos)
+      continue;
+
+    // A line with cutId and cutType is found.
+    // Now set the target cut array, depending on the block type
+    typedef float (*ArraysOfFour)[4];
+    ArraysOfFour cutArray = 0;
+    bool* flag = 0;
+    if (fType == kCut) {
+      if (word.find("BetaStar") == 0) {
+        cutArray = fBetaStarCut;
+        flag = cutsSet;
+      }
+      else if (word.find("RMS") == 0) {
+        cutArray = fRMSCut;
+        flag = cutsSet + 1;
+      }
+      else
+        continue;
+    }
+    else {
+      cutArray = fMVACut;
+      flag = cutsSet;
+    }
+
+    // the next four lines in the config define cut values
+    unsigned iL = 0;
+    for (; iL != 4; ++iL) {
+      std::getline(cutFile, line);
+      if (!cutFile.good()) // input format not correct
+        break;
+
+      ss.clear();
+      ss.str(line);
+      // each line has four numbers = four bins in eta
+      unsigned iE = 0;
+      for (; iE != 4; ++iE) {
+        ss >> cutArray[iL][iE];
+        if (iE != 3 && !ss.good())
+          break;
+      }
+      if (iE != 4) // input format not correct
+        break;
+    }
+    if (iL != 4) {
+      // input format not correct
+      throw std::runtime_error(("JetIDMVA could not parse " + fileName).Data());
+    }
+
+    // config correctly read. set flag.
+    *flag = true;
+
+    if (cutsSet[0] && cutsSet[1]) // nothing more to read
+      break;
   }
 
-  Double_t Rho = iPUEnergyDensity->At(0)->Rho(algo);
-    
-  const FourVectorM rawMom = iJet->RawMom();
-  iJetCorrector->setJetEta(rawMom.Eta());
-  iJetCorrector->setJetPt (rawMom.Pt());
-  iJetCorrector->setJetPhi(rawMom.Phi());
-  iJetCorrector->setJetE  (rawMom.E());
-  iJetCorrector->setRho   (Rho);
-  iJetCorrector->setJetA  (iJet->JetArea());
-  iJetCorrector->setJetEMF(-99.0);     
-  Double_t correction = 1.;
-  if(iId < 0 || iId == 100) correction = iJetCorrector->getCorrection();
-  std::vector<float> lCorrections; if(iId != -1 && iId != 100) lCorrections = iJetCorrector->getSubCorrections();
-  if(iId > -1 && iId < int(lCorrections.size())) correction = lCorrections[iId];
-  if(iId == 100) {
-    iJetCorrector->setJetEta(rawMom.Eta());
-    iJetCorrector->setJetPt (rawMom.Pt());
-    iJetCorrector->setJetPhi(rawMom.Phi());
-    iJetCorrector->setJetE  (rawMom.E());
-    iJetCorrector->setRho   (Rho);
-    iJetCorrector->setJetA  (iJet->JetArea());
-    iJetCorrector->setJetEMF(-99.0);
-    lCorrections = iJetCorrector->getSubCorrections();
-    double correction2 = 1;
-    correction2 *= lCorrections[0];
-    correction = correction-correction2;
-  }
+  cutFile.close();
 
-  return rawMom.Pt()*correction;
+  return cutsSet[0] && cutsSet[1];
 }

@@ -580,16 +580,16 @@ void ElectronIDModRun1::Process()
   if (fElIdType == ElectronTools::kHggLeptonTagId2012HCP) {
     LoadEventObject(fPVName,fVertices);
   }else{
-    fVertices = GetObjThisEvt<VertexOArr>(fVertexName);
+    fVertices = GetObject<VertexOArr>(fVertexName);
   }
 
   if (fElIsoType != ElectronTools::kPFIsoNoL) {
     LoadEventObject(fElectronBranchName, fElectrons);
   }
   else {
-    fElectrons    = GetObjThisEvt<ElectronOArr>(fElectronBranchName);
-    fNonIsolatedMuons	  = GetObjThisEvt<MuonCol>(fNonIsolatedMuonsName);
-    fNonIsolatedElectrons = GetObjThisEvt<ElectronCol>(fNonIsolatedElectronsName);
+    fElectrons    = GetObject<ElectronOArr>(fElectronBranchName);
+    fNonIsolatedMuons	  = GetObject<MuonCol>(fNonIsolatedMuonsName);
+    fNonIsolatedElectrons = GetObject<ElectronCol>(fNonIsolatedElectronsName);
   }
   LoadEventObject(fBeamSpotName, fBeamSpot);
   LoadEventObject(fTrackName, fTracks);
@@ -610,7 +610,7 @@ void ElectronIDModRun1::Process()
 
   if (fElIsoType == ElectronTools::kPFIso_HWW2012TrigV0 || fElIsoType == ElectronTools::kPFIso_HggLeptonTag2012 || fElIsoType == ElectronTools::kPFIso_HggLeptonTag2012HCP) {
     // Name is hardcoded, can be changed if someone feels to do it
-    fPFNoPileUpCands = GetObjThisEvt<PFCandidateCol>(fPFNoPileUpName);
+    fPFNoPileUpCands = GetObject<PFCandidateCol>(fPFNoPileUpName);
   }
 
   //get trigger object collection if trigger matching is enabled

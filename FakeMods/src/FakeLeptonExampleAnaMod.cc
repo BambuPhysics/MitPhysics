@@ -64,7 +64,7 @@ void FakeLeptonExampleAnaMod::Process()
 
   //Get Met
   if (!fMetName.IsNull()) {
-    fMet = GetObjThisEvt<MetCol>(fMetName);
+    fMet = GetObject<MetCol>(fMetName);
   } 
   const Met *originalCaloMet = 0;
   if (fMet) {
