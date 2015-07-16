@@ -33,6 +33,7 @@
 #include "MitPhysics/Mods/interface/PuppiMod.h"
 #include "MitPhysics/Mods/interface/PFTauCleaningMod.h"
 #include "MitPhysics/Mods/interface/TauIDMod.h"
+#include "MitPhysics/Mods/interface/TauCleaningMod.h"
 #include "MitPhysics/Mods/interface/PFTauIdMod.h"
 #include "MitPhysics/Mods/interface/PFTauIDModRun1.h"
 #include "MitPhysics/Mods/interface/TrackingPurityFilterMod.h"
@@ -87,6 +88,7 @@
 #pragma link C++ class mithep::PuppiMod+;
 #pragma link C++ class mithep::PFTauCleaningMod+;
 #pragma link C++ class mithep::TauIDMod+;
+#pragma link C++ class mithep::TauCleaningMod+;
 #pragma link C++ class mithep::PFTauIdMod+;
 #pragma link C++ class mithep::IdMod<mithep::PFTau>+;
 #pragma link C++ class mithep::PFTauIDModRun1+;
