@@ -56,6 +56,7 @@ namespace mithep
       void SetApplyLowPUCorr( Bool_t apply )                 { fApplyLowPUCorr = apply;    }
       void SetUseEtaForAlgo( Bool_t use )                    { fUseEtaForAlgo = use;       }
       void SetEtaForAlgo( Double_t eta )                     { fEtaForAlgo = eta;          }
+      void SetDump( Bool_t dump )                            { fDumpingPuppi = dump;       }
 
     protected:
       void                  SlaveBegin();
@@ -67,9 +68,9 @@ namespace mithep
       TString               fPFCandidatesName;    // Name of PFCandidate collection (input)
       TString               fPuppiParticlesName;  // Name of Puppi Particle collection (output)
 
-      const VertexCol *fVertexes;                 // Vertex branch
+      const VertexCol      *fVertexes;            // Vertex branch
       const PFCandidateCol *fPFCandidates;        // Particle flow branch
-      PFCandidateArr *fPuppiParticles;            // The output collection
+      PFCandidateArr       *fPuppiParticles;      // The output collection
 
       Double_t fRMin;                             // Minimum dR cut for summing up surrounding particles
       Double_t fR0;                               // Maximum dR cut for summing up surrounding particles
@@ -84,12 +85,13 @@ namespace mithep
       Double_t fRMSScaleFactor;                   // A scale factor for RMS
       Double_t fTrackUncertainty;                 // The experimental uncertainty in the track fit to vertex distance
 
-      Bool_t fKeepPileup;                         // Keep pileup with zero weight (for debugging)
-      Bool_t fInvert;                             // Option to invert weights
-      Bool_t fApplyCHS;                           // This will force weights to 0 or 1 for tracked particles
-      Bool_t fApplyLowPUCorr;                     // This will cause a correction when lots of PV particles fall below median
-      Bool_t fUseEtaForAlgo;                      // Determines if you use eta cut or PFType to determine algorithm use
+      Bool_t   fKeepPileup;                       // Keep pileup with zero weight (for debugging)
+      Bool_t   fInvert;                           // Option to invert weights
+      Bool_t   fApplyCHS;                         // This will force weights to 0 or 1 for tracked particles
+      Bool_t   fApplyLowPUCorr;                   // This will cause a correction when lots of PV particles fall below median
+      Bool_t   fUseEtaForAlgo;                    // Determines if you use eta cut or PFType to determine algorithm use
       Double_t fEtaForAlgo;                       // Eta cut to switch algorithms, if you want it
+      Bool_t   fDumpingPuppi;                     // If this is true, we dump particle information and weights
 
       // These are parameters that are functions of Eta hopefully we can be more clever some day
       Int_t fNumEtaBins;                          // This is the number of eta regions we are dividing into

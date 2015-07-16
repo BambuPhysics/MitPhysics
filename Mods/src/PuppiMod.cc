@@ -16,7 +16,7 @@ ClassImp(mithep::PuppiMod)
 //--------------------------------------------------------------------------------------------------
 PuppiMod::PuppiMod(const char *name, const char *title) : 
   BaseMod(name,title),
-  fEtaConfigName(TString(gSystem->Getenv("CMSSW_BASE")) + "/src/MitPhysics/data/PuppiEta_150701.cfg"),
+  fEtaConfigName(TString(gSystem->Getenv("CMSSW_BASE")) + "/src/MitPhysics/PuppiCfg/Puppi.cfg"),
   fVertexesName(Names::gkPVBrn),
   fPFCandidatesName(Names::gkPFCandidatesBrn),
   fPuppiParticlesName("PuppiParticles"),
@@ -35,8 +35,9 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fInvert(kFALSE),
   fApplyCHS(kTRUE),
   fApplyLowPUCorr(kTRUE),
-  fUseEtaForAlgo(kFALSE),
-  fEtaForAlgo(2.5)
+  fUseEtaForAlgo(kTRUE),
+  fEtaForAlgo(2.5),
+  fDumpingPuppi(kFALSE)
 {
   // Constructor.
 }
@@ -46,14 +47,15 @@ PuppiMod::~PuppiMod() {}
 
 //--------------------------------------------------------------------------------------------------
 Int_t PuppiMod::GetParticleType(const PFCandidate *cand){
+  Bool_t charged = (cand->PFType() > 0 && cand->PFType() < 4);
   if(fUseEtaForAlgo){
     Double_t checkEta = fabs(cand->Eta());
     if(checkEta > fEtaForAlgo){
       return 4;
     }
-    else if(cand->PFType() != 1) return 3;
+    else if(not charged) return 3;
   }
-  if(cand->PFType() == 1){
+  if(charged){
     if((fabs(cand->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) < fDZCut) &&
        (MathUtils::AddInQuadrature(cand->SourceVertex().X() - fVertexes->At(0)->Position().X(),
 				   cand->SourceVertex().Y() - fVertexes->At(0)->Position().Y()) < fD0Cut))
@@ -126,6 +128,7 @@ void PuppiMod::SlaveBegin()
     }
   }
   fNumEtaBins = fMaxEtas.size();
+  std::cout << "Number of Eta bins: " << fNumEtaBins << std::endl;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -330,6 +333,30 @@ void PuppiMod::Process()
     // add PuppiParticle to the collection
     PFCandidate *PuppiParticle = fPuppiParticles->Allocate();
     new (PuppiParticle) PFCandidate(*fPFCandidates->At(i0));
+    if(fDumpingPuppi){
+      std::cout << "=========================================================================================" << std::endl;
+      std::cout << "PF Candidate Number: " << i0 << std::endl;
+      std::cout << "PF Type: " << GetParticleType(PuppiParticle) << " (" << PuppiParticle->PFType() << ")" << std::endl;
+      std::cout << "Vertex distances: " << fabs(PuppiParticle->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) << "; ";
+      std::cout << MathUtils::AddInQuadrature(PuppiParticle->SourceVertex().X() - fVertexes->At(0)->Position().X(),
+                                              PuppiParticle->SourceVertex().Y() - fVertexes->At(0)->Position().Y()) << std::endl;
+      std::cout << "Nearby PV particles: ";
+      std::vector<Int_t> nearList = Mapper->GetSurrounding(i0);
+      for(UInt_t i1 = 0; i1 < nearList.size(); i1++){
+        if(nearList[i1] == i0) continue;
+        if(GetParticleType(fPFCandidates->At(nearList[i1])) == 1)
+          std::cout << nearList[i1] << " (" << MathUtils::DeltaR(PuppiParticle->Eta(),PuppiParticle->Phi(),
+                                                                 fPFCandidates->At(nearList[i1])->Eta(),
+                                                                 fPFCandidates->At(nearList[i1])->Phi()) <<  "), ";
+      }
+      nearList.resize(0);
+      std::cout << std::endl;
+      std::cout << "Pt: " << PuppiParticle->Pt() << "; Eta: " << PuppiParticle->Eta();
+      std::cout << "; Phi: " << PuppiParticle->Phi() << "; Mass: " << PuppiParticle->Mass() << std::endl;
+      std::cout << "Median Alphas:";
+      std::cout << alphaCMed[GetEtaBin(PuppiParticle)] << "; " << alphaFMed[GetEtaBin(PuppiParticle)] << std::endl;
+      std::cout << "Weight: " << weight << "; " << alphaC[i0] << "; " << alphaF[i0] << std::endl;
+    }
     if(weight < 1)                                                   // Weight the particle if required
       PuppiParticle->SetPtEtaPhiM(PuppiParticle->Pt()*(weight),PuppiParticle->Eta(),
                                   PuppiParticle->Phi(),PuppiParticle->Mass()*(weight));

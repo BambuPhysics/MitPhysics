@@ -32,6 +32,10 @@ ParticleMapper::Initialize( const PFCandidateCol &Particles, Double_t DeltaEta, 
 
   fBinContents = new std::vector<Int_t>[fNumTotBins];
 
+  for(Int_t i0 = 0; i0 < fNumTotBins; i0++){
+    fBinContents[i0].resize(0);
+  }
+
   for(Int_t i0 = 0; i0 < fNumParticles; i0++){
     Int_t etaBin;
     Int_t phiBin;
@@ -80,6 +84,7 @@ ParticleMapper::GetSurrounding(Int_t index){
   Int_t phiBin = bin/fNumEtaBins;
 
   std::vector<Int_t> tempVec;
+  tempVec.resize(0);
 
   Int_t tempEtaBin;
   Int_t tempPhiBin;
@@ -89,7 +94,7 @@ ParticleMapper::GetSurrounding(Int_t index){
     tempEtaBin = etaBin + i0;
     if(tempEtaBin < 0 || tempEtaBin >= fNumEtaBins) continue;
     for(Int_t i1 = -1; i1 < 2; i1++){
-      tempPhiBin = phiBin + i0;
+      tempPhiBin = phiBin + i1;
       if(tempPhiBin == -1) tempPhiBin = fNumPhiBins - 1;  // This allows wrapping
       if(tempPhiBin == fNumPhiBins) tempPhiBin = 0;
       tempBin = tempEtaBin + tempPhiBin*fNumEtaBins;
