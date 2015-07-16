@@ -38,7 +38,7 @@ namespace mithep {
     ~IdMod();
 
     char const* GetInputName() const { return fInputName; }
-    char const* GetOutputName() const;
+    char const* GetOutputName() const { return fOutputName; }
 
     char const* GetTriggerObjectsName() const       { return fAuxInputNames[kTrigObjects]; }
     char const* GetConversionsName() const          { return fAuxInputNames[kConversions]; }
@@ -58,7 +58,7 @@ namespace mithep {
     Double_t GetEtaMax() const { return fEtaMax; }
 
     void SetInputName(char const* n) { fInputName = n; }
-    void SetOutputName(char const* n);
+    void SetOutputName(char const* n) { fOutputName = n; }
 
     void SetTriggerObjectsName(const char* n)       { fAuxInputNames[kTrigObjects] = n; }
     void SetConversionsName(const char* n)          { fAuxInputNames[kConversions] = n; }
@@ -134,6 +134,7 @@ namespace mithep {
     TH1D* fCutFlow = 0;
 
     TString        fInputName = ""; // input collection of objects to be Id'ed
+    TString        fOutputName = ""; // input collection of objects to be Id'ed
     TString        fAuxInputNames[nAuxInputs] = {};
     TObject const* fAuxInputs[nAuxInputs] = {};
 
@@ -167,34 +168,16 @@ namespace mithep {
   }
 
   template<class O>
-  char const*
-  mithep::IdMod<O>::GetOutputName() const
-  {
-    if (fIsFilterMode)
-      return fGoodObjects.GetName();
-    else
-      return fFlags.GetName();
-  }
-
-  template<class O>
-  void
-  mithep::IdMod<O>::SetOutputName(char const* n)
-  {
-    if (fIsFilterMode)
-      return fGoodObjects.SetName(n);
-    else
-      return fFlags.SetName(n);
-  }
-
-  template<class O>
   void
   mithep::IdMod<O>::SlaveBegin()
   {
     if (fIsFilterMode) {
+      fGoodObjects.SetName(fOutputName);
       if (!PublishObj(&fGoodObjects))
         SendError(kAbortAnalysis, "SlaveBegin", "Cannot publish output");
     }
     else {
+      fFlags.SetName(fOutputName);
       if (!PublishObj(&fFlags))
         SendError(kAbortAnalysis, "SlaveBegin", "Cannot publish output");
     }
