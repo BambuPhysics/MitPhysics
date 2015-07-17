@@ -9,7 +9,7 @@ jetIdMod = mithep.JetIdMod(
     MVACutWP = mithep.JetIDMVA.kLoose,
     MVAWeightsFile = os.environ['MIT_DATA'] + '/TMVAClassification_5x_BDT_chsFullPlusRMS.weights.xml',
     MVACutsFile = os.environ['MIT_DATA'] + '/jetIDCuts_121221.dat',
-    UseClassicBetaForMVA = True,
+    UseClassicBetaForMVA = False,
     PtMin = 30.,
     EtaMax = 2.5
 )
