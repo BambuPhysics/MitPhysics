@@ -20,7 +20,7 @@ namespace mithep {
     PFTauIdMod(char const* name = "PFTauIdMod", 
                char const* title = "Tau identification module");
 
-    Long64_t GetDiscriminatorMask() const            { return fDiscriminators; }
+    Long64_t GetDiscriminatorMask() const;
     Bool_t   GetIsHPSSel() const                     { return fIsHPSSel; }
     // cuts for non-HPS taus
     Double_t GetPtLeadChargedHadronPFCandMin() const { return fPtLeadChargedHadronPFCandMin; }
@@ -29,8 +29,11 @@ namespace mithep {
     Double_t GetSignalMassMin() const                { return fSignalMassMin; }
     Double_t GetSignalMassMax() const                { return fSignalMassMax; }
 
-    void AddDiscriminator(UInt_t d)                  { fDiscriminators |= (1 << d); }
-    void SetDiscriminatorMask(Long64_t bitmask)      { fDiscriminators = bitmask; }
+    void AddDiscriminator(UInt_t d, Bool_t invert = kFALSE)
+    { AddCutDiscriminator(d, 0.5, !invert); }
+    void AddCutDiscriminator(UInt_t d, Double_t c, Bool_t passAbove = kTRUE)
+    { fDiscriminators[d] = CutConfig(c, passAbove); }
+    void RemoveDiscriminator(UInt_t d)               { fDiscriminators.erase(d); }
     void SetIsHPSSel(Bool_t b)                       { fIsHPSSel = b; }
     void SetPtLeadChargedHadronPFCandMin(Double_t x) { fPtLeadChargedHadronPFCandMin = x; }
     void SetIsoChargedHadronPtSumMax(Double_t x)     { fIsoChargedHadronPtSumMax = x; }
@@ -44,8 +47,8 @@ namespace mithep {
       cPt,
       cEta,
       cDisc,
-      nHPSCuts = cDisc + PFTau::nDiscriminators,
-      cCharge = cAll + 1,
+      nHPSCuts = cDisc,
+      cCharge = cEta + 1,
       cNPF,
       cLeadPF,
       cLeadPt,
@@ -60,7 +63,9 @@ namespace mithep {
     Bool_t IsGood(PFTau const&) override;
     void   IdBegin() override;
 
-    Long64_t fDiscriminators = 0; //bit mask of discriminators to apply - let's hope CMS doesn't end up with more than 64 discriminators
+    typedef std::pair<Double_t, Bool_t> CutConfig;
+
+    std::map<UInt_t, CutConfig> fDiscriminators{};
     Bool_t   fIsHPSSel = kTRUE;               //apply HPS Tau selection
     Double_t fPtLeadChargedHadronPFCandMin = 5.; //min LeadChargedHadronPFCand pt cut
     Double_t fIsoChargedHadronPtSumMax = 2.;       //maximum of Pt iso tracks

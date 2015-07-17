@@ -6,4 +6,3 @@ pfTauIdMod = mithep.PFTauIdMod(
     EtaMax = 2.3
 )
 pfTauIdMod.AddDiscriminator(mithep.PFTau.kDiscriminationByDecayModeFindingNewDMs)
-

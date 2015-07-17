@@ -26,13 +26,20 @@ mithep::PFTauIdMod::IsGood(mithep::PFTau const& tau)
 
     fCutFlow->Fill(cEta);
 
-    for (unsigned iB = 0; iB != PFTau::nDiscriminators; ++iB) {
-      if (((fDiscriminators >> iB) & 1) == 1) {
-        if (tau.PFTauDiscriminator(iB) < 0.5)
+    double cutFlow = cEta + 1.;
+    for (auto& disc : fDiscriminators) {
+      unsigned iD = disc.first;
+      CutConfig& cut(disc.second);
+      if (cut.second) {
+        if (tau.PFTauDiscriminator(iD) < cut.first)
           return false;
-
-        fCutFlow->Fill(cDisc + iB);
       }
+      else {
+        if (tau.PFTauDiscriminator(iD) > cut.first)
+          return false;
+      }
+      fCutFlow->Fill(cutFlow);
+      cutFlow += 1.;
     }
   }
   else {
@@ -104,12 +111,20 @@ mithep::PFTauIdMod::IdBegin()
   if (fIsHPSSel) {
     fCutFlow->SetBins(nHPSCuts, 0., double(nHPSCuts));
     xaxis->SetBinLabel(cAll + 1, "All");
-    for (unsigned iD = 0; iD != PFTau::nDiscriminators; ++iD)
-      xaxis->SetBinLabel(cDisc + iD + 1, PFTau::PFTauDiscriminatorName(iD));
+    xaxis->SetBinLabel(cPt + 1, "Pt");
+    xaxis->SetBinLabel(cEta + 1, "Eta");
+    int iX = fCutFlow->GetNbinsX() + 1;
+    for (auto& disc : fDiscriminators) {
+      fCutFlow->SetBins(iX, 0., iX);
+      xaxis->SetBinLabel(iX, PFTau::PFTauDiscriminatorName(disc.first));
+      ++iX;
+    }
   }
   else {
     fCutFlow->SetBins(nNonHPSCuts, 0., double(nNonHPSCuts));
     xaxis->SetBinLabel(cAll + 1, "All");
+    xaxis->SetBinLabel(cPt + 1, "Pt");
+    xaxis->SetBinLabel(cEta + 1, "Eta");
     xaxis->SetBinLabel(cCharge + 1, "Charge");
     xaxis->SetBinLabel(cNPF + 1, "NPF");
     xaxis->SetBinLabel(cLeadPF + 1, "LeadPF");
@@ -120,4 +135,14 @@ mithep::PFTauIdMod::IdBegin()
     xaxis->SetBinLabel(cSystemPt + 1, "SystemPt");
     xaxis->SetBinLabel(cSystemMass + 1, "SystemMass");
   }
+}
+
+Long64_t
+mithep::PFTauIdMod::GetDiscriminatorMask() const
+{
+  Long64_t m = 0;
+  for (auto& disc : fDiscriminators)
+    m |= (1 << disc.first);
+
+  return m;
 }
