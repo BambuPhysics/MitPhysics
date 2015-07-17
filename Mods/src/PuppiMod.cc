@@ -142,9 +142,13 @@ void PuppiMod::SlaveTerminate()
 void PuppiMod::Process()
 {
   // Process entries of the tree. 
-
   LoadBranch(fVertexesName);
   LoadBranch(fPFCandidatesName);
+
+  if(fDumpingPuppi){
+    std::cout << "Primary Vertex location: " << fVertexes->At(0)->Position().x() << ", ";
+    std::cout << fVertexes->At(0)->Position().y() << ", " << fVertexes->At(0)->Position().z() << std::endl;
+  }
 
   // This mapper will return particles that are only close in eta, phi space
   ParticleMapper *Mapper = new ParticleMapper();
@@ -212,8 +216,8 @@ void PuppiMod::Process()
       Double_t checkEta = fabs(iCandidate->Eta());
       for(Int_t i1 = 0; i1 < fNumEtaBins; i1++){
         if(checkEta > fEtaMaxExtraps[i1]) continue;                 // If outside the binning that we are interested in, don't use CHPU
-        if(alphaF[i0] == -100) numFCHPUis0[i1]++;                   // Count particles to ignore when taking the median
-        if(alphaC[i0] == -100) numCCHPUis0[i1]++;
+        if(alphaF[i0] <= 0) numFCHPUis0[i1]++;                      // Count particles to ignore when taking the median
+        if(alphaC[i0] <= 0) numCCHPUis0[i1]++;
         alphaFCHPU[i1][numCHPU[i1]] = alphaF[i0];                   // Only intializing particles up to the number of charged PU
         alphaCCHPU[i1][numCHPU[i1]] = alphaC[i0];
         numCHPU[i1]++;                                              // Count the total number of charged PU particles
@@ -245,6 +249,16 @@ void PuppiMod::Process()
   for(Int_t i0 = 0; i0 < fNumEtaBins; i0++){
     TMath::Sort(numCHPU[i0],alphaFCHPU[i0],IndicesFCHPU[i0],0);
     TMath::Sort(numCHPU[i0],alphaCCHPU[i0],IndicesCCHPU[i0],0);
+    if(fDumpingPuppi){
+      std::cout << "alphaCs for median: " << std::endl;
+      for(Int_t i1 = 0; i1 < numCHPU[i0]; i1++){
+        std::cout << i1 << " (" << IndicesFCHPU[i0][i1] << "): " << alphaCCHPU[i0][IndicesCCHPU[i0][i1]] << std::endl;
+      }
+      std::cout << "alphaFs for median: " << std::endl;
+      for(Int_t i1 = 0; i1 < numCHPU[i0]; i1++){
+        std::cout << i1 << " (" << IndicesFCHPU[i0][i1] << "): " << alphaFCHPU[i0][IndicesFCHPU[i0][i1]] << std::endl;
+      }
+    }
   }
 
   // Now we'll find the median and sigma (left-handed RMS) squared for each event and eta bin
@@ -256,6 +270,7 @@ void PuppiMod::Process()
   for(Int_t i0 = 0; i0 < fNumEtaBins; i0++){
     Int_t medIndexF = (numCHPU[i0] + numFCHPUis0[i0])/2;              // These are sort of meta
     Int_t medIndexC = (numCHPU[i0] + numCCHPUis0[i0])/2;              // Just watch how they are used...
+    if(fDumpingPuppi) std::cout << "In bin " << i0 << " using " << medIndexC << "; " << medIndexF << std::endl;
     if(numCHPU[i0] == numFCHPUis0[i0]) alphaFMed[i0] = 0;
     else if((numCHPU[i0] - numFCHPUis0[i0]) % 2 == 0) 
       alphaFMed[i0] = (alphaFCHPU[i0][IndicesFCHPU[i0][medIndexF - 1]] + alphaFCHPU[i0][IndicesFCHPU[i0][medIndexF]])/2;
@@ -340,8 +355,8 @@ void PuppiMod::Process()
       std::cout << "Vertex distances: " << fabs(PuppiParticle->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) << "; ";
       std::cout << MathUtils::AddInQuadrature(PuppiParticle->SourceVertex().X() - fVertexes->At(0)->Position().X(),
                                               PuppiParticle->SourceVertex().Y() - fVertexes->At(0)->Position().Y()) << std::endl;
-      std::cout << "Nearby PV particles: ";
       std::vector<Int_t> nearList = Mapper->GetSurrounding(i0);
+      std::cout << "Nearby PV particles: ";
       for(UInt_t i1 = 0; i1 < nearList.size(); i1++){
         if(nearList[i1] == i0) continue;
         if(GetParticleType(fPFCandidates->At(nearList[i1])) == 1)
@@ -349,12 +364,23 @@ void PuppiMod::Process()
                                                                  fPFCandidates->At(nearList[i1])->Eta(),
                                                                  fPFCandidates->At(nearList[i1])->Phi()) <<  "), ";
       }
-      nearList.resize(0);
       std::cout << std::endl;
+      std::cout << "Nearby other particles: ";
+      for(UInt_t i1 = 0; i1 < nearList.size(); i1++){
+        if(nearList[i1] == i0) continue;
+        if(GetParticleType(fPFCandidates->At(nearList[i1])) != 1)
+          std::cout << nearList[i1] << " (" << MathUtils::DeltaR(PuppiParticle->Eta(),PuppiParticle->Phi(),
+                                                                 fPFCandidates->At(nearList[i1])->Eta(),
+                                                                 fPFCandidates->At(nearList[i1])->Phi()) <<  "), ";
+      }
+      std::cout << std::endl;
+      nearList.resize(0);
       std::cout << "Pt: " << PuppiParticle->Pt() << "; Eta: " << PuppiParticle->Eta();
       std::cout << "; Phi: " << PuppiParticle->Phi() << "; Mass: " << PuppiParticle->Mass() << std::endl;
       std::cout << "Median Alphas:";
       std::cout << alphaCMed[GetEtaBin(PuppiParticle)] << "; " << alphaFMed[GetEtaBin(PuppiParticle)] << std::endl;
+      std::cout << "Alpha RMS:";
+      std::cout << sigma2C[GetEtaBin(PuppiParticle)] << "; " << sigma2F[GetEtaBin(PuppiParticle)] << std::endl;
       std::cout << "Weight: " << weight << "; " << alphaC[i0] << "; " << alphaF[i0] << std::endl;
     }
     if(weight < 1)                                                   // Weight the particle if required
