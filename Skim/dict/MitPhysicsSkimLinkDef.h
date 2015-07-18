@@ -1,5 +1,3 @@
-// $Id: MitPhysicsSkimLinkDef.h,v 1.2 2012/06/03 20:25:56 paus Exp $
-
 #ifndef MITPHYSICS_SKIM_LINKDEF_H
 #define MITPHYSICS_SKIM_LINKDEF_H
 #include "MitPhysics/Skim/interface/BaseH4lSkim.h"
@@ -8,6 +6,7 @@
 #include "MitPhysics/Skim/interface/H4lMuTagProbeSkim.h"
 #include "MitPhysics/Skim/interface/H4lZPlusFakeSkim.h"
 #include "MitPhysics/Skim/interface/H4lLightFlavorSkim.h"
+#include "MitPhysics/Skim/interface/MonoJetAnalysisMod.h"
 #endif
 
 #ifdef __CLING__
@@ -23,4 +22,5 @@
 #pragma link C++ class mithep::H4lMuTagProbeSkim+;
 #pragma link C++ class mithep::H4lZPlusFakeSkim+;
 #pragma link C++ class mithep::H4lLightFlavorSkim+;
+#pragma link C++ class mithep::MonoJetAnalysisMod+;
 #endif
