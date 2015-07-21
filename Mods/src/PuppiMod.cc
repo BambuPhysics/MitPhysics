@@ -16,7 +16,7 @@ ClassImp(mithep::PuppiMod)
 //--------------------------------------------------------------------------------------------------
 PuppiMod::PuppiMod(const char *name, const char *title) : 
   BaseMod(name,title),
-  fEtaConfigName(TString(gSystem->Getenv("CMSSW_BASE")) + "/src/MitPhysics/PuppiCfg/Puppi.cfg"),
+  fEtaConfigName(""),
   fVertexesName(Names::gkPVBrn),
   fPFCandidatesName(Names::gkPFCandidatesBrn),
   fPuppiParticlesName("PuppiParticles"),
@@ -56,15 +56,23 @@ Int_t PuppiMod::GetParticleType(const PFCandidate *cand){
     else if(not charged) return 3;
   }
   if(charged){
-    if((fabs(cand->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) < fDZCut) &&
-       (MathUtils::AddInQuadrature(cand->SourceVertex().X() - fVertexes->At(0)->Position().X(),
-				   cand->SourceVertex().Y() - fVertexes->At(0)->Position().Y()) < fD0Cut))
-      return 1;                             // This is charged PV particle
-    else return 2;                          // This is charged PU particle
+    Double_t checkDZ = 0.;
+    Double_t checkD0 = 0.;
+    if(cand->HasTrackerTrk()){
+      checkDZ = cand->TrackerTrk()->DzCorrected(*(fVertexes->At(0)));
+      checkD0 = cand->TrackerTrk()->D0Corrected(*(fVertexes->At(0)));
+    }
+    else if(cand->HasGsfTrk()){
+      checkDZ = cand->GsfTrk()->DzCorrected(*(fVertexes->At(0)));
+      checkD0 = cand->GsfTrk()->D0Corrected(*(fVertexes->At(0)));
+    }
+    if(fabs(checkDZ) < fDZCut && checkD0 < fD0Cut)
+      return 1;                               // This is charged PV particle
+    else return 2;                            // This is charged PU particle
   }
   else if(cand->PFType() != 6 && cand->PFType() != 7)
-    return 3;                               // This is neutral particle in the center
-  else return 4;                            // This is neutral particle in the forward region
+    return 3;                                 // This is neutral particle in the center
+  else return 4;                              // This is neutral particle in the forward region
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -103,6 +111,9 @@ void PuppiMod::SlaveBegin()
   PublishObj(fPuppiParticles);
 
   // Read the configuration file
+  if(fEtaConfigName == ""){
+    SendError(kAbortAnalysis, "SlaveBegin", "Config name for Puppi not given.");
+  }
   std::cout << fEtaConfigName << std::endl;
   std::ifstream configFile;
   configFile.open(fEtaConfigName.Data());
@@ -352,9 +363,14 @@ void PuppiMod::Process()
       std::cout << "=========================================================================================" << std::endl;
       std::cout << "PF Candidate Number: " << i0 << std::endl;
       std::cout << "PF Type: " << GetParticleType(PuppiParticle) << " (" << PuppiParticle->PFType() << ")" << std::endl;
-      std::cout << "Vertex distances: " << fabs(PuppiParticle->SourceVertex().Z() - fVertexes->At(0)->Position().Z()) << "; ";
-      std::cout << MathUtils::AddInQuadrature(PuppiParticle->SourceVertex().X() - fVertexes->At(0)->Position().X(),
-                                              PuppiParticle->SourceVertex().Y() - fVertexes->At(0)->Position().Y()) << std::endl;
+      if(PuppiParticle->HasTrackerTrk()){
+        std::cout << "Vertex distances: " << PuppiParticle->TrackerTrk()->DzCorrected(*(fVertexes->At(0))) << "; ";
+        std::cout << PuppiParticle->TrackerTrk()->D0Corrected(*(fVertexes->At(0))) << std::endl;
+      }
+      else if(PuppiParticle->HasGsfTrk()){
+        std::cout << "Vertex distances: " << PuppiParticle->GsfTrk()->DzCorrected(*(fVertexes->At(0))) << "; ";
+        std::cout << PuppiParticle->GsfTrk()->D0Corrected(*(fVertexes->At(0))) << std::endl;
+      }
       std::vector<Int_t> nearList = Mapper->GetSurrounding(i0);
       std::cout << "Nearby PV particles: ";
       for(UInt_t i1 = 0; i1 < nearList.size(); i1++){
