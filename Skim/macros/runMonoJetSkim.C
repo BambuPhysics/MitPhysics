@@ -111,21 +111,30 @@ void runMonoJetSkim(const char *fileset    = "0000",
   //-----------------------------------------------------------------------------------------------------------
   // HLT information : trigger not applied (neither for data nor for MC, store info to apply selection offline
   //-----------------------------------------------------------------------------------------------------------
-  HLTMod *hltMod = new HLTMod("HLTModP");
+  HLTMod *hltMod = new HLTMod();
 
   // monojet triggers
-  const int nMjtTrigs = 2;
-  TString monoJetTriggers[nMjtTrigs] = {"HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight_v1",
-					"HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight_v1"};
-  for (int i=0; i<nMjtTrigs; i++)
-    hltMod->AddTrigger(TString("!+"+monoJetTriggers[i]),0,999999);
+  TString triggers[] = {"HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight_v*",
+                        "HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight_v*"};
+  for (auto& trigger : triggers)
+    hltMod->AddTrigger(trigger);
 
   hltMod->SetBitsName("HLTBits");
-  hltMod->SetTrigObjsName("MyHltPhotObjs");
+  hltMod->SetTrigObjsName("MonoJetTriggerObjects");
   hltMod->SetAbortIfNotAccepted(isData);
-  //  hltMod->SetPrintTable(kTRUE);
+  hltMod->SetAbortIfNoData(kFALSE);
 
   modules.push_back(hltMod);
+
+  JetIdMod* leadJetId = new JetIdMod("LeadJetId");
+  leadJetId->SetMinChargedHadronFraction(0.2);
+  leadJetId->SetMaxNeutralHadronFraction(0.7);
+  leadJetId->SetMaxNeutralEMFraction(0.7);
+  leadJetId->SetApplyPFLooseId(kTRUE);
+  leadJetId->SetPtMin(90.);
+  leadJetId->SetMinOutput(1);
+
+  modules.push_back(leadJetId);
 
   //------------------------------------------------------------------------------------------------
   // select events with a good primary vertex
@@ -304,9 +313,9 @@ void runMonoJetSkim(const char *fileset    = "0000",
   // select events
   //------------------------------------------------------------------------------------------------
 
-  float minLeadingJetPt = 50.;
   float maxJetEta       = 4.7;
-  float minMet          = 50.;
+  float minMet          = 150.;
+  float minLeadJetPt    = 90.;
 
   MonoJetAnalysisMod *monojetSel = new MonoJetAnalysisMod("MonoJetSelector");
   monojetSel->SetMetName(type1MetCorr->GetOutputName());
@@ -324,7 +333,7 @@ void runMonoJetSkim(const char *fileset    = "0000",
   for (unsigned iCat = 0; iCat != MonoJetAnalysisMod::nMonoJetCategories; ++iCat) {
     monojetSel->SetCategoryActive(iCat, kTRUE);
     monojetSel->SetMaxNumJets(iCat, 3);
-    monojetSel->SetMinLeadJetPt(iCat, minLeadingJetPt);
+    monojetSel->SetMinLeadJetPt(iCat, minLeadJetPt);
     monojetSel->SetMaxJetEta(iCat, maxJetEta);
     monojetSel->SetMinMetPt(iCat, minMet);
     monojetSel->SetMinChargedHadronFrac(iCat, 0.2); 
@@ -356,9 +365,12 @@ void runMonoJetSkim(const char *fileset    = "0000",
   skimOutput->Keep("AKt4PFJetsCHS");
   skimOutput->Keep("AKt8PFJetsCHS");
   skimOutput->Keep("Electrons");
+  skimOutput->Keep("Conversions");
+  skimOutput->Keep("*Stable*");
   skimOutput->Keep("Muons");
   skimOutput->Keep("HPSTaus");
   skimOutput->Keep("Photons");
+  skimOutput->Keep("AKT4GenJets");
   skimOutput->AddNewBranch(monojetSel->GetCategoryFlagsName());
 
   skimOutput->SetMaxFileSize(10 * 1024); // 10 GB - should never exceed
@@ -384,6 +396,7 @@ void runMonoJetSkim(const char *fileset    = "0000",
   Analysis *ana = new Analysis;
   ana->SetUseCacher(1);
   ana->SetUseHLT(kTRUE);
+  ana->SetAllowNoHLTTree(kTRUE); // for private MC with no HLT info
   ana->SetKeepHierarchy(kFALSE);
   ana->SetPrintScale(100);
   ana->SetOutputName(outputName + "_hist.root");
