@@ -29,15 +29,16 @@ mithep::JetCorrector::AddParameterFile(char const* fileName)
   mithep::Jet::ECorr lastLevel = TranslateLevel(it->definitions().level().c_str());
   fLevels.push_back(lastLevel);
 
-  // check correction ordering
-  if (fParameters.size() > 1) {
-    ++it;
-    if (TranslateLevel(it->definitions().level().c_str()) >= lastLevel) {
-      std::cerr << "Exception in JetCorrector::AddParameterFile(" << fileName << "):" << std::endl;
-      std::cerr << "Correction parameters must be added in ascending order of correction levels" << std::endl;
-      throw std::runtime_error("Configuration error");
-    }
-  }
+// Not enforcing ordered corrections because L2L3Residual is seen as L2 by the JetCorrectionParameters
+//   // check correction ordering
+//   if (fParameters.size() > 1) {
+//     ++it;
+//     if (TranslateLevel(it->definitions().level().c_str()) >= lastLevel) {
+//       std::cerr << "Exception in JetCorrector::AddParameterFile(" << fileName << "):" << std::endl;
+//       std::cerr << "Correction parameters must be added in ascending order of correction levels" << std::endl;
+//       throw std::runtime_error("Configuration error");
+//     }
+//   }
 }
 
 void
