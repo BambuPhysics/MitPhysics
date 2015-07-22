@@ -1026,8 +1026,6 @@ Double_t IsolationTools::CiCTrackIsolation(const Photon* p,
   return maxIso;
 }
 
-//ChargedIso_selvtx_DR0To0p001=IsolationTools::PFChargedIsolation(p, SelVtx, 0.01, 0, 0.0, 0.0, 0.1, 0.2,fPFCands);
-
 Double_t IsolationTools::PFChargedIsolation(const Photon *p, 
                                             const BaseVertex *theVtx, 
                                             Double_t extRadius,
