@@ -1,5 +1,3 @@
-// $Id: MitPhysicsSelModsLinkDef.h,v 1.7 2010/10/04 18:06:10 ceballos Exp $
-
 #ifndef MITPHYSICS_SELMODS_LINKDEF_H
 #define MITPHYSICS_SELMODS_LINKDEF_H
 
@@ -22,6 +20,7 @@
 #include "MitPhysics/SelMods/interface/PhotonPlusIsoTrackSelMod.h"
 #include "MitPhysics/SelMods/interface/HwwExampleAnalysisMod.h"
 #include "MitPhysics/SelMods/interface/WBFExampleAnalysisMod.h"
+#include "MitPhysics/SelMods/interface/EventCategoryMod.h"
 #endif
  
 #ifdef __CLING__
@@ -50,4 +49,5 @@
 #pragma link C++ class mithep::PhotonPlusIsoTrackSelMod+;
 #pragma link C++ class mithep::HwwExampleAnalysisMod+;
 #pragma link C++ class mithep::WBFExampleAnalysisMod+;
+#pragma link C++ class mithep::EventCategoryMod+;
 #endif

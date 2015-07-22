@@ -29,7 +29,9 @@ using namespace mithep;
 //--------------------------------------------------------------------------------------------------
 void runMonoJetSkim(const char *fileset    = "0000",
 		    const char *skim       = "noskim",
-		    const char *dataset    = "WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM",
+                    //		    const char *dataset    = "WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM",
+                    //		    const char *dataset    = "DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v3+AODSIM",
+                    const char* dataset    = "MET+Run2015B-PromptReco-v1+AOD",
 		    const char *book       = "t2mit/filefi/041",
 		    const char *catalogDir = "/home/cmsprod/catalog",
 		    const char *outputLabel = "monojet",
@@ -44,18 +46,17 @@ void runMonoJetSkim(const char *fileset    = "0000",
     printf(" JSON file was not properly defined. EXIT!\n");
     return;
   }
-
-  TString jsonFile = TString("/home/cmsprod/cms/json/") + json;
+  TString jsonDir(gSystem->Getenv("MIT_JSON_DIR"));
   Bool_t  isData   = (json != "~");
 
   TString MitData(gSystem->Getenv("MIT_DATA"));
   if(MitData.Length() == 0){
-    MitData = gSystem->Getenv("CMSSW_BASE");
-    MitData += "/src/MitPhysics/data";
+    printf(" MIT_DATA was not properly defined. EXIT!\n");
+    return;
   }
 
   printf("\n Initialization worked: \n\n");
-  printf("   JSON   : %s (file: %s)\n",  json.Data(), jsonFile.Data());
+  printf("   JSON   : %s\n",  json.Data());
   printf("   isData : %d\n\n",isData);
 
   //------------------------------------------------------------------------------------------------
@@ -70,42 +71,22 @@ void runMonoJetSkim(const char *fileset    = "0000",
   //------------------------------------------------------------------------------------------------
   std::vector<mithep::BaseMod*> modules;
 
-  RunLumiSelectionMod *runLumiSel = new RunLumiSelectionMod;
-  runLumiSel->SetAcceptMC(kTRUE);                          // Monte Carlo events are always accepted
+  if (isData) {
+    RunLumiSelectionMod* runLumiSel = new RunLumiSelectionMod;
 
-  // only select on run- and lumisection numbers when valid json file present
-  if ((jsonFile.CompareTo("/home/cmsprod/cms/json/~") != 0) &&
-      (jsonFile.CompareTo("/home/cmsprod/cms/json/-") != 0)   ) {
-    printf("\n Jason file added: %s \n\n",jsonFile.Data());
-    runLumiSel->AddJSONFile(jsonFile.Data());
-  }
-  if ((jsonFile.CompareTo("/home/cmsprod/cms/json/-") == 0)   ) {
-    printf("\n WARNING -- Looking at data without JSON file: always accept.\n\n");
-    runLumiSel->SetAbortIfNotAccepted(kFALSE);   // accept all events if there is no valid JSON file
-  }
-  printf("\n Run lumi worked. \n\n");
+    // only select on run- and lumisection numbers when valid json file present
+    if ((json.CompareTo("-") == 0)) {
+      printf("\n WARNING -- Looking at data without JSON file: always accept.\n\n");
+      runLumiSel->SetAbortIfNotAccepted(kFALSE);   // accept all events if there is no valid JSON file
+    }
+    else if (json.CompareTo("~") != 0) {
+      printf("\n Jason file added: %s \n\n", json.Data());
+      runLumiSel->AddJSONFile((jsonDir + "/" + json).Data());
+    }
 
-  modules.push_back(runLumiSel);
+    printf("\n Run lumi worked. \n\n");
 
-  // Generator info
-  GeneratorMod *generatorMod = 0;
-  if (!isData) {
-    generatorMod = new GeneratorMod;
-    generatorMod->SetPrintDebug(kFALSE);
-    generatorMod->SetPtLeptonMin(0.0);
-    generatorMod->SetEtaLeptonMax(2.7);
-    generatorMod->SetPtPhotonMin(0.0);
-    generatorMod->SetEtaPhotonMax(2.7);
-    generatorMod->SetPtRadPhotonMin(0.0);
-    generatorMod->SetEtaRadPhotonMax(2.7);
-    generatorMod->SetIsData(isData);
-    generatorMod->SetFillHist(! isData);
-    generatorMod->SetApplyISRFilter(kFALSE);
-    generatorMod->SetApplyVVFilter(kFALSE);
-    generatorMod->SetApplyVGFilter(kFALSE);
-    generatorMod->SetFilterBTEvents(kFALSE);
-
-    modules.push_back(generatorMod);
+    modules.push_back(runLumiSel);
   }
 
   //-----------------------------------------------------------------------------------------------------------
@@ -264,10 +245,10 @@ void runMonoJetSkim(const char *fileset    = "0000",
 
   JetCorrectionMod *jetCorr = new JetCorrectionMod;
   if (isData){ 
-    jetCorr->AddCorrectionFromFile((MitData+TString("/Summer13_V1_DATA_L1FastJet_AK5PF.txt")).Data()); 
-    jetCorr->AddCorrectionFromFile((MitData+TString("/Summer13_V1_DATA_L2Relative_AK5PF.txt")).Data()); 
-    jetCorr->AddCorrectionFromFile((MitData+TString("/Summer13_V1_DATA_L3Absolute_AK5PF.txt")).Data()); 
-    jetCorr->AddCorrectionFromFile((MitData+TString("/Summer13_V1_DATA_L2L3Residual_AK5PF.txt")).Data());
+    jetCorr->AddCorrectionFromFile((MitData+TString("/74X_dataRun2_Prompt_v1_L1FastJet_AK4PFchs.txt")).Data()); 
+    jetCorr->AddCorrectionFromFile((MitData+TString("/74X_dataRun2_Prompt_v1_L2Relative_AK4PFchs.txt")).Data()); 
+    jetCorr->AddCorrectionFromFile((MitData+TString("/74X_dataRun2_Prompt_v1_L3Absolute_AK4PFchs.txt")).Data()); 
+    jetCorr->AddCorrectionFromFile((MitData+TString("/74X_dataRun2_Prompt_v1_L2L3Residual_AK4PFchs.txt")).Data());
   }                                                                                      
   else {                                                                                 
     jetCorr->AddCorrectionFromFile((MitData+TString("/MCRUN2_74_V9_L1FastJet_AK4PFchs.txt")).Data()); 
@@ -302,9 +283,17 @@ void runMonoJetSkim(const char *fileset    = "0000",
   type1MetCorr->ApplyType0(kFALSE);
   type1MetCorr->ApplyType1(kTRUE);
   type1MetCorr->ApplyShift(kFALSE);
-  type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L1FastJet_AK4PF.txt");
-  type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L2Relative_AK4PF.txt");
-  type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L3Absolute_AK4PF.txt");
+  if (isData) {
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/74X_dataRun2_Prompt_v1_L1FastJet_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/74X_dataRun2_Prompt_v1_L2Relative_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/74X_dataRun2_Prompt_v1_L3Absolute_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/74X_dataRun2_Prompt_v1_L2L3Residual_AK4PF.txt");
+  }
+  else {
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L1FastJet_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L2Relative_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L3Absolute_AK4PF.txt");
+  }
   type1MetCorr->IsData(isData);
 
   modules.push_back(type1MetCorr);
@@ -342,6 +331,27 @@ void runMonoJetSkim(const char *fileset    = "0000",
   }
 
   modules.push_back(monojetSel);
+
+  // Generator info
+  
+  if (!isData) {
+    GeneratorMod *generatorMod = new GeneratorMod;
+    generatorMod->SetPrintDebug(kFALSE);
+    generatorMod->SetPtLeptonMin(0.0);
+    generatorMod->SetEtaLeptonMax(2.7);
+    generatorMod->SetPtPhotonMin(0.0);
+    generatorMod->SetEtaPhotonMax(2.7);
+    generatorMod->SetPtRadPhotonMin(0.0);
+    generatorMod->SetEtaRadPhotonMax(2.7);
+    generatorMod->SetIsData(isData);
+    generatorMod->SetFillHist(! isData);
+    generatorMod->SetApplyISRFilter(kFALSE);
+    generatorMod->SetApplyVVFilter(kFALSE);
+    generatorMod->SetApplyVGFilter(kFALSE);
+    generatorMod->SetFilterBTEvents(kFALSE);
+
+    modules.push_back(generatorMod);
+  }
 
   //------------------------------------------------------------------------------------------------
   // skim output
@@ -422,7 +432,7 @@ void runMonoJetSkim(const char *fileset    = "0000",
   // Say what we are doing
   //------------------------------------------------------------------------------------------------
   printf("\n==== PARAMETER SUMMARY FOR THIS JOB ====\n");
-  printf("\n JSON file: %s\n",jsonFile.Data());
+  printf("\n JSON file: %s\n", json.Data());
   printf("\n Rely on Catalog: %s\n",catalogDir);
   printf("  -> Book: %s  Dataset: %s  Skim: %s  Fileset: %s <-\n",book,dataset,skim,fileset);
   printf("\n========================================\n");

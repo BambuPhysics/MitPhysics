@@ -1,6 +1,4 @@
 //--------------------------------------------------------------------------------------------------
-// $Id: GenericSelMod.h,v 1.6 2009/06/17 11:50:28 loizides Exp $
-//
 // GenericSelMod
 // 
 // This module allows trivial event selection based on counting the number of
