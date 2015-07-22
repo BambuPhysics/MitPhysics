@@ -39,6 +39,7 @@
 #include "MitPhysics/Mods/interface/MVASystematicsMod.h"
 #include "MitPhysics/Mods/interface/SeparatePileUpMod.h"
 #include "MitPhysics/Mods/interface/VTagMod.h"
+#include "MitPhysics/Mods/interface/FatJetExtenderMod.h"
 #endif
 
 #ifdef __CLING__
@@ -94,6 +95,5 @@
 #pragma link C++ class mithep::MVASystematicsMod+;
 #pragma link C++ class mithep::SeparatePileUpMod+;
 #pragma link C++ class mithep::VTagMod+;
+#pragma link C++ class mithep::FatJetExtenderMod+;
 #endif
-
-// dumb
