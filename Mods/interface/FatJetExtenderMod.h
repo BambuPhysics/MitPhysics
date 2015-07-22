@@ -81,7 +81,7 @@ namespace mithep
       void SlaveTerminate();
 
       void FillXlFatJet (const FatJet *fatJet);
-      void FillXlSubJets(std::vector<fastjet::PseudoJet> &fjSubJets, XlFatJet *pFatJet, XlSubJet::ESubJetType subJetType)
+      void FillXlSubJets(std::vector<fastjet::PseudoJet> &fjSubJets, XlFatJet *pFatJet, XlSubJet::ESubJetType subJetType);
 
       // Jet collection helpers
       std::vector <fastjet::PseudoJet>
@@ -95,6 +95,9 @@ namespace mithep
       double GetPullAngle(std::vector<fastjet::PseudoJet> &fjSubJets, float constitsPtMin);
       double fMicrojetR0 = -1.0;
 
+      void GetJetConstituents(fastjet::PseudoJet&, std::vector<fastjet::PseudoJet>&, float);
+      double FindRMS(std::vector<float>);
+      double FindMean(std::vector<float>);
     private:
       Bool_t fIsData;                      //is this data or MC?
       Bool_t fQGTaggingActive;             //=true if QGTagging info is filled
@@ -105,9 +108,17 @@ namespace mithep
       Bool_t fFatJetsFromBranch;              //are input jets from Branch?
       const FatJetCol *fFatJets;                 //input jets
 
+      TString fPFCandidatesName;           //(i) name of PF candidates coll
+      Bool_t fPFCandidatesFromBranch;
+      const PFCandidateCol *fPFCandidates; //particle flow candidates coll handle
+
       TString fPileUpDenName;              //(i) name of PU energy density coll
       Bool_t fPileUpDenFromBranch;         //is PU energy density from Branch?
       const PileupEnergyDensityCol *fPileUpDen; //PU energy density coll handle
+
+      TString fVertexesName;               //(i) name of vertex coll
+      Bool_t fVertexesFromBranch;          //are vertexex from Branch?
+      const VertexCol *fVertexes;          //vertex coll handle
 
       TString fXlFatJetsName;              //name of output fXlFatJets collection
       XlFatJetArr *fXlFatJets;             //array of fXlFatJets
@@ -128,11 +139,12 @@ namespace mithep
       fastjet::JetDefinition *fCAJetDef;   //fastjet clustering definition
       fastjet::GhostedAreaSpec *fActiveArea;
       fastjet::AreaDefinition *fAreaDefinition;
-      Array<XlSubJet> * fSubjets[XlSubJet::nSubJetTypes];
-
+      
       Deconstruction::Deconstruct *fDeconstruct;
 
-      int fProcessNJets;
+      UInt_t fProcessNJets;
+
+      Bool_t fDoShowerDeconstruction;
 
       // QG tagger
       QGTagger *fQGTagger;                 //QGTagger calculator

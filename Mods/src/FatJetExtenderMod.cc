@@ -1,5 +1,5 @@
 #include "MitAna/DataTree/interface/Names.h"
-#include "MitAna/TreeFiller/interface/FatJetExtenderMod.h"
+#include "MitPhysics/Mods/interface/FatJetExtenderMod.h"
 #include "MitAna/DataTree/interface/PFJetCol.h"
 
 #include "MitCommon/DataFormats/interface/Vect4M.h"
@@ -31,16 +31,17 @@ FatJetExtenderMod::FatJetExtenderMod(const char *name, const char *title) :
   fQGTaggingActive (kTRUE),
   fQGTaggerCHS (kFALSE),
   fPublishOutput (kTRUE),
-  fProcessNJets (2),
-  fFatJetsName (Names::gkFatJetBrn),
+  fFatJetsName (""),
   fFatJetsFromBranch (kTRUE),
   fFatJets (0),
-  fPfCandidatesName (Names::gkPFCandidatesBrn),
-  fPfCandidatesFromBranch(kTRUE),
-  fPfCandidates (0),
+  fPFCandidatesName (Names::gkPFCandidatesBrn),
+  fPFCandidates (0),
   fPileUpDenName(Names::gkPileupEnergyDensityBrn),
   fPileUpDenFromBranch(kTRUE),
   fPileUpDen(0),
+  fVertexesName ("GoodVertexes"), 
+  fVertexesFromBranch(kFALSE),
+  fVertexes(0),
   fXlFatJetsName ("XlFatJets"),
   fSoftDropZCut (0.1),
   fSoftDropR0 (1.),
@@ -51,11 +52,11 @@ FatJetExtenderMod::FatJetExtenderMod(const char *name, const char *title) :
   fTrimRad (0.2),
   fTrimPtFrac (0.05),
   fConeSize (0.6),
-  fDeconstruct(0)
+  fDeconstruct(0),
+  fProcessNJets (3),
+  fDoShowerDeconstruction(kTRUE)
 {
   // Constructor.
-  for (unsigned int i=0; i<XlSubJet::nSubJetTypes; ++i)
-    fSubjets[i] = new Array<XlSubJet>(N_MAX_SUBJETS);
 
 }
 
@@ -85,30 +86,28 @@ void FatJetExtenderMod::Process()
   // make sure the out collections are empty before starting
   fXlFatJets->Delete();
 
-  fFatJets = GetObject<JetOArr>(fFatJetsName);
+  fFatJets = GetObject<FatJetCol>(fFatJetsName);
   if (fQGTaggingActive){
     fPileUpDen = GetObject<PileupEnergyDensityCol>(fPileUpDenName);
   }
 
 
   // Loop over PFCandidates and unmark them : necessary for skimming
-  for (UInt_t i=0; i<fPfCandidates->GetEntries(); ++i)
-    fPfCandidates->At(i)->UnmarkMe();
+  for (UInt_t i=0; i<fPFCandidates->GetEntries(); ++i)
+    fPFCandidates->At(i)->UnmarkMe();
 
   // Setup pileup density for QG computation
   if (fQGTaggingActive)
     fQGTagger->SetRhoIso(fPileUpDen->At(0)->RhoRandomLowEta());
 
   // set up shower deconstruction stuff
-  if (fTopTaggingActive) {
     TString inputCard = Utils::GetEnv("CMSSW_BASE");
-    inputCard += TString::Format("/src/MitAna/SDAlgorithm/config/input_card_%i.dat",int(fR0*10));
+    inputCard += TString::Format("/src/MitAna/SDAlgorithm/config/input_card_%i.dat",int(fConeSize*10));
     AnalysisParameters param(inputCard.Data());
-    TopGluonModel *signal = new TopGluonModel(param);
-    BackgroundModel *background = new BackgroundModel(param);
-    ISRModel *isr = new ISRModel(param);
+    Deconstruction::TopGluonModel *signal = new Deconstruction::TopGluonModel(param);
+    Deconstruction::BackgroundModel *background = new Deconstruction::BackgroundModel(param);
+    Deconstruction::ISRModel *isr = new Deconstruction::ISRModel(param);
     fDeconstruct = new Deconstruction::Deconstruct(param, *signal, *background, *isr);
-  }
 
   // Loop over jets
   for (UInt_t i=0; i<fFatJets->GetEntries(); ++i) {
@@ -117,7 +116,7 @@ void FatJetExtenderMod::Process()
     if (i >= fProcessNJets)
       break;
 
-    const PFJet *jet = dynamic_cast<const PFJet*>(fFatJets->At(i));
+    const FatJet *jet = dynamic_cast<const FatJet*>(fFatJets->At(i));
     if (! jet) {
       printf(" FatJetExtenderMod::Process() - ERROR - jets provided are not PFJets.");
       break;
@@ -140,7 +139,6 @@ void FatJetExtenderMod::SlaveBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis.
   ReqEventObject(fFatJetsName,fFatJets,fFatJetsFromBranch);
-  ReqEventObject(fPfCandidatesName,fPfCandidates,fPfCandidatesFromBranch);
   ReqEventObject(fPileUpDenName,fPileUpDen,fPileUpDenFromBranch);
   ReqEventObject(fVertexesName,fVertexes,fVertexesFromBranch);
 
@@ -148,11 +146,9 @@ void FatJetExtenderMod::SlaveBegin()
 
   // Create the new output collection
   fXlFatJets = new XlFatJetArr(16,fXlFatJetsName);
-  fXlSubJets = new XlSubJetArr(16,fXlSubJetsName);
   // Publish collection for further usage in the analysis
   if (fPublishOutput) {
     PublishObj(fXlFatJets);
-    PublishObj(fXlSubJets);
   }
 
   // Prepare pruner
@@ -191,7 +187,6 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   // Prepare and store in an array a new FatJet
   XlFatJet *xlFatJet = fXlFatJets->Allocate();
   new (xlFatJet) XlFatJet(*fatJet);
-  RefArray<XlSubJet> * newSubjets[XlSubJet::nSubJetTypes];
 
   // Prepare and store QG tagging info
   float qgValue = -1.;
@@ -267,52 +262,52 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   double MassTrimmed = fjClusteredJets[XlSubJet::kTrimmed].m();
 
   // do CMS and HEP top tagging
-  fastjet::PseudoJet iJet;
-  fastjet::PseudoJet cmsTopJet;
-  HEPTopTagger hepTopJet;
   fastjet::CMSTopTagger* fCMSTopTagger = new fastjet::CMSTopTagger();
   std::vector<fastjet::PseudoJet> lOutJets = sorted_by_pt(fjClustering->inclusive_jets(0.0));
-  iJet = lOutJets[0];
-  cmsTopJet = fCMSTopTagger->result(iJet);
-  hepTopJet = HEPTopTagger::HEPTopTagger(fjClustering,iJet);;
+  fastjet::PseudoJet iJet = lOutJets[0];
+  HEPTopTagger hepTopJet = HEPTopTagger(*fjClustering,iJet);;
+  fastjet::PseudoJet cmsTopJet = fCMSTopTagger->result(iJet);
 
   // refill subjets
   XlSubJet * tmp_sj;
+  Jet * tmp_j;
   std::vector<fastjet::PseudoJet> fjSubjets;
   for (unsigned int iSJType = 0; iSJType!=XlSubJet::nSubJetTypes; ++iSJType) {
-    RefArray<XlSubJet> newCollection = xlFatJet->GetSubJets(iSJType);
-    RefArray<XlSubJet> oldCollection = fatJet->GetSubJets(iSJType);
-    newCollection.ResetSubJetcol();
-    if (iSJType < XlSubJet::CMSTT) {
+    RefArray<XlSubJet> newCollection = xlFatJet->GetSubJets((XlSubJet::ESubJetType)iSJType);
+    RefArray<XlSubJet> oldCollection = fatJet->GetSubJets((XlSubJet::ESubJetType)iSJType);
+    newCollection.Reset();
+    if (iSJType < XlSubJet::kCMSTT) {
       // these were already filled, so copy and dR match to fastjet subjets
       // necessary since XlSubJet does not store PFCands
       int nSubJets = std::min<unsigned int>(fjClusteredJets[iSJType].constituents().size(),oldCollection.Entries());
       fjSubjets = fjClusteredJets[iSJType].associated_cluster_sequence()->exclusive_subjets(fjClusteredJets[iSJType],nSubJets);
       for (unsigned int iSJ=0; iSJ!=oldCollection.Entries(); ++iSJ) {
-        tmp_sj = (oldCollection.At(iSJ))->MakeCopy();
+        tmp_j = (oldCollection.At(iSJ))->MakeCopy();
+        tmp_sj = new XlSubJet(*tmp_j);
         float minDeltaR2 = 999;
-        fastjet::PseudoJet *fjSubjet;
-        for (auto fastjet::PseudoJet & sj : fjSubjets) {
-          float deltaR2 = MathUtils::DeltaR2(tmp_sj->Phi(),tmp_sj->Eta(),sj.phi().sj.eta());
+        fastjet::PseudoJet *matched_fjSubjet;
+        for (fastjet::PseudoJet fjSubjet : fjSubjets) {
+          float deltaR2 = MathUtils::DeltaR2(tmp_sj->Phi(),tmp_sj->Eta(),fjSubjet.phi(),fjSubjet.eta());
           if (deltaR2<minDeltaR2) {
             minDeltaR2 = deltaR2;
-            fjSubjet = &sj;
+            matched_fjSubjet = &fjSubjet;
           }
         }
-        FillSubjetQGTagging(*fjSubjet, .01, tmp_sj, xlFatJet);
+        FillSubjetQGTagging(*matched_fjSubjet, .01, tmp_sj, xlFatJet);
         if (iSJType == XlSubJet::kSoftDrop) {
           // calculate pull angle wrt softdrop subjets
-          xlFatJet->SetPullAngle(GetPullAngle(Sorted_by_pt_min_pt(fjSubjets, 0.01), 0.01))
+          std::vector<fastjet::PseudoJet> sortedSubjets = Sorted_by_pt_min_pt(fjSubjets, 0.01);
+          xlFatJet->SetPullAngle(GetPullAngle(sortedSubjets, 0.01));
         }
-        xlFatJet->AddSubJet(tmp_sj,iSJType);
-      } else if (iSJType == XlSubJet::CMSTT) {
-        // now we do CMSTT and HEPTT - no b-tagging possible for these yet!
-        fjSubjets = cmsTopJet.pieces();
-        FillXlSubJets(fjSubjets,xlFatJet,XlSubJet::CMSTT);
-      } else if (iSJType == XlSubJet:HEPTT) {
-        fjSubjets = hepTopJet.top_subjets()
-        FillXlSubJets(fjSubjets,xlFatJet,XlSubJet::HEPTT);
+        xlFatJet->AddSubJet(tmp_sj,(XlSubJet::ESubJetType)iSJType);
       }
+    } else if (iSJType == XlSubJet::kCMSTT) {
+      // now we do CMSTT and HEPTT - no b-tagging possible for these yet!
+      fjSubjets = cmsTopJet.pieces();
+      FillXlSubJets(fjSubjets,xlFatJet,XlSubJet::kCMSTT);
+    } else if (iSJType == XlSubJet::kHEPTT) {
+      fjSubjets = hepTopJet.top_subjets();
+      FillXlSubJets(fjSubjets,xlFatJet,XlSubJet::kHEPTT);
     }
   }
 
@@ -326,9 +321,9 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
         // 0..500   -> 0.3
         // 500..700 -> 0.2
         // 700..inf -> 0.
-        if (fj_it->pt() < 500)
+        if (fatJet->Pt() < 500)
          	 microconesize=0.3;
-        else if (fj_it->pt() < 700)
+        else if (fatJet->Pt() < 700)
          	 microconesize=0.2;
         else
          	 microconesize=0.1;
@@ -344,8 +339,8 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
       double Psignal = 0.0;
       double Pbackground = 0.0;
       try {
-        double chi = deconstruct->deconstruct(microjets, Psignal, Pbackground);
-        fatJet->SetChi(chi);
+        double chi = fDeconstruct->deconstruct(microjets, Psignal, Pbackground);
+        xlFatJet->SetChi(chi);
       } catch(Deconstruction::Exception &e) {
         std::cout << "Exception while running SD: " << e.what() << std::endl;
       }
@@ -390,9 +385,7 @@ void FatJetExtenderMod::FillXlSubJets(std::vector<fastjet::PseudoJet> &fjSubJets
                                  XlFatJet *pFatJet, XlSubJet::ESubJetType subJetType)
 {
   for (int iSJet=0; iSJet < (int) fjSubJets.size(); iSJet++) {
-    XlSubJet *subJet = fXlSubJets->Allocate();
-    // Prepare and store in an array a new SubJet
-    new (subJet) XlSubJet();
+    XlSubJet *subJet = new XlSubJet();
     subJet->SetRawPtEtaPhiM(fjSubJets[iSJet].pt(),
                             fjSubJets[iSJet].eta(),
                             fjSubJets[iSJet].phi(),
@@ -453,8 +446,10 @@ double FatJetExtenderMod::FindRMS(std::vector<float> qjetmasses)
   float mean = FindMean(qjetmasses);
 
   float totalsquared = 0.;
+  float ctr = 0.;
   for (unsigned int i = 0; i < qjetmasses.size(); i++){
     totalsquared += (qjetmasses[i] - mean)*(qjetmasses[i] - mean) ;
+    ++ctr;
   }
   float RMS = sqrt( totalsquared/ctr );
   return RMS;
