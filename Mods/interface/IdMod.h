@@ -56,6 +56,7 @@ namespace mithep {
     UInt_t GetIsoType() const { return fIsoType; }
     Double_t GetPtMin() const { return fPtMin; }
     Double_t GetEtaMax() const { return fEtaMax; }
+    UInt_t GetMinOutput() const { return fMinOutput; }
 
     void SetInputName(char const* n) { fInputName = n; }
     void SetOutputName(char const* n) { fOutputName = n; }
@@ -77,6 +78,7 @@ namespace mithep {
     void SetIsoType(UInt_t t) { fIsoType = t; }
     void SetPtMin(Double_t m) { fPtMin = m; }
     void SetEtaMax(Double_t m) { fEtaMax = m; }
+    void SetMinOutput(UInt_t m) { fMinOutput = m; }
 
   protected:
     void SlaveBegin() override;
