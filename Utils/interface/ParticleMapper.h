@@ -2,6 +2,11 @@
 // Particle Mapper
 //
 // Tool to avoid looping over entire sets of PF Candidates in an event
+// Initialize with a collection of PFCandidates. These fill a grid in eta-phi space with either 
+// a default resolution or one specified by the user. Then the object can be used to return the 
+// indices of particles in the same bin or all nearby bins. This second option guarantees returning
+// all particles within a distance of the resolution (plus some extras). This is much faster than
+// looping over all other particles to determine which ones are close.
 //
 // Authors: D.Abercrombie
 //--------------------------------------------------------------------------------------------------

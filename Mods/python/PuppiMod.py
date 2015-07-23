@@ -1,7 +1,8 @@
+import os
 from MitAna.TreeMod.bambu import mithep
 
 puppiMod = mithep.PuppiMod(
-    EtaConfigName = '/home/dabercro/cms/cmssw/041/CMSSW_7_4_6/src/MitPhysics/data/PuppiEta_150701.cfg',
+    EtaConfigName = os.getenv("CMSSW_BASE")+'/src/MitPhysics/data/PuppiEta_150701.cfg',
     OutputName = 'PuppiParticles',
     RMin = 0.02,
     R0 = 0.3,
