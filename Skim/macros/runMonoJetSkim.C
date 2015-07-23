@@ -29,12 +29,17 @@ using namespace mithep;
 //--------------------------------------------------------------------------------------------------
 void runMonoJetSkim(const char *fileset    = "0000",
 		    const char *skim       = "noskim",
-		    const char *dataset    = "WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM",
+                    //		    const char *dataset    = "WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM",
+		    const char *dataset    = "MET+Run2015B-PromptReco-v1+AOD",
 		    const char *book       = "t2mit/filefi/041",
 		    const char *catalogDir = "/home/cmsprod/catalog",
 		    const char *outputLabel = "monojet",
 		    int         nEvents    = 1000)
 {
+  float maxJetEta       = 4.7;
+  float minMet          = 90.;
+  float minLeadJetPt    = 90.;
+
   //------------------------------------------------------------------------------------------------
   // json parameters get passed through the environment
   // for MC, the value must be "~"
@@ -45,17 +50,22 @@ void runMonoJetSkim(const char *fileset    = "0000",
     return;
   }
 
-  TString jsonFile = TString("/home/cmsprod/cms/json/") + json;
-  Bool_t  isData   = (json != "~");
+  Bool_t isData = (json != "~");
 
   TString MitData(gSystem->Getenv("MIT_DATA"));
-  if(MitData.Length() == 0){
-    MitData = gSystem->Getenv("CMSSW_BASE");
-    MitData += "/src/MitPhysics/data";
+  if (MitData.Length() == 0) {
+    printf(" MIT_DATA was not defined. EXIT!\n");
+    return;
+  }
+
+  TString jsonDir(gSystem->Getenv("MIT_JSON_DIR"));
+  if (jsonDir.Length() == 0) {
+    printf(" MIT_JSON_DIR was not defined. EXIT!\n");
+    return;
   }
 
   printf("\n Initialization worked: \n\n");
-  printf("   JSON   : %s (file: %s)\n",  json.Data(), jsonFile.Data());
+  printf("   JSON   : %s\n",  json.Data());
   printf("   isData : %d\n\n",isData);
 
   //------------------------------------------------------------------------------------------------
@@ -70,42 +80,21 @@ void runMonoJetSkim(const char *fileset    = "0000",
   //------------------------------------------------------------------------------------------------
   std::vector<mithep::BaseMod*> modules;
 
-  RunLumiSelectionMod *runLumiSel = new RunLumiSelectionMod;
-  runLumiSel->SetAcceptMC(kTRUE);                          // Monte Carlo events are always accepted
+  if (isData) {
+    RunLumiSelectionMod *runLumiSel = new RunLumiSelectionMod;
+    runLumiSel->SetAcceptMC(kTRUE);                          // Monte Carlo events are always accepted
 
-  // only select on run- and lumisection numbers when valid json file present
-  if ((jsonFile.CompareTo("/home/cmsprod/cms/json/~") != 0) &&
-      (jsonFile.CompareTo("/home/cmsprod/cms/json/-") != 0)   ) {
-    printf("\n Jason file added: %s \n\n",jsonFile.Data());
-    runLumiSel->AddJSONFile(jsonFile.Data());
-  }
-  if ((jsonFile.CompareTo("/home/cmsprod/cms/json/-") == 0)   ) {
-    printf("\n WARNING -- Looking at data without JSON file: always accept.\n\n");
-    runLumiSel->SetAbortIfNotAccepted(kFALSE);   // accept all events if there is no valid JSON file
-  }
-  printf("\n Run lumi worked. \n\n");
+    // only select on run- and lumisection numbers when valid json file present
+    if ((json.CompareTo("-") == 0)) {
+      printf("\n WARNING -- Looking at data without JSON file: always accept.\n\n");
+      runLumiSel->SetAbortIfNotAccepted(kFALSE);   // accept all events if there is no valid JSON file
+    }
+    else if ((json.CompareTo("~") != 0)) {
+      printf("\n Jason file added: %s \n\n", json.Data());
+      runLumiSel->AddJSONFile((jsonDir + "/" + json).Data());
+    }
 
-  modules.push_back(runLumiSel);
-
-  // Generator info
-  GeneratorMod *generatorMod = 0;
-  if (!isData) {
-    generatorMod = new GeneratorMod;
-    generatorMod->SetPrintDebug(kFALSE);
-    generatorMod->SetPtLeptonMin(0.0);
-    generatorMod->SetEtaLeptonMax(2.7);
-    generatorMod->SetPtPhotonMin(0.0);
-    generatorMod->SetEtaPhotonMax(2.7);
-    generatorMod->SetPtRadPhotonMin(0.0);
-    generatorMod->SetEtaRadPhotonMax(2.7);
-    generatorMod->SetIsData(isData);
-    generatorMod->SetFillHist(! isData);
-    generatorMod->SetApplyISRFilter(kFALSE);
-    generatorMod->SetApplyVVFilter(kFALSE);
-    generatorMod->SetApplyVGFilter(kFALSE);
-    generatorMod->SetFilterBTEvents(kFALSE);
-
-    modules.push_back(generatorMod);
+    modules.push_back(runLumiSel);
   }
 
   //-----------------------------------------------------------------------------------------------------------
@@ -131,7 +120,8 @@ void runMonoJetSkim(const char *fileset    = "0000",
   leadJetId->SetMaxNeutralHadronFraction(0.7);
   leadJetId->SetMaxNeutralEMFraction(0.7);
   leadJetId->SetApplyPFLooseId(kTRUE);
-  leadJetId->SetPtMin(90.);
+  leadJetId->SetPtMin(minLeadJetPt);
+  leadJetId->SetEtaMax(maxJetEta);
   leadJetId->SetMinOutput(1);
 
   modules.push_back(leadJetId);
@@ -313,10 +303,6 @@ void runMonoJetSkim(const char *fileset    = "0000",
   // select events
   //------------------------------------------------------------------------------------------------
 
-  float maxJetEta       = 4.7;
-  float minMet          = 150.;
-  float minLeadJetPt    = 90.;
-
   MonoJetAnalysisMod *monojetSel = new MonoJetAnalysisMod("MonoJetSelector");
   monojetSel->SetMetName(type1MetCorr->GetOutputName());
   monojetSel->SetJetsName(jetId->GetOutputName());
@@ -342,6 +328,26 @@ void runMonoJetSkim(const char *fileset    = "0000",
   }
 
   modules.push_back(monojetSel);
+
+  // Generator info
+  if (!isData) {
+    GeneratorMod* generatorMod = new GeneratorMod;
+    generatorMod->SetPrintDebug(kFALSE);
+    generatorMod->SetPtLeptonMin(0.0);
+    generatorMod->SetEtaLeptonMax(2.7);
+    generatorMod->SetPtPhotonMin(0.0);
+    generatorMod->SetEtaPhotonMax(2.7);
+    generatorMod->SetPtRadPhotonMin(0.0);
+    generatorMod->SetEtaRadPhotonMax(2.7);
+    generatorMod->SetIsData(isData);
+    generatorMod->SetFillHist(! isData);
+    generatorMod->SetApplyISRFilter(kFALSE);
+    generatorMod->SetApplyVVFilter(kFALSE);
+    generatorMod->SetApplyVGFilter(kFALSE);
+    generatorMod->SetFilterBTEvents(kFALSE);
+
+    modules.push_back(generatorMod);
+  }
 
   //------------------------------------------------------------------------------------------------
   // skim output
@@ -377,7 +383,7 @@ void runMonoJetSkim(const char *fileset    = "0000",
   skimOutput->SetFileName(outputName);
   skimOutput->SetPathName(".");
 
-  modules.push_back(skimOutput);
+  skimOutput->AddCondition(monojetSel);
 
   //------------------------------------------------------------------------------------------------
   // making the analysis chain
@@ -404,6 +410,7 @@ void runMonoJetSkim(const char *fileset    = "0000",
     ana->SetProcessNEvents(nEvents);
 
   ana->AddSuperModule(modules.front());
+  ana->AddSuperModule(skimOutput);
 
   //------------------------------------------------------------------------------------------------
   // organize input
@@ -422,7 +429,7 @@ void runMonoJetSkim(const char *fileset    = "0000",
   // Say what we are doing
   //------------------------------------------------------------------------------------------------
   printf("\n==== PARAMETER SUMMARY FOR THIS JOB ====\n");
-  printf("\n JSON file: %s\n",jsonFile.Data());
+  printf("\n JSON file: %s\n", json.Data());
   printf("\n Rely on Catalog: %s\n",catalogDir);
   printf("  -> Book: %s  Dataset: %s  Skim: %s  Fileset: %s <-\n",book,dataset,skim,fileset);
   printf("\n========================================\n");
