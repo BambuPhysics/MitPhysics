@@ -28,21 +28,22 @@ namespace mithep {
     char const* GetCategoryFlagsName() const { return fCategoryFlags.GetName(); }
     
     // set input names
-    void SetMetName(const char *n)           { fMetName= n; }
-    void SetJetsName(const char *n)          { fJetsName = n; } 
-    void SetVetoElectronsName(const char *n) { fVetoElectronsName = n; }
-    void SetElectronMaskName(const char *n)  { fElectronMaskName = n; }
-    void SetVetoMuonsName(const char *n)     { fVetoMuonsName = n; }
-    void SetMuonMaskName(const char *n)      { fMuonMaskName = n; }
-    void SetVetoTausName(const char *n)      { fVetoTausName = n; }
-    void SetVetoPhotonsName(const char *n)   { fVetoPhotonsName = n; }
-    void SetPhotonMaskName(const char *n)    { fPhotonMaskName = n; }
+    void SetMetName(const char* n)           { fMetName= n; }
+    void SetJetsName(const char* n)          { fJetsName = n; } 
+    void SetVetoElectronsName(const char* n) { fVetoElectronsName = n; }
+    void SetElectronMaskName(const char* n)  { fElectronMaskName = n; }
+    void SetVetoMuonsName(const char* n)     { fVetoMuonsName = n; }
+    void SetMuonMaskName(const char* n)      { fMuonMaskName = n; }
+    void SetVetoTausName(const char* n)      { fVetoTausName = n; }
+    void SetVetoPhotonsName(const char* n)   { fVetoPhotonsName = n; }
+    void SetPhotonMaskName(const char* n)    { fPhotonMaskName = n; }
 
     // set output name
-    void SetCategoryFlagsName(const char *n) { fCategoryFlags.SetName(n); }
+    void SetCategoryFlagsName(const char* n) { fCategoryFlags.SetName(n); }
 
     // Setting cut values
     void SetCategoryActive(UInt_t c, Bool_t a = kTRUE) { fCategoryActive[c] = a; }
+    void AddTriggerName(UInt_t c, const char* n)       { fTriggerNames[c].push_back(n); }
     void SetMaxNumJets(UInt_t c, Int_t n)              { fMaxNumJets[c] = n; }
     void SetMinLeadJetPt(UInt_t c, Double_t x)         { fMinLeadJetPt[c] = x; }
     void SetMaxJetEta(UInt_t c, Double_t x)            { fMaxJetEta[c] = x; }
@@ -65,8 +66,9 @@ namespace mithep {
 
   protected:
     // Standard module methods
-    void Process() override;
     void SlaveBegin() override;
+    void BeginRun() override;
+    void Process() override;
     void SlaveTerminate() override;
 
     // names of the input collections
@@ -79,12 +81,11 @@ namespace mithep {
     TString fVetoTausName{"GoodTaus"};
     TString fVetoPhotonsName{"VetoPhotons"};
     TString fPhotonMaskName{"GoodPhotons"};
+    TString fTriggerBitsName{Names::gkHltBitBrn};
 
-    // Cuts
-    // The module can define up to nCat set of cuts, each corresponing
-    // to a skim category.
-    // Pretty bad implementation as the output file does not document
-    // what cuts resulted in which cateogry, but this is just an example..
+    std::vector<TString> fTriggerNames[nMonoJetCategories]{};
+    std::vector<UInt_t> fTriggerIds[nMonoJetCategories]{};
+
     Bool_t   fCategoryActive[nMonoJetCategories] = {};
     UInt_t   fMaxNumJets[nMonoJetCategories] = {};
     Double_t fMinLeadJetPt[nMonoJetCategories] = {};
@@ -109,6 +110,7 @@ namespace mithep {
 
     enum Cut {
       cAll,
+      cTrigger,
       cNElectrons,
       cNMuons,
       cNTaus,

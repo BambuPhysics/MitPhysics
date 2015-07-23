@@ -7,6 +7,8 @@
 #include "MitAna/DataTree/interface/PhotonCol.h"
 #include "MitAna/DataTree/interface/JetCol.h"
 #include "MitAna/DataTree/interface/PFJet.h"
+#include "MitAna/DataTree/interface/TriggerTable.h"
+#include "MitAna/DataTree/interface/TriggerMask.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 
 #include <limits>
@@ -54,6 +56,7 @@ MonoJetAnalysisMod::SlaveBegin()
     AddTH1(fCutflow[iCat], "hCutflow" + fgMonoJetCategories[iCat], ";;Events", nCuts, 0., nCuts);
     auto* xaxis = fCutflow[iCat]->GetXaxis();
     xaxis->SetBinLabel(cAll + 1, "All");
+    xaxis->SetBinLabel(cTrigger + 1, "Trigger");
     xaxis->SetBinLabel(cNElectrons + 1, "NElectrons");
     xaxis->SetBinLabel(cNMuons + 1, "NMuons");
     xaxis->SetBinLabel(cNPhotons + 1, "NPhotons");
@@ -71,6 +74,24 @@ MonoJetAnalysisMod::SlaveBegin()
   PublishObj(&fCategoryFlags);
 
   fNEventsSelected = 0;
+}
+
+void
+MonoJetAnalysisMod::BeginRun()
+{
+  if (!HasHLTInfo())
+    return;
+
+  auto* hltTable = GetHLTTable();
+  for (unsigned iCat = 0; iCat != nMonoJetCategories; ++iCat) {
+    for (auto trigger : fTriggerNames[iCat]) {
+      if (trigger.EndsWith("*"))
+        trigger.ReplaceAll("*", "");
+      auto* triggerName = hltTable->GetWildcard(trigger);
+      if (triggerName)
+        fTriggerIds[iCat].push_back(triggerName->Id());
+    }
+  }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -111,6 +132,10 @@ MonoJetAnalysisMod::Process()
   if (!photonMask)
     SendError(kAbortAnalysis, "Process", "Could not find " + fPhotonMaskName);
 
+  auto* triggerMask = GetObject<TriggerMask>(fTriggerBitsName);
+  if (!triggerMask)
+    SendError(kAbortAnalysis, "Process", "Could not find " + fTriggerBitsName);
+
   bool skipEvent = true;
 
   for (unsigned iCat = 0; iCat != nMonoJetCategories; ++iCat) {
@@ -121,8 +146,19 @@ MonoJetAnalysisMod::Process()
 
     fCutflow[iCat]->Fill(cAll);
 
-    // Cuts based on object multiplicities
+    if (fTriggerIds[iCat].size() != 0) {
+      unsigned iT = 0;
+      for (; iT != fTriggerIds[iCat].size(); ++iT) {
+        if (triggerMask->At(fTriggerIds[iCat].at(iT)))
+          break;
+      }
+      if (iT == fTriggerIds[iCat].size())
+        continue;
+    }
 
+    fCutflow[iCat]->Fill(cTrigger);
+
+    // Cuts based on object multiplicities
     switch (iCat) {
     case kDielectron:
       // Mask applied on top of veto electrons
@@ -317,7 +353,8 @@ MonoJetAnalysisMod::Process()
 }
 
 //--------------------------------------------------------------------------------------------------
-void MonoJetAnalysisMod::SlaveTerminate()
+void
+MonoJetAnalysisMod::SlaveTerminate()
 {
   Info("SlaveTerminate", "Selected events on MonoJetAnalysisMod: %d", fNEventsSelected);
 

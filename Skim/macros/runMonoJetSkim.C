@@ -28,12 +28,13 @@ using namespace mithep;
 
 //--------------------------------------------------------------------------------------------------
 void runMonoJetSkim(const char *fileset    = "0000",
-		    const char *skim       = "noskim",
-                    const char *dataset    = "WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM",
-		    const char *book       = "t2mit/filefi/041",
-		    const char *catalogDir = "/home/cmsprod/catalog",
-		    const char *outputLabel = "monojet",
-		    int         nEvents    = 1000)
+                    const char *skim       = "noskim",
+                    //const char *dataset    = "WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM",
+                    const char *dataset    = "MET+Run2015B-PromptReco-v1+AOD",
+                    const char *book       = "t2mit/filefi/041",
+                    const char *catalogDir = "/home/cmsprod/catalog",
+                    const char *outputLabel = "monojet",
+                    int         nEvents    = 10000)
 {
   float maxJetEta       = 4.7;
   float minMet          = 90.;
@@ -101,10 +102,14 @@ void runMonoJetSkim(const char *fileset    = "0000",
   HLTMod *hltMod = new HLTMod();
 
   // monojet triggers
-  TString triggers[] = {"HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight_v*",
-                        "HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight_v*"};
-  for (auto& trigger : triggers)
-    hltMod->AddTrigger(trigger);
+  std::vector<TString> triggerNames[MonoJetAnalysisMod::nMonoJetCategories];
+  triggerNames[MonoJetAnalysisMod::kSignal].push_back("HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight_v*");
+  triggerNames[MonoJetAnalysisMod::kSignal].push_back("HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight_v*");
+
+  for (auto& names : triggerNames) {
+    for (auto& name : names)
+      hltMod->AddTrigger(name);
+  }
 
   hltMod->SetBitsName("HLTBits");
   hltMod->SetTrigObjsName("MonoJetTriggerObjects");
@@ -324,6 +329,8 @@ void runMonoJetSkim(const char *fileset    = "0000",
   // Using uniform setup for all categories
   for (unsigned iCat = 0; iCat != MonoJetAnalysisMod::nMonoJetCategories; ++iCat) {
     monojetSel->SetCategoryActive(iCat, kTRUE);
+    for (auto& name : triggerNames[iCat])
+      monojetSel->AddTriggerName(iCat, name);
     monojetSel->SetMaxNumJets(iCat, 3);
     monojetSel->SetMinLeadJetPt(iCat, minLeadJetPt);
     monojetSel->SetMaxJetEta(iCat, maxJetEta);
