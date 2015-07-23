@@ -29,8 +29,7 @@ using namespace mithep;
 //--------------------------------------------------------------------------------------------------
 void runMonoJetSkim(const char *fileset    = "0000",
 		    const char *skim       = "noskim",
-                    //		    const char *dataset    = "WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM",
-		    const char *dataset    = "MET+Run2015B-PromptReco-v1+AOD",
+                    const char *dataset    = "WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM",
 		    const char *book       = "t2mit/filefi/041",
 		    const char *catalogDir = "/home/cmsprod/catalog",
 		    const char *outputLabel = "monojet",
@@ -81,16 +80,15 @@ void runMonoJetSkim(const char *fileset    = "0000",
   std::vector<mithep::BaseMod*> modules;
 
   if (isData) {
-    RunLumiSelectionMod *runLumiSel = new RunLumiSelectionMod;
-    runLumiSel->SetAcceptMC(kTRUE);                          // Monte Carlo events are always accepted
+    RunLumiSelectionMod* runLumiSel = new RunLumiSelectionMod;
 
     // only select on run- and lumisection numbers when valid json file present
     if ((json.CompareTo("-") == 0)) {
       printf("\n WARNING -- Looking at data without JSON file: always accept.\n\n");
       runLumiSel->SetAbortIfNotAccepted(kFALSE);   // accept all events if there is no valid JSON file
     }
-    else if ((json.CompareTo("~") != 0)) {
-      printf("\n Jason file added: %s \n\n", json.Data());
+    else if (json.CompareTo("~") != 0) {
+      printf("\n Json file added: %s \n\n", json.Data());
       runLumiSel->AddJSONFile((jsonDir + "/" + json).Data());
     }
 
@@ -254,10 +252,10 @@ void runMonoJetSkim(const char *fileset    = "0000",
 
   JetCorrectionMod *jetCorr = new JetCorrectionMod;
   if (isData){ 
-    jetCorr->AddCorrectionFromFile((MitData+TString("/Summer13_V1_DATA_L1FastJet_AK5PF.txt")).Data()); 
-    jetCorr->AddCorrectionFromFile((MitData+TString("/Summer13_V1_DATA_L2Relative_AK5PF.txt")).Data()); 
-    jetCorr->AddCorrectionFromFile((MitData+TString("/Summer13_V1_DATA_L3Absolute_AK5PF.txt")).Data()); 
-    jetCorr->AddCorrectionFromFile((MitData+TString("/Summer13_V1_DATA_L2L3Residual_AK5PF.txt")).Data());
+    jetCorr->AddCorrectionFromFile((MitData+TString("/74X_dataRun2_Prompt_v1_L1FastJet_AK4PFchs.txt")).Data()); 
+    jetCorr->AddCorrectionFromFile((MitData+TString("/74X_dataRun2_Prompt_v1_L2Relative_AK4PFchs.txt")).Data()); 
+    jetCorr->AddCorrectionFromFile((MitData+TString("/74X_dataRun2_Prompt_v1_L3Absolute_AK4PFchs.txt")).Data()); 
+    jetCorr->AddCorrectionFromFile((MitData+TString("/74X_dataRun2_Prompt_v1_L2L3Residual_AK4PFchs.txt")).Data());
   }                                                                                      
   else {                                                                                 
     jetCorr->AddCorrectionFromFile((MitData+TString("/MCRUN2_74_V9_L1FastJet_AK4PFchs.txt")).Data()); 
@@ -292,9 +290,17 @@ void runMonoJetSkim(const char *fileset    = "0000",
   type1MetCorr->ApplyType0(kFALSE);
   type1MetCorr->ApplyType1(kTRUE);
   type1MetCorr->ApplyShift(kFALSE);
-  type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L1FastJet_AK4PF.txt");
-  type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L2Relative_AK4PF.txt");
-  type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L3Absolute_AK4PF.txt");
+  if (isData) {
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/74X_dataRun2_Prompt_v1_L1FastJet_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/74X_dataRun2_Prompt_v1_L2Relative_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/74X_dataRun2_Prompt_v1_L3Absolute_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/74X_dataRun2_Prompt_v1_L2L3Residual_AK4PF.txt");
+  }
+  else {
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L1FastJet_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L2Relative_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L3Absolute_AK4PF.txt");
+  }
   type1MetCorr->IsData(isData);
 
   modules.push_back(type1MetCorr);

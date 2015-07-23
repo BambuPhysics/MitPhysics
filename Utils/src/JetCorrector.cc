@@ -29,20 +29,29 @@ mithep::JetCorrector::AddParameterFile(char const* fileName)
   mithep::Jet::ECorr lastLevel = TranslateLevel(it->definitions().level().c_str());
   fLevels.push_back(lastLevel);
 
-  // check correction ordering
-  if (fParameters.size() > 1) {
-    ++it;
-    if (TranslateLevel(it->definitions().level().c_str()) >= lastLevel) {
-      std::cerr << "Exception in JetCorrector::AddParameterFile(" << fileName << "):" << std::endl;
-      std::cerr << "Correction parameters must be added in ascending order of correction levels" << std::endl;
-      throw std::runtime_error("Configuration error");
-    }
-  }
+// Not enforcing ordered corrections because L2L3Residual is seen as L2 by the JetCorrectionParameters
+//   // check correction ordering
+//   if (fParameters.size() > 1) {
+//     ++it;
+//     if (TranslateLevel(it->definitions().level().c_str()) >= lastLevel) {
+//       std::cerr << "Exception in JetCorrector::AddParameterFile(" << fileName << "):" << std::endl;
+//       std::cerr << "Correction parameters must be added in ascending order of correction levels" << std::endl;
+//       throw std::runtime_error("Configuration error");
+//     }
+//   }
+}
+
+void
+mithep::JetCorrector::ClearParameters()
+{
+  fParameters.clear();
+  fLevels.clear();
 }
 
 void
 mithep::JetCorrector::Initialize()
 {
+  delete fCorrector;
   fCorrector = new FactorizedJetCorrector(fParameters);
 }
 
@@ -69,10 +78,14 @@ mithep::JetCorrector::CorrectionFactors(mithep::Jet& jet, Double_t rho/* = 0.*/)
   else
     fCorrector->setJetEMF(-99.0);
 
-  std::vector<float>&& corrections = fCorrector->getSubCorrections();
+  std::vector<float>&& corrections(fCorrector->getSubCorrections());
+
+  // if MaxCorrLevel is specified, downsize the corrections array
+  // for data L1+L2+L3+L2L3Residual, the last (residual) appears as L2
+  // therefore must check for level <= fMaxCorrLevel
   if (fMaxCorrLevel != Jet::nECorrs) {
-    for (unsigned iL = 1; iL <= fLevels.size(); ++iL) {
-      if (fLevels[iL - 1] == fMaxCorrLevel) {
+    for (unsigned iL = fLevels.size(); iL != 0; --iL) {
+      if (fLevels[iL - 1] <= fMaxCorrLevel) {
         corrections.resize(iL);
         break;
       }
@@ -95,18 +108,37 @@ mithep::JetCorrector::CorrectionFactor(mithep::Jet& jet, Double_t rho/* = 0.*/) 
 void
 mithep::JetCorrector::Correct(mithep::Jet& jet, Double_t rho/* = 0.*/) const
 {
+  //set and enable correction factors in the output jet
+
   auto&& corrections(CorrectionFactors(jet, rho));
 
-  //set and enable correction factors in the output jet
-  double cumulativeCorrection = 1.0;
+  auto lastLevel = mithep::Jet::nECorrs;
 
   for (unsigned iC = 0; iC != corrections.size(); ++iC) {
-    float currentCorrection = corrections.at(iC) / cumulativeCorrection;
-    cumulativeCorrection = corrections.at(iC);
+    auto currentLevel = fLevels.at(iC);
+    float currentCorrection = 1.;
+    if (lastLevel == mithep::Jet::L3 && currentLevel == mithep::Jet::L2) {
+      // special case for L2L3Residual
+      // store L3*L2L3 as L3 correction
+      if (iC > 1)
+        currentCorrection = corrections.at(iC) / corrections.at(iC - 2);
+      else
+        currentCorrection = corrections.at(iC);
+
+      currentLevel = mithep::Jet::L3;
+    }
+    else {
+      if (iC > 0)
+        currentCorrection = corrections.at(iC) / corrections.at(iC - 1);
+      else
+        currentCorrection = corrections.at(iC);
+    }
 
     //set correction and enable
-    jet.SetCorrectionScale(currentCorrection, fLevels.at(iC));
-    jet.EnableCorrection(fLevels.at(iC));
+    jet.SetCorrectionScale(currentCorrection, currentLevel);
+    jet.EnableCorrection(currentLevel);
+
+    lastLevel = currentLevel;
   }
 }
 
