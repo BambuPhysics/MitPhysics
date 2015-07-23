@@ -35,8 +35,8 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fInvert(kFALSE),
   fApplyCHS(kTRUE),
   fApplyLowPUCorr(kTRUE),
-  fUseEtaFor Algo(kTRUE),
-  fEtaFor Algo(2.5),
+  fUseEtaForAlgo(kTRUE),
+  fEtaForAlgo(2.5),
   fDumpingPuppi(kFALSE)
 {
   // Constructor.
@@ -49,9 +49,9 @@ PuppiMod::~PuppiMod() {}
 Int_t PuppiMod::GetParticleType(const PFCandidate *cand)
 {
   Bool_t charged = (cand->PFType() > 0 && cand->PFType() < 4);
-  if (fUseEtaFor Algo) {
+  if (fUseEtaForAlgo) {
     Double_t checkEta = fabs(cand->Eta());
-    if (checkEta > fEtaFor Algo)
+    if (checkEta > fEtaForAlgo)
       return 4;
     else if (not charged) 
       return 3;
@@ -120,7 +120,7 @@ void PuppiMod::SlaveBegin()
     SendError(kAbortAnalysis, "SlaveBegin", "Config name for  Puppi not given.");
 
   std::cout << fEtaConfigName << std::endl;
-  std::if stream configFile;
+  std::ifstream configFile;
   configFile.open(fEtaConfigName.Data());
   TString tempMaxEta;
   TString tempMinPt;
