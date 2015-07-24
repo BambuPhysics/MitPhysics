@@ -21,8 +21,8 @@ namespace mithep
   class PuppiMod : public BaseMod
   {
     public:
-      PuppiMod(const char *name="PuppiMod", 
-               const char *title="Puppi module");
+      PuppiMod( const char *name="PuppiMod", 
+                const char *title="Puppi module" );
      ~PuppiMod();
 
       Int_t GetParticleType( const PFCandidate *cand );
