@@ -30,9 +30,10 @@
 #include "MitPhysics/Mods/interface/PhotonMvaMod.h"
 #include "MitPhysics/Mods/interface/PhotonPairSelector.h"
 #include "MitPhysics/Mods/interface/PhotonTreeWriter.h"
-#include "MitPhysics/Mods/interface/TauCleaningMod.h"
+#include "MitPhysics/Mods/interface/PuppiMod.h"
 #include "MitPhysics/Mods/interface/PFTauCleaningMod.h"
 #include "MitPhysics/Mods/interface/TauIDMod.h"
+#include "MitPhysics/Mods/interface/TauCleaningMod.h"
 #include "MitPhysics/Mods/interface/PFTauIdMod.h"
 #include "MitPhysics/Mods/interface/PFTauIDModRun1.h"
 #include "MitPhysics/Mods/interface/TrackingPurityFilterMod.h"
@@ -84,9 +85,10 @@
 #pragma link C++ class mithep::PhotonTreeWriterPhoton16+;
 #pragma link C++ class mithep::PhotonTreeWriterDiphotonEvent+;
 #pragma link C++ class mithep::PhotonTreeWriterVtx+;
-#pragma link C++ class mithep::TauCleaningMod+;
+#pragma link C++ class mithep::PuppiMod+;
 #pragma link C++ class mithep::PFTauCleaningMod+;
 #pragma link C++ class mithep::TauIDMod+;
+#pragma link C++ class mithep::TauCleaningMod+;
 #pragma link C++ class mithep::PFTauIdMod+;
 #pragma link C++ class mithep::IdMod<mithep::PFTau>+;
 #pragma link C++ class mithep::PFTauIDModRun1+;
@@ -95,5 +97,3 @@
 #pragma link C++ class mithep::SeparatePileUpMod+;
 #pragma link C++ class mithep::VTagMod+;
 #endif
-
-// dumb
