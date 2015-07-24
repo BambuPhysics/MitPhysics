@@ -29,16 +29,15 @@ using namespace mithep;
 //--------------------------------------------------------------------------------------------------
 void runMonoJetSkim(const char *fileset    = "0000",
                     const char *skim       = "noskim",
-                    //const char *dataset    = "WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM",
                     const char *dataset    = "MET+Run2015B-PromptReco-v1+AOD",
                     const char *book       = "t2mit/filefi/041",
                     const char *catalogDir = "/home/cmsprod/catalog",
                     const char *outputLabel = "monojet",
                     int         nEvents    = 10000)
 {
-  float maxJetEta       = 4.7;
-  float minMet          = 90.;
-  float minLeadJetPt    = 90.;
+  float maxJetEta       = 2.5;
+  float minMet          = 50.;
+  float minLeadJetPt    = 30.;
 
   //------------------------------------------------------------------------------------------------
   // json parameters get passed through the environment
@@ -105,6 +104,15 @@ void runMonoJetSkim(const char *fileset    = "0000",
   std::vector<TString> triggerNames[MonoJetAnalysisMod::nMonoJetCategories];
   triggerNames[MonoJetAnalysisMod::kSignal].push_back("HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight_v*");
   triggerNames[MonoJetAnalysisMod::kSignal].push_back("HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight_v*");
+  triggerNames[MonoJetAnalysisMod::kSingleMuon].push_back("HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight_v*");
+  triggerNames[MonoJetAnalysisMod::kSingleMuon].push_back("HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight_v*");
+  triggerNames[MonoJetAnalysisMod::kSingleMuon].push_back("HLT_IsoMu27_v*");
+  triggerNames[MonoJetAnalysisMod::kDimuon].push_back("HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight_v*");
+  triggerNames[MonoJetAnalysisMod::kDimuon].push_back("HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight_v*");
+  triggerNames[MonoJetAnalysisMod::kDimuon].push_back("HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v*");
+  triggerNames[MonoJetAnalysisMod::kSingleElectron].push_back("HLT_Ele27_eta2p1_WPLoose_Gsf_v*");
+  triggerNames[MonoJetAnalysisMod::kDielectron].push_back("HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*");
+  triggerNames[MonoJetAnalysisMod::kPhoton].push_back("HLT_Photon175_v*");
 
   for (auto& names : triggerNames) {
     for (auto& name : names)
