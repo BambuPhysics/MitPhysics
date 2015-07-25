@@ -33,11 +33,11 @@ void runMonoJetSkim(const char *fileset    = "0000",
                     const char *book       = "t2mit/filefi/041",
                     const char *catalogDir = "/home/cmsprod/catalog",
                     const char *outputLabel = "monojet",
-                    int         nEvents    = 10000)
+                    int         nEvents    = 1000)
 {
   float maxJetEta       = 2.5;
   float minMet          = 50.;
-  float minLeadJetPt    = 30.;
+  float minLeadJetPt    = 50.;
 
   //------------------------------------------------------------------------------------------------
   // json parameters get passed through the environment
@@ -258,7 +258,7 @@ void runMonoJetSkim(const char *fileset    = "0000",
   pfTauIdMod->SetEtaMax(2.3);
   pfTauIdMod->SetInputName("HPSTaus");
   pfTauIdMod->AddDiscriminator(mithep::PFTau::kDiscriminationByDecayModeFindingNewDMs);
-  pfTauIdMod->AddCutDiscriminator(mithep::PFTau::kDiscriminationByRawCombinedIsolationDBSumPtCorr3Hits,5);
+  pfTauIdMod->AddCutDiscriminator(mithep::PFTau::kDiscriminationByRawCombinedIsolationDBSumPtCorr3Hits, 5., kFALSE);
   pfTauIdMod->SetOutputName("GoodTaus");
 
   modules.push_back(pfTauIdMod);
@@ -346,29 +346,10 @@ void runMonoJetSkim(const char *fileset    = "0000",
     monojetSel->SetMinChargedHadronFrac(iCat, 0.2); 
     monojetSel->SetMaxNeutralHadronFrac(iCat, 0.7);
     monojetSel->SetMaxNeutralEmFrac(iCat, 0.7);
+    monojetSel->SetIgnoreTrigger(!isData);
   }
 
   modules.push_back(monojetSel);
-
-  // Generator info
-  if (!isData) {
-    GeneratorMod* generatorMod = new GeneratorMod;
-    generatorMod->SetPrintDebug(kFALSE);
-    generatorMod->SetPtLeptonMin(0.0);
-    generatorMod->SetEtaLeptonMax(2.7);
-    generatorMod->SetPtPhotonMin(0.0);
-    generatorMod->SetEtaPhotonMax(2.7);
-    generatorMod->SetPtRadPhotonMin(0.0);
-    generatorMod->SetEtaRadPhotonMax(2.7);
-    generatorMod->SetIsData(isData);
-    generatorMod->SetFillHist(! isData);
-    generatorMod->SetApplyISRFilter(kFALSE);
-    generatorMod->SetApplyVVFilter(kFALSE);
-    generatorMod->SetApplyVGFilter(kFALSE);
-    generatorMod->SetFilterBTEvents(kFALSE);
-
-    modules.push_back(generatorMod);
-  }
 
   //------------------------------------------------------------------------------------------------
   // skim output
@@ -431,7 +412,7 @@ void runMonoJetSkim(const char *fileset    = "0000",
     ana->SetProcessNEvents(nEvents);
 
   ana->AddSuperModule(modules.front());
-  ana->AddSuperModule(skimOutput);
+  ana->AddOutputMod(skimOutput);
 
   //------------------------------------------------------------------------------------------------
   // organize input
@@ -473,4 +454,5 @@ void runMonoJetSkim(const char *fileset    = "0000",
 
   return;
 }
+
 

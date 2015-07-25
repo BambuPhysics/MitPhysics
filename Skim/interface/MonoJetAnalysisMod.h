@@ -52,6 +52,8 @@ namespace mithep {
     void SetMaxNeutralHadronFrac(UInt_t c, Double_t x) { fMaxNeutralHadronFrac[c] = x; }
     void SetMaxNeutralEmFrac(UInt_t c, Double_t x)     { fMaxNeutralEmFrac[c] = x; }
 
+    void SetIgnoreTrigger(Bool_t i)                    { fIgnoreTrigger = i; }
+
     enum MonoJetCategory {
       kSignal,
       kDielectron,
@@ -94,6 +96,8 @@ namespace mithep {
     Double_t fMinChargedHadronFrac[nMonoJetCategories] = {};
     Double_t fMaxNeutralHadronFrac[nMonoJetCategories] = {};
     Double_t fMaxNeutralEmFrac[nMonoJetCategories] = {};
+
+    Bool_t fIgnoreTrigger{kFALSE};
 
     // Category (signal/calibration regions) bitmask
     mithep::NFArrBool fCategoryFlags{nMonoJetCategories, "MonoJetCategories"};

@@ -9,6 +9,7 @@
 #include "MitAna/DataTree/interface/PFJet.h"
 #include "MitAna/DataTree/interface/TriggerTable.h"
 #include "MitAna/DataTree/interface/TriggerMask.h"
+#include "MitAna/TreeMod/interface/HLTFwkMod.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 
 #include <limits>
@@ -79,7 +80,7 @@ MonoJetAnalysisMod::SlaveBegin()
 void
 MonoJetAnalysisMod::BeginRun()
 {
-  if (!HasHLTInfo())
+  if (!HasHLTInfo() || !GetHltFwkMod()->HasData())
     return;
 
   auto* hltTable = GetHLTTable();
@@ -132,9 +133,12 @@ MonoJetAnalysisMod::Process()
   if (!photonMask)
     SendError(kAbortAnalysis, "Process", "Could not find " + fPhotonMaskName);
 
-  auto* triggerMask = GetObject<TriggerMask>(fTriggerBitsName);
-  if (!triggerMask)
-    SendError(kAbortAnalysis, "Process", "Could not find " + fTriggerBitsName);
+  TriggerMask* triggerMask = 0;
+  if (HasHLTInfo() && GetHltFwkMod()->HasData()) {
+    triggerMask = GetObject<TriggerMask>(fTriggerBitsName);
+    if (!triggerMask)
+      SendError(kAbortAnalysis, "Process", "Could not find " + fTriggerBitsName);
+  }
 
   bool skipEvent = true;
 
@@ -146,17 +150,21 @@ MonoJetAnalysisMod::Process()
 
     fCutflow[iCat]->Fill(cAll);
 
-    if (fTriggerIds[iCat].size() != 0) {
+    if (triggerMask && fTriggerIds[iCat].size() != 0) {
       unsigned iT = 0;
       for (; iT != fTriggerIds[iCat].size(); ++iT) {
         if (triggerMask->At(fTriggerIds[iCat].at(iT)))
           break;
       }
-      if (iT == fTriggerIds[iCat].size())
+      // if at least one trigger fired, fill the cutflow
+      if (iT != fTriggerIds[iCat].size()) {
+        fCutflow[iCat]->Fill(cTrigger);
+      }
+      else if (!fIgnoreTrigger) {
+        // abort if not ignoring the trigger
         continue;
+      }
     }
-
-    fCutflow[iCat]->Fill(cTrigger);
 
     // Cuts based on object multiplicities
     switch (iCat) {
