@@ -1,0 +1,71 @@
+#==============================================================================================================================================================
+# dataset (version, name)                        skim           legend for plot                 cross sec.(pb)    scale   overlap  JSON file
+#==============================================================================================================================================================
+#=   DATA        ==============================================================================================================================================
+t2mit/filefi/041 SingleElectron+Run2015B-PromptReco-v1+AOD noskim data 0.0 1.0 -1.0 -
+t2mit/filefi/041 SingleMuon+Run2015B-PromptReco-v1+AOD     noskim data 0.0 1.0 -1.0 -
+t2mit/filefi/041 MET+Run2015B-PromptReco-v1+AOD            noskim data 0.0 1.0 -1.0 -
+##=   MC          ==============================================================================================================================================
+####== Signal     ==============================================================================================================================================
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_1000_1+dmytro-RunIISpring15DR74-7d289899b95f0cdbb07483b6a432e2e5+USER                      noskim DM   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_1000_1+dmytro-RunIISpring15DR74-95735aa91e792fda8cd9483f775db31a+USER			     noskim DM   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_100_1+dmytro-RunIISpring15DR74-7d289899b95f0cdbb07483b6a432e2e5+USER			     noskim DM   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_100_1+dmytro-RunIISpring15DR74-95735aa91e792fda8cd9483f775db31a+USER			     noskim DM   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_10_1+dmytro-RunIISpring15DR74-7d289899b95f0cdbb07483b6a432e2e5+USER			     noskim DM   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_10_1+dmytro-RunIISpring15DR74-95735aa91e792fda8cd9483f775db31a+USER			     noskim DM   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_300_1+dmytro-RunIISpring15DR74-7d289899b95f0cdbb07483b6a432e2e5+USER			     noskim DM   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_300_1+dmytro-RunIISpring15DR74-95735aa91e792fda8cd9483f775db31a+USER			     noskim DM   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_5000_1+dmytro-RunIISpring15DR74-7d289899b95f0cdbb07483b6a432e2e5+USER			     noskim DM   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_5000_1+dmytro-RunIISpring15DR74-95735aa91e792fda8cd9483f775db31a+USER			     noskim DM   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_50_1+dmytro-RunIISpring15DR74-7d289899b95f0cdbb07483b6a432e2e5+USER			     noskim DM   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_50_1+dmytro-RunIISpring15DR74-95735aa91e792fda8cd9483f775db31a+USER                        noskim DM   20.0 1.0 -1.0 ~
+####== Background ==============================================================================================================================================
+t2mit/filefi/041 DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v3+AODSIM                noskim DYLL 20.0 1.0 -1.0 ~ 
+t2mit/filefi/041 DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-AsymptFlat10to50bx25Raw_MCRUN2_74_V9-v1+AODSIM   noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-AsymptNoPURawReco_MCRUN2_74_V9A-v4+GEN-SIM-RECO  noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-StartupFlat10to50bx50Raw_MCRUN2_74_V8-v1+AODSIM  noskim mc   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_1000_1+dmytro-RunIISpring15DR74-7d289899b95f0cdbb07483b6a432e2e5+USER			    noskim mc   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_1000_1+dmytro-RunIISpring15DR74-95735aa91e792fda8cd9483f775db31a+USER			    noskim mc   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_100_1+dmytro-RunIISpring15DR74-7d289899b95f0cdbb07483b6a432e2e5+USER			    noskim mc   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_100_1+dmytro-RunIISpring15DR74-95735aa91e792fda8cd9483f775db31a+USER			    noskim mc   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_10_1+dmytro-RunIISpring15DR74-7d289899b95f0cdbb07483b6a432e2e5+USER			    noskim mc   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_10_1+dmytro-RunIISpring15DR74-95735aa91e792fda8cd9483f775db31a+USER			    noskim mc   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_300_1+dmytro-RunIISpring15DR74-7d289899b95f0cdbb07483b6a432e2e5+USER			    noskim mc   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_300_1+dmytro-RunIISpring15DR74-95735aa91e792fda8cd9483f775db31a+USER			    noskim mc   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_5000_1+dmytro-RunIISpring15DR74-7d289899b95f0cdbb07483b6a432e2e5+USER			    noskim mc   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_5000_1+dmytro-RunIISpring15DR74-95735aa91e792fda8cd9483f775db31a+USER			    noskim mc   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_50_1+dmytro-RunIISpring15DR74-7d289899b95f0cdbb07483b6a432e2e5+USER			    noskim mc   20.0 1.0 -1.0 ~
+#t2mit/filefi/041 POWHEG_DMS_NNPDF30_13TeV_Scalar_50_1+dmytro-RunIISpring15DR74-95735aa91e792fda8cd9483f775db31a+USER			    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 QCD_Pt_1400to1800_TuneCUETP8M1_13TeV_pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM			    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 QCD_Pt_170to300_TuneCUETP8M1_13TeV_pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v2+AODSIM				    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 QCD_Pt_1800to2400_TuneCUETP8M1_13TeV_pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM			    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 QCD_Pt_2400to3200_TuneCUETP8M1_13TeV_pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM			    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 QCD_Pt_300to470_TuneCUETP8M1_13TeV_pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM				    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 QCD_Pt_3200toInf_TuneCUETP8M1_13TeV_pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM			    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 QCD_Pt_470to600_TuneCUETP8M1_13TeV_pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v2+AODSIM				    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 QCD_Pt_600to800_TuneCUETP8M1_13TeV_pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v3+AODSIM				    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 QCD_Pt_800to1000_TuneCUETP8M1_13TeV_pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v2+AODSIM			    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 QCD_HT1000to1500_TuneCUETP8M1_13TeV-madgraphMLM-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM		    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 ST_s-channel_4f_leptonDecays_13TeV-amcatnlo-pythia8_TuneCUETP8M1+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM	    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 ST_t-channel_4f_leptonDecays_13TeV-amcatnlo-pythia8_TuneCUETP8M1+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM	    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 ST_t-channel_antitop_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 ST_t-channel_top_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM	    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM	    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 TTJets_SingleLeptFromT_TuneCUETP8M1_13TeV-madgraphMLM-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM	    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM			    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v2+AODSIM			    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 TTTo2L2Nu_13TeV-powheg+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM						    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 TT_TuneCUETP8M1_13TeV-powheg-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v2+AODSIM				    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM			    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 WWTo2L2Nu_13TeV-powheg+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM						    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 WWTo4Q_13TeV-powheg+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v3+AODSIM						    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 WWToLNuQQ_13TeV-powheg+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM						    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 WW_TuneCUETP8M1_13TeV-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM					    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 WZJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM			    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 WZTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM			    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 WZ_TuneCUETP8M1_13TeV-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM					    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 ZZTo2Q2Nu_13TeV_amcatnloFXFX_madspin_pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM			    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 ZZTo4L_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25nsRaw_MCRUN2_74_V9-v1+AODSIM				    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 ZZTo4L_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM					    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 ZZTo4L_13TeV_powheg_pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM					    noskim mc   20.0 1.0 -1.0 ~
+t2mit/filefi/041 ZZ_TuneCUETP8M1_13TeV-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v3+AODSIM                                          noskim mc   20.0 1.0 -1.0 ~
