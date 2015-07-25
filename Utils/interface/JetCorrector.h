@@ -27,6 +27,7 @@ namespace mithep {
     virtual ~JetCorrector();
 
     void AddParameterFile(char const* fileName);
+    void ClearParameters();
     void SetMaxCorrLevel(mithep::Jet::ECorr m) { fMaxCorrLevel = m; }
     void Initialize();
 
