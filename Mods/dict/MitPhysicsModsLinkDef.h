@@ -32,6 +32,7 @@
 #include "MitPhysics/Mods/interface/PhotonTreeWriter.h"
 #include "MitPhysics/Mods/interface/PuppiMod.h"
 #include "MitPhysics/Mods/interface/PFTauCleaningMod.h"
+#include "MitPhysics/Mods/interface/RemoveMuonsMod.h"
 #include "MitPhysics/Mods/interface/TauIDMod.h"
 #include "MitPhysics/Mods/interface/TauCleaningMod.h"
 #include "MitPhysics/Mods/interface/PFTauIdMod.h"
@@ -96,4 +97,5 @@
 #pragma link C++ class mithep::MVASystematicsMod+;
 #pragma link C++ class mithep::SeparatePileUpMod+;
 #pragma link C++ class mithep::VTagMod+;
+#pragma link C++ class mithep::RemoveMuonsMod+;
 #endif
