@@ -21,8 +21,6 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fVertexesName(Names::gkPVBrn),
   fPFCandidatesName(Names::gkPFCandidatesBrn),
   fPuppiParticlesName("PuppiParticles"),
-  fVertexesFromBranch(kTRUE),
-  fPFCandidatesFromBranch(kTRUE),
   fPFCandidates(0),
   fPuppiParticles(0),
   fRMin(0.02),
@@ -110,12 +108,6 @@ Double_t PuppiMod::Chi2fromDZ(Double_t dz)
 //--------------------------------------------------------------------------------------------------
 void PuppiMod::SlaveBegin()
 {
-  // ===== load branches ====
-  if(fVertexesFromBranch)
-    ReqBranch(fVertexesName, fVertexes);
-  if(fPFCandidatesFromBranch)
-    ReqBranch(fPFCandidatesName, fPFCandidates);
-
   // Prepare the storage array for the PuppiParticles
   fPuppiParticles = new PFCandidateArr(16);
   fPuppiParticles->SetName(fPuppiParticlesName);
@@ -164,15 +156,8 @@ void PuppiMod::SlaveTerminate()
 void PuppiMod::Process()
 {
   // Process entries of the tree. 
-  if (fVertexesFromBranch) 
-    LoadBranch(fVertexesName);
-  else
-    LoadEventObject(fVertexesName, fVertexes);
-
-  if(fPFCandidatesFromBranch)
-    LoadBranch(fPFCandidatesName);
-  else
-    LoadEventObject(fPFCandidatesName, fPFCandidates);
+  fVertexes = GetObject<VertexCol>(fVertexesName);
+  fPFCandidates = GetObject<PFCandidateCol>(fPFCandidatesName);
 
   PFCandidateArr *PuppiParticles = new PFCandidateArr;        // This array is only used if adding object to event, not publishing
 
