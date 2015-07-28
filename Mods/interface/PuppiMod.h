@@ -32,8 +32,6 @@ namespace mithep
       const char   *GetOutputName()                const     { return fPuppiParticlesName;     }
       void SetEtaConfigName( const char *name )              { fEtaConfigName = name;          }
       void SetVertexesName( const char *name )               { fVertexesName = name;           }
-      void SetPFCandidatesFromBranch( Bool_t from )          { fPFCandidatesFromBranch = from; }
-      void SetVertexesFromBranch( Bool_t from )              { fVertexesFromBranch = from;     }
       void SetInputName( const char *name )                  { fPFCandidatesName = name;       }
       void SetOutputName( const char *name )                 { fPuppiParticlesName = name;     }
 
@@ -68,9 +66,6 @@ namespace mithep
       TString               fVertexesName;           // Name of vertices collection used for PV
       TString               fPFCandidatesName;       // Name of PFCandidate collection (input)
       TString               fPuppiParticlesName;     // Name of Puppi Particle collection (output)
-
-      Bool_t                fVertexesFromBranch;
-      Bool_t                fPFCandidatesFromBranch;
 
       const VertexCol      *fVertexes;               // Vertex branch
       const PFCandidateCol *fPFCandidates;           // Particle flow branch
