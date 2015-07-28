@@ -4,6 +4,7 @@
 #include "MitPhysics/Mods/interface/PuppiMod.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitPhysics/Init/interface/ModNames.h"
+#include "MitPhysics/Utils/interface/ParticleMapper.h"
 
 #include "TSystem.h"
 #include "Math/QuantFuncMathCore.h"
@@ -37,7 +38,8 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fApplyLowPUCorr(kTRUE),
   fUseEtaForAlgo(kTRUE),
   fEtaForAlgo(2.5),
-  fDumpingPuppi(kFALSE)
+  fDumpingPuppi(kFALSE),
+  fWriteToFile(kFALSE)
 {
   // Constructor.
 }
@@ -106,10 +108,6 @@ Double_t PuppiMod::Chi2fromDZ(Double_t dz)
 //--------------------------------------------------------------------------------------------------
 void PuppiMod::SlaveBegin()
 {
-  // ===== load branches ====
-  ReqBranch(fVertexesName, fVertexes);
-  ReqBranch(fPFCandidatesName, fPFCandidates);
-
   // Prepare the storage array for the PuppiParticles
   fPuppiParticles = new PFCandidateArr(16);
   fPuppiParticles->SetName(fPuppiParticlesName);
@@ -158,8 +156,10 @@ void PuppiMod::SlaveTerminate()
 void PuppiMod::Process()
 {
   // Process entries of the tree. 
-  LoadBranch(fVertexesName);
-  LoadBranch(fPFCandidatesName);
+  fVertexes = GetObject<VertexCol>(fVertexesName);
+  fPFCandidates = GetObject<PFCandidateCol>(fPFCandidatesName);
+
+  PFCandidateArr *PuppiParticles = new PFCandidateArr;        // This array is only used if adding object to event, not publishing
 
   if (fDumpingPuppi) {
     std::cout << "Primary Vertex location: " << fVertexes->At(0)->Position().x() << ", ";
@@ -219,7 +219,7 @@ void PuppiMod::Process()
         continue;                                             // Don't bother comparing a particle to itself
       const PFCandidate *jCandidate = fPFCandidates->At(i2);
       Double_t dRTemp = MathUtils::DeltaR(iCandidate,jCandidate);
-      if (dRTemp > fRMin && dRTemp < fR0) {                                           // Only look at other particles in this range
+      if (dRTemp > fRMin && dRTemp < fR0) {                                          // Only look at other particles in this range
         Int_t jParticleType = GetParticleType(jCandidate);
         Double_t theAddition = (pow(jCandidate->Pt(),fAlpha))/(pow(dRTemp,fBeta));   // This is the thing we have to add inside the log
         alphaF[i0] = alphaF[i0] + theAddition;                                       // First do the sum inside the log (alphaF)
@@ -228,32 +228,32 @@ void PuppiMod::Process()
       }
     }
     if (alphaF[i0] == 0) 
-      alphaF[i0] = -100;                          // Take the logs and ignore sum == 0 particles
+      alphaF[i0] = -100;                                                             // Take the logs and ignore sum == 0 particles
     else 
       alphaF[i0] = TMath::Log(alphaF[i0]);
     if (alphaC[i0] == 0) 
       alphaC[i0] = -100;
     else 
       alphaC[i0] = TMath::Log(alphaC[i0]);
-    if (iParticleType == 2) {                                         // if charged PU, we might store it in the proper eta bin
+    if (iParticleType == 2) {                                       // if charged PU, we might store it in the proper eta bin
       Double_t checkEta = fabs(iCandidate->Eta());
       for (Int_t i1 = 0; i1 < fNumEtaBins; i1++) {
         if (checkEta > fEtaMaxExtraps[i1]) 
-          continue;                 // if outside the binning that we are interested in, don't use CHPU
+          continue;                                                 // if outside the binning that we are interested in, don't use CHPU
         if (alphaF[i0] <= 0) 
-          numFCHPUis0[i1]++;                      // Count particles to ignore when taking the median
+          numFCHPUis0[i1]++;                                        // Count particles to ignore when taking the median
         if (alphaC[i0] <= 0)
           numCCHPUis0[i1]++;
-        alphaFCHPU[i1][numCHPU[i1]] = alphaF[i0];                    // Only intializing particles up to the number of charged PU
+        alphaFCHPU[i1][numCHPU[i1]] = alphaF[i0];                   // Only intializing particles up to the number of charged PU
         alphaCCHPU[i1][numCHPU[i1]] = alphaC[i0];
-        numCHPU[i1]++;                                               // Count the total number of charged PU particles
+        numCHPU[i1]++;                                              // Count the total number of charged PU particles
       }
     }
     else if (iParticleType == 1 && fApplyLowPUCorr) {               // if charged PV, and trying to correct
       Double_t checkEta = fabs(iCandidate->Eta());
       for (Int_t i1 = 0; i1 < fNumEtaBins; i1++) {
         if (checkEta > fEtaMaxExtraps[i1])
-          continue;                 // if outside the binning that we are interested in, don't use CHPV
+          continue;                                                 // if outside the binning that we are interested in, don't use CHPV
         alphaFCHPV[i1][numCHPV[i1]] = alphaF[i0];                   // Only intializing particles up to the number of charged PV
         alphaCCHPV[i1][numCHPV[i1]] = alphaC[i0];
         numCHPV[i1]++;                                              // Count the total number of charged PV particles
@@ -376,7 +376,7 @@ void PuppiMod::Process()
     if (chi2 > 0) {                                                    // if chi2 value was assigned
       weight = ROOT::Math::chisquared_cdf(chi2,1);                     //   then make the weight
       if (weight < fMinWeightCut)
-        weight = 0;                         // if less than the minimum cut, set weight back to zero
+        weight = 0;                                                    // if less than the minimum cut, set weight back to zero
     }
 
     if ((CandidateType == 3 || CandidateType == 4) &&                  // if neutral Pt is less than expected for given NPV
@@ -431,10 +431,13 @@ void PuppiMod::Process()
       std::cout << "Alpha RMS:";
       std::cout << sigma2C[GetEtaBin(PuppiParticle)] << "; " << sigma2F[GetEtaBin(PuppiParticle)] << std::endl;
       std::cout << "Weight: " << weight << "; " << alphaC[i0] << "; " << alphaF[i0] << std::endl;
+      fDumpingPuppi = false;                                           // You will not want to dump this more than once
     }
     if (weight < 1)                                                    // Weight the particle if required
       PuppiParticle->SetPtEtaPhiM(PuppiParticle->Pt()*(weight),PuppiParticle->Eta(),
                                   PuppiParticle->Phi(),PuppiParticle->Mass()*(weight));
   }
   fPuppiParticles->Trim();
+  PuppiParticles->Clone();
+  AddObjThisEvt(PuppiParticles);
 }
