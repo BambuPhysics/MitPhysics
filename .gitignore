@@ -4,3 +4,5 @@ data
 *_LinkDefDict.*
 *_ReflexDict.*
 *~
+*.root
+*.pcm

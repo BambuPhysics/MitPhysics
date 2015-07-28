@@ -34,10 +34,6 @@ MetCorrectionMod::SlaveBegin()
   if (fApplyType1) {
     MakeJetCorrector();
     fJetCorrector->Initialize();
-
-    auto& levels(fJetCorrector->GetLevels());
-    if (levels.size() != 3 || levels.back() < Jet::L3)
-      SendError(kAbortModule, "SlaveBegin", "JetCorrector not set up with proper set of parameters.");
   }
 
   if (fApplyShift) {

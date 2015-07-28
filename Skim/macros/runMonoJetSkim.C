@@ -28,13 +28,17 @@ using namespace mithep;
 
 //--------------------------------------------------------------------------------------------------
 void runMonoJetSkim(const char *fileset    = "0000",
-		    const char *skim       = "noskim",
-		    const char *dataset    = "WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8+RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1+AODSIM",
-		    const char *book       = "t2mit/filefi/041",
-		    const char *catalogDir = "/home/cmsprod/catalog",
-		    const char *outputLabel = "monojet",
-		    int         nEvents    = 1000)
+                    const char *skim       = "noskim",
+                    const char *dataset    = "MET+Run2015B-PromptReco-v1+AOD",
+                    const char *book       = "t2mit/filefi/041",
+                    const char *catalogDir = "/home/cmsprod/catalog",
+                    const char *outputLabel = "monojet",
+                    int         nEvents    = 1000)
 {
+  float maxJetEta       = 2.5;
+  float minMet          = 50.;
+  float minLeadJetPt    = 50.;
+
   //------------------------------------------------------------------------------------------------
   // json parameters get passed through the environment
   // for MC, the value must be "~"
@@ -45,17 +49,22 @@ void runMonoJetSkim(const char *fileset    = "0000",
     return;
   }
 
-  TString jsonFile = TString("/home/cmsprod/cms/json/") + json;
-  Bool_t  isData   = (json != "~");
+  Bool_t isData = (json != "~");
 
   TString MitData(gSystem->Getenv("MIT_DATA"));
-  if(MitData.Length() == 0){
-    MitData = gSystem->Getenv("CMSSW_BASE");
-    MitData += "/src/MitPhysics/data";
+  if (MitData.Length() == 0) {
+    printf(" MIT_DATA was not defined. EXIT!\n");
+    return;
+  }
+
+  TString jsonDir(gSystem->Getenv("MIT_JSON_DIR"));
+  if (jsonDir.Length() == 0) {
+    printf(" MIT_JSON_DIR was not defined. EXIT!\n");
+    return;
   }
 
   printf("\n Initialization worked: \n\n");
-  printf("   JSON   : %s (file: %s)\n",  json.Data(), jsonFile.Data());
+  printf("   JSON   : %s\n",  json.Data());
   printf("   isData : %d\n\n",isData);
 
   //------------------------------------------------------------------------------------------------
@@ -70,62 +79,63 @@ void runMonoJetSkim(const char *fileset    = "0000",
   //------------------------------------------------------------------------------------------------
   std::vector<mithep::BaseMod*> modules;
 
-  RunLumiSelectionMod *runLumiSel = new RunLumiSelectionMod;
-  runLumiSel->SetAcceptMC(kTRUE);                          // Monte Carlo events are always accepted
+  if (isData) {
+    RunLumiSelectionMod* runLumiSel = new RunLumiSelectionMod;
 
-  // only select on run- and lumisection numbers when valid json file present
-  if ((jsonFile.CompareTo("/home/cmsprod/cms/json/~") != 0) &&
-      (jsonFile.CompareTo("/home/cmsprod/cms/json/-") != 0)   ) {
-    printf("\n Jason file added: %s \n\n",jsonFile.Data());
-    runLumiSel->AddJSONFile(jsonFile.Data());
-  }
-  if ((jsonFile.CompareTo("/home/cmsprod/cms/json/-") == 0)   ) {
-    printf("\n WARNING -- Looking at data without JSON file: always accept.\n\n");
-    runLumiSel->SetAbortIfNotAccepted(kFALSE);   // accept all events if there is no valid JSON file
-  }
-  printf("\n Run lumi worked. \n\n");
+    // only select on run- and lumisection numbers when valid json file present
+    if ((json.CompareTo("-") == 0)) {
+      printf("\n WARNING -- Looking at data without JSON file: always accept.\n\n");
+      runLumiSel->SetAbortIfNotAccepted(kFALSE);   // accept all events if there is no valid JSON file
+    }
+    else if (json.CompareTo("~") != 0) {
+      printf("\n Json file added: %s \n\n", json.Data());
+      runLumiSel->AddJSONFile((jsonDir + "/" + json).Data());
+    }
 
-  modules.push_back(runLumiSel);
-
-  // Generator info
-  GeneratorMod *generatorMod = 0;
-  if (!isData) {
-    generatorMod = new GeneratorMod;
-    generatorMod->SetPrintDebug(kFALSE);
-    generatorMod->SetPtLeptonMin(0.0);
-    generatorMod->SetEtaLeptonMax(2.7);
-    generatorMod->SetPtPhotonMin(0.0);
-    generatorMod->SetEtaPhotonMax(2.7);
-    generatorMod->SetPtRadPhotonMin(0.0);
-    generatorMod->SetEtaRadPhotonMax(2.7);
-    generatorMod->SetIsData(isData);
-    generatorMod->SetFillHist(! isData);
-    generatorMod->SetApplyISRFilter(kFALSE);
-    generatorMod->SetApplyVVFilter(kFALSE);
-    generatorMod->SetApplyVGFilter(kFALSE);
-    generatorMod->SetFilterBTEvents(kFALSE);
-
-    modules.push_back(generatorMod);
+    modules.push_back(runLumiSel);
   }
 
   //-----------------------------------------------------------------------------------------------------------
   // HLT information : trigger not applied (neither for data nor for MC, store info to apply selection offline
   //-----------------------------------------------------------------------------------------------------------
-  HLTMod *hltMod = new HLTMod("HLTModP");
+  HLTMod *hltMod = new HLTMod();
 
   // monojet triggers
-  const int nMjtTrigs = 2;
-  TString monoJetTriggers[nMjtTrigs] = {"HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight_v1",
-					"HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight_v1"};
-  for (int i=0; i<nMjtTrigs; i++)
-    hltMod->AddTrigger(TString("!+"+monoJetTriggers[i]),0,999999);
+  std::vector<TString> triggerNames[MonoJetAnalysisMod::nMonoJetCategories];
+  triggerNames[MonoJetAnalysisMod::kSignal].push_back("HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight_v*");
+  triggerNames[MonoJetAnalysisMod::kSignal].push_back("HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight_v*");
+  triggerNames[MonoJetAnalysisMod::kSingleMuon].push_back("HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight_v*");
+  triggerNames[MonoJetAnalysisMod::kSingleMuon].push_back("HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight_v*");
+  triggerNames[MonoJetAnalysisMod::kSingleMuon].push_back("HLT_IsoMu27_v*");
+  triggerNames[MonoJetAnalysisMod::kDimuon].push_back("HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight_v*");
+  triggerNames[MonoJetAnalysisMod::kDimuon].push_back("HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight_v*");
+  triggerNames[MonoJetAnalysisMod::kDimuon].push_back("HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v*");
+  triggerNames[MonoJetAnalysisMod::kSingleElectron].push_back("HLT_Ele27_eta2p1_WPLoose_Gsf_v*");
+  triggerNames[MonoJetAnalysisMod::kDielectron].push_back("HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v*");
+  triggerNames[MonoJetAnalysisMod::kPhoton].push_back("HLT_Photon175_v*");
+
+  for (auto& names : triggerNames) {
+    for (auto& name : names)
+      hltMod->AddTrigger(name);
+  }
 
   hltMod->SetBitsName("HLTBits");
-  hltMod->SetTrigObjsName("MyHltPhotObjs");
+  hltMod->SetTrigObjsName("MonoJetTriggerObjects");
   hltMod->SetAbortIfNotAccepted(isData);
-  //  hltMod->SetPrintTable(kTRUE);
+  hltMod->SetAbortIfNoData(kFALSE);
 
   modules.push_back(hltMod);
+
+  JetIdMod* leadJetId = new JetIdMod("LeadJetId");
+  leadJetId->SetMinChargedHadronFraction(0.2);
+  leadJetId->SetMaxNeutralHadronFraction(0.7);
+  leadJetId->SetMaxNeutralEMFraction(0.7);
+  leadJetId->SetApplyPFLooseId(kTRUE);
+  leadJetId->SetPtMin(minLeadJetPt);
+  leadJetId->SetEtaMax(maxJetEta);
+  leadJetId->SetMinOutput(1);
+
+  modules.push_back(leadJetId);
 
   //------------------------------------------------------------------------------------------------
   // select events with a good primary vertex
@@ -248,17 +258,17 @@ void runMonoJetSkim(const char *fileset    = "0000",
   pfTauIdMod->SetEtaMax(2.3);
   pfTauIdMod->SetInputName("HPSTaus");
   pfTauIdMod->AddDiscriminator(mithep::PFTau::kDiscriminationByDecayModeFindingNewDMs);
-  pfTauIdMod->AddCutDiscriminator(mithep::PFTau::kDiscriminationByRawCombinedIsolationDBSumPtCorr3Hits,5);
+  pfTauIdMod->AddCutDiscriminator(mithep::PFTau::kDiscriminationByRawCombinedIsolationDBSumPtCorr3Hits, 5., kFALSE);
   pfTauIdMod->SetOutputName("GoodTaus");
 
   modules.push_back(pfTauIdMod);
 
   JetCorrectionMod *jetCorr = new JetCorrectionMod;
   if (isData){ 
-    jetCorr->AddCorrectionFromFile((MitData+TString("/Summer13_V1_DATA_L1FastJet_AK5PF.txt")).Data()); 
-    jetCorr->AddCorrectionFromFile((MitData+TString("/Summer13_V1_DATA_L2Relative_AK5PF.txt")).Data()); 
-    jetCorr->AddCorrectionFromFile((MitData+TString("/Summer13_V1_DATA_L3Absolute_AK5PF.txt")).Data()); 
-    jetCorr->AddCorrectionFromFile((MitData+TString("/Summer13_V1_DATA_L2L3Residual_AK5PF.txt")).Data());
+    jetCorr->AddCorrectionFromFile((MitData+TString("/74X_dataRun2_Prompt_v1_L1FastJet_AK4PFchs.txt")).Data()); 
+    jetCorr->AddCorrectionFromFile((MitData+TString("/74X_dataRun2_Prompt_v1_L2Relative_AK4PFchs.txt")).Data()); 
+    jetCorr->AddCorrectionFromFile((MitData+TString("/74X_dataRun2_Prompt_v1_L3Absolute_AK4PFchs.txt")).Data()); 
+    jetCorr->AddCorrectionFromFile((MitData+TString("/74X_dataRun2_Prompt_v1_L2L3Residual_AK4PFchs.txt")).Data());
   }                                                                                      
   else {                                                                                 
     jetCorr->AddCorrectionFromFile((MitData+TString("/MCRUN2_74_V9_L1FastJet_AK4PFchs.txt")).Data()); 
@@ -293,9 +303,17 @@ void runMonoJetSkim(const char *fileset    = "0000",
   type1MetCorr->ApplyType0(kFALSE);
   type1MetCorr->ApplyType1(kTRUE);
   type1MetCorr->ApplyShift(kFALSE);
-  type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L1FastJet_AK4PF.txt");
-  type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L2Relative_AK4PF.txt");
-  type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L3Absolute_AK4PF.txt");
+  if (isData) {
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/74X_dataRun2_Prompt_v1_L1FastJet_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/74X_dataRun2_Prompt_v1_L2Relative_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/74X_dataRun2_Prompt_v1_L3Absolute_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/74X_dataRun2_Prompt_v1_L2L3Residual_AK4PF.txt");
+  }
+  else {
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L1FastJet_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L2Relative_AK4PF.txt");
+    type1MetCorr->AddJetCorrectionFromFile(MitData + "/MCRUN2_74_V9_L3Absolute_AK4PF.txt");
+  }
   type1MetCorr->IsData(isData);
 
   modules.push_back(type1MetCorr);
@@ -303,10 +321,6 @@ void runMonoJetSkim(const char *fileset    = "0000",
   //------------------------------------------------------------------------------------------------
   // select events
   //------------------------------------------------------------------------------------------------
-
-  float minLeadingJetPt = 50.;
-  float maxJetEta       = 4.7;
-  float minMet          = 50.;
 
   MonoJetAnalysisMod *monojetSel = new MonoJetAnalysisMod("MonoJetSelector");
   monojetSel->SetMetName(type1MetCorr->GetOutputName());
@@ -323,13 +337,16 @@ void runMonoJetSkim(const char *fileset    = "0000",
   // Using uniform setup for all categories
   for (unsigned iCat = 0; iCat != MonoJetAnalysisMod::nMonoJetCategories; ++iCat) {
     monojetSel->SetCategoryActive(iCat, kTRUE);
+    for (auto& name : triggerNames[iCat])
+      monojetSel->AddTriggerName(iCat, name);
     monojetSel->SetMaxNumJets(iCat, 3);
-    monojetSel->SetMinLeadJetPt(iCat, minLeadingJetPt);
+    monojetSel->SetMinLeadJetPt(iCat, minLeadJetPt);
     monojetSel->SetMaxJetEta(iCat, maxJetEta);
     monojetSel->SetMinMetPt(iCat, minMet);
     monojetSel->SetMinChargedHadronFrac(iCat, 0.2); 
     monojetSel->SetMaxNeutralHadronFrac(iCat, 0.7);
     monojetSel->SetMaxNeutralEmFrac(iCat, 0.7);
+    monojetSel->SetIgnoreTrigger(!isData);
   }
 
   modules.push_back(monojetSel);
@@ -356,16 +373,19 @@ void runMonoJetSkim(const char *fileset    = "0000",
   skimOutput->Keep("AKt4PFJetsCHS");
   skimOutput->Keep("AKt8PFJetsCHS");
   skimOutput->Keep("Electrons");
+  skimOutput->Keep("Conversions");
+  skimOutput->Keep("*Stable*");
   skimOutput->Keep("Muons");
   skimOutput->Keep("HPSTaus");
   skimOutput->Keep("Photons");
+  skimOutput->Keep("AKT4GenJets");
   skimOutput->AddNewBranch(monojetSel->GetCategoryFlagsName());
 
   skimOutput->SetMaxFileSize(10 * 1024); // 10 GB - should never exceed
   skimOutput->SetFileName(outputName);
   skimOutput->SetPathName(".");
 
-  modules.push_back(skimOutput);
+  skimOutput->AddCondition(monojetSel);
 
   //------------------------------------------------------------------------------------------------
   // making the analysis chain
@@ -384,6 +404,7 @@ void runMonoJetSkim(const char *fileset    = "0000",
   Analysis *ana = new Analysis;
   ana->SetUseCacher(1);
   ana->SetUseHLT(kTRUE);
+  ana->SetAllowNoHLTTree(kTRUE); // for private MC with no HLT info
   ana->SetKeepHierarchy(kFALSE);
   ana->SetPrintScale(100);
   ana->SetOutputName(outputName + "_hist.root");
@@ -391,6 +412,7 @@ void runMonoJetSkim(const char *fileset    = "0000",
     ana->SetProcessNEvents(nEvents);
 
   ana->AddSuperModule(modules.front());
+  ana->AddOutputMod(skimOutput);
 
   //------------------------------------------------------------------------------------------------
   // organize input
@@ -409,7 +431,7 @@ void runMonoJetSkim(const char *fileset    = "0000",
   // Say what we are doing
   //------------------------------------------------------------------------------------------------
   printf("\n==== PARAMETER SUMMARY FOR THIS JOB ====\n");
-  printf("\n JSON file: %s\n",jsonFile.Data());
+  printf("\n JSON file: %s\n", json.Data());
   printf("\n Rely on Catalog: %s\n",catalogDir);
   printf("  -> Book: %s  Dataset: %s  Skim: %s  Fileset: %s <-\n",book,dataset,skim,fileset);
   printf("\n========================================\n");
@@ -432,4 +454,5 @@ void runMonoJetSkim(const char *fileset    = "0000",
 
   return;
 }
+
 
