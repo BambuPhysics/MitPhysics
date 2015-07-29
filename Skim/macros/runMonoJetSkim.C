@@ -340,6 +340,7 @@ void runMonoJetSkim(const char *fileset    = "0000",
     monojetSel->SetCategoryActive(iCat, kTRUE);
     for (auto& name : triggerNames[iCat])
       monojetSel->AddTriggerName(iCat, name);
+    monojetSel->SetMinNumJets(iCat, 1);
     monojetSel->SetMaxNumJets(iCat, 0xffffffff);
     monojetSel->SetMaxJetEta(iCat, maxJetEta);
     monojetSel->SetMinChargedHadronFrac(iCat, 0.2); 

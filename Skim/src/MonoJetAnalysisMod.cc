@@ -31,8 +31,9 @@ MonoJetAnalysisMod::MonoJetAnalysisMod(const char *name, const char *title) :
   BaseMod(name, title)
 {
   // cuts
-  Double_t dbig = std::numeric_limits<double>::max();
+  double dbig = std::numeric_limits<double>::max();
   std::fill_n(fCategoryActive, nMonoJetCategories, false);
+  std::fill_n(fMinNumJets, nMonoJetCategories, 0xffffffff);
   std::fill_n(fMaxNumJets, nMonoJetCategories, 0);
   std::fill_n(fMinLeadJetPt, nMonoJetCategories, dbig);
   std::fill_n(fMaxJetEta, nMonoJetCategories, 0.);
@@ -269,10 +270,12 @@ MonoJetAnalysisMod::Process()
       goodJets.push_back(&jet);
     }
 
-    if (goodJets.size() == 0 || goodJets[0]->Pt() < fMinLeadJetPt[iCat])
-      continue;
+    if (fMinNumJets[iCat] != 0) {
+      if (goodJets.size() < fMinNumJets[iCat] || goodJets[0]->Pt() < fMinLeadJetPt[iCat])
+        continue;
 
-    fCutflow[iCat]->Fill(cLeadJet);
+      fCutflow[iCat]->Fill(cLeadJet);
+    }
 
     if (goodJets.size() > fMaxNumJets[iCat])
       continue;

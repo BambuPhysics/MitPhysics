@@ -44,6 +44,7 @@ namespace mithep {
     // Setting cut values
     void SetCategoryActive(UInt_t c, Bool_t a = kTRUE) { fCategoryActive[c] = a; }
     void AddTriggerName(UInt_t c, const char* n)       { fTriggerNames[c].push_back(n); }
+    void SetMinNumJets(UInt_t c, Int_t n)              { fMinNumJets[c] = n; }
     void SetMaxNumJets(UInt_t c, Int_t n)              { fMaxNumJets[c] = n; }
     void SetMinLeadJetPt(UInt_t c, Double_t x)         { fMinLeadJetPt[c] = x; }
     void SetMaxJetEta(UInt_t c, Double_t x)            { fMaxJetEta[c] = x; }
@@ -89,6 +90,7 @@ namespace mithep {
     std::vector<UInt_t> fTriggerIds[nMonoJetCategories]{};
 
     Bool_t   fCategoryActive[nMonoJetCategories] = {};
+    UInt_t   fMinNumJets[nMonoJetCategories] = {};
     UInt_t   fMaxNumJets[nMonoJetCategories] = {};
     Double_t fMinLeadJetPt[nMonoJetCategories] = {};
     Double_t fMaxJetEta[nMonoJetCategories] = {};
