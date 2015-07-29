@@ -10,75 +10,66 @@
 #ifndef MITMODS_MODS_GOODPVFILTERMOD_H
 #define MITMODS_MODS_GOODPVFILTERMOD_H
 
-#include <string>
-#include <TString.h>
-#include <TH1F.h>
-#include "MitAna/DataTree/interface/VertexFwd.h" 
-#include "MitAna/DataTree/interface/PileupInfoFwd.h"
-#include "MitAna/TreeMod/interface/BaseMod.h" 
+#include "MitAna/TreeMod/interface/BaseMod.h"
+#include "MitAna/DataTree/interface/Names.h"
+#include "MitPhysics/Init/interface/ModNames.h"
 
-namespace mithep 
-{
+#include "TString.h"
+#include "TH1F.h"
+
+namespace mithep {
+
   class GoodPVFilterMod : public BaseMod {
-    public:
-      
-      enum ECuts {
-        eNTracks,
-        eNDof,
-        eZ,
-        eRho
-      };
-      
-      GoodPVFilterMod(const char *name="GoodPVFilterMod", const char *title="Good PV Filter Module");
-      ~GoodPVFilterMod();
+  public:
+    enum ECuts {
+      eNTracks,
+      eNDof,
+      eZ,
+      eRho,
+      nCuts
+    };
 
-      Int_t                       GetNEvents()      const { return fNEvents;       }
-      Int_t                       GetNAccepted()    const { return fNAcceped;      }
-      Int_t                       GetNFailed()      const { return fNFailed;       }
-      const char                 *GetOutputName()   const { return fGoodVertexesName; }
-      const char                 *GetGoodVertexesName() const { return GetOutputName(); }
-      void                        SetAbortIfNotAccepted(Bool_t b)   { fAbort = b;           }
-      void                        SetIsMC(Bool_t b)                 { fIsMC = b;            }
-      void                        SetMinVertexNTracks(UInt_t n)     { fMinVertexNTracks = n;}
-      void                        SetMinNDof(UInt_t n)              { fMinNDof = n; 	    }
-      void                        SetMaxAbsZ(Double_t x)  	    { fMaxAbsZ = x; 	    }
-      void                        SetMaxRho(Double_t x)   	    { fMaxRho = x;          }
-      void                        SetVertexesName(TString s)        { fVertexesName = s;    }
-      void                        SetGoodVertexesName(TString s)    { SetOutputName(s);     }
-      void                        SetOutputName(TString s)          { fGoodVertexesName = s; }
-      
+    GoodPVFilterMod(const char* name = "GoodPVFilterMod", const char* title = "Good PV Filter Module") : BaseMod(name, title) {}
+    ~GoodPVFilterMod() {}
 
-    protected:
-      void                        BeginRun();
-      const BitMask8              FailedCuts(const mithep::Vertex *v) const;
-      virtual void                OnAccepted()  {/*could be implemented in derived classes*/}
-      virtual void                OnFailed()    {/*could be implemented in derived classes*/}
-      void                        Process();
-      void                        SlaveBegin();
-      void                        SlaveTerminate();
+    char const* GetOutputName() const { return fGoodVertexesName; }
+    char const* GetGoodVertexesName() const { return GetOutputName(); }
 
-      Bool_t                      fAbort;         //=true then abort (sub-)modules if not accepted
-      Bool_t                      fIsMC;
-      UInt_t                      fMinVertexNTracks; //minimum number of tracks for the vertex
-      UInt_t                      fMinNDof;       //minimum number of degrees of freedom
-      Double_t                    fMaxAbsZ;       //maximum abs(z) of the vertex
-      Double_t                    fMaxRho;        //maximum rho of the vertex
-      TString                     fVertexesName;  //Name of PV collection
-      TString                     fGoodVertexesName; //Name of newPV collection
-      TString                     fPileupInfoName;
-      Int_t                       fNEvents;       //!number of processed events
-      Int_t                       fNAcceped;      //!number of accepted events
-      Int_t                       fNFailed;       //!number of failed events
-      TH1F                       *hVertexNTracks;
-      TH1F                       *hVertexNDof;
-      TH1F                       *hVertexRho;
-      TH1F                       *hVertexZ;
-      TH1F                       *hNVtx;
-      TH1F                       *hNGoodVtx;
-      TH1D                       *hNGenVtx;
-      TH1D                       *hNPU;
+    void SetAbortIfNotAccepted(Bool_t b)    { fAbort = b; }
+    void SetMinVertexNTracks(UInt_t n)      { fMinVertexNTracks = n; }
+    void SetMinNDof(UInt_t n)               { fMinNDof = n; }
+    void SetMaxAbsZ(Double_t x)  	    { fMaxAbsZ = x; }
+    void SetMaxRho(Double_t x)   	    { fMaxRho = x; }
+    void SetInputName(char const* s)        { fVertexesName = s; }
+    void SetVertexesName(char const* s)     { SetInputName(s); }
+    void SetOutputName(char const* s)       { fGoodVertexesName = s; }
+    void SetGoodVertexesName(char const* s) { SetOutputName(s); }
 
-    ClassDef(GoodPVFilterMod, 1) // L1 TAM module
+  protected:
+    void Process() override;
+    void SlaveBegin() override;
+    void SlaveTerminate() override;
+
+    virtual void OnAccepted()  {/*could be implemented in derived classes*/}
+    virtual void OnFailed()    {/*could be implemented in derived classes*/}
+
+    Bool_t   fAbort{kTRUE};         //=true then abort (sub-)modules if not accepted
+    UInt_t   fMinVertexNTracks{0}; //minimum number of tracks for the vertex
+    UInt_t   fMinNDof{5};       //minimum number of degrees of freedom
+    Double_t fMaxAbsZ{15.};       //maximum abs(z) of the vertex
+    Double_t fMaxRho{2.};        //maximum rho of the vertex
+    TString  fVertexesName{Names::gkPVBrn};  //Name of PV collection
+    TString  fGoodVertexesName{ModNames::gkGoodVertexesName}; //Name of newPV collection
+
+    TH1F* hVertexNTracks = 0;
+    TH1F* hVertexNDof = 0;
+    TH1F* hVertexRho = 0;
+    TH1F* hVertexZ = 0;
+    TH1F* hNVtx = 0;
+    TH1F* hNGoodVtx = 0;
+
+    ClassDef(GoodPVFilterMod, 1)
   };
+
 }
 #endif
