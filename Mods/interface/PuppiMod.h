@@ -55,7 +55,6 @@ namespace mithep
       void SetUseEtaForAlgo( Bool_t use )                    { fUseEtaForAlgo = use;           }
       void SetEtaForAlgo( Double_t eta )                     { fEtaForAlgo = eta;              }
       void SetDump( Bool_t dump )                            { fDumpingPuppi = dump;           }
-      void SetWriteToFile( Bool_t write )                    { fWriteToFile = write;           }
 
     protected:
       void                  SlaveBegin();
@@ -91,7 +90,6 @@ namespace mithep
       Bool_t   fUseEtaForAlgo;                       // Determines if you use eta cut or PFType to determine algorithm use
       Double_t fEtaForAlgo;                          // Eta cut to switch algorithms, if you want it
       Bool_t   fDumpingPuppi;                        // If this is true, we dump particle information and weights
-      Bool_t   fWriteToFile;                         // If true, publish object to write to output file, otherwise place in event
 
       // These are parameters that are functions of Eta hopefully we can be more clever some day
       Int_t fNumEtaBins;                             // This is the number of eta regions we are dividing into

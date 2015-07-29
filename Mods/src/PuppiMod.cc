@@ -38,8 +38,7 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fApplyLowPUCorr(kTRUE),
   fUseEtaForAlgo(kTRUE),
   fEtaForAlgo(2.5),
-  fDumpingPuppi(kFALSE),
-  fWriteToFile(kFALSE)
+  fDumpingPuppi(kFALSE)
 {
   // Constructor.
 }
