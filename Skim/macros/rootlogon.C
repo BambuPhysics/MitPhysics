@@ -26,7 +26,7 @@
   str = str + TString(" -lMitAnaCatalog -lMitAnaDataCont -lMitAnaDataTree -lMitAnaDataUtil");
   str = str + TString(" -lMitAnaPhysicsMod -lMitAnaTAM -lMitAnaTreeMod -lMitAnaUtils");
   str = str + TString(" -lMitAnaValidation");
-  str = str + TString(" -lMitPhysicsMods -lMitPhysicsSelMods -lMitPhysicsSkim");
+  str = str + TString(" -lMitPhysicsMods -lMitPhysicsSelMods -lMitPhysicsSkim -lMitPhysicsInit");
   gSystem->SetMakeSharedLib(str);
 
   // Make sure we have all include files
