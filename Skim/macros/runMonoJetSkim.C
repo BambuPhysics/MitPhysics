@@ -137,7 +137,6 @@ void runMonoJetSkim(const char *fileset    = "0000",
   goodPvMod->SetMinNDof(4.0);
   goodPvMod->SetMaxAbsZ(24.0);
   goodPvMod->SetMaxRho(2.0);
-  goodPvMod->SetIsMC(!isData);
   goodPvMod->SetVertexesName("PrimaryVertexes");
 
   modules.push_back(goodPvMod);
@@ -391,11 +390,14 @@ void runMonoJetSkim(const char *fileset    = "0000",
   skimOutput->Keep("HPSTaus");
   skimOutput->Keep("Photons");
   skimOutput->Keep("AKT4GenJets");
+  skimOutput->AddNewBranch(type1MetCorr->GetOutputName());
   skimOutput->AddNewBranch(monojetSel->GetCategoryFlagsName());
 
   skimOutput->SetMaxFileSize(10 * 1024); // 10 GB - should never exceed
   skimOutput->SetFileName(outputName);
   skimOutput->SetPathName(".");
+  skimOutput->SetCheckTamBr(false);
+  skimOutput->SetKeepTamBr(false);
 
   skimOutput->AddCondition(monojetSel);
 
