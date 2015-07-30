@@ -30,6 +30,7 @@ namespace mithep
       const char   *GetVertexesName()              const     { return fVertexesName;           }
       const char   *GetInputName()                 const     { return fPFCandidatesName;       }   
       const char   *GetOutputName()                const     { return fPuppiParticlesName;     }
+      const char   *GetInvertedName()              const     { return fInvertedParticlesName;  }
       void SetEtaConfigName( const char *name )              { fEtaConfigName = name;          }
       void SetVertexesName( const char *name )               { fVertexesName = name;           }
       void SetInputName( const char *name )                  { fPFCandidatesName = name;       }
@@ -55,7 +56,7 @@ namespace mithep
       void SetApplyLowPUCorr( Bool_t apply )                 { fApplyLowPUCorr = apply;        }
       void SetUseEtaForAlgo( Bool_t use )                    { fUseEtaForAlgo = use;           }
       void SetEtaForAlgo( Double_t eta )                     { fEtaForAlgo = eta;              }
-      void setBothPVandPU( Bool_t both )                     { fBothPVandPU = both;            }
+      void SetBothPVandPU( Bool_t both )                     { fBothPVandPU = both;            }
       void SetDump( Bool_t dump )                            { fDumpingPuppi = dump;           }
 
     protected:
