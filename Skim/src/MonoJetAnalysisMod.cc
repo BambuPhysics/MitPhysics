@@ -112,16 +112,22 @@ MonoJetAnalysisMod::Process()
   auto* electrons = GetObject<ElectronCol>(fVetoElectronsName);
   if (!electrons)
     SendError(kAbortAnalysis, "Process", "Could not find " + fVetoElectronsName);
-  auto* electronMask = GetObject<NFArrBool>(fElectronMaskName);
-  if (!electronMask)
-    SendError(kAbortAnalysis, "Process", "Could not find " + fElectronMaskName);
+  NFArrBool* electronMask = 0;
+  if (fCategoryActive[kDielectron] || fCategoryActive[kSingleElectron]) {
+    electronMask = GetObject<NFArrBool>(fElectronMaskName);
+    if (!electronMask)
+      SendError(kAbortAnalysis, "Process", "Could not find " + fElectronMaskName);
+  }
 
   auto* muons = GetObject<MuonCol>(fVetoMuonsName);
   if (!muons)
     SendError(kAbortAnalysis, "Process", "Could not find " + fVetoMuonsName);
-  auto* muonMask = GetObject<NFArrBool>(fMuonMaskName);
-  if (!muonMask)
-    SendError(kAbortAnalysis, "Process", "Could not find " + fMuonMaskName);
+  NFArrBool* muonMask = 0;
+  if (fCategoryActive[kDimuon] || fCategoryActive[kSingleMuon]) {
+    muonMask = GetObject<NFArrBool>(fMuonMaskName);
+    if (!muonMask)
+      SendError(kAbortAnalysis, "Process", "Could not find " + fMuonMaskName);
+  }
 
   auto* taus = GetObject<PFTauCol>(fVetoTausName);
   if (!taus)
@@ -130,9 +136,12 @@ MonoJetAnalysisMod::Process()
   auto* photons = GetObject<PhotonCol>(fVetoPhotonsName);
   if (!photons)
     SendError(kAbortAnalysis, "Process", "Could not find " + fVetoPhotonsName);
-  auto* photonMask = GetObject<NFArrBool>(fPhotonMaskName);
-  if (!photonMask)
-    SendError(kAbortAnalysis, "Process", "Could not find " + fPhotonMaskName);
+  NFArrBool* photonMask = 0;
+  if (fCategoryActive[kPhoton]) {
+    photonMask = GetObject<NFArrBool>(fPhotonMaskName);
+    if (!photonMask)
+      SendError(kAbortAnalysis, "Process", "Could not find " + fPhotonMaskName);
+  }
 
   TriggerMask* triggerMask = 0;
   if (HasHLTInfo() && GetHltFwkMod()->HasData()) {
