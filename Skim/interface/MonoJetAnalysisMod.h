@@ -52,6 +52,10 @@ namespace mithep {
     void SetMinChargedHadronFrac(UInt_t c, Double_t x) { fMinChargedHadronFrac[c] = x; }
     void SetMaxNeutralHadronFrac(UInt_t c, Double_t x) { fMaxNeutralHadronFrac[c] = x; }
     void SetMaxNeutralEmFrac(UInt_t c, Double_t x)     { fMaxNeutralEmFrac[c] = x; }
+    void SetVetoElectrons(UInt_t c, Bool_t v)          { fVetoElectrons[c] = v; }
+    void SetVetoMuons(UInt_t c, Bool_t v)              { fVetoMuons[c] = v; }
+    void SetVetoTaus(UInt_t c, Bool_t v)               { fVetoTaus[c] = v; }
+    void SetVetoPhotons(UInt_t c, Bool_t v)            { fVetoPhotons[c] = v; }
 
     void SetIgnoreTrigger(Bool_t i)                    { fIgnoreTrigger = i; }
 
@@ -98,6 +102,10 @@ namespace mithep {
     Double_t fMinChargedHadronFrac[nMonoJetCategories] = {};
     Double_t fMaxNeutralHadronFrac[nMonoJetCategories] = {};
     Double_t fMaxNeutralEmFrac[nMonoJetCategories] = {};
+    Bool_t   fVetoElectrons[nMonoJetCategories] = {};
+    Bool_t   fVetoMuons[nMonoJetCategories] = {};
+    Bool_t   fVetoTaus[nMonoJetCategories] = {};
+    Bool_t   fVetoPhotons[nMonoJetCategories] = {};
 
     Bool_t fIgnoreTrigger{kFALSE};
 

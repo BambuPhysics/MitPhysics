@@ -41,6 +41,10 @@ MonoJetAnalysisMod::MonoJetAnalysisMod(const char *name, const char *title) :
   std::fill_n(fMinChargedHadronFrac, nMonoJetCategories, dbig);
   std::fill_n(fMaxNeutralHadronFrac, nMonoJetCategories, 0.);
   std::fill_n(fMaxNeutralEmFrac, nMonoJetCategories, 0.);
+  std::fill_n(fVetoElectrons, nMonoJetCategories, true);
+  std::fill_n(fVetoMuons, nMonoJetCategories, true);
+  std::fill_n(fVetoTaus, nMonoJetCategories, true);
+  std::fill_n(fVetoPhotons, nMonoJetCategories, true);
 
   fCategoryFlags.Resize(nMonoJetCategories);
 }
@@ -189,7 +193,7 @@ MonoJetAnalysisMod::Process()
         continue;
       break;
     default:
-      if (electrons->GetEntries() != 0)
+      if (fVetoElectrons[iCat] && electrons->GetEntries() != 0)
         continue;
       break;
     }
@@ -206,14 +210,14 @@ MonoJetAnalysisMod::Process()
         continue;
       break;
     default:
-      if (muons->GetEntries() != 0)
+      if (fVetoMuons[iCat] && muons->GetEntries() != 0)
         continue;
       break;
     }
 
     fCutflow[iCat]->Fill(cNMuons);
 
-    if (taus->GetEntries() != 0)
+    if (fVetoTaus[iCat] && taus->GetEntries() != 0)
       continue;
 
     fCutflow[iCat]->Fill(cNTaus);
@@ -224,7 +228,7 @@ MonoJetAnalysisMod::Process()
         continue;
       break;
     default:
-      if (photons->GetEntries() != 0)
+      if (fVetoPhotons[iCat] && photons->GetEntries() != 0)
         continue;
       break;
     };
