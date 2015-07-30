@@ -24,6 +24,7 @@
 
 #include "MitAna/DataTree/interface/XlFatJetFwd.h"
 #include "MitAna/DataTree/interface/XlFatJet.h"
+#include "MitAna/DataTree/interface/XlSubJetFwd.h"
 
 #include "MitAna/TreeMod/interface/BaseMod.h"
 #include "MitAna/DataTree/interface/JetCol.h"
@@ -48,12 +49,15 @@ namespace mithep
   class FatJetExtenderMod : public BaseMod
   {
     public:
+      typedef XlSubJet::ESubJetType ESubJetType;
       FatJetExtenderMod(const char *name = "FatJetExtenderMod",
                    const char *title = "XlFatJets Filler module");
       ~FatJetExtenderMod();
 
       void IsData(Bool_t b)                { fIsData = b;           }
-      void SetfQGTaggingOn(Bool_t b)       { fQGTaggingActive = b;  }
+      void SetQGTaggingOn(Bool_t b)        { fQGTaggingActive = b;  }
+      void SetSubJetTypeOn(ESubJetType t) { fSubJetFlags |= (1<<t); }
+      void SetSubJetTypeOff(ESubJetType t) { fSubJetFlags &= ~(1<<t); }
       void SetQGTaggerCHS(bool b)          { fQGTaggerCHS = b;      }
       void PublishOutput(Bool_t b)         { fPublishOutput = b;    }
 
@@ -95,9 +99,13 @@ namespace mithep
       double GetPullAngle(std::vector<fastjet::PseudoJet> &fjSubJets, float constitsPtMin);
       double fMicrojetR0 = -1.0;
 
+      double GetQjetVolatility (std::vector<fastjet::PseudoJet> &constits, int QJetsN = 25, int seed = 12345);
       void GetJetConstituents(fastjet::PseudoJet&, std::vector<fastjet::PseudoJet>&, float);
       double FindRMS(std::vector<float>);
       double FindMean(std::vector<float>);
+
+      Vect4M GetCorrectedMomentum(fastjet::PseudoJet fj_tmp, double thisJEC);
+
     private:
       Bool_t fIsData;                      //is this data or MC?
       Bool_t fQGTaggingActive;             //=true if QGTagging info is filled
@@ -139,7 +147,12 @@ namespace mithep
       fastjet::JetDefinition *fCAJetDef;   //fastjet clustering definition
       fastjet::GhostedAreaSpec *fActiveArea;
       fastjet::AreaDefinition *fAreaDefinition;
-      
+
+      unsigned short fSubJetFlags = 0;    // flags turning on subjet types
+
+      TString fXlSubJetsName[XlSubJet::nSubJetTypes];              //name of output fXlSubJets collection
+      XlSubJetArr *fXlSubJets[XlSubJet::nSubJetTypes];             //array of fXlSubJets
+
       Deconstruction::Deconstruct *fDeconstruct;
 
       UInt_t fProcessNJets;
@@ -148,6 +161,9 @@ namespace mithep
 
       // QG tagger
       QGTagger *fQGTagger;                 //QGTagger calculator
+
+      // Counters : used to initialize seed for QJets volatility
+      Long64_t fCounter;
 
       ClassDef(FatJetExtenderMod, 0)         //XlJets, Fat and Sub, filler
   };
