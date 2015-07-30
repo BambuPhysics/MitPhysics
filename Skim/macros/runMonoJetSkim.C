@@ -37,10 +37,8 @@ void runMonoJetSkim(const char *fileset    = "0000",
                     int         nEvents    = 1000)
 {
   float maxJetEta       = 2.5;
-  float minMet          = 50.;
-  float minLeadJetPt    = 50.;
-  float zllMinMet       = 0.;
-  float zllMinLeadJetPt = 30.;
+  float minMet          = 100.;
+  float minLeadJetPt    = 100.;
 
   //------------------------------------------------------------------------------------------------
   // json parameters get passed through the environment
@@ -340,7 +338,6 @@ void runMonoJetSkim(const char *fileset    = "0000",
     monojetSel->SetCategoryActive(iCat, kTRUE);
     for (auto& name : triggerNames[iCat])
       monojetSel->AddTriggerName(iCat, name);
-    monojetSel->SetMinNumJets(iCat, 1);
     monojetSel->SetMaxNumJets(iCat, 0xffffffff);
     monojetSel->SetMaxJetEta(iCat, maxJetEta);
     monojetSel->SetMinChargedHadronFrac(iCat, 0.2); 
@@ -351,10 +348,12 @@ void runMonoJetSkim(const char *fileset    = "0000",
     switch (iCat) {
     case MonoJetAnalysisMod::kDielectron:
     case MonoJetAnalysisMod::kDimuon:
-      monojetSel->SetMinLeadJetPt(iCat, zllMinLeadJetPt);
-      monojetSel->SetMinMetPt(iCat, zllMinMet);
+      monojetSel->SetMinNumJets(iCat, 0);
+      monojetSel->SetMinMetPt(iCat, 0.);
+      monojetSel->SetVetoPhotons(iCat, false);
       break;
     default:
+      monojetSel->SetMinNumJets(iCat, 1);
       monojetSel->SetMinLeadJetPt(iCat, minLeadJetPt);
       monojetSel->SetMinMetPt(iCat, minMet);
       break;
@@ -372,25 +371,22 @@ void runMonoJetSkim(const char *fileset    = "0000",
     outputName += TString("_") + TString(fileset);
   
   OutputMod *skimOutput = new OutputMod;
-  skimOutput->Drop("*");
-  skimOutput->Keep("HLT*");
 
-  skimOutput->Keep("MC*");
-  skimOutput->Keep("PileupInfo");
-  skimOutput->Keep("Rho");
-  skimOutput->Keep("EvtSelData");
-  skimOutput->Keep("BeamSpot");
-  skimOutput->Keep("PrimaryVertexes");
-  skimOutput->Keep("PFMet");
-  skimOutput->Keep("AKt4PFJetsCHS");
-  skimOutput->Keep("AKt8PFJetsCHS");
-  skimOutput->Keep("Electrons");
-  skimOutput->Keep("Conversions");
-  skimOutput->Keep("*Stable*");
-  skimOutput->Keep("Muons");
-  skimOutput->Keep("HPSTaus");
-  skimOutput->Keep("Photons");
-  skimOutput->Keep("AKT4GenJets");
+  skimOutput->Keep("*");
+  skimOutput->Drop("L1TechBits*");
+  skimOutput->Drop("L1AlgoBits*");
+  skimOutput->Drop("MCVertexes");
+  skimOutput->Drop("PFEcal*SuperClusters");
+  skimOutput->Drop("*Tracks");
+  skimOutput->Drop("StandaloneMuonTracksWVtxConstraint");
+  skimOutput->Drop("PrimaryVertexesBeamSpot");
+  skimOutput->Drop("InclusiveSecondaryVertexes");
+  skimOutput->Drop("CosmicMuons");
+  skimOutput->Drop("MergedElectronsStable");
+  skimOutput->Drop("MergedConversions*");
+  skimOutput->Drop("AKT8GenJets");
+  skimOutput->Drop("AKt4PFJets");
+  skimOutput->Drop("DCASig");
   skimOutput->AddNewBranch(type1MetCorr->GetOutputName());
   skimOutput->AddNewBranch(monojetSel->GetCategoryFlagsName());
 
@@ -399,6 +395,8 @@ void runMonoJetSkim(const char *fileset    = "0000",
   skimOutput->SetPathName(".");
   skimOutput->SetCheckTamBr(false);
   skimOutput->SetKeepTamBr(false);
+  skimOutput->SetCheckBrDep(true);
+  skimOutput->SetUseBrDep(true);
 
   skimOutput->AddCondition(monojetSel);
 
