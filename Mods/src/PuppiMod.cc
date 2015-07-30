@@ -21,6 +21,7 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fVertexesName(Names::gkPVBrn),
   fPFCandidatesName(Names::gkPFCandidatesBrn),
   fPuppiParticlesName("PuppiParticles"),
+  fInvertedParticlesName("PUPuppiParticles"),
   fPFCandidates(0),
   fPuppiParticles(0),
   fRMin(0.02),
@@ -38,6 +39,7 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fApplyLowPUCorr(kTRUE),
   fUseEtaForAlgo(kTRUE),
   fEtaForAlgo(2.5),
+  fBothPVandPU(kFALSE),
   fDumpingPuppi(kFALSE)
 {
   // Constructor.
@@ -116,7 +118,6 @@ void PuppiMod::SlaveBegin()
   if (fEtaConfigName == "")
     SendError(kAbortAnalysis, "SlaveBegin", "Config name for Puppi not given.");
 
-  std::cout << fEtaConfigName << std::endl;
   std::ifstream configFile;
   configFile.open(fEtaConfigName.Data());
   TString tempMaxEta;
@@ -141,7 +142,10 @@ void PuppiMod::SlaveBegin()
     }
   }
   fNumEtaBins = fMaxEtas.size();
-  std::cout << "Number of Eta bins: " << fNumEtaBins << std::endl;
+  if (fDumpingPuppi) {
+    std::cout << fEtaConfigName << std::endl;
+    std::cout << "Number of Eta bins: " << fNumEtaBins << std::endl;
+  }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -158,7 +162,8 @@ void PuppiMod::Process()
   fVertexes = GetObject<VertexCol>(fVertexesName);
   fPFCandidates = GetObject<PFCandidateCol>(fPFCandidatesName);
 
-  PFCandidateArr *PuppiParticles = new PFCandidateArr;        // This array is only used if adding object to event, not publishing
+  PFCandidateArr *InvertedParticles = new PFCandidateArr;
+  InvertedParticles->SetName(fInvertedParticlesName);
 
   if (fDumpingPuppi) {
     std::cout << "Primary Vertex location: " << fVertexes->At(0)->Position().x() << ", ";
@@ -339,13 +344,11 @@ void PuppiMod::Process()
       alphaFMed[i0] = alphaFMed[i0] 
         - sqrt(ROOT::Math::chisquared_quantile(double(NumCorrF)/
                                                double(numCHPV[i0] + numCHPU[i0] - numFCHPUis0[i0]),
-                                               1.)
-               *sigma2F[i0]);
+                                               1.)*sigma2F[i0]);
       alphaCMed[i0] = alphaCMed[i0] 
         - sqrt(ROOT::Math::chisquared_quantile(double(NumCorrC)/
                                                double(numCHPV[i0] + numCHPU[i0] - numCCHPUis0[i0]),
-                                               1.)
-               *sigma2C[i0]);
+                                               1.)*sigma2C[i0]);
     }
   }
 
@@ -381,62 +384,75 @@ void PuppiMod::Process()
     if ((CandidateType == 3 || CandidateType == 4) &&                  // if neutral Pt is less than expected for given NPV
        (fPFCandidates->At(i0)->Pt()*(weight) < fMinNeutralPts[etaBin] + fMinNeutralPtSlopes[etaBin] * (fVertexes->GetEntries())))
       weight = 0;                                                      //   set weight to zero
-    if (fInvert)
+    if (fInvert || !fBothPVandPU)
       weight = 1.0 - weight;                                           // Invert the weight here if asked for 
-    if (weight == 0 && not fKeepPileup)
-      continue;                                                        // Throw out if we're not keeping it
-
-    // add PuppiParticle to the collection
-    PFCandidate *PuppiParticle = fPuppiParticles->Allocate();
-    new (PuppiParticle) PFCandidate(*fPFCandidates->At(i0));
-    if (fDumpingPuppi) {
-      std::cout << "=========================================================================================" << std::endl;
-      std::cout << "PF Candidate Number: " << i0 << std::endl;
-      std::cout << "PF Type: " << GetParticleType(PuppiParticle) << " (" << PuppiParticle->PFType() << ")" << std::endl;
-      if (PuppiParticle->HasTrackerTrk()) {
-        std::cout << "Vertex distances: " << PuppiParticle->TrackerTrk()->DzCorrected(*(fVertexes->At(0))) << "; ";
-        std::cout << PuppiParticle->TrackerTrk()->D0Corrected(*(fVertexes->At(0))) << std::endl;
+    if (weight != 0 || fKeepPileup) {
+      // add PuppiParticle to the collection
+      PFCandidate *PuppiParticle = fPuppiParticles->Allocate();
+      new (PuppiParticle) PFCandidate(*fPFCandidates->At(i0));
+      if (fDumpingPuppi) {
+        std::cout << "=========================================================================================" << std::endl;
+        std::cout << "PF Candidate Number: " << i0 << std::endl;
+        std::cout << "PF Type: " << GetParticleType(PuppiParticle) << " (" << PuppiParticle->PFType() << ")" << std::endl;
+        if (PuppiParticle->HasTrackerTrk()) {
+          std::cout << "Vertex distances: " << PuppiParticle->TrackerTrk()->DzCorrected(*(fVertexes->At(0))) << "; ";
+          std::cout << PuppiParticle->TrackerTrk()->D0Corrected(*(fVertexes->At(0))) << std::endl;
+        }
+        else if (PuppiParticle->HasGsfTrk()) {
+          std::cout << "Vertex distances: " << PuppiParticle->GsfTrk()->DzCorrected(*(fVertexes->At(0))) << "; ";
+          std::cout << PuppiParticle->GsfTrk()->D0Corrected(*(fVertexes->At(0))) << std::endl;
+        }
+        std::vector<Int_t> nearList = Mapper->GetSurrounding(i0);
+        std::cout << "Nearby PV particles: ";
+        for (UInt_t i1 = 0; i1 < nearList.size(); i1++) {
+          if (nearList[i1] == i0)
+            continue;
+          if (GetParticleType(fPFCandidates->At(nearList[i1])) == 1)
+            std::cout << nearList[i1] << " (" << MathUtils::DeltaR(PuppiParticle->Eta(),PuppiParticle->Phi(),
+                                                                   fPFCandidates->At(nearList[i1])->Eta(),
+                                                                   fPFCandidates->At(nearList[i1])->Phi()) <<  "), ";
+        }
+        std::cout << std::endl;
+        std::cout << "Nearby other particles: ";
+        for (UInt_t i1 = 0; i1 < nearList.size(); i1++) {
+          if (nearList[i1] == i0) 
+            continue;
+          if (GetParticleType(fPFCandidates->At(nearList[i1])) != 1)
+            std::cout << nearList[i1] << " (" << MathUtils::DeltaR(PuppiParticle->Eta(),PuppiParticle->Phi(),
+                                                                   fPFCandidates->At(nearList[i1])->Eta(),
+                                                                   fPFCandidates->At(nearList[i1])->Phi()) <<  "), ";
+        }
+        std::cout << std::endl;
+        nearList.resize(0);
+        std::cout << "Pt: " << PuppiParticle->Pt() << "; Eta: " << PuppiParticle->Eta();
+        std::cout << "; Phi: " << PuppiParticle->Phi() << "; Mass: " << PuppiParticle->Mass() << std::endl;
+        std::cout << "Median Alphas:";
+        std::cout << alphaCMed[GetEtaBin(PuppiParticle)] << "; " << alphaFMed[GetEtaBin(PuppiParticle)] << std::endl;
+        std::cout << "Alpha RMS:";
+        std::cout << sigma2C[GetEtaBin(PuppiParticle)] << "; " << sigma2F[GetEtaBin(PuppiParticle)] << std::endl;
+        std::cout << "Weight: " << weight << "; " << alphaC[i0] << "; " << alphaF[i0] << std::endl;
+        fDumpingPuppi = false;                                           // You will not want to dump this more than once
       }
-      else if (PuppiParticle->HasGsfTrk()) {
-        std::cout << "Vertex distances: " << PuppiParticle->GsfTrk()->DzCorrected(*(fVertexes->At(0))) << "; ";
-        std::cout << PuppiParticle->GsfTrk()->D0Corrected(*(fVertexes->At(0))) << std::endl;
-      }
-      std::vector<Int_t> nearList = Mapper->GetSurrounding(i0);
-      std::cout << "Nearby PV particles: ";
-      for (UInt_t i1 = 0; i1 < nearList.size(); i1++) {
-        if (nearList[i1] == i0)
-          continue;
-        if (GetParticleType(fPFCandidates->At(nearList[i1])) == 1)
-          std::cout << nearList[i1] << " (" << MathUtils::DeltaR(PuppiParticle->Eta(),PuppiParticle->Phi(),
-                                                                 fPFCandidates->At(nearList[i1])->Eta(),
-                                                                 fPFCandidates->At(nearList[i1])->Phi()) <<  "), ";
-      }
-      std::cout << std::endl;
-      std::cout << "Nearby other particles: ";
-      for (UInt_t i1 = 0; i1 < nearList.size(); i1++) {
-        if (nearList[i1] == i0) 
-          continue;
-        if (GetParticleType(fPFCandidates->At(nearList[i1])) != 1)
-          std::cout << nearList[i1] << " (" << MathUtils::DeltaR(PuppiParticle->Eta(),PuppiParticle->Phi(),
-                                                                 fPFCandidates->At(nearList[i1])->Eta(),
-                                                                 fPFCandidates->At(nearList[i1])->Phi()) <<  "), ";
-      }
-      std::cout << std::endl;
-      nearList.resize(0);
-      std::cout << "Pt: " << PuppiParticle->Pt() << "; Eta: " << PuppiParticle->Eta();
-      std::cout << "; Phi: " << PuppiParticle->Phi() << "; Mass: " << PuppiParticle->Mass() << std::endl;
-      std::cout << "Median Alphas:";
-      std::cout << alphaCMed[GetEtaBin(PuppiParticle)] << "; " << alphaFMed[GetEtaBin(PuppiParticle)] << std::endl;
-      std::cout << "Alpha RMS:";
-      std::cout << sigma2C[GetEtaBin(PuppiParticle)] << "; " << sigma2F[GetEtaBin(PuppiParticle)] << std::endl;
-      std::cout << "Weight: " << weight << "; " << alphaC[i0] << "; " << alphaF[i0] << std::endl;
-      fDumpingPuppi = false;                                           // You will not want to dump this more than once
+      if (weight < 1)                                                    // Weight the particle if required
+        PuppiParticle->SetPtEtaPhiM(PuppiParticle->Pt()*(weight),PuppiParticle->Eta(),
+                                    PuppiParticle->Phi(),PuppiParticle->Mass()*(weight));
     }
-    if (weight < 1)                                                    // Weight the particle if required
-      PuppiParticle->SetPtEtaPhiM(PuppiParticle->Pt()*(weight),PuppiParticle->Eta(),
-                                  PuppiParticle->Phi(),PuppiParticle->Mass()*(weight));
+    if (fBothPVandPU) {
+      weight = 1.0 - weight;
+      if (weight == 0)
+        continue;
+      PFCandidate *PuppiParticle = InvertedParticles->Allocate();
+      new (PuppiParticle) PFCandidate(*fPFCandidates->At(i0));
+      if (weight < 1)                                                    // Weight the particle if required
+        PuppiParticle->SetPtEtaPhiM(PuppiParticle->Pt()*(weight),PuppiParticle->Eta(),
+                                    PuppiParticle->Phi(),PuppiParticle->Mass()*(weight));
+    }
+  }
+  if (fBothPVandPU) {
+    InvertedParticles->Trim();
+    AddObjThisEvt(InvertedParticles);
   }
   fPuppiParticles->Trim();
-  PuppiParticles->Clone();
+  PFCandidateArr *PuppiParticles = (PFCandidateArr*) fPuppiParticles->Clone();
   AddObjThisEvt(PuppiParticles);
 }
