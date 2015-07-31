@@ -57,6 +57,7 @@ namespace mithep {
     Double_t GetPtMin() const { return fPtMin; }
     Double_t GetEtaMax() const { return fEtaMax; }
     UInt_t GetMinOutput() const { return fMinOutput; }
+    UInt_t GetMaxOutput() const { return fMaxOutput; }
 
     void SetInputName(char const* n) { fInputName = n; }
     void SetOutputName(char const* n) { fOutputName = n; }
@@ -79,6 +80,7 @@ namespace mithep {
     void SetPtMin(Double_t m) { fPtMin = m; }
     void SetEtaMax(Double_t m) { fEtaMax = m; }
     void SetMinOutput(UInt_t m) { fMinOutput = m; }
+    void SetMaxOutput(UInt_t m) { fMaxOutput = m; }
 
   protected:
     void SlaveBegin() override;
@@ -142,6 +144,7 @@ namespace mithep {
 
     Bool_t   fIsFilterMode = kTRUE;
     UInt_t   fMinOutput = 0;
+    UInt_t   fMaxOutput = 0xffffffff;
     UInt_t   fIdType = 0xffffffff;
     UInt_t   fIsoType = 0xffffffff;
     Double_t fPtMin = 0.;
@@ -233,7 +236,7 @@ namespace mithep {
       }
     }
   
-    if (nGoodObjects < fMinOutput) {
+    if (nGoodObjects < fMinOutput || nGoodObjects > fMaxOutput) {
       SkipEvent();
       return;
     }

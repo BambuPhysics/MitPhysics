@@ -44,6 +44,7 @@ namespace mithep {
     // Setting cut values
     void SetCategoryActive(UInt_t c, Bool_t a = kTRUE) { fCategoryActive[c] = a; }
     void AddTriggerName(UInt_t c, const char* n)       { fTriggerNames[c].push_back(n); }
+    void SetMinNumJets(UInt_t c, Int_t n)              { fMinNumJets[c] = n; }
     void SetMaxNumJets(UInt_t c, Int_t n)              { fMaxNumJets[c] = n; }
     void SetMinLeadJetPt(UInt_t c, Double_t x)         { fMinLeadJetPt[c] = x; }
     void SetMaxJetEta(UInt_t c, Double_t x)            { fMaxJetEta[c] = x; }
@@ -51,6 +52,10 @@ namespace mithep {
     void SetMinChargedHadronFrac(UInt_t c, Double_t x) { fMinChargedHadronFrac[c] = x; }
     void SetMaxNeutralHadronFrac(UInt_t c, Double_t x) { fMaxNeutralHadronFrac[c] = x; }
     void SetMaxNeutralEmFrac(UInt_t c, Double_t x)     { fMaxNeutralEmFrac[c] = x; }
+    void SetVetoElectrons(UInt_t c, Bool_t v)          { fVetoElectrons[c] = v; }
+    void SetVetoMuons(UInt_t c, Bool_t v)              { fVetoMuons[c] = v; }
+    void SetVetoTaus(UInt_t c, Bool_t v)               { fVetoTaus[c] = v; }
+    void SetVetoPhotons(UInt_t c, Bool_t v)            { fVetoPhotons[c] = v; }
 
     void SetIgnoreTrigger(Bool_t i)                    { fIgnoreTrigger = i; }
 
@@ -89,6 +94,7 @@ namespace mithep {
     std::vector<UInt_t> fTriggerIds[nMonoJetCategories]{};
 
     Bool_t   fCategoryActive[nMonoJetCategories] = {};
+    UInt_t   fMinNumJets[nMonoJetCategories] = {};
     UInt_t   fMaxNumJets[nMonoJetCategories] = {};
     Double_t fMinLeadJetPt[nMonoJetCategories] = {};
     Double_t fMaxJetEta[nMonoJetCategories] = {};
@@ -96,6 +102,10 @@ namespace mithep {
     Double_t fMinChargedHadronFrac[nMonoJetCategories] = {};
     Double_t fMaxNeutralHadronFrac[nMonoJetCategories] = {};
     Double_t fMaxNeutralEmFrac[nMonoJetCategories] = {};
+    Bool_t   fVetoElectrons[nMonoJetCategories] = {};
+    Bool_t   fVetoMuons[nMonoJetCategories] = {};
+    Bool_t   fVetoTaus[nMonoJetCategories] = {};
+    Bool_t   fVetoPhotons[nMonoJetCategories] = {};
 
     Bool_t fIgnoreTrigger{kFALSE};
 

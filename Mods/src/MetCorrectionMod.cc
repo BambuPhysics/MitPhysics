@@ -2,6 +2,8 @@
 
 #include "MitAna/DataTree/interface/JetCol.h"
 #include "MitAna/DataTree/interface/MetCol.h"
+#include "MitAna/DataTree/interface/PFMetCol.h"
+#include "MitAna/DataTree/interface/CaloMetCol.h"
 #include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
 #include "MitAna/DataTree/interface/VertexCol.h"
 #include "MitAna/DataTree/interface/PFCandidateCol.h"
@@ -15,16 +17,28 @@ using namespace mithep;
 
 ClassImp(mithep::MetCorrectionMod)
 
-MetCorrectionMod::MetCorrectionMod(char const* name, char const* title) :
-  BaseMod(name, title)
-{
-  fOutput.SetOwner(true);
-}
-
 //--------------------------------------------------------------------------------------------------
 void
 MetCorrectionMod::SlaveBegin()
 {
+  switch (fOutputType) {
+  case kMet:
+    fOutput = new MetArr(1, fOutputName);
+    break;
+  case kCaloMet:
+    fOutput = new CaloMetArr(1, fOutputName);
+    break;
+  case kPFMet:
+    fOutput = new PFMetArr(1, fOutputName);
+    break;
+  default:
+    SendError(kAbortAnalysis, "SlaveBegin",
+              "Unknown output Met type %d", fOutputType);
+    return;
+  }
+
+  PublishObj(fOutput);
+
   if (fApplyType0) {
     //type0 formula: function of Pt of vectorial sum of PU particles
     if (!fFormulaType0)
@@ -43,8 +57,6 @@ MetCorrectionMod::SlaveBegin()
     if (!fFormulaShiftPy)
       MakeFormula(2);
   }
-
-  PublishObj(&fOutput);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -55,7 +67,9 @@ MetCorrectionMod::SlaveTerminate()
     delete fJetCorrector;
     fJetCorrector = 0;
   }
-  RetractObj(fOutput.GetName());
+  RetractObj(fOutput->GetName());
+  delete fOutput;
+  fOutput = 0;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -72,6 +86,21 @@ MetCorrectionMod::Process()
     return;
   }
 
+  if (metCol->GetEntries() == 0) {
+    SendError(kAbortModule, "Process",
+              "Met collection %s is empty",
+              fMetName.Data());
+    return;
+  }
+
+  auto& inMet(*metCol->At(0));
+  if ((fOutputType == kPFMet && inMet.ObjType() != kPFMet) ||
+      (fOutputType == kCaloMet && inMet.ObjType() != kCaloMet)) {
+    SendError(kAbortModule, "Process",
+              "Input Met type does not match the output type.");
+    return;
+  }
+
   VertexCol* inVertices = 0;
   if (fApplyType0 || fApplyShift) {
     inVertices = GetObject<VertexCol>(fVertexName);
@@ -84,7 +113,7 @@ MetCorrectionMod::Process()
   }
 
   // prepare the storage array for the corrected MET
-  fOutput.Reset();
+  fOutput->Reset();
 
   TVector2 metCorrection[3] = {};
   double sumEtCorrection[3] = {};
@@ -246,7 +275,7 @@ MetCorrectionMod::Process()
     if (fPrint) {
       std::cout << "\n" << std::endl;
       std::cout << "Final type1 cor Pt: " << metCorrection[1].Mod() << std::endl;
-      std::cout << "raw Met Pt        : " << metCol->At(0)->Pt() << std::endl;
+      std::cout << "raw Met Pt        : " << inMet.Pt() << std::endl;
       std::cout << "+++++++ End of type 1 correction scope +++++++\n\n" << std::endl;
     }
   }
@@ -268,17 +297,31 @@ MetCorrectionMod::Process()
     // debug
     if (fPrint) {
       std::cout << "XY shift cor Pt: " << metCorrection[2].Mod() << std::endl;
-      std::cout << "raw Met Pt     : " << metCol->At(0)->Pt() << std::endl;
+      std::cout << "raw Met Pt     : " << inMet.Pt() << std::endl;
       std::cout << "+++++++ End of XY shift correction scope +++++++\n\n" << std::endl;
     }
   }
 
   // initialize the corrected met to the uncorrected one
-  Met* original = metCol->At(0);
-  Met* corrected = original->MakeCopy();
-  double mex = original->Mex();
-  double mey = original->Mey();
-  double sumEt = original->SumEt();
+  Met* corrected = 0;
+  switch (fOutputType) {
+  case kMet:
+    corrected = static_cast<MetArr*>(fOutput)->Allocate();
+    new (corrected) Met(inMet);
+    break;
+  case kCaloMet:
+    corrected = static_cast<CaloMetArr*>(fOutput)->Allocate();
+    new (corrected) CaloMet(static_cast<CaloMet&>(inMet));
+    break;
+  case kPFMet:
+    corrected = static_cast<PFMetArr*>(fOutput)->Allocate();
+    new (corrected) PFMet(static_cast<PFMet&>(inMet));
+    break;
+  }
+
+  double mex = inMet.Mex();
+  double mey = inMet.Mey();
+  double sumEt = inMet.SumEt();
   for (unsigned iC = 0; iC != 3; ++iC) {
     mex += metCorrection[iC].X();
     mey += metCorrection[iC].Y();
@@ -287,9 +330,6 @@ MetCorrectionMod::Process()
   corrected->SetMex(mex);
   corrected->SetMey(mey);
   corrected->SetSumEt(sumEt);
-
-  // add corrected met to collection
-  fOutput.AddOwned(corrected);
 }
 
 void

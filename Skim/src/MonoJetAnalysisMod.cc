@@ -31,8 +31,9 @@ MonoJetAnalysisMod::MonoJetAnalysisMod(const char *name, const char *title) :
   BaseMod(name, title)
 {
   // cuts
-  Double_t dbig = std::numeric_limits<double>::max();
+  double dbig = std::numeric_limits<double>::max();
   std::fill_n(fCategoryActive, nMonoJetCategories, false);
+  std::fill_n(fMinNumJets, nMonoJetCategories, 0xffffffff);
   std::fill_n(fMaxNumJets, nMonoJetCategories, 0);
   std::fill_n(fMinLeadJetPt, nMonoJetCategories, dbig);
   std::fill_n(fMaxJetEta, nMonoJetCategories, 0.);
@@ -40,6 +41,10 @@ MonoJetAnalysisMod::MonoJetAnalysisMod(const char *name, const char *title) :
   std::fill_n(fMinChargedHadronFrac, nMonoJetCategories, dbig);
   std::fill_n(fMaxNeutralHadronFrac, nMonoJetCategories, 0.);
   std::fill_n(fMaxNeutralEmFrac, nMonoJetCategories, 0.);
+  std::fill_n(fVetoElectrons, nMonoJetCategories, true);
+  std::fill_n(fVetoMuons, nMonoJetCategories, true);
+  std::fill_n(fVetoTaus, nMonoJetCategories, true);
+  std::fill_n(fVetoPhotons, nMonoJetCategories, true);
 
   fCategoryFlags.Resize(nMonoJetCategories);
 }
@@ -111,16 +116,22 @@ MonoJetAnalysisMod::Process()
   auto* electrons = GetObject<ElectronCol>(fVetoElectronsName);
   if (!electrons)
     SendError(kAbortAnalysis, "Process", "Could not find " + fVetoElectronsName);
-  auto* electronMask = GetObject<NFArrBool>(fElectronMaskName);
-  if (!electronMask)
-    SendError(kAbortAnalysis, "Process", "Could not find " + fElectronMaskName);
+  NFArrBool* electronMask = 0;
+  if (fCategoryActive[kDielectron] || fCategoryActive[kSingleElectron]) {
+    electronMask = GetObject<NFArrBool>(fElectronMaskName);
+    if (!electronMask)
+      SendError(kAbortAnalysis, "Process", "Could not find " + fElectronMaskName);
+  }
 
   auto* muons = GetObject<MuonCol>(fVetoMuonsName);
   if (!muons)
     SendError(kAbortAnalysis, "Process", "Could not find " + fVetoMuonsName);
-  auto* muonMask = GetObject<NFArrBool>(fMuonMaskName);
-  if (!muonMask)
-    SendError(kAbortAnalysis, "Process", "Could not find " + fMuonMaskName);
+  NFArrBool* muonMask = 0;
+  if (fCategoryActive[kDimuon] || fCategoryActive[kSingleMuon]) {
+    muonMask = GetObject<NFArrBool>(fMuonMaskName);
+    if (!muonMask)
+      SendError(kAbortAnalysis, "Process", "Could not find " + fMuonMaskName);
+  }
 
   auto* taus = GetObject<PFTauCol>(fVetoTausName);
   if (!taus)
@@ -129,9 +140,12 @@ MonoJetAnalysisMod::Process()
   auto* photons = GetObject<PhotonCol>(fVetoPhotonsName);
   if (!photons)
     SendError(kAbortAnalysis, "Process", "Could not find " + fVetoPhotonsName);
-  auto* photonMask = GetObject<NFArrBool>(fPhotonMaskName);
-  if (!photonMask)
-    SendError(kAbortAnalysis, "Process", "Could not find " + fPhotonMaskName);
+  NFArrBool* photonMask = 0;
+  if (fCategoryActive[kPhoton]) {
+    photonMask = GetObject<NFArrBool>(fPhotonMaskName);
+    if (!photonMask)
+      SendError(kAbortAnalysis, "Process", "Could not find " + fPhotonMaskName);
+  }
 
   TriggerMask* triggerMask = 0;
   if (HasHLTInfo() && GetHltFwkMod()->HasData()) {
@@ -179,7 +193,7 @@ MonoJetAnalysisMod::Process()
         continue;
       break;
     default:
-      if (electrons->GetEntries() != 0)
+      if (fVetoElectrons[iCat] && electrons->GetEntries() != 0)
         continue;
       break;
     }
@@ -196,14 +210,14 @@ MonoJetAnalysisMod::Process()
         continue;
       break;
     default:
-      if (muons->GetEntries() != 0)
+      if (fVetoMuons[iCat] && muons->GetEntries() != 0)
         continue;
       break;
     }
 
     fCutflow[iCat]->Fill(cNMuons);
 
-    if (taus->GetEntries() != 0)
+    if (fVetoTaus[iCat] && taus->GetEntries() != 0)
       continue;
 
     fCutflow[iCat]->Fill(cNTaus);
@@ -214,7 +228,7 @@ MonoJetAnalysisMod::Process()
         continue;
       break;
     default:
-      if (photons->GetEntries() != 0)
+      if (fVetoPhotons[iCat] && photons->GetEntries() != 0)
         continue;
       break;
     };
@@ -269,10 +283,12 @@ MonoJetAnalysisMod::Process()
       goodJets.push_back(&jet);
     }
 
-    if (goodJets.size() == 0 || goodJets[0]->Pt() < fMinLeadJetPt[iCat])
-      continue;
+    if (fMinNumJets[iCat] != 0) {
+      if (goodJets.size() < fMinNumJets[iCat] || goodJets[0]->Pt() < fMinLeadJetPt[iCat])
+        continue;
 
-    fCutflow[iCat]->Fill(cLeadJet);
+      fCutflow[iCat]->Fill(cLeadJet);
+    }
 
     if (goodJets.size() > fMaxNumJets[iCat])
       continue;
