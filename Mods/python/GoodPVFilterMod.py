@@ -5,6 +5,5 @@ goodPVFilterMod = mithep.GoodPVFilterMod(
     MinNDof = 4,
     MaxAbsZ = 24.,
     MaxRho = 2.,
-    IsMC = not analysis.isRealData,
     VertexesName = mithep.Names.gkPVBrn
 )
