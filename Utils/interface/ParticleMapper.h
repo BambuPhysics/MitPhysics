@@ -21,27 +21,26 @@ namespace mithep {
   class ParticleMapper {
   public:
 
-    ParticleMapper();
+    ParticleMapper(Double_t DeltaEta = 0.3,Double_t DeltaPhi = 0.3,Double_t EtaMax = 5.0);
     virtual ~ParticleMapper();
 
-    void Initialize(const PFCandidateCol &Particles,Double_t DeltaEta = 0.3,Double_t DeltaPhi = 0.3,Double_t EtaMax = 5.0);
+    void InitEvent(const PFCandidateCol &);
     
-    std::vector<Int_t> GetSurrounding( Int_t index );                // Returns a vector of particle indices in particle bin and adjacent bins
-    std::vector<Int_t> GetNearEtaPhi( Double_t eta, Double_t phi);   // Returns a vector of particle indices in area of eta-phi spot given
+    std::vector<UInt_t> GetSurrounding( UInt_t index ) const;                // Returns a vector of particle indices in particle bin and adjacent bins
+    std::vector<UInt_t> GetNearEtaPhi( Double_t eta, Double_t phi) const;   // Returns a vector of particle indices in area of eta-phi spot given
 
   private:
     
     Double_t  fDeltaEta;
     Double_t  fDeltaPhi;
-    Int_t     fNumParticles;
-    Int_t     fNumEtaBins;
-    Int_t     fNumPhiBins;
-    Int_t     fNumTotBins;
+    Double_t  fEtaMax;
+    UInt_t    fNumEtaBins;
+    UInt_t    fNumPhiBins;
 
-    Int_t *fParticleLocation;
-    std::vector<Int_t> *fBinContents;
+    std::vector<Int_t> fParticleLocation;          // Particle index to bin mapping
+    std::vector<std::vector<UInt_t>> fBinContents; // List of particle indices in each bin
 
-    std::vector<Int_t> ReturnNear( Int_t etaBin, Int_t phiBin );     // This is the function that the "Get" functions ultimately call
+    std::vector<UInt_t> ReturnNear( Int_t etaBin, Int_t phiBin ) const;     // This is the function that the "Get" functions ultimately call
 
     ClassDef(ParticleMapper, 0)
   };
