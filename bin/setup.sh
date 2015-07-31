@@ -22,6 +22,10 @@ else
   $CMSSW_BASE/src/MitPhysics/bin/updateData.sh
 fi
 
+#Get Shower Deconstruction code
+cd $CMSSW_BASE/src/MitPhysics
+tar -xf /cvmfs/cvmfs.cmsaf.mit.edu/hidsk0001/cmsprod/cms/external/SDAlgorithm/SDAlgorithm.0.6.tar.gz
+
 # Generate ROOT dictionaries for classes defined in this module
 $CMSSW_BASE/src/MitCommon/bin/genDict.sh MitPhysics/{FakeMods,Init,Mods,SelMods,Skim,Utils,Validation}
 
