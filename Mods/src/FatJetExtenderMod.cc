@@ -116,7 +116,7 @@ void FatJetExtenderMod::Process()
 
   // set up shower deconstruction stuff
   TString inputCard = Utils::GetEnv("CMSSW_BASE");
-  inputCard += TString::Format("/src/MitAna/SDAlgorithm/config/input_card_%i.dat",int(fConeSize*10));
+  inputCard += TString::Format("/src/MitPhysics/SDAlgorithm/config/input_card_%i.dat",int(fConeSize*10));
   AnalysisParameters param(inputCard.Data());
   Deconstruction::TopGluonModel *signal = new Deconstruction::TopGluonModel(param);
   Deconstruction::BackgroundModel *background = new Deconstruction::BackgroundModel(param);
