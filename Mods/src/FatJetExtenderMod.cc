@@ -51,11 +51,6 @@ FatJetExtenderMod::FatJetExtenderMod(const char *name, const char *title) :
   fTrimPtFrac (0.05),
   fConeSize (0.6),
   fDeconstruct(0),
-  fDoSDSubJets(kFALSE),
-  fDoPrunedSubJets(kFALSE),
-  fDoTrimmedSubJets(kFALSE),
-  fDoCMSTT(kFALSE),
-  fDoHEPTT(kFALSE),
   fProcessNJets (3),
   fDoShowerDeconstruction(kTRUE)
 {
@@ -158,7 +153,7 @@ void FatJetExtenderMod::SlaveBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis.
   ReqEventObject(fFatJetsName,fFatJets,fFatJetsFromBranch);
-  ReqEventObject(fPfCandidatesName,fPfCandidates,fPfCandidatesFromBranch
+  ReqEventObject(fPFCandidatesName,fPFCandidates,fPFCandidatesFromBranch);
   ReqEventObject(fPileUpDenName,fPileUpDen,fPileUpDenFromBranch);
   ReqEventObject(fVertexesName,fVertexes,fVertexesFromBranch);
 
@@ -166,17 +161,17 @@ void FatJetExtenderMod::SlaveBegin()
 
   // Create the new output collection
   fXlFatJets = new XlFatJetArr(16,fXlFatJetsName);
-  for(ESubJetType i = XlSubJet::kSoftDrop; i<XlSubJet::nSubJetTypes; ++i) {
+  for(unsigned int i = XlSubJet::kSoftDrop; i<XlSubJet::nSubJetTypes; ++i) {
     // only allocate memory for the subjets that are turned on
     if (fSubJetFlags & (1<<i))
-      fXlSubJets[(unsigned int)i] = new XlSubJetArr(16,fXlSubJetsName[(unsigned int)i]);
+      fXlSubJets[i] = new XlSubJetArr(16,fXlSubJetsName[i]);
   }
   // Publish collection for further usage in the analysis
   if (fPublishOutput) {
     PublishObj(fXlFatJets);
-    for(ESubJetType i = XlSubJet::kSoftDrop; i<XlSubJet::nSubJetTypes; ++i) {
+    for(unsigned int i = XlSubJet::kSoftDrop; i<XlSubJet::nSubJetTypes; ++i) {
       if (fSubJetFlags & (1<<i))
-        PublishObj(fXlSubJets[(unsigned int)i]);
+        PublishObj(fXlSubJets[i]);
     }
   }
 
@@ -329,7 +324,7 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
       // these have a common interface
       int nSubJets = std::min<unsigned int>(fjClusteredJets[iSJType].constituents().size(),3);
       fjSubjets = fjClusteredJets[iSJType].associated_cluster_sequence()->exclusive_subjets(fjClusteredJets[iSJType],nSubJets);
-      std::vector<fastjet::PseudoJet> fjSubJetsSorted = Sorted_by_pt_min_pt(fjTopSubJets,0.01);
+      std::vector<fastjet::PseudoJet> fjSubJetsSorted = Sorted_by_pt_min_pt(fjSubjets,0.01);
       if (!computedPullAngle) {
         xlFatJet->SetPullAngle(GetPullAngle(fjSubJetsSorted,0.01));
       }
@@ -381,12 +376,19 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   // ---- Fastjet is done ----
   double thisJEC = xlFatJet->Pt()/xlFatJet->RawMom().Pt();
 
+  xlFatJet->SetTau1(tau1);
+  xlFatJet->SetTau2(tau2);
+  xlFatJet->SetTau3(tau3);
+  xlFatJet->SetTau4(tau4);
+
   // Store the energy correlation values
   xlFatJet->SetC2b0(C2b0);
   xlFatJet->SetC2b0p2(C2b0p2);
   xlFatJet->SetC2b0p5(C2b0p5);
   xlFatJet->SetC2b1(C2b1);
   xlFatJet->SetC2b2(C2b2);
+
+  xlFatJet->SetQJetVol(QJetVol);
 
   // Store the groomed masses, apply JEC
   xlFatJet->SetMassSDb0(MassSDb0*thisJEC);
@@ -428,7 +430,7 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
 
 //--------------------------------------------------------------------------------------------------
 
-inline Vect4M FatJetExtender::GetCorrectedMomentum(fastjet::PseudoJet fj_tmp, double thisJEC) {
+inline Vect4M FatJetExtenderMod::GetCorrectedMomentum(fastjet::PseudoJet fj_tmp, double thisJEC) {
   return Vect4M(thisJEC*fj_tmp.pt(),fj_tmp.eta(), fj_tmp.phi(),thisJEC*fj_tmp.m());
 }
 
@@ -492,6 +494,40 @@ void FatJetExtenderMod::GetJetConstituents(fastjet::PseudoJet &jet, std::vector 
 
   return;
 }
+//--------------------------------------------------------------------------------------------------
+double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &constits, int QJetsN, int seed)
+{
+  std::vector<float> qjetmasses;
+
+  double zcut(0.1), dcut_fctr(0.5), exp_min(0.), exp_max(0.), rigidity(0.1), truncationFactor(0.01);
+
+  QjetsPlugin qjet_plugin(zcut, dcut_fctr, exp_min, exp_max, rigidity, truncationFactor);
+  fastjet::JetDefinition qjet_def(&qjet_plugin);
+
+  for(unsigned int ii = 0 ; ii < (unsigned int) QJetsN ; ii++){
+    qjet_plugin.SetRandSeed(seed+ii); // new feature in Qjets to set the random seed
+    fastjet::ClusterSequence *qjet_seq =
+      new fastjet::ClusterSequence(constits, qjet_def);
+
+    vector<fastjet::PseudoJet> inclusive_jets2 = sorted_by_pt(qjet_seq->inclusive_jets(5.0));
+    // skip failed recombinations (with no output jets)
+    if (inclusive_jets2.size() < 1)
+      continue;
+    if (inclusive_jets2.size()>0) { qjetmasses.push_back( inclusive_jets2[0].m() ); }
+    // memory cleanup
+    if ((qjet_seq->inclusive_jets()).size() > 0)
+      qjet_seq->delete_self_when_unused();
+    delete qjet_seq;
+  }
+
+  // find RMS of a vector
+  float qjetsRMS = FindRMS( qjetmasses );
+  // find mean of a vector
+  float qjetsMean = FindMean( qjetmasses );
+  float qjetsVolatility = qjetsRMS/qjetsMean;
+  return qjetsVolatility;
+}
+
 
 //--------------------------------------------------------------------------------------------------
 double FatJetExtenderMod::FindRMS(std::vector<float> qjetmasses)
