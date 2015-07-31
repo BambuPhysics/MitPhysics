@@ -5,7 +5,7 @@
 // The methods are synchronized with JetMET POG 2012 studies, documented in this twiki
 // https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMetAnalysis#7_7_6_MET_Corrections
 //
-// Authors: L.Di Matteo
+// Authors: L.Di Matteo, Y.Iiyama
 //--------------------------------------------------------------------------------------------------
 
 #ifndef MITPHYSICS_MODS_METCORRECTIONMOD_H
@@ -13,28 +13,31 @@
 
 #include "MitAna/TreeMod/interface/BaseMod.h"
 #include "MitPhysics/Utils/interface/JetCorrector.h"
-#include "MitAna/DataTree/interface/MetCol.h"
 #include "MitAna/DataTree/interface/PileupEnergyDensity.h"
 
 #include "MitAna/DataTree/interface/Names.h"
+#include "MitAna/DataTree/interface/ObjTypes.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 
 #include "TFormula.h"
 
 namespace mithep {
 
+  class BaseCollection;
+
   // (Get|Set)ExprShift(Data|MC)P(x|y) is removed. Use IsData flag + (Get|Set)ExprShiftP(x|y) instead.
 
   class MetCorrectionMod : public BaseMod {
   public:
     MetCorrectionMod(const char* name="MetCorrectionMod",
-                     const char* title="Met correction module");
+                     const char* title="Met correction module") : BaseMod(name, title) {}
     ~MetCorrectionMod() {}
 
     const char*   GetInputName() const       { return fMetName; }
-    const char*   GetOutputName() const      { return fOutput.GetName(); }
+    const char*   GetOutputName() const      { return fOutputName; }
     const char*   GetCorrectedName() const   { return GetOutputName(); }
     const char*   GetJetsName() const        { return fJetsName; }
+    UInt_t        GetOutputType() const      { return fOutputType; }
     Double_t      GetMinDz() const           { return fMinDz; }
     const char*   GetExprType0();
     const char*   GetExprShiftPx();
@@ -45,9 +48,10 @@ namespace mithep {
     Bool_t        GetSkipMuons() const       { return fSkipMuons; }
 
     void SetInputName(const char *name)        { fMetName = name; }
-    void SetOutputName(const char *name)       { fOutput.SetName(name); }
+    void SetOutputName(const char *name)       { fOutputName = name; }
     void SetCorrectedName(const char *name)    { SetOutputName(name); }
     void SetJetsName(const char *name)         { fJetsName = name; }
+    void SetOutputType(UInt_t t)               { fOutputType = t; }
     void SetMinDz(Double_t d)                  { fMinDz = d; }
     void ApplyType0(bool b)                    { fApplyType0 = b; }
     void ApplyType1(bool b)                    { fApplyType1 = b; }
@@ -72,6 +76,7 @@ namespace mithep {
     void MakeJetCorrector();
     void MakeFormula(UInt_t idx, char const* expr = "");
 
+    TString       fOutputName{"PFMetT0T1Shift"};
     TString       fMetName{"PFMet"};                           //name of met collection (input)
     TString       fJetsName{Names::gkPFJetBrn};                //name of uncorrected jet collection (input)
     TString       fPFCandidatesName{Names::gkPFCandidatesBrn}; //name of PF candidates collection (input)
@@ -97,7 +102,8 @@ namespace mithep {
     Bool_t        fIsData = kTRUE; //flag for data/MC distinction
     Bool_t        fPrint = kFALSE; //flag for debug print out
 
-    MetOArr       fOutput{1, "PFMetT0T1Shift"}; //using ObjArray to accomodate different MET types
+    UInt_t          fOutputType = kPFMet;
+    BaseCollection* fOutput = 0;
 
     ClassDef(MetCorrectionMod, 1) // met correction module
   };

@@ -14,6 +14,7 @@
 #include "MitPhysics/Utils/interface/ElectronTools.h"
 #include "MitPhysics/Mods/interface/PhotonIdMod.h"
 #include "MitPhysics/Mods/interface/PFTauIdMod.h"
+#include "MitPhysics/Mods/interface/PFTauCleaningMod.h"
 #include "MitPhysics/Mods/interface/JetIdMod.h"
 #include "MitPhysics/Mods/interface/JetCorrectionMod.h"
 #include "MitPhysics/Mods/interface/MetCorrectionMod.h"
@@ -36,8 +37,8 @@ void runMonoJetSkim(const char *fileset    = "0000",
                     int         nEvents    = 1000)
 {
   float maxJetEta       = 2.5;
-  float minMet          = 50.;
-  float minLeadJetPt    = 50.;
+  float minMet          = 100.;
+  float minLeadJetPt    = 100.;
 
   //------------------------------------------------------------------------------------------------
   // json parameters get passed through the environment
@@ -126,17 +127,6 @@ void runMonoJetSkim(const char *fileset    = "0000",
 
   modules.push_back(hltMod);
 
-  JetIdMod* leadJetId = new JetIdMod("LeadJetId");
-  leadJetId->SetMinChargedHadronFraction(0.2);
-  leadJetId->SetMaxNeutralHadronFraction(0.7);
-  leadJetId->SetMaxNeutralEMFraction(0.7);
-  leadJetId->SetApplyPFLooseId(kTRUE);
-  leadJetId->SetPtMin(minLeadJetPt);
-  leadJetId->SetEtaMax(maxJetEta);
-  leadJetId->SetMinOutput(1);
-
-  modules.push_back(leadJetId);
-
   //------------------------------------------------------------------------------------------------
   // select events with a good primary vertex
   //------------------------------------------------------------------------------------------------
@@ -145,7 +135,6 @@ void runMonoJetSkim(const char *fileset    = "0000",
   goodPvMod->SetMinNDof(4.0);
   goodPvMod->SetMaxAbsZ(24.0);
   goodPvMod->SetMaxRho(2.0);
-  goodPvMod->SetIsMC(!isData);
   goodPvMod->SetVertexesName("PrimaryVertexes");
 
   modules.push_back(goodPvMod);
@@ -244,7 +233,7 @@ void runMonoJetSkim(const char *fileset    = "0000",
 
   PhotonIdMod *photonIdMod = new PhotonIdMod("GoodPhotonId");
   photonIdMod->SetInputName(vetoPhotonIdMod->GetOutputName());
-  photonIdMod->SetPtMin(90.);
+  photonIdMod->SetPtMin(minMet);
   photonIdMod->SetOutputName("GoodPhotons");
   photonIdMod->SetIdType(mithep::PhotonTools::kPhys14Medium);
   photonIdMod->SetIsoType(mithep::PhotonTools::kPhys14MediumIso);
@@ -259,9 +248,19 @@ void runMonoJetSkim(const char *fileset    = "0000",
   pfTauIdMod->SetInputName("HPSTaus");
   pfTauIdMod->AddDiscriminator(mithep::PFTau::kDiscriminationByDecayModeFindingNewDMs);
   pfTauIdMod->AddCutDiscriminator(mithep::PFTau::kDiscriminationByRawCombinedIsolationDBSumPtCorr3Hits, 5., kFALSE);
-  pfTauIdMod->SetOutputName("GoodTaus");
+  pfTauIdMod->SetOutputName("LooseTaus");
 
   modules.push_back(pfTauIdMod);
+
+  PFTauCleaningMod* pfTauCleaningMod = new PFTauCleaningMod;
+  pfTauCleaningMod->SetOutputName("LooseCleanTaus");
+  pfTauCleaningMod->SetGoodPFTausName(pfTauIdMod->GetOutputName());
+  pfTauCleaningMod->SetCleanElectronsName(vetoEleIdMod->GetOutputName());
+  pfTauCleaningMod->SetCleanMuonsName(vetoMuonIdMod->GetOutputName());
+
+  modules.push_back(pfTauCleaningMod);
+
+  // in principle can cut here with nTau == 0 but for now passing
 
   JetCorrectionMod *jetCorr = new JetCorrectionMod;
   if (isData){ 
@@ -329,7 +328,7 @@ void runMonoJetSkim(const char *fileset    = "0000",
   monojetSel->SetElectronMaskName(eleIdMod->GetOutputName());
   monojetSel->SetVetoMuonsName(vetoMuonIdMod->GetOutputName());
   monojetSel->SetMuonMaskName(muonIdMod->GetOutputName());
-  monojetSel->SetVetoTausName(pfTauIdMod->GetOutputName());
+  monojetSel->SetVetoTausName(pfTauCleaningMod->GetOutputName());
   monojetSel->SetVetoPhotonsName(vetoPhotonIdMod->GetOutputName());
   monojetSel->SetPhotonMaskName(photonIdMod->GetOutputName());
   monojetSel->SetCategoryFlagsName("MonoJetEventCategories");
@@ -339,14 +338,26 @@ void runMonoJetSkim(const char *fileset    = "0000",
     monojetSel->SetCategoryActive(iCat, kTRUE);
     for (auto& name : triggerNames[iCat])
       monojetSel->AddTriggerName(iCat, name);
-    monojetSel->SetMaxNumJets(iCat, 3);
-    monojetSel->SetMinLeadJetPt(iCat, minLeadJetPt);
+    monojetSel->SetMaxNumJets(iCat, 0xffffffff);
     monojetSel->SetMaxJetEta(iCat, maxJetEta);
-    monojetSel->SetMinMetPt(iCat, minMet);
     monojetSel->SetMinChargedHadronFrac(iCat, 0.2); 
     monojetSel->SetMaxNeutralHadronFrac(iCat, 0.7);
     monojetSel->SetMaxNeutralEmFrac(iCat, 0.7);
     monojetSel->SetIgnoreTrigger(!isData);
+
+    switch (iCat) {
+    case MonoJetAnalysisMod::kDielectron:
+    case MonoJetAnalysisMod::kDimuon:
+      monojetSel->SetMinNumJets(iCat, 0);
+      monojetSel->SetMinMetPt(iCat, 0.);
+      monojetSel->SetVetoPhotons(iCat, false);
+      break;
+    default:
+      monojetSel->SetMinNumJets(iCat, 1);
+      monojetSel->SetMinLeadJetPt(iCat, minLeadJetPt);
+      monojetSel->SetMinMetPt(iCat, minMet);
+      break;
+    }
   }
 
   modules.push_back(monojetSel);
@@ -360,30 +371,32 @@ void runMonoJetSkim(const char *fileset    = "0000",
     outputName += TString("_") + TString(fileset);
   
   OutputMod *skimOutput = new OutputMod;
-  skimOutput->Drop("*");
-  skimOutput->Keep("HLT*");
 
-  skimOutput->Keep("MC*");
-  skimOutput->Keep("PileupInfo");
-  skimOutput->Keep("Rho");
-  skimOutput->Keep("EvtSelData");
-  skimOutput->Keep("BeamSpot");
-  skimOutput->Keep("PrimaryVertexes");
-  skimOutput->Keep("PFMet");
-  skimOutput->Keep("AKt4PFJetsCHS");
-  skimOutput->Keep("AKt8PFJetsCHS");
-  skimOutput->Keep("Electrons");
-  skimOutput->Keep("Conversions");
-  skimOutput->Keep("*Stable*");
-  skimOutput->Keep("Muons");
-  skimOutput->Keep("HPSTaus");
-  skimOutput->Keep("Photons");
-  skimOutput->Keep("AKT4GenJets");
+  skimOutput->Keep("*");
+  skimOutput->Drop("L1TechBits*");
+  skimOutput->Drop("L1AlgoBits*");
+  skimOutput->Drop("MCVertexes");
+  skimOutput->Drop("PFEcal*SuperClusters");
+  skimOutput->Drop("*Tracks");
+  skimOutput->Drop("StandaloneMuonTracksWVtxConstraint");
+  skimOutput->Drop("PrimaryVertexesBeamSpot");
+  skimOutput->Drop("InclusiveSecondaryVertexes");
+  skimOutput->Drop("CosmicMuons");
+  skimOutput->Drop("MergedElectronsStable");
+  skimOutput->Drop("MergedConversions*");
+  skimOutput->Drop("AKT8GenJets");
+  skimOutput->Drop("AKt4PFJets");
+  skimOutput->Drop("DCASig");
+  skimOutput->AddNewBranch(type1MetCorr->GetOutputName());
   skimOutput->AddNewBranch(monojetSel->GetCategoryFlagsName());
 
   skimOutput->SetMaxFileSize(10 * 1024); // 10 GB - should never exceed
   skimOutput->SetFileName(outputName);
   skimOutput->SetPathName(".");
+  skimOutput->SetCheckTamBr(false);
+  skimOutput->SetKeepTamBr(false);
+  skimOutput->SetCheckBrDep(true);
+  skimOutput->SetUseBrDep(true);
 
   skimOutput->AddCondition(monojetSel);
 

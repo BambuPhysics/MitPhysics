@@ -6,6 +6,8 @@ using namespace mithep;
 
 //--------------------------------------------------------------------------------------------------
 ParticleMapper::ParticleMapper() :
+  fDeltaEta(0),
+  fDeltaPhi(0),
   fNumParticles(0),
   fNumEtaBins(0),
   fNumPhiBins(0),
@@ -25,9 +27,12 @@ ParticleMapper::~ParticleMapper()
 void
 ParticleMapper::Initialize(const PFCandidateCol &Particles, Double_t DeltaEta, Double_t DeltaPhi, Double_t EtaMax)
 {
+  fDeltaEta = DeltaEta;
+  fDeltaPhi = DeltaPhi;
+
   fNumParticles = Particles.GetEntries();
-  fNumEtaBins   = 2*ceil(EtaMax/DeltaEta);
-  fNumPhiBins   = floor(2*(TMath::Pi()/DeltaPhi));  // The last bin will be larger than DeltaPhi
+  fNumEtaBins   = 2*ceil(EtaMax/fDeltaEta);
+  fNumPhiBins   = floor(2*(TMath::Pi()/fDeltaPhi));  // The last bin will be larger than fDeltaPhi
   fNumTotBins   = fNumEtaBins * fNumPhiBins;
 
   fParticleLocation = new Int_t[fNumParticles];
@@ -48,26 +53,14 @@ ParticleMapper::Initialize(const PFCandidateCol &Particles, Double_t DeltaEta, D
     Double_t phi = Particles.At(i0)->Phi();
     if (phi < 0)
       phi = phi + 2.0*(TMath::Pi());                // This way's easier so that there's only one bin with weird resolution
-    etaBin = floor(eta/DeltaEta) + fNumEtaBins/2;
-    phiBin = floor(phi/DeltaPhi);
+    etaBin = floor(eta/fDeltaEta) + fNumEtaBins/2;
+    phiBin = floor(phi/fDeltaPhi);
     if (phiBin == fNumPhiBins)
       phiBin = phiBin - 1;                          // Sticks overflow into last bin
     Int_t finalBin = etaBin + phiBin*fNumEtaBins;
     fParticleLocation[i0] = finalBin;
     fBinContents[finalBin].push_back(i0);
   }
-}
-
-//--------------------------------------------------------------------------------------------------
-std::vector<Int_t>
-ParticleMapper::GetInBin(Int_t index)
-{
-  if (fParticleLocation[index] < 0) {
-    std::vector<Int_t> blankVector;
-    blankVector.resize(0);
-    return blankVector;
-  }
-  return fBinContents[fParticleLocation[index]];
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -84,6 +77,36 @@ ParticleMapper::GetSurrounding(Int_t index)
   Int_t etaBin = bin % fNumEtaBins;
   Int_t phiBin = bin/fNumEtaBins;
 
+  return ReturnNear(etaBin, phiBin);
+}
+
+//--------------------------------------------------------------------------------------------------
+std::vector<Int_t>
+ParticleMapper::GetNearEtaPhi(Double_t eta, Double_t phi)
+{
+  if (fabs(eta) > fDeltaEta*(fNumEtaBins/2)) {
+    std::vector<Int_t> blankVector;
+    blankVector.resize(0);
+    return blankVector;
+  }
+
+  while (phi > 2*(TMath::Pi()))
+    phi = phi - 2*(TMath::Pi());
+  while (phi < 0) 
+    phi = phi + 2*(TMath::Pi());
+
+  Int_t etaBin = floor(eta/fDeltaEta) + fNumEtaBins/2;
+  Int_t phiBin = floor(phi/fDeltaPhi);
+  if (phiBin == fNumPhiBins) 
+    phiBin = phiBin - 1;
+
+  return ReturnNear(etaBin, phiBin);
+}
+
+//--------------------------------------------------------------------------------------------------
+std::vector<Int_t>
+ParticleMapper::ReturnNear(Int_t etaBin, Int_t phiBin)
+{
   std::vector<Int_t> tempVec;
   tempVec.resize(0);
 
