@@ -10,9 +10,9 @@
 #define MITPHYSICS_MODS_PUPPIMOD_H
 
 #include "MitAna/TreeMod/interface/BaseMod.h" 
-#include "MitAna/DataTree/interface/VertexCol.h"
-#include "MitAna/DataTree/interface/PFCandidateCol.h"
-#include "MitAna/DataCont/interface/Types.h"
+#include "MitAna/DataTree/interface/VertexFwd.h"
+#include "MitAna/DataTree/interface/PFCandidateFwd.h"
+#include "MitPhysics/Utils/interface/ParticleMapper.h"
 
 namespace mithep 
 {
@@ -22,10 +22,6 @@ namespace mithep
       PuppiMod( const char *name="PuppiMod", 
                 const char *title="Puppi module" );
      ~PuppiMod();
-
-      Int_t GetParticleType( const PFCandidate *cand );
-      Int_t GetEtaBin( const PFCandidate *cand );
-      Double_t Chi2fromDZ( Double_t dz );
 
       const char   *GetVertexesName()              const     { return fVertexesName;           }
       const char   *GetInputName()                 const     { return fPFCandidatesName;       }   
@@ -60,9 +56,20 @@ namespace mithep
       void SetDump( Bool_t dump )                            { fDumpingPuppi = dump;           }
 
     protected:
-      void                  SlaveBegin();
-      void                  SlaveTerminate();
-      void                  Process();
+      void                  SlaveBegin() override;
+      void                  SlaveTerminate() override;
+      void                  Process() override;
+
+      enum ParticleType {
+        kChargedPrimary = 1,
+        kChargedPU,
+        kNeutralCentral,
+        kNeutralForward
+      };
+
+      ParticleType GetParticleType( const PFCandidate *cand, Vertex const* ) const;
+      Int_t GetEtaBin( const PFCandidate *cand ) const;
+      Double_t Chi2fromDZ( Double_t dz ) const;
       
       TString               fEtaConfigName;          // Name of the configuration file with eta tables
       TString               fVertexesName;           // Name of vertices collection used for PV
@@ -70,8 +77,6 @@ namespace mithep
       TString               fPuppiParticlesName;     // Name of Puppi Particle collection (output)
       TString               fInvertedParticlesName;  // Name of Inverted Puppi Particle collection (output) if putting out both
 
-      const VertexCol      *fVertexes;               // Vertex branch
-      const PFCandidateCol *fPFCandidates;           // Particle flow branch
       PFCandidateArr       *fPuppiParticles;         // The output collection for publishing
 
       Double_t fRMin;                                // Minimum dR cut for summing up surrounding particles
@@ -97,7 +102,7 @@ namespace mithep
       Bool_t   fDumpingPuppi;                        // If this is true, we dump particle information and weights
 
       // These are parameters that are functions of Eta hopefully we can be more clever some day
-      Int_t fNumEtaBins;                             // This is the number of eta regions we are dividing into
+      UInt_t fNumEtaBins;                             // This is the number of eta regions we are dividing into
       std::vector<Double_t> fMaxEtas;                // These are the maximum etas for each region of the table
       std::vector<Double_t> fMinPts;                 // Various Pt cuts
       std::vector<Double_t> fMinNeutralPts;          // Minimum Pt cut on neutral particles (after weighting)
@@ -105,6 +110,8 @@ namespace mithep
       std::vector<Double_t> fRMSEtaSFs;              // Scale factor for RMS as function of Eta
       std::vector<Double_t> fMedEtaSFs;              // Scale factor for median as a function of Eta
       std::vector<Double_t> fEtaMaxExtraps;          // I think this is the maximum eta to calculate median alphas?
+
+      ParticleMapper* fMapper;                        // For efficient determination of particle proximity
 
       ClassDef(PuppiMod, 1)                          // Puppi module
   };
