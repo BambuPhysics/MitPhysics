@@ -49,7 +49,6 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
 //--------------------------------------------------------------------------------------------------
 PuppiMod::~PuppiMod()
 {
-  std::cout << "Deleting PuppiMod..." << std::endl;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -174,7 +173,6 @@ void
 PuppiMod::SlaveTerminate()
 {
   // ===== deallocate memory ====
-  delete fPuppiParticles;
   delete fMapper;
 }
 
