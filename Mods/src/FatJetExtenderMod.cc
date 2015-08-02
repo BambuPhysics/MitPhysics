@@ -504,6 +504,7 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
   QjetsPlugin qjet_plugin(zcut, dcut_fctr, exp_min, exp_max, rigidity, truncationFactor);
   fastjet::JetDefinition qjet_def(&qjet_plugin);
 
+  unsigned int nFailed = 0;
   for(unsigned int ii = 0 ; ii < (unsigned int) QJetsN ; ii++){
     qjet_plugin.SetRandSeed(seed+ii); // new feature in Qjets to set the random seed
     fastjet::ClusterSequence *qjet_seq =
@@ -511,9 +512,23 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
 
     vector<fastjet::PseudoJet> inclusive_jets2 = sorted_by_pt(qjet_seq->inclusive_jets(5.0));
     // skip failed recombinations (with no output jets)
-    if (inclusive_jets2.size() < 1)
+    if (inclusive_jets2.size() == 0) {
+      nFailed++;
       continue;
-    if (inclusive_jets2.size()>0) { qjetmasses.push_back( inclusive_jets2[0].m() ); }
+    }
+    else if (inclusive_jets2.size() > 1) {
+      if (inclusive_jets2[1].pt() > inclusive_jets2[0]*0.1) {
+      // if more than one jet were found, probably don't trust the mass of the leading one
+      // unless the subleading one is really small:
+        nFailed++;
+        continue;
+      }
+    }
+    if (nFailed*5 > QJetsN)
+      // if more than a fifth of the iterations fail, let's just give up
+      return -1;
+
+    jetmasses.push_back( inclusive_jets2[0].m() );
     // memory cleanup
     if ((qjet_seq->inclusive_jets()).size() > 0)
       qjet_seq->delete_self_when_unused();
