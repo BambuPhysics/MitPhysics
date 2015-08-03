@@ -1,10 +1,9 @@
 from MitAna.TreeMod.bambu import mithep
 import os
 
-fatJetExtenderMod = mithep.fatJetExtenderMod(
+fatJetExtenderMod = mithep.FatJetExtenderMod(
     InputName = "FatJets",
     OutputName = 'XlFatJets',
     ProcessNJets = 4,
-    ConeSize = 0.8,
-    PublishOutput = True
+    ConeSize = 0.8
 )

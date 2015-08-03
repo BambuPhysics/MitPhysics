@@ -78,6 +78,9 @@ namespace mithep
       void SetTrimRad(double d)            { fTrimRad = d;          }
       void SetTrimPtFrac(double d)         { fTrimPtFrac = d;       }
       void SetConeSize(double d)           { fConeSize = d;         }
+      void SetPFCandsName(const char *n)   { fPFCandidatesName = n; }
+      void SetPileUpDenName(const char *n) { fPileUpDenName = n;    }
+      void SetVertexesName(const char *n)  { fVertexesName = n;     }
 
     protected:
       void Process();

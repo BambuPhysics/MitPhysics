@@ -42,7 +42,7 @@ FatJetExtenderMod::FatJetExtenderMod(const char *name, const char *title) :
   fVertexes(0),
   fXlFatJetsName ("XlFatJets"),
   fSoftDropZCut (0.1),
-  fSoftDropR0 (1.),
+  fSoftDropR0 (.8),
   fPruneZCut (0.1),
   fPruneDistCut (0.5),
   fFilterN (3),
