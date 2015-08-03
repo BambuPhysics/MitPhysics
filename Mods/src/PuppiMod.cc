@@ -173,6 +173,8 @@ void
 PuppiMod::SlaveTerminate()
 {
   // ===== deallocate memory ====
+  RetractObj(fPuppiParticles->GetName());
+  delete fPuppiParticles;
   delete fMapper;
 }
 
@@ -467,8 +469,8 @@ PuppiMod::Process()
     InvertedParticles->Trim();
     AddObjThisEvt(InvertedParticles);
   }
+  else
+    delete InvertedParticles;
   
   fPuppiParticles->Trim();
-  // PFCandidateArr *PuppiParticles = (PFCandidateArr*) fPuppiParticles->Clone();
-  // AddObjThisEvt(PuppiParticles);
 }
