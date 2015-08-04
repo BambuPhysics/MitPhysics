@@ -117,7 +117,7 @@ namespace mithep
 
       TString fFatJetsName;                   //(i) name of input jets
       Bool_t fFatJetsFromBranch;              //are input jets from Branch?
-      const FatJetCol *fFatJets;                 //input jets
+      const JetCol *fFatJets;                 //input jets
 
       TString fPFCandidatesName;           //(i) name of PF candidates coll
       Bool_t fPFCandidatesFromBranch;
@@ -151,13 +151,17 @@ namespace mithep
       fastjet::GhostedAreaSpec *fActiveArea;
       fastjet::AreaDefinition *fAreaDefinition;
 
-      unsigned short fSubJetFlags = 0;    // flags turning on subjet types
+      unsigned short fSubJetFlags = 1;    // flags turning on subjet types
 
       TString fXlSubJetsName[XlSubJet::nSubJetTypes];              //name of output fXlSubJets collection
       XlSubJetArr *fXlSubJets[XlSubJet::nSubJetTypes];             //array of fXlSubJets
-
+      
       Deconstruction::Deconstruct *fDeconstruct;
-
+      AnalysisParameters *fParam;
+      Deconstruction::TopGluonModel *fSignal;
+      Deconstruction::BackgroundModel *fBackground;
+      Deconstruction::ISRModel *fISR; 
+      
       UInt_t fProcessNJets;
 
       Bool_t fDoShowerDeconstruction;

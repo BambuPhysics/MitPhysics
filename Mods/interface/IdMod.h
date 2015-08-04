@@ -240,7 +240,6 @@ namespace mithep {
       SkipEvent();
       return;
     }
-
     if (fIsFilterMode) {
       // sort according to pt
       fGoodObjects.Sort();

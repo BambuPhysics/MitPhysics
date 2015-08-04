@@ -30,7 +30,7 @@ FatJetExtenderMod::FatJetExtenderMod(const char *name, const char *title) :
   fQGTaggerCHS (kFALSE),
   fPublishOutput (kTRUE),
   fFatJetsName (""),
-  fFatJetsFromBranch (kTRUE),
+  fFatJetsFromBranch (kFALSE),
   fFatJets (0),
   fPFCandidatesName (Names::gkPFCandidatesBrn),
   fPFCandidates (0),
@@ -71,8 +71,10 @@ FatJetExtenderMod::~FatJetExtenderMod()
 {
   // Destructor
   if (fXlSubJets){
-    for(int i=0; i<XlSubJet::nSubJetTypes; ++i)
-      delete fXlSubJets[i];
+    for(int i=0; i<XlSubJet::nSubJetTypes; ++i) {
+      if (fSubJetFlags & (1<<i))
+        delete fXlSubJets[i];
+    }
   }
 
   if (fXlFatJets)
@@ -90,6 +92,10 @@ FatJetExtenderMod::~FatJetExtenderMod()
   delete fQGTagger;
 
   delete fDeconstruct;
+  delete fParam;
+  delete fSignal;
+  delete fBackground;
+  delete fISR;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -97,10 +103,12 @@ void FatJetExtenderMod::Process()
 {
   // make sure the out collections are empty before starting
   fXlFatJets->Delete();
-  for(unsigned int i=0; i<XlSubJet::nSubJetTypes; ++i)
-    fXlSubJets[i]->Delete();
-
-  fFatJets = GetObject<FatJetCol>(fFatJetsName);
+  for(unsigned int i=0; i<XlSubJet::nSubJetTypes; ++i) {
+    if (fSubJetFlags & (1<<i))
+      fXlSubJets[i]->Delete();
+  }
+  fFatJets = GetObject<JetCol>(fFatJetsName);
+  fPFCandidates = GetObject<PFCandidateCol>(fPFCandidatesName);
   if (fQGTaggingActive){
     fPileUpDen = GetObject<PileupEnergyDensityCol>(fPileUpDenName);
     fVertexes = GetObject<VertexCol>(fVertexesName);
@@ -114,14 +122,6 @@ void FatJetExtenderMod::Process()
   if (fQGTaggingActive)
     fQGTagger->SetRhoIso(fPileUpDen->At(0)->RhoRandomLowEta());
 
-  // set up shower deconstruction stuff
-  TString inputCard = Utils::GetEnv("CMSSW_BASE");
-  inputCard += TString::Format("/src/MitPhysics/SDAlgorithm/config/input_card_%i.dat",int(fConeSize*10));
-  AnalysisParameters param(inputCard.Data());
-  Deconstruction::TopGluonModel *signal = new Deconstruction::TopGluonModel(param);
-  Deconstruction::BackgroundModel *background = new Deconstruction::BackgroundModel(param);
-  Deconstruction::ISRModel *isr = new Deconstruction::ISRModel(param);
-  fDeconstruct = new Deconstruction::Deconstruct(param, *signal, *background, *isr);
 
   // Loop over jets
   for (UInt_t i=0; i<fFatJets->GetEntries(); ++i) {
@@ -130,7 +130,7 @@ void FatJetExtenderMod::Process()
     if (i >= fProcessNJets)
       break;
 
-    const FatJet *jet = dynamic_cast<const FatJet*>(fFatJets->At(i));
+    const FatJet *jet = static_cast<const FatJet*>(fFatJets->At(i));
     if (! jet) {
       printf(" FatJetExtenderMod::Process() - ERROR - jets provided are not FatJets.");
       break;
@@ -152,11 +152,6 @@ void FatJetExtenderMod::Process()
 void FatJetExtenderMod::SlaveBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis.
-  ReqEventObject(fFatJetsName,fFatJets,fFatJetsFromBranch);
-  ReqEventObject(fPFCandidatesName,fPFCandidates,fPFCandidatesFromBranch);
-  ReqEventObject(fPileUpDenName,fPileUpDen,fPileUpDenFromBranch);
-  ReqEventObject(fVertexesName,fVertexes,fVertexesFromBranch);
-
   // Initialize area caculation (done with ghost particles)
 
   // Create the new output collection
@@ -196,6 +191,15 @@ void FatJetExtenderMod::SlaveBegin()
 
   // Initialize QGTagger class
   fQGTagger = new QGTagger(fQGTaggerCHS);
+  
+  // set up shower deconstruction stuff
+  TString inputCard = Utils::GetEnv("CMSSW_BASE");
+  inputCard += TString::Format("/src/MitPhysics/SDAlgorithm/config/input_card_%i.dat",int(fConeSize*10));
+  fParam = new AnalysisParameters(inputCard.Data());
+  fSignal = new Deconstruction::TopGluonModel(*fParam);
+  fBackground = new Deconstruction::BackgroundModel(*fParam);
+  fISR = new Deconstruction::ISRModel(*fParam);
+  fDeconstruct = new Deconstruction::Deconstruct(*fParam, *fSignal, *fBackground, *fISR);
 
   return;
 }
@@ -312,7 +316,6 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   HEPTopTagger hepTopJet = HEPTopTagger(*fjClustering,iJet);;
   fastjet::PseudoJet cmsTopJet = fCMSTopTagger->result(iJet);
 
-
   // fill subjets
   Bool_t computedPullAngle = kFALSE;
   for (unsigned int iSJType = 0; iSJType!=XlSubJet::nSubJetTypes; ++iSJType) {
@@ -337,7 +340,6 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
       FillXlSubJets(fjSubjets,xlFatJet,XlSubJet::kHEPTT);
     }
   }
-
 
   // take a shower
   if (fDoShowerDeconstruction) {
@@ -440,7 +442,7 @@ void FatJetExtenderMod::FillXlSubJets(std::vector<fastjet::PseudoJet> &fjSubJets
                                  XlFatJet *pFatJet, XlSubJet::ESubJetType subJetType)
 {
   for (int iSJet=0; iSJet < (int) fjSubJets.size(); iSJet++) {
-    XlSubJet *subJet = fXlSubJets[(unsigned int)subJetType]->Allocate();
+    XlSubJet *subJet = fXlSubJets[(unsigned int)subJetType]->AddNew();
     subJet->SetRawPtEtaPhiM(fjSubJets[iSJet].pt(),
                             fjSubJets[iSJet].eta(),
                             fjSubJets[iSJet].phi(),
@@ -454,7 +456,7 @@ void FatJetExtenderMod::FillXlSubJets(std::vector<fastjet::PseudoJet> &fjSubJets
     subJet->SetSubJetType(subJetType);
 
     // Add the subjet to the relative fatjet
-    pFatJet->AddSubJet(subJet);
+    pFatJet->AddSubJet(subJet,subJetType);
 
   }
 
@@ -504,7 +506,7 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
   QjetsPlugin qjet_plugin(zcut, dcut_fctr, exp_min, exp_max, rigidity, truncationFactor);
   fastjet::JetDefinition qjet_def(&qjet_plugin);
 
-  unsigned int nFailed = 0;
+  int nFailed = 0;
   for(unsigned int ii = 0 ; ii < (unsigned int) QJetsN ; ii++){
     qjet_plugin.SetRandSeed(seed+ii); // new feature in Qjets to set the random seed
     fastjet::ClusterSequence *qjet_seq =
@@ -517,7 +519,7 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
       continue;
     }
     else if (inclusive_jets2.size() > 1) {
-      if (inclusive_jets2[1].pt() > inclusive_jets2[0]*0.1) {
+      if (inclusive_jets2[1].pt() > inclusive_jets2[0].pt()*0.1) {
       // if more than one jet were found, probably don't trust the mass of the leading one
       // unless the subleading one is really small:
         nFailed++;
@@ -528,7 +530,7 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
       // if more than a fifth of the iterations fail, let's just give up
       return -1;
 
-    jetmasses.push_back( inclusive_jets2[0].m() );
+    qjetmasses.push_back( inclusive_jets2[0].m() );
     // memory cleanup
     if ((qjet_seq->inclusive_jets()).size() > 0)
       qjet_seq->delete_self_when_unused();
