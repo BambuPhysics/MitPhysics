@@ -1,10 +1,13 @@
 <use   name="MitCommon/MathTools"/>
 <use   name="MitAna/TreeMod"/>
+<use   name="MitAna/PhysicsUtils"/>
 <use   name="MitPhysics/Init"/>
 <use   name="MitPhysics/Utils"/>
 <use   name="MitPhysics/ElectronLikelihood"/>
+<use   name="MitPhysics/SDAlgorithm"/>
 <use   name="fastjet"/>
 <use   name="fastjet-contrib"/>
+<use   name="qjets"/>
 <use   name="root"/>
 <use   name="roottmva"/>
 <use   root=""/>
