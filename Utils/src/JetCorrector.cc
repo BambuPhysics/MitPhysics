@@ -13,6 +13,7 @@ ClassImp(mithep::JetCorrector)
 mithep::JetCorrector::~JetCorrector()
 {
   delete fCorrector;
+  delete fUncertainty;
 }
 
 void
