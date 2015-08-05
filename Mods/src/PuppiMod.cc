@@ -170,6 +170,7 @@ void
 PuppiMod::SlaveTerminate()
 {
   // ===== deallocate memory ====
+  RetractObj(fPuppiParticles->GetName());
   delete fPuppiParticles;
   delete fMapper;
 }
