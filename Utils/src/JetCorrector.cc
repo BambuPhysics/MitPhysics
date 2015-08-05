@@ -3,6 +3,7 @@
 #include "MitAna/DataTree/interface/ObjTypes.h"
 
 #include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
+#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 
 #include <stdexcept>
 #include <sys/stat.h>
@@ -17,10 +18,12 @@ mithep::JetCorrector::~JetCorrector()
 void
 mithep::JetCorrector::AddParameterFile(char const* fileName)
 {
-  mithep::Jet::ECorr lastLevel = fLevels.back();
-  if (lastLevel == mithep::Jet::Custom) { // = Uncertainty
-    std::cerr << "JetCorrector cannot add a correction level on top of Uncertainty." << std::endl;
-    throw std::runtime_error("Configuration error");
+  if (fLevels.size() != 0) {
+    mithep::Jet::ECorr lastLevel = fLevels.back();
+    if (lastLevel == mithep::Jet::Custom) { // = Uncertainty
+      std::cerr << "JetCorrector cannot add a correction level on top of Uncertainty." << std::endl;
+      throw std::runtime_error("Configuration error");
+    }
   }
 
   struct stat buffer;
@@ -40,20 +43,29 @@ mithep::JetCorrector::AddParameterFile(char const* fileName)
 
   auto it = fParameters.rbegin();
   mithep::Jet::ECorr level = TranslateLevel(it->definitions().level().c_str());
-  if (level == mithep::Jet::Custom && lastLevel != mithep::Jet::L2 && lastLevel != mithep::Jet::L3) {
-    // L2 for case of data L2L3 residual correction
-    std::cerr << "Uncertainty is currently only available on top of L3 (+L2L3Residual) correction." << std::endl;
-    throw std::runtime_error("Configuration error");
+
+  if (level == mithep::Jet::Custom) {
+    if (fLevels.size() == 0) {
+      std::cerr << "Cannot apply JEC uncertainty to empty JEC configuration (L1+L2+L3+(L2L3) corrections must come first)." << std::endl;
+      throw std::runtime_error("Configuration error");
+    }
+    else {
+      mithep::Jet::ECorr lastLevel = fLevels.back();
+      if (lastLevel != mithep::Jet::L2 && lastLevel != mithep::Jet::L3) {
+        // L2 for case of data L2L3 residual correction
+        std::cerr << "Uncertainty is currently only available on top of L3 (+L2L3Residual) correction." << std::endl;
+        throw std::runtime_error("Configuration error");
+      }
+    }
   }
 
   fLevels.push_back(level);
 
 // Not enforcing ordered corrections because L2L3Residual is seen as L2 by the JetCorrectionParameters
 //   // check correction ordering
-//   lastLevel = level;
 //   if (fParameters.size() > 1) {
 //     ++it;
-//     if (TranslateLevel(it->definitions().level().c_str()) >= lastLevel) {
+//     if (TranslateLevel(it->definitions().level().c_str()) >= level) {
 //       std::cerr << "Exception in JetCorrector::AddParameterFile(" << fileName << "):" << std::endl;
 //       std::cerr << "Correction parameters must be added in ascending order of correction levels" << std::endl;
 //       throw std::runtime_error("Configuration error");
@@ -73,6 +85,9 @@ mithep::JetCorrector::Initialize()
 {
   delete fCorrector;
   fCorrector = new FactorizedJetCorrector(fParameters);
+  delete fUncertainty;
+  if (fLevels.size() != 0 && fLevels.back() == mithep::Jet::Custom)
+    fUncertainty = new JetCorrectionUncertainty(fParameters.back());
 }
 
 std::vector<Float_t>
@@ -102,11 +117,12 @@ mithep::JetCorrector::CorrectionFactors(mithep::Jet& jet, Double_t rho/* = 0.*/)
 
   // if MaxCorrLevel is specified, downsize the corrections array
   // for data L1+L2+L3+L2L3Residual, the last (residual) appears as L2
-  // therefore must check for level <= fMaxCorrLevel
+  // therefore must check for level > fMaxCorrLevel
   // also if uncertainty (using Custom) is required that is the last level
+  // Uncertainty (Custom = 7) is not in corrections anyway so there is no worry of cutting it out
   if (fMaxCorrLevel != Jet::nECorrs) {
-    for (unsigned iL = fLevels.size(); iL != 0; --iL) {
-      if (fLevels[iL - 1] <= fMaxCorrLevel || fLevels[iL - 1] == mithep::Jet::Custom) {
+    for (unsigned iL = 0; iL != corrections.size(); ++iL) {
+      if (fLevels[iL] > fMaxCorrLevel) {
         corrections.resize(iL);
         break;
       }
@@ -124,6 +140,34 @@ mithep::JetCorrector::CorrectionFactor(mithep::Jet& jet, Double_t rho/* = 0.*/) 
     return factors.back();
   else
     return 1.;
+}
+
+Float_t
+mithep::JetCorrector::UncertaintyFactor(mithep::Jet& jet) const
+{
+  if (!fUncertainty)
+    return 1.;
+
+  // uncertainty is calculated on fully corrected momentum
+  fUncertainty->setJetEta(jet.Eta());
+  fUncertainty->setJetPt(jet.Pt());
+
+  // last cumulative (up to L3 or L2L3) + fSigma * uncertainty
+  // getUncertainty(true): Upside uncertainty.
+  // Usually downside is not used; probably the uncertainty is symmetric anyway..
+  return 1. + fSigma * fUncertainty->getUncertainty(true);
+}
+
+Bool_t
+mithep::JetCorrector::IsInitialized() const
+{
+  if (!fCorrector)
+    return false;
+
+  if (fLevels.size() != 0 && fLevels.back() == mithep::Jet::Custom && !fUncertainty)
+    return false;
+
+  return true;
 }
 
 void
@@ -148,11 +192,6 @@ mithep::JetCorrector::Correct(mithep::Jet& jet, Double_t rho/* = 0.*/) const
 
       currentLevel = mithep::Jet::L3;
     }
-    else if (currentLevel == mithep::Jet::Custom) {
-      currentLevel = lastLevel;
-      // last cumulative (up to L3 or L2L3) + fSigma * uncertainty
-      currentCorrection = corrections.at(iC - 1) + fSigma * corrections.at(iC);
-    }
     else {
       if (iC > 0)
         currentCorrection = corrections.at(iC) / corrections.at(iC - 1);
@@ -165,6 +204,11 @@ mithep::JetCorrector::Correct(mithep::Jet& jet, Double_t rho/* = 0.*/) const
     jet.EnableCorrection(currentLevel);
 
     lastLevel = currentLevel;
+  }
+
+  if (fLevels.size() != 0 && corrections.size() != 0 && fLevels.back() == mithep::Jet::Custom) {
+    jet.SetCorrectionScale(UncertaintyFactor(jet), mithep::Jet::Custom);
+    jet.EnableCorrection(mithep::Jet::Custom);
   }
 }
 

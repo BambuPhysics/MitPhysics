@@ -239,14 +239,14 @@ MetCorrectionMod::Process()
       double offsetCorr;
       if (inJet.AbsEta() < 9.9) {
         std::vector<float>&& corr(fJetCorrector->CorrectionFactors(inJet, rho));
-        fullCorr = corr.back();
+        fullCorr = corr.back() * fJetCorrector->UncertaintyFactor(inJet);
         offsetCorr = corr.front();
       }
       else {
-        auto* modJet = inJet.MakeCopy();
-        modJet->SetRawPtEtaPhiM(inJetRawMom.Pt(), inJet.Eta() / inJet.AbsEta() * 9.9, inJetRawMom.Phi(), inJetRawMom.M());
-        std::vector<float>&& corr(fJetCorrector->CorrectionFactors(*modJet, rho));
-        fullCorr = corr.back();
+        auto modJet(inJet);
+        modJet.SetRawPtEtaPhiM(inJetRawMom.Pt(), inJet.Eta() / inJet.AbsEta() * 9.9, inJetRawMom.Phi(), inJetRawMom.M());
+        std::vector<float>&& corr(fJetCorrector->CorrectionFactors(modJet, rho));
+        fullCorr = corr.back() * fJetCorrector->UncertaintyFactor(modJet);
         offsetCorr = corr.front();
       }
 
@@ -355,6 +355,7 @@ MetCorrectionMod::MakeJetCorrector()
 {
   if (!fJetCorrector) {
     fJetCorrector = new JetCorrector;
+    fJetCorrector->SetUncertaintySigma(fJESUncertaintySigma);
     fOwnJetCorrector = true;
   }
 }

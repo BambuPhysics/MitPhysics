@@ -18,6 +18,7 @@
 #include <algorithm>
 
 class FactorizedJetCorrector;
+class JetCorrectionUncertainty;
 
 namespace mithep {
 
@@ -29,7 +30,7 @@ namespace mithep {
     void AddParameterFile(char const* fileName);
     void ClearParameters();
     void SetMaxCorrLevel(mithep::Jet::ECorr m) { fMaxCorrLevel = m; }
-    void SetUncertaintySigma(Int_t s) { fSigma = s; }
+    void SetUncertaintySigma(Double_t s) { fSigma = s; }
     void Initialize();
 
     std::vector<mithep::Jet::ECorr> const& GetLevels() const { return fLevels; }
@@ -38,10 +39,12 @@ namespace mithep {
     std::vector<Float_t> CorrectionFactors(mithep::Jet&, Double_t rho = 0.) const;
     // Returns the full correction (i.e. the last element of CorrectionFactors)
     Float_t CorrectionFactor(mithep::Jet&, Double_t rho = 0.) const;
-    void Correct(mithep::Jet&, Double_t rho = 0.) const;
-    Bool_t IsInitialized() const { return fCorrector != 0; }
+    Float_t UncertaintyFactor(mithep::Jet&) const;
+    Bool_t IsInitialized() const;
     Bool_t IsEnabled(mithep::Jet::ECorr l) const
     { return l < fMaxCorrLevel && std::find(fLevels.begin(), fLevels.end(), l) != fLevels.end(); }
+
+    void Correct(mithep::Jet&, Double_t rho = 0.) const;
 
     static mithep::Jet::ECorr TranslateLevel(char const* levelName);
 
@@ -50,7 +53,8 @@ namespace mithep {
     std::vector<mithep::Jet::ECorr> fLevels{};
     mithep::Jet::ECorr fMaxCorrLevel = mithep::Jet::nECorrs;
     FactorizedJetCorrector* fCorrector = 0;
-    Int_t fSigma = 0;
+    JetCorrectionUncertainty* fUncertainty = 0;
+    Double_t fSigma = 0.;
 
     ClassDef(JetCorrector, 0)
   };

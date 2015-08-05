@@ -61,6 +61,7 @@ namespace mithep {
     void SetExprShiftPx(const char *expr)  { MakeFormula(1, expr); }
     void SetExprShiftPy(const char *expr)  { MakeFormula(2, expr); }
     void AddJetCorrectionFromFile(char const* file);
+    void SetJESUncertaintySigma(Double_t s)    { fJESUncertaintySigma = s; }
     void SetJetCorrector(JetCorrector*);
     void SetRhoAlgo(UInt_t a)                  { fRhoAlgo = a; }
     void SetMaxEMFraction(Double_t m)          { fMaxEMFraction = m; }
@@ -94,6 +95,7 @@ namespace mithep {
     Bool_t        fOwnJetCorrector = kFALSE;
     JetCorrector* fJetCorrector = 0; //For type 1 correction. Can be created internally or set externally
     UInt_t        fRhoAlgo = PileupEnergyDensity::kFixedGridFastjetAll;
+    Double_t      fJESUncertaintySigma = 0.;
 
     Double_t      fMaxEMFraction = -1.; //maximum charged + neutral EM energy fraction
                                         //for jet to be in Type1 corr (< 0 -> does not skip jets)
