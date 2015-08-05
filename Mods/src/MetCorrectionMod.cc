@@ -209,6 +209,11 @@ MetCorrectionMod::Process()
       auto& inJet = *inJets->At(iJ);
       auto&& inJetRawMom(inJet.RawMom());
 
+      double absEta = inJetRawMom.AbsEta();
+
+      if (absEta > fMaxJetEta)
+        continue;
+
       if (fMaxEMFraction > 0.) {
         if (inJet.ObjType() == kPFJet) {
           auto& inPFJet = static_cast<PFJet const&>(inJet);
@@ -237,14 +242,14 @@ MetCorrectionMod::Process()
 
       double fullCorr;
       double offsetCorr;
-      if (inJet.AbsEta() < 9.9) {
+      if (absEta < 9.9) {
         std::vector<float>&& corr(fJetCorrector->CorrectionFactors(inJet, rho));
         fullCorr = corr.back() * fJetCorrector->UncertaintyFactor(inJet);
         offsetCorr = corr.front();
       }
       else {
         auto modJet(inJet);
-        modJet.SetRawPtEtaPhiM(inJetRawMom.Pt(), inJet.Eta() / inJet.AbsEta() * 9.9, inJetRawMom.Phi(), inJetRawMom.M());
+        modJet.SetRawPtEtaPhiM(inJetRawMom.Pt(), inJet.Eta() / absEta * 9.9, inJetRawMom.Phi(), inJetRawMom.M());
         std::vector<float>&& corr(fJetCorrector->CorrectionFactors(modJet, rho));
         fullCorr = corr.back() * fJetCorrector->UncertaintyFactor(modJet);
         offsetCorr = corr.front();
