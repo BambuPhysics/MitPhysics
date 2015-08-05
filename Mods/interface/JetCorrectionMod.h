@@ -43,6 +43,7 @@ namespace mithep
       void SetInputName(char const* name)            { fJetsName = name; }
       void SetRhoType(RhoUtilities::RhoType); /*DEPRECATED*/
       void SetRhoAlgo(unsigned algo)                 { fRhoAlgo = algo; }
+      void SetUncertaintySigma(Double_t s)           { fSigma = s; }
       void SetCorrector(JetCorrector*);
 
     protected:
@@ -55,6 +56,7 @@ namespace mithep
       TString       fJetsName{Names::gkPFJetBrn}; //name of jet collection (input))
       TString       fRhoBranchName{Names::gkPileupEnergyDensityBrn}; //name of pileup energy density collection
       UInt_t        fRhoAlgo = PileupEnergyDensity::kFixedGridFastjetAll;
+      Double_t      fSigma = 0.; //shift JES by fSigma * Uncertainty (needs uncertainty source)
       Bool_t        fOwnCorrector = kFALSE;
       JetCorrector* fCorrector = 0;
 
