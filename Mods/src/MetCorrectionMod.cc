@@ -209,7 +209,7 @@ MetCorrectionMod::Process()
       auto& inJet = *inJets->At(iJ);
       auto&& inJetRawMom(inJet.RawMom());
 
-      double absEta = inJetRawMom.AbsEta();
+      double absEta = inJet.AbsEta();
 
       if (absEta > fMaxJetEta)
         continue;
