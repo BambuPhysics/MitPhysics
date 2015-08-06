@@ -133,6 +133,7 @@ JetCorrectionMod::MakeCorrector()
 {
   if (!fCorrector) {
     fCorrector = new JetCorrector;
+    fCorrector->SetUncertaintySigma(fSigma);
     fOwnCorrector = true;
   }
 }

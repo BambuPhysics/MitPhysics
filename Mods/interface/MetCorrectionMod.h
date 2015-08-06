@@ -21,6 +21,8 @@
 
 #include "TFormula.h"
 
+#include <limits>
+
 namespace mithep {
 
   class BaseCollection;
@@ -56,16 +58,22 @@ namespace mithep {
     void ApplyType0(bool b)                    { fApplyType0 = b; }
     void ApplyType1(bool b)                    { fApplyType1 = b; }
     void ApplyShift(bool b)                    { fApplyShift = b; }
+    // type 0 parameters
     void SetExprType0(const char *expr)        { MakeFormula(0, expr); }
     void SetPFCandidatesName(const char *name) { fPFCandidatesName = name; }
     void SetExprShiftPx(const char *expr)  { MakeFormula(1, expr); }
     void SetExprShiftPy(const char *expr)  { MakeFormula(2, expr); }
+    // type 1 parameters
     void AddJetCorrectionFromFile(char const* file);
+    void SetJESUncertaintySigma(Double_t s)    { fJESUncertaintySigma = s; }
     void SetJetCorrector(JetCorrector*);
     void SetRhoAlgo(UInt_t a)                  { fRhoAlgo = a; }
     void SetMaxEMFraction(Double_t m)          { fMaxEMFraction = m; }
     void SetSkipMuons(Bool_t s)                { fSkipMuons = s; }
+    void SetMaxJetEta(Double_t m)              { fMaxJetEta = m; }
+    // shift parameters
     void IsData(bool b)                        { fIsData = b; }
+
     void SetPrint(bool b)                      { fPrint = b; }
 
   protected:
@@ -94,10 +102,11 @@ namespace mithep {
     Bool_t        fOwnJetCorrector = kFALSE;
     JetCorrector* fJetCorrector = 0; //For type 1 correction. Can be created internally or set externally
     UInt_t        fRhoAlgo = PileupEnergyDensity::kFixedGridFastjetAll;
-
+    Double_t      fJESUncertaintySigma = 0.;
     Double_t      fMaxEMFraction = -1.; //maximum charged + neutral EM energy fraction
                                         //for jet to be in Type1 corr (< 0 -> does not skip jets)
     Bool_t        fSkipMuons = kFALSE; //remove muon P4 from jet P4 in Type 1 corr
+    Double_t      fMaxJetEta = std::numeric_limits<double>::max();
                   
     Bool_t        fIsData = kTRUE; //flag for data/MC distinction
     Bool_t        fPrint = kFALSE; //flag for debug print out
