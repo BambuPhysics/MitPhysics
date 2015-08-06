@@ -25,7 +25,7 @@ ClassImp(mithep::FatJetExtenderMod)
 //--------------------------------------------------------------------------------------------------
 FatJetExtenderMod::FatJetExtenderMod(const char *name, const char *title) :
   BaseMod (name,title),
-  fIsData (kTRUE),
+  fIsData (kFALSE),
   fQGTaggingActive (kTRUE),
   fQGTaggerCHS (kFALSE),
   fPublishOutput (kTRUE),
