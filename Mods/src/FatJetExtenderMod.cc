@@ -324,14 +324,19 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
     // okay, we really do want to save this collection
     std::vector<fastjet::PseudoJet> fjSubjets;
     if (iSJType <= XlSubJet::kTrimmed) {
+      if (!fjClusteredJets[iSJType].has_constituents()) 
+        // if subjet finding failed, skip this step
+        continue;
       // these have a common interface
       int nSubJets = std::min<unsigned int>(fjClusteredJets[iSJType].constituents().size(),3);
-      fjSubjets = fjClusteredJets[iSJType].associated_cluster_sequence()->exclusive_subjets(fjClusteredJets[iSJType],nSubJets);
-      std::vector<fastjet::PseudoJet> fjSubJetsSorted = Sorted_by_pt_min_pt(fjSubjets,0.01);
-      if (!computedPullAngle) {
-        xlFatJet->SetPullAngle(GetPullAngle(fjSubJetsSorted,0.01));
+      if (nSubJets>0) {
+        fjSubjets = fjClusteredJets[iSJType].associated_cluster_sequence()->exclusive_subjets(fjClusteredJets[iSJType],nSubJets);
+        std::vector<fastjet::PseudoJet> fjSubJetsSorted = Sorted_by_pt_min_pt(fjSubjets,0.01);
+        if (!computedPullAngle) {
+          xlFatJet->SetPullAngle(GetPullAngle(fjSubJetsSorted,0.01));
+        }
+        FillXlSubJets(fjSubJetsSorted,xlFatJet,(ESubJetType)iSJType);
       }
-      FillXlSubJets(fjSubJetsSorted,xlFatJet,(ESubJetType)iSJType);
     } else if (iSJType == XlSubJet::kCMSTT) {
       fjSubjets = cmsTopJet.pieces();
       FillXlSubJets(fjSubjets,xlFatJet,XlSubJet::kCMSTT);
@@ -391,7 +396,7 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   xlFatJet->SetC2b2(C2b2);
 
   xlFatJet->SetQJetVol(QJetVol);
-
+  
   // Store the groomed masses, apply JEC
   xlFatJet->SetMassSDb0(MassSDb0*thisJEC);
   xlFatJet->SetMassSDb1(MassSDb1*thisJEC);
