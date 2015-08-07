@@ -198,8 +198,8 @@ void FatJetExtenderMod::SlaveBegin()
   fQGTagger = new QGTagger(fQGTaggerCHS);
 
   // set up shower deconstruction stuff
-  TString inputCard = Utils::GetEnv("CMSSW_BASE");
-  inputCard += TString::Format("/src/MitPhysics/SDAlgorithm/config/input_card_%i.dat",int(fConeSize*10));
+  TString inputCard = Utils::GetEnv("MIT_DATA");
+  inputCard += TString::Format("/SDAlgorithm/input_card_%i.dat",int(fConeSize*10));
   fParam = new AnalysisParameters(inputCard.Data());
   fSignal = new Deconstruction::TopGluonModel(*fParam);
   fBackground = new Deconstruction::BackgroundModel(*fParam);
