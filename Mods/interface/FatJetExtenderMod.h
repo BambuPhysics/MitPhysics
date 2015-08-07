@@ -3,7 +3,7 @@
 //
 // FatJetExtender
 //
-// This module processes a collection of input fatjets, compute the substrucure
+// This module processes a collection of input FatJets, compute the substrucure
 // and fill a output collections of fXlFatJets
 //
 // Authors: L.DiMatteo, S.Narayanan
@@ -43,6 +43,7 @@
 #include "MitPhysics/SDAlgorithm/interface/ISRModel.h"
 #include "MitPhysics/SDAlgorithm/interface/Deconstruct.h"
 #include "MitPhysics/SDAlgorithm/interface/ParseUtils.h"
+#include "TStopwatch.h"
 
 namespace mithep
 {
@@ -81,7 +82,10 @@ namespace mithep
       void SetPFCandsName(const char *n)   { fPFCandidatesName = n; }
       void SetPileUpDenName(const char *n) { fPileUpDenName = n;    }
       void SetVertexesName(const char *n)  { fVertexesName = n;     }
-
+      void SetDoShowerDeconstruction(Bool_t b) { fDoShowerDeconstruction = b; }
+      void SetBeVerbose(Bool_t b)          { fBeVerbose = b;  }
+      void SetDoECF(Bool_t b)              { fDoECF = b; }
+      void SetNMaxMicrojets(unsigned int n)         { fNMaxMicrojets = n; }
     protected:
       void Process();
       void SlaveBegin();
@@ -166,8 +170,13 @@ namespace mithep
 
       Bool_t fDoShowerDeconstruction;
 
-      // QG tagger
       QGTagger *fQGTagger;                 //QGTagger calculator
+      
+      Bool_t fBeVerbose;
+      Bool_t fDoECF;                       // this is now a user-set option, as it's quite slow 
+      unsigned int fNMaxMicrojets;
+      
+      TStopwatch *fStopwatch;
 
       // Counters : used to initialize seed for QJets volatility
       Long64_t fCounter;
