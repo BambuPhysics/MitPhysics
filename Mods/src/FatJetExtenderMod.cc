@@ -134,7 +134,7 @@ void FatJetExtenderMod::Process()
     if (i >= fProcessNJets)
       break;
 
-    const FatJet *jet = static_cast<const FatJet*>(fFatJets->At(i));
+    const FatJet *jet = dynamic_cast<const FatJet*>(fFatJets->At(i));
     if (! jet) {
       printf(" FatJetExtenderMod::Process() - ERROR - jets provided are not FatJets.");
       break;
@@ -373,7 +373,7 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   // fill subjets
   Bool_t computedPullAngle = kFALSE;
   for (unsigned int iSJType = 0; iSJType!=XlSubJet::nSubJetTypes; ++iSJType) {
-    if (fSubJetFlags & ~(1<<iSJType))
+    if (!(fSubJetFlags & (1<<iSJType)))
       continue;
     // okay, we really do want to save this collection
     std::vector<fastjet::PseudoJet> fjSubjets;
