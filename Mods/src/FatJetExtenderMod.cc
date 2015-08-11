@@ -9,8 +9,8 @@
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitAna/PhysicsUtils/interface/CMSTopTagger.h"
 #include "MitAna/PhysicsUtils/interface/HEPTopTagger.h"
-#include "RecoJets/JetAlgorithms/interface/QjetsPlugin.h"
-#include "RecoJets/JetAlgorithms/interface/Qjets.h"
+#include "QjetsPlugin.h"
+#include "Qjets.h"
 
 #include "fastjet/contrib/Njettiness.hh"
 #include "fastjet/contrib/EnergyCorrelator.hh"
@@ -544,7 +544,7 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
 {
   std::vector<float> qjetmasses;
 
-  double zcut(0.1), dcut_fctr(0.5), exp_min(0.), exp_max(0.), rigidity(0.1), truncationFactor(0.01);
+  double zcut(0.1), dcut_fctr(0.5), exp_min(0.), exp_max(0.), rigidity(0.1), truncationFactor(0.0);
 
   QjetsPlugin qjet_plugin(zcut, dcut_fctr, exp_min, exp_max, rigidity, truncationFactor);
   fastjet::JetDefinition qjet_def(&qjet_plugin);
@@ -555,7 +555,11 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
     fastjet::ClusterSequence *qjet_seq =
       new fastjet::ClusterSequence(constits, qjet_def);
 
-    vector<fastjet::PseudoJet> inclusive_jets2 = sorted_by_pt(qjet_seq->inclusive_jets(5.0));
+    if (!qjet_plugin.succeeded())
+      return -(seed+ii);  // this will be the error value for when too many jets are left unmerged...needs more investigation, seed is saved so can reproduce
+                          // haha
+
+    vector<fastjet::PseudoJet> inclusive_jets2 = sorted_by_pt(qjet_seq->inclusive_jets(10.0));
     // skip failed recombinations (with no output jets)
     if (inclusive_jets2.size() == 0) {
       nFailed++;
