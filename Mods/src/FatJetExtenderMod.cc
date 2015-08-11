@@ -9,8 +9,8 @@
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitAna/PhysicsUtils/interface/CMSTopTagger.h"
 #include "MitAna/PhysicsUtils/interface/HEPTopTagger.h"
-#include "QjetsPlugin.h"
-#include "Qjets.h"
+#include "RecoJets/JetAlgorithms/interface/QjetsPlugin.h"
+#include "RecoJets/JetAlgorithms/interface/Qjets.h"
 
 #include "fastjet/contrib/Njettiness.hh"
 #include "fastjet/contrib/EnergyCorrelator.hh"
