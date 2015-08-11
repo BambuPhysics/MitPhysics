@@ -7,8 +7,6 @@
 #include "MitCommon/DataFormats/interface/Types.h"
 #include "MitCommon/Utils/interface/Utils.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
-#include "MitAna/PhysicsUtils/interface/CMSTopTagger.h"
-#include "MitAna/PhysicsUtils/interface/HEPTopTagger.h"
 #include "QjetsPlugin.h"
 #include "Qjets.h"
 
@@ -17,6 +15,7 @@
 #include "fastjet/contrib/Nsubjettiness.hh"
 #include "fastjet/contrib/NjettinessPlugin.hh"
 #include "fastjet/contrib/SoftDrop.hh"
+#include "MitAna/PhysicsUtils/interface/HEPTopTagger.h"
 
 using namespace mithep;
 
@@ -86,7 +85,7 @@ FatJetExtenderMod::~FatJetExtenderMod()
   delete fPruner;
   delete fFilterer;
   delete fTrimmer ;
-
+  delete fCMSTopTagger;
   delete fCAJetDef;
 
   delete fActiveArea;
@@ -186,6 +185,7 @@ void FatJetExtenderMod::SlaveBegin()
 
   // CA constructor (fConeSize = 0.6 for antiKt) - reproducing paper 1: http://arxiv.org/abs/1011.2268
   fCAJetDef = new fastjet::JetDefinition(fastjet::cambridge_algorithm, fConeSize);
+  fCMSTopTagger = new fastjet::CMSTopTagger();
 
   // Initialize area caculation (done with ghost particles)
   int activeAreaRepeats = 1;
@@ -256,9 +256,6 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   // Check that the output collection size is non-null, otherwise nothing to be done further
   if (fjOutJets.size() < 1) {
     printf(" FatJetExtenderMod::FillXlFatJet() - WARNING - input FatJet produces null reclustering output!\n");
-
-    if (fjOutJets.size() > 0)
-      fjClustering->delete_self_when_unused();
     delete fjClustering;
 
     return;
@@ -360,7 +357,6 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
 		}
 
   // do CMS and HEP top tagging
-  fastjet::CMSTopTagger* fCMSTopTagger = new fastjet::CMSTopTagger();
   std::vector<fastjet::PseudoJet> lOutJets = sorted_by_pt(fjClustering->inclusive_jets(0.0));
   fastjet::PseudoJet iJet = lOutJets[0];
   HEPTopTagger hepTopJet = HEPTopTagger(*fjClustering,iJet);;
@@ -438,6 +434,9 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
     if (fBeVerbose) {
 			fprintf(stderr,"Finished shower deconstruction in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
 		}
+    if (cs_micro->inclusive_jets().size()>0)
+      cs_micro->delete_self_when_unused();
+    delete cs_micro; 
   }
 
 
@@ -555,9 +554,10 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
     fastjet::ClusterSequence *qjet_seq =
       new fastjet::ClusterSequence(constits, qjet_def);
 
-    if (!qjet_plugin.succeeded())
-      return -(seed+ii);  // this will be the error value for when too many jets are left unmerged...needs more investigation, seed is saved so can reproduce
-                          // haha
+    if (!qjet_plugin.succeeded()) {
+      delete qjet_seq; // inclusive_jets() not run yet, so no need to call delete_self_when_unused()
+      return -(seed+ii);  // this will be the error value for when too many jets are left unmerged...needs more investigation
+    }
 
     vector<fastjet::PseudoJet> inclusive_jets2 = sorted_by_pt(qjet_seq->inclusive_jets(10.0));
     // skip failed recombinations (with no output jets)
@@ -573,9 +573,13 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
         continue;
       }
     }
-    if (nFailed*5 > QJetsN)
+    if (nFailed*5 > QJetsN) {
+      if ((qjet_seq->inclusive_jets()).size() > 0)
+        qjet_seq->delete_self_when_unused();
+      delete qjet_seq;
       // if more than a fifth of the iterations fail, let's just give up
       return -1;
+    }
 
     qjetmasses.push_back( inclusive_jets2[0].m() );
     // memory cleanup

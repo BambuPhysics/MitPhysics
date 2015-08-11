@@ -43,6 +43,7 @@
 #include "MitPhysics/SDAlgorithm/interface/ISRModel.h"
 #include "MitPhysics/SDAlgorithm/interface/Deconstruct.h"
 #include "MitPhysics/SDAlgorithm/interface/ParseUtils.h"
+#include "MitAna/PhysicsUtils/interface/CMSTopTagger.h"
 #include "TStopwatch.h"
 
 namespace mithep
@@ -154,6 +155,7 @@ namespace mithep
       fastjet::JetDefinition *fCAJetDef;   //fastjet clustering definition
       fastjet::GhostedAreaSpec *fActiveArea;
       fastjet::AreaDefinition *fAreaDefinition;
+      fastjet::CMSTopTagger* fCMSTopTagger;
 
       unsigned short fSubJetFlags = 1;    // flags turning on subjet types
 
