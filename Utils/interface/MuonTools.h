@@ -29,10 +29,6 @@
 namespace mithep {
   class MuonTools {
     public:
-      MuonTools(const char *mutemp="$MIT_DATA/MuonCaloTemplate.root", 
-                const char *pitemp="$MIT_DATA/PionCaloTemplate.root");
-      virtual ~MuonTools();
-
       enum EMuIdType {
         kIdUndef = 0,       //not defined
         kWMuId,             //"WMuId"
@@ -152,11 +148,10 @@ namespace mithep {
         kMuEAData2012
       };
 
-      Bool_t          Init(const char *mutemp, const char *pitemp);
-      Bool_t          IsGood(const mithep::Muon *iMuon, ESelType iSel) const;
-      Double_t        GetCaloCompatibility(const mithep::Muon *iMuon,
-                                         Bool_t iEMSpecial, Bool_t iCorrectedHCAL) const; 
-      Double_t        GetSegmentCompatibility(const mithep::Muon *iMuon)             const;
+      static Bool_t   IsGood(const mithep::Muon *iMuon, ESelType iSel);
+      static Double_t GetCaloCompatibility(const mithep::Muon *iMuon,
+                                           Bool_t iEMSpecial, Bool_t iCorrectedHCAL);
+      static Double_t GetSegmentCompatibility(const mithep::Muon *iMuon);
       static Bool_t   PassD0Cut(const Muon *mu, const VertexCol *vertices, EMuIdType, Int_t iVertex = 0);
       static Bool_t   PassD0Cut(const Muon *mu, const BeamSpotCol *beamspots, EMuIdType);
       static Bool_t   PassD0Cut(const Muon *mu, Double_t d0, EMuIdType);
@@ -178,40 +173,45 @@ namespace mithep {
       static Bool_t     PassClass(Muon const*, EMuClassType classType);
       static void       MuonPtEta(Muon const*, EMuClassType classType, Double_t& pt, Double_t& absEta);
 
+      static Bool_t   LoadCaloCompatibilityTemplates(const char *mutemp, const char *pitemp, Bool_t force = kFALSE);
+      static void     DeleteCaloCompatibilityTemplates();
+
     protected:
-      void        DeleteHistos();
-      Bool_t      Overflow(const TH2D *iHist, Double_t lVal0, Double_t lVal1)    const; 
-      Double_t    SigWeight(Double_t iVal0, Double_t iVal1)                      const; 
+      MuonTools() {}
+      virtual ~MuonTools() {}
+
+      static Bool_t   Overflow(const TH2D *iHist, Double_t lVal0, Double_t lVal1);
+      static Double_t SigWeight(Double_t iVal0, Double_t iVal1);
    
     private:
-      Bool_t      fIsInit;              //!=true if histograms are loaded
-      TH2D       *fmuon_em_etaEmi;      //!Neg Endcap EM       Calo Deposit Template for Muons
-      TH2D       *fmuon_had_etaEmi;     //!Neg Endcap Hadronic Calo Deposit Template for Muons
-      TH2D       *fmuon_had_etaTmi;     //!Neg Transition Hadronic Calo Deposit Template for Muons
-      TH2D       *fmuon_em_etaB;        //!Barrel EM       Calo Deposit Template for Muons
-      TH2D       *fmuon_had_etaB;       //!Barrel Hadronic Calo Deposit Template for Muons
-      TH2D       *fmuon_ho_etaB;        //!Barrel HO       Calo Deposit Template for Muons
-      TH2D       *fmuon_had_etaTpl;     //!Plus Transition Hadronic Calo Deposit Template for Muons
-      TH2D       *fmuon_em_etaEpl;      //!Plus Endcap EM       Calo Deposit Template for Muons
-      TH2D       *fmuon_had_etaEpl;     //!Plus Endcap Hadronic Calo Deposit Template for Muons
-      TH2D       *fpion_em_etaEmi;      //!Neg  Endcap EM       Calo Deposit Template for Pions
-      TH2D       *fpion_had_etaEmi;     //!Neg  Endcap Hadronic Calo Deposit Template for Pions
-      TH2D       *fpion_had_etaTmi;     //!Neg Transition Hadronic Calo Deposit Template for Pions
-      TH2D       *fpion_em_etaB;        //!Barrel EM       Calo Deposit Template for Pions
-      TH2D       *fpion_had_etaB;       //!Barrel Hadronic Calo Deposit Template for Pions
-      TH2D       *fpion_ho_etaB;        //!Barrel HO       Calo Deposit Template for Pions
-      TH2D       *fpion_had_etaTpl;     //!Plus Transition Hadronic Calo Deposit Template for Pions
-      TH2D       *fpion_em_etaEpl;      //!Plus Endcap EM       Calo Deposit Template for Pions
-      TH2D       *fpion_had_etaEpl;     //!Plus Endcap Hadronic Calo Deposit Template for Pions
+      static Bool_t  fCaloCompatTemplatesSet;
+      static TH2D   *fmuon_em_etaEmi;      //!Neg Endcap EM       Calo Deposit Template for Muons
+      static TH2D   *fmuon_had_etaEmi;     //!Neg Endcap Hadronic Calo Deposit Template for Muons
+      static TH2D   *fmuon_had_etaTmi;     //!Neg Transition Hadronic Calo Deposit Template for Muons
+      static TH2D   *fmuon_em_etaB;        //!Barrel EM       Calo Deposit Template for Muons
+      static TH2D   *fmuon_had_etaB;       //!Barrel Hadronic Calo Deposit Template for Muons
+      static TH2D   *fmuon_ho_etaB;        //!Barrel HO       Calo Deposit Template for Muons
+      static TH2D   *fmuon_had_etaTpl;     //!Plus Transition Hadronic Calo Deposit Template for Muons
+      static TH2D   *fmuon_em_etaEpl;      //!Plus Endcap EM       Calo Deposit Template for Muons
+      static TH2D   *fmuon_had_etaEpl;     //!Plus Endcap Hadronic Calo Deposit Template for Muons
+      static TH2D   *fpion_em_etaEmi;      //!Neg  Endcap EM       Calo Deposit Template for Pions
+      static TH2D   *fpion_had_etaEmi;     //!Neg  Endcap Hadronic Calo Deposit Template for Pions
+      static TH2D   *fpion_had_etaTmi;     //!Neg Transition Hadronic Calo Deposit Template for Pions
+      static TH2D   *fpion_em_etaB;        //!Barrel EM       Calo Deposit Template for Pions
+      static TH2D   *fpion_had_etaB;       //!Barrel Hadronic Calo Deposit Template for Pions
+      static TH2D   *fpion_ho_etaB;        //!Barrel HO       Calo Deposit Template for Pions
+      static TH2D   *fpion_had_etaTpl;     //!Plus Transition Hadronic Calo Deposit Template for Pions
+      static TH2D   *fpion_em_etaEpl;      //!Plus Endcap EM       Calo Deposit Template for Pions
+      static TH2D   *fpion_had_etaEpl;     //!Plus Endcap Hadronic Calo Deposit Template for Pions
 
-      TH2D       *LoadHisto(const char *fname, TFile *file)                      const;
+      static TH2D   *LoadHisto(const char *fname, TFile *file);
 
     ClassDef(MuonTools, 1) // Muon tools
   };
 }
 
 //--------------------------------------------------------------------------------------------------
-inline Double_t mithep::MuonTools::SigWeight(Double_t iVal0, Double_t iVal1) const
+inline Double_t mithep::MuonTools::SigWeight(Double_t iVal0, Double_t iVal1)
 {
   // Returns weighted uncertainty given segment matching uncertainty (iVal0) and
   // segment matching pull (iVal1).
@@ -227,7 +227,7 @@ inline Double_t mithep::MuonTools::SigWeight(Double_t iVal0, Double_t iVal1) con
   return 1./TMath::Power(lVal,0.25);
 }
 //--------------------------------------------------------------------------------------------------
-inline Bool_t mithep::MuonTools::Overflow(const TH2D *iHist, Double_t lVal0, Double_t lVal1) const
+inline Bool_t mithep::MuonTools::Overflow(const TH2D *iHist, Double_t lVal0, Double_t lVal1)
 {
   // Check if values are in overflow bins of given histogram.
 

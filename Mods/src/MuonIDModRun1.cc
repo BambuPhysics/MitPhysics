@@ -5,6 +5,8 @@
 #include "MitAna/DataTree/interface/VertexCol.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 
+#include "TSystem.h"
+
 using namespace mithep;
 
 ClassImp(mithep::MuonIDModRun1)
@@ -53,7 +55,6 @@ MuonIDModRun1::MuonIDModRun1(const char *name, const char *title)
   fNonIsolatedElectrons(0),
   fPileupEnergyDensityName(Names::gkPileupEnergyDensityBrn),
   fPileupEnergyDensity(0),
-  fMuonTools(0),
   fMuonIDMVA(0),
   fPVName(Names::gkPVBeamSpotBrn),
   fRhoAlgo(mithep::PileupEnergyDensity::kHighEta)
@@ -585,6 +586,9 @@ void MuonIDModRun1::SlaveBegin()
 
   using std::string;
 
+  TString mitData(gSystem->Getenv("MIT_DATA"));
+  MuonTools::LoadCaloCompatibilityTemplates(mitData + "/MuonCaloTemplate.root", mitData + "/PionCaloTemplate.root");
+
   if (fCleanMuonsName.CompareTo("HggLeptonTagMuons") == 0) {
     ReqEventObject(fPVName,fVertices,true);
   }
@@ -706,7 +710,6 @@ void MuonIDModRun1::SlaveBegin()
 
   // If we use MVA ID, need to load MVA weights
   if     (fMuIsoType == MuonTools::kMVAIso_BDTG_IDIso || fMuIDType == MuonTools::kMVAID_BDTG_IDIso) {
-    fMuonTools = new MuonTools();
     fMuonIDMVA = new MuonIDMVA();
     fMuonIDMVA->Initialize("BDTG method",
                            string((getenv("MIT_DATA")+string("/MuonMVAWeights/BarrelPtBin0_IDIsoCombined_BDTG.weights.xml"))),
@@ -726,7 +729,6 @@ void MuonIDModRun1::SlaveBegin()
     muonidiso_weightfiles.push_back(string((getenv("MIT_DATA")+string("/MuonMVAWeights/MuonIsoMVA_BDTG_V0_endcap_highpt.weights.xml"))));
     muonidiso_weightfiles.push_back(string((getenv("MIT_DATA")+string("/MuonMVAWeights/MuonIsoMVA_BDTG_V0_tracker.weights.xml"))));
     muonidiso_weightfiles.push_back(string((getenv("MIT_DATA")+string("/MuonMVAWeights/MuonIsoMVA_BDTG_V0_global.weights.xml"))));
-    fMuonTools = new MuonTools();
     fMuonIDMVA = new MuonIDMVA();
     fMuonIDMVA->Initialize("MuonIso_BDTG_IsoRings",
                            MuonIDMVA::kIsoRingsV0,
@@ -740,7 +742,6 @@ void MuonIDModRun1::SlaveBegin()
     muonidiso_weightfiles.push_back(string((getenv("MIT_DATA")+string("/MuonMVAWeights/MuonIsoMVA_santi-V1_LE_BDT.weights.xml"))));
     muonidiso_weightfiles.push_back(string((getenv("MIT_DATA")+string("/MuonMVAWeights/MuonIsoMVA_santi-V1_HB_BDT.weights.xml"))));
     muonidiso_weightfiles.push_back(string((getenv("MIT_DATA")+string("/MuonMVAWeights/MuonIsoMVA_santi-V1_HE_BDT.weights.xml"))));
-    fMuonTools = new MuonTools();
     fMuonIDMVA = new MuonIDMVA();
     fMuonIDMVA->Initialize("muonHZZ2012IsoDRMVA",
                            MuonIDMVA::kIsoDeltaR,
@@ -762,7 +763,7 @@ Bool_t MuonIDModRun1::PassMuonMVA_BDTG_IdIso(const Muon *mu, const Vertex *verte
   else if (mu->HasStandaloneTrk())
     muTrk = mu->StandaloneTrk();
 
-  Double_t MVAValue = fMuonIDMVA->MVAValue(mu,vertex,fMuonTools,fPFCandidates,PileupEnergyDensity);
+  Double_t MVAValue = fMuonIDMVA->MVAValue(mu,vertex,fPFCandidates,PileupEnergyDensity);
 
   Int_t subdet = 0;
   if (fabs(muTrk->Eta()) < 1.479)
@@ -824,7 +825,7 @@ Bool_t MuonIDModRun1::PassMuonIsoRingsV0_BDTG_Iso(const Muon *mu, const Vertex *
 
   ElectronOArr *tempElectrons = new  ElectronOArr;
   MuonOArr     *tempMuons     = new  MuonOArr;
-  Double_t MVAValue = fMuonIDMVA->MVAValue(mu,vertex,fMuonTools,fPFCandidates,
+  Double_t MVAValue = fMuonIDMVA->MVAValue(mu,vertex,fPFCandidates,
                                            PileupEnergyDensity,MuonTools::kMuEAFall11MC,tempElectrons,tempMuons,isDebug);
   delete tempElectrons;
   delete tempMuons;
@@ -872,7 +873,7 @@ Bool_t MuonIDModRun1::PassMuonIsoDeltaR(const Muon *mu, const Vertex *vertex,
 
   ElectronOArr *tempElectrons = new  ElectronOArr;
   MuonOArr     *tempMuons     = new  MuonOArr;
-  Double_t MVAValue = fMuonIDMVA->MVAValue(mu,vertex,fMuonTools,fPFNoPileUpCands,
+  Double_t MVAValue = fMuonIDMVA->MVAValue(mu,vertex,fPFNoPileUpCands,
                                            PileupEnergyDensity,MuonTools::kMuEAFall11MC,tempElectrons,tempMuons,kFALSE);
   delete tempElectrons;
   delete tempMuons;
@@ -901,11 +902,11 @@ void MuonIDModRun1::SlaveTerminate()
 {
   printf(" MuonIDModRun1::SlaveTerminate -- enter\n");
 
+  MuonTools::DeleteCaloCompatibilityTemplates();
+
   // Run finishing code on the computer (slave) that did the analysis
   if (fMuonIDMVA)
     delete fMuonIDMVA;
-  if (fMuonTools)
-    delete fMuonTools;
 
   printf(" MuonIDModRun1::SlaveTerminate -- exit\n");
 }

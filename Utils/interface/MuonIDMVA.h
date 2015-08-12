@@ -66,11 +66,11 @@ namespace mithep {
     Bool_t   IsInitialized() const { return fIsInitialized; }
     UInt_t   GetMVABin(double eta,double pt,
                        Bool_t isGlobal = kTRUE, Bool_t isTrackerMuon = kTRUE) const;
-    Double_t MVAValue(const Muon *mu, const Vertex *vertex, MuonTools *fMuonTools,
+    Double_t MVAValue(const Muon *mu, const Vertex *vertex,
                       const PFCandidateCol *PFCands, 
                       const PileupEnergyDensityCol *PileupEnergyDensity, 
                       Bool_t printDebug = kFALSE);
-    Double_t MVAValue(const Muon *mu, const Vertex *vertex, MuonTools *fMuonTools,
+    Double_t MVAValue(const Muon *mu, const Vertex *vertex,
                       const PFCandidateCol *PFCands, 
                       const PileupEnergyDensityCol *PileupEnergyDensity, 
                       MuonTools::EMuonEffectiveAreaTarget EffectiveAreaTarget,
