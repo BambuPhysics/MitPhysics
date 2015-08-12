@@ -688,23 +688,26 @@ mithep::MuonTools::PassId(const Muon *mu, EMuIdType idType)
   // 2015 POG Medium ID for Run-2 as of 2015-07-24
   // Loose muon with a few additional requirements
   case kMedium:
-    return mu->BestTrk() != 0 &&
-      mu->IsPFMuon() == kTRUE &&
-      (
-        mu->Quality().Quality(MuonQuality::AllGlobalMuons) ||
-        mu->Quality().Quality(MuonQuality::AllTrackerMuons)
-      ) && 
-      mu->ValidFraction() > 0.8 &&
-      (
+    {
+      double segComp = GetSegmentCompatibility(mu);
+      return mu->BestTrk() != 0 &&
+        mu->IsPFMuon() == kTRUE &&
         (
+         mu->Quality().Quality(MuonQuality::AllGlobalMuons) ||
+         mu->Quality().Quality(MuonQuality::AllTrackerMuons)
+        ) && 
+        mu->ValidFraction() > 0.8 &&
+        (
+         (
           mu->Quality().Quality(MuonQuality::AllGlobalMuons) &&
           normChi2 < 3.0 && 
           mu->Chi2LocalPosition() < 12.0 &&
           mu->TrkKink() < 20.0 &&
-          GetSegmentCompatibility(mu) > .303
-        ) ||
-        GetSegmentCompatibility(mu) > .451
-      );
+          segComp > .303
+         ) ||
+         segComp > .451
+        );
+    }
 
   // 2015 POG Tight ID for Run-2 as of 2015-07-24
   // Global muon with additional muon-quality requirements.
