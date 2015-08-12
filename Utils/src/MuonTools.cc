@@ -90,7 +90,7 @@ void MuonTools::DeleteHistos()
 }
 
 //--------------------------------------------------------------------------------------------------
-Double_t MuonTools::GetCaloCompatability(const Muon *iMuon,
+Double_t MuonTools::GetCaloCompatibility(const Muon *iMuon,
                                          Bool_t iEMSpecial, Bool_t iCorrectedHCAL) const
 {
   // Get calo compatibility value for given muon based on calorimeter templates.
@@ -301,12 +301,12 @@ Bool_t MuonTools::IsGood(const mithep::Muon *iMuon, ESelType iSel) const
     break;
   }
 
-  Double_t lVal = GetSegmentCompatability(iMuon); 
+  Double_t lVal = GetSegmentCompatibility(iMuon); 
   if (lVal == 0.5) // exclude this border case
     return kFALSE;
 
   lVal *= 1.2;
-  lVal += 0.8*GetCaloCompatability(iMuon,kTRUE,kTRUE);
+  lVal += 0.8*GetCaloCompatibility(iMuon,kTRUE,kTRUE);
   if (lVal > tm2dcut) 
     return kTRUE;
 
@@ -315,7 +315,7 @@ Bool_t MuonTools::IsGood(const mithep::Muon *iMuon, ESelType iSel) const
 }
 
 //--------------------------------------------------------------------------------------------------
-Double_t MuonTools::GetSegmentCompatability(const mithep::Muon *iMuon) const
+Double_t MuonTools::GetSegmentCompatibility(const mithep::Muon *iMuon) const
 {
   // Get segment compatability for given muon based on likelihood of well defined 
   // track through chambers.
@@ -662,6 +662,7 @@ mithep::MuonTools::PassPFIso(Muon const* mu, EMuIsoType type, PFCandidateCol con
 Bool_t
 mithep::MuonTools::PassId(const Muon *mu, EMuIdType idType)
 {
+  MuonTools muAxe; // dummy instantiation to use static members
   Double_t normChi2 = 0.0;
   if (mu->HasGlobalTrk())
     normChi2 = mu->GlobalTrk()->Chi2() / mu->GlobalTrk()->Ndof();
@@ -684,20 +685,58 @@ mithep::MuonTools::PassId(const Muon *mu, EMuIdType idType)
       mu->BestTrk()->NPixelHits() > 0 &&
       mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
 
+  // 2015 POG Loose ID for Run-2 as of 2015-07-24
+  // "For multi-muon analysis the Loose Muon id should be complemented with a DeltaR cut
+  // between the muon pairs (DeltaR<0.02) in order to suppress contribution from split tracks."
+  // for more info: "https://indico.cern.ch/event/203424/material-old/slides/1?contribId=0"
   case kLoose:
     return mu->BestTrk() != 0 &&
-      mu->Quality().Quality(MuonQuality::TMOneStationLoose) &&
-      mu->Quality().Quality(MuonQuality::TM2DCompatibilityLoose) &&
-      mu->BestTrk()->NHits() > 10 &&
-      normChi2 < 10.0 &&
-      mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
+      mu->IsPFMuon() == kTRUE &&
+      (
+        mu->Quality().Quality(MuonQuality::AllGlobalMuons) ||
+        mu->Quality().Quality(MuonQuality::AllTrackerMuons)
+      );
 
-  case kTight:
+  // 2015 POG Medium ID for Run-2 as of 2015-07-24
+  // Loose muon with a few additional requirements
+  case kMedium:
+    return mu->BestTrk() != 0 &&
+      mu->IsPFMuon() == kTRUE &&
+      (
+        mu->Quality().Quality(MuonQuality::AllGlobalMuons) ||
+        mu->Quality().Quality(MuonQuality::AllTrackerMuons)
+      ) && 
+      mu->ValidFraction() > 0.8 &&
+      (
+        (
+          mu->Quality().Quality(MuonQuality::AllGlobalMuons) &&
+          normChi2 < 3.0 && 
+          mu->Chi2LocalPosition() < 12.0 &&
+          mu->TrkKink() < 20.0 &&
+          muAxe.GetSegmentCompatibility(mu) > .303
+        ) ||
+        muAxe.GetSegmentCompatibility(mu) > .451
+      );
     return mu->BestTrk() != 0 &&
       mu->NTrkLayersHit() > 5 &&
       mu->IsPFMuon() == kTRUE &&
       mu->BestTrk()->NPixelHits() > 0 &&
       normChi2 < 10.0;
+
+  // 2015 POG Tight ID for Run-2 as of 2015-07-24
+  // Global muon with additional muon-quality requirements.
+  // Tight Muon ID selects a subset of the Particle-Flow muons.
+  case kTight:
+    return mu->BestTrk() != 0 &&
+      mu->Quality().Quality(MuonQuality::AllGlobalMuons) &&
+      mu->IsPFMuon() == kTRUE &&
+      normChi2 < 10.0 && 
+      mu->NValidHits() > 0 && // number of valid muon hits on the muon chambers in the global track:
+      mu->NMatches() > 2 &&
+      mu->BestTrk()->Dxy() < 0.2 &&
+      mu->BestTrk()->Dsz() < 0.5 &&
+      mu->BestTrk()->NPixelHits() > 0 &&
+      mu->NTrkLayersHit() > 5;
 
   case kMuonPOG2012CutBasedIdTight:
     return mu->IsGlobalMuon() &&

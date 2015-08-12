@@ -38,6 +38,7 @@ namespace mithep {
         kWMuId,             //"WMuId"
         kZMuId,             //"ZMuId"
         kTight,             //"Tight"
+        kMedium,             //"Medium"
         kMuonPOG2012CutBasedIdTight,             //"muonPOG2012CutBasedIDTight"
         kLoose,             //"Loose"
         kWWMuIdV1,          //"WWMuIdV1"
@@ -153,9 +154,9 @@ namespace mithep {
 
       Bool_t          Init(const char *mutemp, const char *pitemp);
       Bool_t          IsGood(const mithep::Muon *iMuon, ESelType iSel) const;
-      Double_t        GetCaloCompatability(const mithep::Muon *iMuon,
+      Double_t        GetCaloCompatibility(const mithep::Muon *iMuon,
                                          Bool_t iEMSpecial, Bool_t iCorrectedHCAL) const; 
-      Double_t        GetSegmentCompatability(const mithep::Muon *iMuon)             const;
+      Double_t        GetSegmentCompatibility(const mithep::Muon *iMuon)             const;
       static Bool_t   PassD0Cut(const Muon *mu, const VertexCol *vertices, EMuIdType, Int_t iVertex = 0);
       static Bool_t   PassD0Cut(const Muon *mu, const BeamSpotCol *beamspots, EMuIdType);
       static Bool_t   PassD0Cut(const Muon *mu, Double_t d0, EMuIdType);
