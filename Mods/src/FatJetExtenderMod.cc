@@ -48,7 +48,7 @@ FatJetExtenderMod::FatJetExtenderMod(const char *name, const char *title) :
   fFilterRad (0.2),
   fTrimRad (0.2),
   fTrimPtFrac (0.05),
-  fConeSize (0.6),
+  fConeSize (0.8),
   fDeconstruct(0),
   fProcessNJets (4),
   fDoShowerDeconstruction(kFALSE),
@@ -82,22 +82,38 @@ FatJetExtenderMod::~FatJetExtenderMod()
   if (fXlFatJets)
     delete fXlFatJets;
 
-  delete fPruner;
-  delete fFilterer;
-  delete fTrimmer ;
-  delete fCMSTopTagger;
-  delete fCAJetDef;
+  if (fPruner)
+    delete fPruner;
+  if (fFilterer)
+    delete fFilterer;
+  if (fTrimmer)
+    delete fTrimmer ;
+  if (fCMSTopTagger)
+    delete fCMSTopTagger;
+  if (fCAJetDef)
+    delete fCAJetDef;
 
-  delete fActiveArea;
-  delete fAreaDefinition;
+  if (fActiveArea)
+    delete fActiveArea;
+  if (fAreaDefinition)
+    delete fAreaDefinition;
 
-  delete fQGTagger;
+  if (fQGTagger)
+    delete fQGTagger;
 
-  delete fDeconstruct;
-  delete fParam;
-  delete fSignal;
-  delete fBackground;
-  delete fISR;
+  if (fDeconstruct)
+    delete fDeconstruct;
+  if (fParam)
+    delete fParam;
+  if (fSignal)
+    delete fSignal;
+  if (fBackground)
+    delete fBackground;
+  if (fISR)
+    delete fISR;
+
+  if (fStopwatch)
+    delete fStopwatch;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -256,6 +272,8 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   // Check that the output collection size is non-null, otherwise nothing to be done further
   if (fjOutJets.size() < 1) {
     printf(" FatJetExtenderMod::FillXlFatJet() - WARNING - input FatJet produces null reclustering output!\n");
+    if (fjClustering->inclusive_jets(0.).size()>0)
+      fjClustering->delete_self_when_unused();
     delete fjClustering;
 
     return;
@@ -309,7 +327,7 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   			fprintf(stderr,"Finished ECF calculation in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
   		}
   }
-  
+
   // Compute Q-jets volatility
   std::vector<fastjet::PseudoJet> constits;
   GetJetConstituents(fjJet, constits, 0.01);
@@ -434,11 +452,10 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
     if (fBeVerbose) {
 			fprintf(stderr,"Finished shower deconstruction in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
 		}
-    if (cs_micro->inclusive_jets().size()>0)
+    if (cs_micro->inclusive_jets(0.).size()>0)
       cs_micro->delete_self_when_unused();
-    delete cs_micro; 
+    delete cs_micro;
   }
-
 
   // Store groomed 4-momenta, apply JEC
   fastjet::PseudoJet fj_tmp;
@@ -462,7 +479,7 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   fXlFatJets->Trim();
 
   // Memory cleanup
-  if (fjOutJets.size() > 0)
+  if (fjClustering->inclusive_jets().size() > 0)
     fjClustering->delete_self_when_unused();
   delete fjClustering;
     if (fBeVerbose) {
