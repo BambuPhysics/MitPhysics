@@ -717,11 +717,6 @@ mithep::MuonTools::PassId(const Muon *mu, EMuIdType idType)
         ) ||
         muAxe.GetSegmentCompatibility(mu) > .451
       );
-    return mu->BestTrk() != 0 &&
-      mu->NTrkLayersHit() > 5 &&
-      mu->IsPFMuon() == kTRUE &&
-      mu->BestTrk()->NPixelHits() > 0 &&
-      normChi2 < 10.0;
 
   // 2015 POG Tight ID for Run-2 as of 2015-07-24
   // Global muon with additional muon-quality requirements.
