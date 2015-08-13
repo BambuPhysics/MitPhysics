@@ -7,91 +7,73 @@ ClassImp(mithep::MuonTools)
 
 using namespace mithep;
 
-//--------------------------------------------------------------------------------------------------
-MuonTools::MuonTools(const char *mutemp, const char *pitemp) :
-  fIsInit(kFALSE),
-  fmuon_em_etaEmi(0),
-  fmuon_had_etaEmi(0),
-  fmuon_had_etaTmi(0),
-  fmuon_em_etaB(0),
-  fmuon_had_etaB(0),
-  fmuon_ho_etaB(0),
-  fmuon_had_etaTpl(0),
-  fmuon_em_etaEpl(0),
-  fmuon_had_etaEpl(0),
-  fpion_em_etaEmi(0),
-  fpion_had_etaEmi(0),
-  fpion_had_etaTmi(0),
-  fpion_em_etaB(0),
-  fpion_had_etaB(0),
-  fpion_ho_etaB(0),
-  fpion_had_etaTpl(0),
-  fpion_em_etaEpl(0),
-  fpion_had_etaEpl(0)
-{
-  // Constructor.
-
-  if (mutemp && pitemp)
-    Init(mutemp, pitemp);
-}
+Bool_t MuonTools::fCaloCompatTemplatesSet{kFALSE};
+TH2D* MuonTools::fmuon_em_etaEmi{0};
+TH2D* MuonTools::fmuon_had_etaEmi{0};
+TH2D* MuonTools::fmuon_had_etaTmi{0};
+TH2D* MuonTools::fmuon_em_etaB{0};
+TH2D* MuonTools::fmuon_had_etaB{0};
+TH2D* MuonTools::fmuon_ho_etaB{0};
+TH2D* MuonTools::fmuon_had_etaTpl{0};
+TH2D* MuonTools::fmuon_em_etaEpl{0};
+TH2D* MuonTools::fmuon_had_etaEpl{0};
+TH2D* MuonTools::fpion_em_etaEmi{0};
+TH2D* MuonTools::fpion_had_etaEmi{0};
+TH2D* MuonTools::fpion_had_etaTmi{0};
+TH2D* MuonTools::fpion_em_etaB{0};
+TH2D* MuonTools::fpion_had_etaB{0};
+TH2D* MuonTools::fpion_ho_etaB{0};
+TH2D* MuonTools::fpion_had_etaTpl{0};
+TH2D* MuonTools::fpion_em_etaEpl{0};
+TH2D* MuonTools::fpion_had_etaEpl{0};
 
 //--------------------------------------------------------------------------------------------------
-MuonTools::~MuonTools() 
-{
-  // Destructor.
-
-  DeleteHistos();
-}
-
-//--------------------------------------------------------------------------------------------------
-void MuonTools::DeleteHistos()
+void MuonTools::DeleteCaloCompatibilityTemplates()
 {
   // Delete histograms.
+  delete fpion_em_etaEmi; 
+  delete fpion_had_etaEmi;
+  delete fpion_had_etaTmi;
+  delete fpion_em_etaB;
+  delete fpion_had_etaB;
+  delete fpion_ho_etaB;
+  delete fpion_had_etaTpl;
+  delete fpion_em_etaEpl;
+  delete fpion_had_etaEpl;
+  delete fmuon_em_etaEmi;
+  delete fmuon_had_etaEmi;
+  delete fmuon_had_etaTmi;
+  delete fmuon_em_etaB;
+  delete fmuon_had_etaB;
+  delete fmuon_ho_etaB;
+  delete fmuon_had_etaTpl;
+  delete fmuon_em_etaEpl;
+  delete fmuon_had_etaEpl;
+  fpion_em_etaEmi  = 0;
+  fpion_had_etaEmi = 0;
+  fpion_had_etaTmi = 0;
+  fpion_em_etaB    = 0;
+  fpion_had_etaB   = 0;
+  fpion_ho_etaB    = 0;
+  fpion_had_etaTpl = 0;
+  fpion_em_etaEpl  = 0;
+  fpion_had_etaEpl = 0;
+  fmuon_em_etaEmi  = 0;
+  fmuon_had_etaEmi = 0;
+  fmuon_had_etaTmi = 0;
+  fmuon_em_etaB    = 0;
+  fmuon_had_etaB   = 0;
+  fmuon_ho_etaB    = 0;
+  fmuon_had_etaTpl = 0;
+  fmuon_em_etaEpl  = 0;
+  fmuon_had_etaEpl = 0;
 
-  if (fIsInit) {
-    delete fpion_em_etaEmi; 
-    delete fpion_had_etaEmi;
-    delete fpion_had_etaTmi;
-    delete fpion_em_etaB;
-    delete fpion_had_etaB;
-    delete fpion_ho_etaB;
-    delete fpion_had_etaTpl;
-    delete fpion_em_etaEpl;
-    delete fpion_had_etaEpl;
-    delete fmuon_em_etaEmi;
-    delete fmuon_had_etaEmi;
-    delete fmuon_had_etaTmi;
-    delete fmuon_em_etaB;
-    delete fmuon_had_etaB;
-    delete fmuon_ho_etaB;
-    delete fmuon_had_etaTpl;
-    delete fmuon_em_etaEpl;
-    delete fmuon_had_etaEpl;
-    fpion_em_etaEmi  = 0;
-    fpion_had_etaEmi = 0;
-    fpion_had_etaTmi = 0;
-    fpion_em_etaB    = 0;
-    fpion_had_etaB   = 0;
-    fpion_ho_etaB    = 0;
-    fpion_had_etaTpl = 0;
-    fpion_em_etaEpl  = 0;
-    fpion_had_etaEpl = 0;
-    fmuon_em_etaEmi  = 0;
-    fmuon_had_etaEmi = 0;
-    fmuon_had_etaTmi = 0;
-    fmuon_em_etaB    = 0;
-    fmuon_had_etaB   = 0;
-    fmuon_ho_etaB    = 0;
-    fmuon_had_etaTpl = 0;
-    fmuon_em_etaEpl  = 0;
-    fmuon_had_etaEpl = 0;
-    fIsInit = kFALSE;
-  }
+  fCaloCompatTemplatesSet = kFALSE;
 }
 
 //--------------------------------------------------------------------------------------------------
-Double_t MuonTools::GetCaloCompatability(const Muon *iMuon,
-                                         Bool_t iEMSpecial, Bool_t iCorrectedHCAL) const
+Double_t MuonTools::GetCaloCompatibility(const Muon *iMuon,
+                                         Bool_t iEMSpecial, Bool_t iCorrectedHCAL)
 {
   // Get calo compatibility value for given muon based on calorimeter templates.
   // If iEMSpecial is true, then a use different arrangement of ECAL for compatibility.
@@ -167,6 +149,11 @@ Double_t MuonTools::GetCaloCompatability(const Muon *iMuon,
     lTPionHo  = fpion_ho_etaB;
     lTMuonHo  = fmuon_ho_etaB;
   }
+
+  if (!lTPionEm || !lTPionHad || !lTPionHo || !lTMuonEm || !lTMuonHad || !lTMuonHo) {
+    Error("GetCaloCompatibility", "Template histograms not available");
+    throw std::runtime_error("muon calo compatibility");
+  }
   
   Double_t lPBX = 1.;     
   Double_t lPSX = 1.; 
@@ -212,13 +199,14 @@ Double_t MuonTools::GetCaloCompatability(const Muon *iMuon,
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t MuonTools::Init(const char *mutemp, const char *pitemp)
+Bool_t MuonTools::LoadCaloCompatibilityTemplates(const char *mutemp, const char *pitemp, Bool_t force/* = kFALSE*/)
 {
   // Read histograms from given files.
 
-  if (fIsInit) {
-    DeleteHistos();
-  }
+  if (fCaloCompatTemplatesSet && !force)
+    return kTRUE;
+
+  DeleteCaloCompatibilityTemplates();
 
   TDirectory::TContext context(0);
 
@@ -257,12 +245,13 @@ Bool_t MuonTools::Init(const char *mutemp, const char *pitemp)
   pion_templates->Close();
   delete pion_templates;
 
-  fIsInit = kTRUE;
+  fCaloCompatTemplatesSet = kTRUE;
+
   return kTRUE;
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t MuonTools::IsGood(const mithep::Muon *iMuon, ESelType iSel) const
+Bool_t MuonTools::IsGood(const mithep::Muon *iMuon, ESelType iSel)
 {
   // Return true if given muon qualifies given selection criterium.
 
@@ -301,12 +290,12 @@ Bool_t MuonTools::IsGood(const mithep::Muon *iMuon, ESelType iSel) const
     break;
   }
 
-  Double_t lVal = GetSegmentCompatability(iMuon); 
+  Double_t lVal = GetSegmentCompatibility(iMuon); 
   if (lVal == 0.5) // exclude this border case
     return kFALSE;
 
   lVal *= 1.2;
-  lVal += 0.8*GetCaloCompatability(iMuon,kTRUE,kTRUE);
+  lVal += 0.8*GetCaloCompatibility(iMuon,kTRUE,kTRUE);
   if (lVal > tm2dcut) 
     return kTRUE;
 
@@ -315,7 +304,7 @@ Bool_t MuonTools::IsGood(const mithep::Muon *iMuon, ESelType iSel) const
 }
 
 //--------------------------------------------------------------------------------------------------
-Double_t MuonTools::GetSegmentCompatability(const mithep::Muon *iMuon) const
+Double_t MuonTools::GetSegmentCompatibility(const mithep::Muon *iMuon)
 {
   // Get segment compatability for given muon based on likelihood of well defined 
   // track through chambers.
@@ -684,20 +673,54 @@ mithep::MuonTools::PassId(const Muon *mu, EMuIdType idType)
       mu->BestTrk()->NPixelHits() > 0 &&
       mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
 
+  // 2015 POG Loose ID for Run-2 as of 2015-07-24
+  // "For multi-muon analysis the Loose Muon id should be complemented with a DeltaR cut
+  // between the muon pairs (DeltaR<0.02) in order to suppress contribution from split tracks."
+  // for more info: "https://indico.cern.ch/event/203424/material-old/slides/1?contribId=0"
   case kLoose:
     return mu->BestTrk() != 0 &&
-      mu->Quality().Quality(MuonQuality::TMOneStationLoose) &&
-      mu->Quality().Quality(MuonQuality::TM2DCompatibilityLoose) &&
-      mu->BestTrk()->NHits() > 10 &&
-      normChi2 < 10.0 &&
-      mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
+      mu->IsPFMuon() == kTRUE &&
+      (
+        mu->Quality().Quality(MuonQuality::AllGlobalMuons) ||
+        mu->Quality().Quality(MuonQuality::AllTrackerMuons)
+      );
 
+  // 2015 POG Medium ID for Run-2 as of 2015-07-24
+  // Loose muon with a few additional requirements
+  case kMedium:
+    {
+      double segComp = GetSegmentCompatibility(mu);
+      return mu->BestTrk() != 0 &&
+        mu->IsPFMuon() == kTRUE &&
+        (
+         mu->Quality().Quality(MuonQuality::AllGlobalMuons) ||
+         mu->Quality().Quality(MuonQuality::AllTrackerMuons)
+        ) && 
+        mu->ValidFraction() > 0.8 &&
+        (
+         (
+          mu->Quality().Quality(MuonQuality::AllGlobalMuons) &&
+          normChi2 < 3.0 && 
+          mu->Chi2LocalPosition() < 12.0 &&
+          mu->TrkKink() < 20.0 &&
+          segComp > .303
+         ) ||
+         segComp > .451
+        );
+    }
+
+  // 2015 POG Tight ID for Run-2 as of 2015-07-24
+  // Global muon with additional muon-quality requirements.
+  // Tight Muon ID selects a subset of the Particle-Flow muons.
   case kTight:
     return mu->BestTrk() != 0 &&
-      mu->NTrkLayersHit() > 5 &&
+      mu->Quality().Quality(MuonQuality::AllGlobalMuons) &&
       mu->IsPFMuon() == kTRUE &&
+      normChi2 < 10.0 && 
+      mu->NValidHits() > 0 && // number of valid muon hits on the muon chambers in the global track:
+      mu->NMatches() > 2 &&
       mu->BestTrk()->NPixelHits() > 0 &&
-      normChi2 < 10.0;
+      mu->NTrkLayersHit() > 5;
 
   case kMuonPOG2012CutBasedIdTight:
     return mu->IsGlobalMuon() &&
@@ -752,7 +775,7 @@ mithep::MuonTools::PassId(const Muon *mu, EMuIdType idType)
 }
 
 //--------------------------------------------------------------------------------------------------
-TH2D *MuonTools::LoadHisto(const char *name, TFile *file) const
+TH2D *MuonTools::LoadHisto(const char *name, TFile *file)
 {
   // Load histogram with given name from given file and return it.
 
@@ -816,6 +839,7 @@ MuonTools::PassD0Cut(Muon const*, Double_t d0, EMuIdType idType)
   switch (idType) {
   case kMuonPOG2012CutBasedIdTight:
   case kMVAID_BDTG_IDIso:
+  case kTight:
     return d0 < 0.2;
     break;
   default:
@@ -855,6 +879,7 @@ MuonTools::PassDZCut(Muon const*, Double_t dz, EMuIdType idType)
 {
   switch (idType) {
   case kMuonPOG2012CutBasedIdTight:
+  case kTight:
     return dz < 0.5;
 
   case kMVAID_BDTG_IDIso:

@@ -127,7 +127,6 @@ namespace mithep
     ElectronCol        *fNonIsolatedElectrons;//!pointer to old electron collection
     TString             fPileupEnergyDensityName;
     const PileupEnergyDensityCol *fPileupEnergyDensity;
-    MuonTools          *fMuonTools;           // interface to tools for muon ID
     MuonIDMVA          *fMuonIDMVA;           // helper class for MuonMVA
     TString             fPVName;
 
