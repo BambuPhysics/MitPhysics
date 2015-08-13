@@ -839,6 +839,7 @@ MuonTools::PassD0Cut(Muon const*, Double_t d0, EMuIdType idType)
   switch (idType) {
   case kMuonPOG2012CutBasedIdTight:
   case kMVAID_BDTG_IDIso:
+  case kTight:
     return d0 < 0.2;
     break;
   default:
@@ -878,6 +879,7 @@ MuonTools::PassDZCut(Muon const*, Double_t dz, EMuIdType idType)
 {
   switch (idType) {
   case kMuonPOG2012CutBasedIdTight:
+  case kTight:
     return dz < 0.5;
 
   case kMVAID_BDTG_IDIso:
