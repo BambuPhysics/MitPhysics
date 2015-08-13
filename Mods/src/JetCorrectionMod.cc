@@ -90,7 +90,7 @@ JetCorrectionMod::Process()
     return;
   }
 
-  fCorrectedJets.Reset();
+  fCorrectedJets.Delete();
 
   // loop over jets
   for (unsigned iJ = 0; iJ != inJets->GetEntries(); ++iJ) {
