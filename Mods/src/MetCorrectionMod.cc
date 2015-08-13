@@ -113,7 +113,7 @@ MetCorrectionMod::Process()
   }
 
   // prepare the storage array for the corrected MET
-  fOutput->Reset();
+  fOutput->Delete();
 
   TVector2 metCorrection[3] = {};
   double sumEtCorrection[3] = {};
