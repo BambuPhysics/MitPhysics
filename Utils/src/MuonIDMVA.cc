@@ -665,7 +665,7 @@ Double_t MuonIDMVA::MVAValue_ID( Double_t MuPt,
 
 
 //--------------------------------------------------------------------------------------------------
-Double_t MuonIDMVA::MVAValue(const Muon *mu, const Vertex *vertex, MuonTools *fMuonTools,
+Double_t MuonIDMVA::MVAValue(const Muon *mu, const Vertex *vertex,
                              const PFCandidateCol *PFCands, 
                              const PileupEnergyDensityCol *PileupEnergyDensity, 
                              Bool_t printDebug) {
@@ -706,8 +706,8 @@ Double_t MuonIDMVA::MVAValue(const Muon *mu, const Vertex *vertex, MuonTools *fM
   fMVAVar_MuIP3d                 = mu->Ip3dPV();
   fMVAVar_MuIP3dSig              = mu->Ip3dPVSignificance();
   fMVAVar_MuTrkKink              = mu->TrkKink();
-  fMVAVar_MuSegmentCompatibility = fMuonTools->GetSegmentCompatability(mu);
-  fMVAVar_MuCaloCompatibility    = fMuonTools->GetCaloCompatability(mu, kTRUE, kTRUE);
+  fMVAVar_MuSegmentCompatibility = MuonTools::GetSegmentCompatibility(mu);
+  fMVAVar_MuCaloCompatibility    = MuonTools::GetCaloCompatibility(mu, kTRUE, kTRUE);
   fMVAVar_MuHadEnergyOverPt      = (mu->HadEnergy() - Rho*MuonTools::MuonEffectiveArea(MuonTools::kMuHadEnergy,muTrk->Eta()))/muTrk->Pt();
   fMVAVar_MuHoEnergyOverPt       = (mu->HoEnergy() - Rho*MuonTools::MuonEffectiveArea(MuonTools::kMuHoEnergy,muTrk->Eta()))/muTrk->Pt();
   fMVAVar_MuEmEnergyOverPt       = (mu->EmEnergy() - Rho*MuonTools::MuonEffectiveArea(MuonTools::kMuEmEnergy,muTrk->Eta()))/muTrk->Pt();
@@ -773,7 +773,7 @@ Double_t MuonIDMVA::MVAValue(const Muon *mu, const Vertex *vertex, MuonTools *fM
 
 
 //--------------------------------------------------------------------------------------------------
-Double_t MuonIDMVA::MVAValue(const Muon *mu, const Vertex *vertex, MuonTools *fMuonTools,
+Double_t MuonIDMVA::MVAValue(const Muon *mu, const Vertex *vertex,
                              const PFCandidateCol *PFCands, 
                              const PileupEnergyDensityCol *PileupEnergyDensity, 
                              MuonTools::EMuonEffectiveAreaTarget EffectiveAreaTarget,
@@ -819,8 +819,8 @@ Double_t MuonIDMVA::MVAValue(const Muon *mu, const Vertex *vertex, MuonTools *fM
   fMVAVar_MuIP3d                 = mu->Ip3dPV();
   fMVAVar_MuIP3dSig              = mu->Ip3dPVSignificance();
   fMVAVar_MuTrkKink              = mu->TrkKink();
-  fMVAVar_MuSegmentCompatibility = fMuonTools->GetSegmentCompatability(mu);
-  fMVAVar_MuCaloCompatibility    = fMuonTools->GetCaloCompatability(mu, kTRUE, kTRUE);
+  fMVAVar_MuSegmentCompatibility = MuonTools::GetSegmentCompatibility(mu);
+  fMVAVar_MuCaloCompatibility    = MuonTools::GetCaloCompatibility(mu, kTRUE, kTRUE);
   fMVAVar_MuHadEnergy            = mu->HadEnergy() ;
   fMVAVar_MuEmEnergy             = mu->EmEnergy();
   fMVAVar_MuHadS9Energy          = mu->HadS9Energy();
