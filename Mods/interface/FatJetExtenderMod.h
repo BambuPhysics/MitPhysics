@@ -87,6 +87,7 @@ namespace mithep
       void SetBeVerbose(Bool_t b)          { fBeVerbose = b;  }
       void SetDoECF(Bool_t b)              { fDoECF = b; }
       void SetNMaxMicrojets(unsigned int n)         { fNMaxMicrojets = n; }
+      void SetDebugFlag(int i)   { fDebugFlag = i; }
     protected:
       void Process();
       void SlaveBegin();
@@ -113,6 +114,7 @@ namespace mithep
       double FindMean(std::vector<float>);
 
       Vect4M GetCorrectedMomentum(fastjet::PseudoJet fj_tmp, double thisJEC);
+
 
     private:
       Bool_t fIsData;                      //is this data or MC?
@@ -182,6 +184,8 @@ namespace mithep
 
       // Counters : used to initialize seed for QJets volatility
       Long64_t fCounter;
+
+      int fDebugFlag = -1;
 
       ClassDef(FatJetExtenderMod, 0)         //XlJets, Fat and Sub, filler
   };

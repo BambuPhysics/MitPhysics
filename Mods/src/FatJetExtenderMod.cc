@@ -132,7 +132,7 @@ void FatJetExtenderMod::Process()
     fPileUpDen = GetObject<PileupEnergyDensityCol>(fPileUpDenName);
     fVertexes = GetObject<VertexCol>(fVertexesName);
   }
-
+if (fDebugFlag == 0) return;
   // Loop over PFCandidates and unmark them : necessary for skimming
   for (UInt_t i=0; i<fPFCandidates->GetEntries(); ++i)
     fPFCandidates->At(i)->UnmarkMe();
@@ -157,7 +157,7 @@ void FatJetExtenderMod::Process()
 
     // mark jet (and consequently its consituents) for further use in skim
     jet->Mark();
-
+if (fDebugFlag == 1) continue;
     if (fBeVerbose) {
 			fprintf(stderr,"Finished setup in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
 		}
@@ -236,9 +236,10 @@ void FatJetExtenderMod::SlaveTerminate()
 void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
 {
   // Prepare and store in an array a new FatJet
-  XlFatJet *xlFatJet = fXlFatJets->Allocate();
-  new (xlFatJet) XlFatJet(*fatJet);
-
+  XlFatJet *xlFatJet = fXlFatJets->AddNew();
+  // XlFatJet *xlFatJet = fXlFatJets->Allocate();
+  // new (xlFatJet) XlFatJet(*fatJet);
+if (fDebugFlag == 2) return;
   // Prepare and store QG tagging info
   float qgValue = -1.;
   if (fQGTaggingActive) {
@@ -246,7 +247,7 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
     qgValue = fQGTagger->QGValue();
   }
   xlFatJet->SetQGTag(qgValue);
-
+if (fDebugFlag == 3) return;
     if (fBeVerbose) {
 			fprintf(stderr,"Finished QG-tagging in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
 		}
@@ -272,12 +273,18 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   // Check that the output collection size is non-null, otherwise nothing to be done further
   if (fjOutJets.size() < 1) {
     printf(" FatJetExtenderMod::FillXlFatJet() - WARNING - input FatJet produces null reclustering output!\n");
-    if (fjClustering->inclusive_jets(0.).size()>0)
+    if (fjOutJets.size()>0)
       fjClustering->delete_self_when_unused();
     delete fjClustering;
 
     return;
   }
+if (fDebugFlag == 4) {
+  if (fjOutJets.size()>0) fjClustering->delete_self_when_unused();
+  delete fjClustering;
+  return;
+}
+
   fastjet::PseudoJet fjJet = fjOutJets[0];
 
     if (fBeVerbose) {
@@ -300,6 +307,11 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   xlFatJet->SetTau2(tau2);
   xlFatJet->SetTau3(tau3);
   xlFatJet->SetTau4(tau4);
+if (fDebugFlag == 5) {
+  if (fjOutJets.size()>0) fjClustering->delete_self_when_unused();
+  delete fjClustering;
+  return;
+}
 
     if (fBeVerbose) {
 			fprintf(stderr,"Finished njettiness calculation in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
@@ -335,6 +347,11 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   fCounter++;
   constits.clear();
   xlFatJet->SetQJetVol(QJetVol);
+if (fDebugFlag == 6) {
+  if (fjOutJets.size()>0) fjClustering->delete_self_when_unused();
+  delete fjClustering;
+  return;
+}
 
     if (fBeVerbose) {
 			fprintf(stderr,"Finished Qjets in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
@@ -369,6 +386,11 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   xlFatJet->SetMassPruned(MassPruned*thisJEC);
   xlFatJet->SetMassFiltered(MassFiltered*thisJEC);
   xlFatJet->SetMassTrimmed(MassTrimmed*thisJEC);
+if (fDebugFlag == 7) {
+  if (fjOutJets.size()>0) fjClustering->delete_self_when_unused();
+  delete fjClustering;
+  return;
+}
 
     if (fBeVerbose) {
 			fprintf(stderr,"Finished grooming in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
@@ -379,6 +401,11 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   fastjet::PseudoJet iJet = lOutJets[0];
   HEPTopTagger hepTopJet = HEPTopTagger(*fjClustering,iJet);;
   fastjet::PseudoJet cmsTopJet = fCMSTopTagger->result(iJet);
+if (fDebugFlag == 8) {
+  if (fjOutJets.size()>0) fjClustering->delete_self_when_unused();
+  delete fjClustering;
+  return;
+}
 
     if (fBeVerbose) {
 			fprintf(stderr,"Finished CMSTT and HEPTT in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
@@ -392,16 +419,17 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
     // okay, we really do want to save this collection
     std::vector<fastjet::PseudoJet> fjSubjets;
     if (iSJType <= XlSubJet::kTrimmed) {
+      // these have a common interface
       if (!fjClusteredJets[iSJType].has_constituents())
         // if subjet finding failed, skip this step
         continue;
-      // these have a common interface
       int nSubJets = std::min<unsigned int>(fjClusteredJets[iSJType].constituents().size(),3);
       if (nSubJets>0) {
         fjSubjets = fjClusteredJets[iSJType].associated_cluster_sequence()->exclusive_subjets(fjClusteredJets[iSJType],nSubJets);
         std::vector<fastjet::PseudoJet> fjSubJetsSorted = Sorted_by_pt_min_pt(fjSubjets,0.01);
         if (!computedPullAngle) {
           xlFatJet->SetPullAngle(GetPullAngle(fjSubJetsSorted,0.01));
+          computedPullAngle = kTRUE;
         }
         FillXlSubJets(fjSubJetsSorted,xlFatJet,(ESubJetType)iSJType);
       }
@@ -413,6 +441,11 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
       FillXlSubJets(fjSubjets,xlFatJet,XlSubJet::kHEPTT);
     }
   }
+if (fDebugFlag == 9) {
+  if (fjOutJets.size()>0) fjClustering->delete_self_when_unused();
+  delete fjClustering;
+  return;
+}
     if (fBeVerbose) {
 			fprintf(stderr,"Finished filling subjets in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
 		}
@@ -479,7 +512,7 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   fXlFatJets->Trim();
 
   // Memory cleanup
-  if (fjClustering->inclusive_jets().size() > 0)
+  if (fjOutJets.size() > 0)
     fjClustering->delete_self_when_unused();
   delete fjClustering;
     if (fBeVerbose) {
@@ -591,7 +624,7 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
       }
     }
     if (nFailed*5 > QJetsN) {
-      if ((qjet_seq->inclusive_jets()).size() > 0)
+      if (inclusive_jets2.size() > 0)
         qjet_seq->delete_self_when_unused();
       delete qjet_seq;
       // if more than a fifth of the iterations fail, let's just give up
@@ -600,7 +633,7 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
 
     qjetmasses.push_back( inclusive_jets2[0].m() );
     // memory cleanup
-    if ((qjet_seq->inclusive_jets()).size() > 0)
+    if (inclusive_jets2.size() > 0)
       qjet_seq->delete_self_when_unused();
     delete qjet_seq;
   }
