@@ -123,7 +123,6 @@ void FatJetExtenderMod::Process()
     fPileUpDen = GetObject<PileupEnergyDensityCol>(fPileUpDenName);
     fVertexes = GetObject<VertexCol>(fVertexesName);
   }
-if (fDebugFlag == 0) return;
   // Loop over PFCandidates and unmark them : necessary for skimming
   for (UInt_t i=0; i<fPFCandidates->GetEntries(); ++i)
     fPFCandidates->At(i)->UnmarkMe();
@@ -148,7 +147,6 @@ if (fDebugFlag == 0) return;
 
     // mark jet (and consequently its consituents) for further use in skim
     jet->Mark();
-if (fDebugFlag == 1) continue;
     if (fBeVerbose) {
 			fprintf(stderr,"Finished setup in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
 		}
@@ -238,7 +236,6 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   // Prepare and store in an array a new FatJet
   XlFatJet *xlFatJet = fXlFatJets->Allocate();
   new (xlFatJet) XlFatJet(*fatJet);
-if (fDebugFlag == 2) return;
   // Prepare and store QG tagging info
   float qgValue = -1.;
   if (fQGTaggingActive) {
@@ -246,7 +243,6 @@ if (fDebugFlag == 2) return;
     qgValue = fQGTagger->QGValue();
   }
   xlFatJet->SetQGTag(qgValue);
-if (fDebugFlag == 3) return;
     if (fBeVerbose) {
 			fprintf(stderr,"Finished QG-tagging in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
 		}
@@ -260,30 +256,19 @@ if (fDebugFlag == 3) return;
   }
 
   // Setup the cluster for fastjet
-  fastjet::ClusterSequenceArea *fjClustering =
-    new fastjet::ClusterSequenceArea(fjParts,*fCAJetDef,*fAreaDefinition);
+  fastjet::ClusterSequenceArea fjClustering (fjParts,*fCAJetDef,*fAreaDefinition);
   // ---- Fastjet is ready ----
 
 
   // Produce a new set of jets based on the fastjet particle collection and the defined clustering
   // Cut off fat jets with pt < 10 GeV and consider only the hardest jet of the output collection
-  std::vector<fastjet::PseudoJet> fjOutJets = sorted_by_pt(fjClustering->inclusive_jets(10.));
+  std::vector<fastjet::PseudoJet> fjOutJets = sorted_by_pt(fjClustering.inclusive_jets(10.));
 
   // Check that the output collection size is non-null, otherwise nothing to be done further
   if (fjOutJets.size() < 1) {
     printf(" FatJetExtenderMod::FillXlFatJet() - WARNING - input FatJet produces null reclustering output!\n");
-    if (fjOutJets.size()>0)
-      fjClustering->delete_self_when_unused();
-    delete fjClustering;
-
     return;
   }
-if (fDebugFlag == 4) {
-  if (fjOutJets.size()>0) fjClustering->delete_self_when_unused();
-  delete fjClustering;
-  return;
-}
-
   fastjet::PseudoJet fjJet = fjOutJets[0];
 
     if (fBeVerbose) {
@@ -306,11 +291,6 @@ if (fDebugFlag == 4) {
   xlFatJet->SetTau2(tau2);
   xlFatJet->SetTau3(tau3);
   xlFatJet->SetTau4(tau4);
-if (fDebugFlag == 5) {
-  if (fjOutJets.size()>0) fjClustering->delete_self_when_unused();
-  delete fjClustering;
-  return;
-}
 
     if (fBeVerbose) {
 			fprintf(stderr,"Finished njettiness calculation in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
@@ -349,12 +329,6 @@ if (fDebugFlag == 5) {
     xlFatJet->SetQJetVol(QJetVol);
   }
 
-if (fDebugFlag == 6) {
-  if (fjOutJets.size()>0) fjClustering->delete_self_when_unused();
-  delete fjClustering;
-  return;
-}
-
     if (fBeVerbose) {
 			fprintf(stderr,"Finished Qjets in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
 		}
@@ -388,26 +362,16 @@ if (fDebugFlag == 6) {
   xlFatJet->SetMassPruned(MassPruned*thisJEC);
   xlFatJet->SetMassFiltered(MassFiltered*thisJEC);
   xlFatJet->SetMassTrimmed(MassTrimmed*thisJEC);
-if (fDebugFlag == 7) {
-  if (fjOutJets.size()>0) fjClustering->delete_self_when_unused();
-  delete fjClustering;
-  return;
-}
 
     if (fBeVerbose) {
 			fprintf(stderr,"Finished grooming in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
 		}
 
   // do CMS and HEP top tagging
-  std::vector<fastjet::PseudoJet> lOutJets = sorted_by_pt(fjClustering->inclusive_jets(0.0));
+  std::vector<fastjet::PseudoJet> lOutJets = sorted_by_pt(fjClustering.inclusive_jets(0.0));
   fastjet::PseudoJet iJet = lOutJets[0];
-  HEPTopTagger hepTopJet = HEPTopTagger(*fjClustering,iJet);;
+  HEPTopTagger hepTopJet = HEPTopTagger(fjClustering,iJet);;
   fastjet::PseudoJet cmsTopJet = fCMSTopTagger->result(iJet);
-if (fDebugFlag == 8) {
-  if (fjOutJets.size()>0) fjClustering->delete_self_when_unused();
-  delete fjClustering;
-  return;
-}
 
     if (fBeVerbose) {
 			fprintf(stderr,"Finished CMSTT and HEPTT in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
@@ -443,11 +407,6 @@ if (fDebugFlag == 8) {
       FillXlSubJets(fjSubjets,xlFatJet,XlSubJet::kHEPTT);
     }
   }
-if (fDebugFlag == 9) {
-  if (fjOutJets.size()>0) fjClustering->delete_self_when_unused();
-  delete fjClustering;
-  return;
-}
     if (fBeVerbose) {
 			fprintf(stderr,"Finished filling subjets in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
 		}
@@ -514,9 +473,6 @@ if (fDebugFlag == 9) {
   fXlFatJets->Trim();
 
   // Memory cleanup
-  if (fjOutJets.size() > 0)
-    fjClustering->delete_self_when_unused();
-  delete fjClustering;
     if (fBeVerbose) {
 			fprintf(stderr,"Finished filling and cleanup in %f seconds\n",fStopwatch->RealTime());
     }
