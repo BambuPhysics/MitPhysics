@@ -86,6 +86,7 @@ namespace mithep
       void SetDoShowerDeconstruction(Bool_t b) { fDoShowerDeconstruction = b; }
       void SetBeVerbose(Bool_t b)          { fBeVerbose = b;  }
       void SetDoECF(Bool_t b)              { fDoECF = b; }
+      void SetDoQjets(Bool_t b)            { fDoQjets = b; }
       void SetNMaxMicrojets(unsigned int n)         { fNMaxMicrojets = n; }
       void SetDebugFlag(int i)   { fDebugFlag = i; }
     protected:
@@ -178,6 +179,7 @@ namespace mithep
       
       Bool_t fBeVerbose;
       Bool_t fDoECF;                       // this is now a user-set option, as it's quite slow 
+      Bool_t fDoQjets;
       unsigned int fNMaxMicrojets;
       
       TStopwatch *fStopwatch;

@@ -58,15 +58,6 @@ FatJetExtenderMod::FatJetExtenderMod(const char *name, const char *title) :
 {
   // Constructor.
 
-    // setup subjet branch names
-    fXlSubJetsName[0] = fXlFatJetsName+"_SoftDropSubjets";
-    fXlSubJetsName[1] = fXlFatJetsName+"_PrunedSubjets";
-    fXlSubJetsName[2] = fXlFatJetsName+"_TrimmedSubjets";
-    fXlSubJetsName[3] = fXlFatJetsName+"_CMSTTSubjets";
-    fXlSubJetsName[4] = fXlFatJetsName+"_HEPTTSubjets";
-    fXlSubJetsName[5] = fXlFatJetsName+"_NjettinessSubjets";
-
-
 }
 
 FatJetExtenderMod::~FatJetExtenderMod()
@@ -172,6 +163,15 @@ if (fDebugFlag == 1) continue;
 void FatJetExtenderMod::SlaveBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis.
+    // setup subjet branch names
+    fXlSubJetsName[0] = fXlFatJetsName+"_SoftDropSubjets";
+    fXlSubJetsName[1] = fXlFatJetsName+"_PrunedSubjets";
+    fXlSubJetsName[2] = fXlFatJetsName+"_TrimmedSubjets";
+    fXlSubJetsName[3] = fXlFatJetsName+"_CMSTTSubjets";
+    fXlSubJetsName[4] = fXlFatJetsName+"_HEPTTSubjets";
+    fXlSubJetsName[5] = fXlFatJetsName+"_NjettinessSubjets";
+
+
   // Initialize area caculation (done with ghost particles)
 
   // Create the new output collection
@@ -236,9 +236,8 @@ void FatJetExtenderMod::SlaveTerminate()
 void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
 {
   // Prepare and store in an array a new FatJet
-  XlFatJet *xlFatJet = fXlFatJets->AddNew();
-  // XlFatJet *xlFatJet = fXlFatJets->Allocate();
-  // new (xlFatJet) XlFatJet(*fatJet);
+  XlFatJet *xlFatJet = fXlFatJets->Allocate();
+  new (xlFatJet) XlFatJet(*fatJet);
 if (fDebugFlag == 2) return;
   // Prepare and store QG tagging info
   float qgValue = -1.;
@@ -339,14 +338,17 @@ if (fDebugFlag == 5) {
   			fprintf(stderr,"Finished ECF calculation in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
   		}
   }
+  
+  if (fDoQjets) {
+    // Compute Q-jets volatility
+    std::vector<fastjet::PseudoJet> constits;
+    GetJetConstituents(fjJet, constits, 0.01);
+    double QJetVol = GetQjetVolatility(constits, 25, fCounter*25);
+    fCounter++;
+    constits.clear();
+    xlFatJet->SetQJetVol(QJetVol);
+  }
 
-  // Compute Q-jets volatility
-  std::vector<fastjet::PseudoJet> constits;
-  GetJetConstituents(fjJet, constits, 0.01);
-  double QJetVol = GetQjetVolatility(constits, 25, fCounter*25);
-  fCounter++;
-  constits.clear();
-  xlFatJet->SetQJetVol(QJetVol);
 if (fDebugFlag == 6) {
   if (fjOutJets.size()>0) fjClustering->delete_self_when_unused();
   delete fjClustering;
@@ -601,15 +603,13 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
   int nFailed = 0;
   for(unsigned int ii = 0 ; ii < (unsigned int) QJetsN ; ii++){
     qjet_plugin.SetRandSeed(seed+ii); // new feature in Qjets to set the random seed
-    fastjet::ClusterSequence *qjet_seq =
-      new fastjet::ClusterSequence(constits, qjet_def);
+    fastjet::ClusterSequence qjet_seq(constits, qjet_def);
 
     if (!qjet_plugin.succeeded()) {
-      delete qjet_seq; // inclusive_jets() not run yet, so no need to call delete_self_when_unused()
       return -(seed+ii);  // this will be the error value for when too many jets are left unmerged...needs more investigation
     }
 
-    vector<fastjet::PseudoJet> inclusive_jets2 = sorted_by_pt(qjet_seq->inclusive_jets(10.0));
+    vector<fastjet::PseudoJet> inclusive_jets2 = sorted_by_pt(qjet_seq.inclusive_jets(10.0));
     // skip failed recombinations (with no output jets)
     if (inclusive_jets2.size() == 0) {
       nFailed++;
@@ -624,18 +624,12 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
       }
     }
     if (nFailed*5 > QJetsN) {
-      if (inclusive_jets2.size() > 0)
-        qjet_seq->delete_self_when_unused();
-      delete qjet_seq;
       // if more than a fifth of the iterations fail, let's just give up
       return -1;
     }
 
     qjetmasses.push_back( inclusive_jets2[0].m() );
     // memory cleanup
-    if (inclusive_jets2.size() > 0)
-      qjet_seq->delete_self_when_unused();
-    delete qjet_seq;
   }
 
   // find RMS of a vector
