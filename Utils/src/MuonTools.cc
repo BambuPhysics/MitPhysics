@@ -611,7 +611,7 @@ mithep::MuonTools::PassPFIso(Muon const* mu, EMuIsoType type, PFCandidateCol con
 
   case kPFIsoBetaPUCorrected:
     // pfCandidates here should be NoPileupCandidates
-    return IsolationTools::BetaMwithPUCorrection(pfCandidates, pileupCands, mu, 0.4) < mu->Pt() * 0.2;
+    return IsolationTools::BetaMwithPUCorrection(pfCandidates, pileupCands, mu, 0.4) < mu->Pt() * 0.40;
 
   case kPFIsoBetaPUCorrectedTight:
     // pfCandidates here should be NoPileupCandidates
@@ -840,10 +840,10 @@ MuonTools::PassD0Cut(Muon const*, Double_t d0, EMuIdType idType)
   case kMuonPOG2012CutBasedIdTight:
   case kMVAID_BDTG_IDIso:
   case kTight:
-    return d0 < 0.2;
+    return d0 < 0.02;
     break;
   default:
-    return d0 < 0.3;
+    return kTRUE;
     break;
   }
 }
@@ -879,14 +879,12 @@ MuonTools::PassDZCut(Muon const*, Double_t dz, EMuIdType idType)
 {
   switch (idType) {
   case kMuonPOG2012CutBasedIdTight:
-  case kTight:
-    return dz < 0.5;
-
   case kMVAID_BDTG_IDIso:
+  case kTight:
     return dz < 0.1;
 
   default:
-    return dz < 20.;
+    return kTRUE;
   }
 }
 
