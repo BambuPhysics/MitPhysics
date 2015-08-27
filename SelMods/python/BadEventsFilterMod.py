@@ -1,7 +1,7 @@
-from MitAna.TreeMod.bambu import mithep
+from MitAna.TreeMod.bambu import mithep, analysis
 
 badEventsFilterMod = mithep.BadEventsFilterMod('BadEventsFilterMod',
     EEBadScFilter = True,
     CSCTightHaloFilter = True,
-    HBHENoiseFilter = False
+    HBHENoiseFilter = analysis.isRealData
 )
