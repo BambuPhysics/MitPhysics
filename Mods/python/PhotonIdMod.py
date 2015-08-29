@@ -2,8 +2,8 @@ from MitAna.TreeMod.bambu import mithep
 
 photonIdMod = mithep.PhotonIdMod(
     OutputName = 'LoosePhotons',
-    IdType = mithep.PhotonTools.kPhys14Loose,
-    IsoType = mithep.PhotonTools.kPhys14LooseIso,
+    IdType = mithep.PhotonTools.kSummer15Loose,
+    IsoType = mithep.PhotonTools.kSummer15LooseIso,
     PtMin = 15.,
     EtaMax = 2.5
 )

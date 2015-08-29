@@ -76,7 +76,8 @@ namespace mithep {
         kCaloMuon,
         kTrackerBased,
         kGlobalOnly,
-        kPFGlobalorTracker
+        kPFGlobalorTracker,
+	kSoftMuon
       };
 
       enum ESelType { 
@@ -157,8 +158,7 @@ namespace mithep {
       static Bool_t   PassD0Cut(const Muon *mu, Double_t d0, EMuIdType);
       static Bool_t   PassDZCut(const Muon *mu, const VertexCol *vertices, EMuIdType, Int_t iVertex = 0);
       static Bool_t   PassDZCut(const Muon *mu, Double_t dz, EMuIdType);
-      static Bool_t   PassSoftMuonCut(const Muon *mu, const VertexCol *vertices, const Double_t fDZCut = 0.2,
-                                    const Bool_t applyIso = kTRUE);
+      static Bool_t   PassSoftMuonCut(const Muon *mu, const VertexCol *vertices, const Bool_t applyIso = kTRUE);
       static Double_t MuonEffectiveArea(EMuonEffectiveAreaType type, Double_t Eta, 
                                         EMuonEffectiveAreaTarget EffectiveAreaTarget = kMuEAData2011);
       // added 2015:
@@ -170,7 +170,7 @@ namespace mithep {
                                   PFCandidateCol const* pileupCands = 0,
                                   ElectronCol const* = 0,
                                   MuonCol const* = 0);
-      static Bool_t     PassClass(Muon const*, EMuClassType classType);
+      static Bool_t     PassClass(Muon const*, EMuClassType classType, const VertexCol *vertices);
       static void       MuonPtEta(Muon const*, EMuClassType classType, Double_t& pt, Double_t& absEta);
 
       static Bool_t   LoadCaloCompatibilityTemplates(const char *mutemp, const char *pitemp, Bool_t force = kFALSE);

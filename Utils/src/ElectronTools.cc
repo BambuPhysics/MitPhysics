@@ -329,38 +329,39 @@ Bool_t ElectronTools::PassCustomIso(const Electron *ele, EElIsoType isoType)
 Bool_t
 mithep::ElectronTools::PassID(Electron const* ele, EElIdType type)
 {
-  if (type >= kPhys14Veto && type <= kPhys14Tight) {
+  if (type >= kSummer15Veto && type <= kSummer15Fake) {
     double deltaEtaCut, deltaPhiCut, sigmaIetaIetaCut, hOverECut, ooEmooPCut;
     bool isEB = ele->SCluster()->AbsEta() < gkEleEBEtaMax;
 
     switch (type) {
-    case kPhys14Veto:
-      deltaEtaCut      = isEB ? 0.013625 : 0.011932;
-      deltaPhiCut      = isEB ? 0.230374 : 0.255450;
-      sigmaIetaIetaCut = isEB ? 0.011586 : 0.031849;
-      hOverECut        = isEB ? 0.181130 : 0.223870;
-      ooEmooPCut       = isEB ? 0.295751 : 0.155501;
+    case kSummer15Veto:
+      deltaEtaCut      = isEB ? 0.0152 : 0.0113;
+      deltaPhiCut      = isEB ? 0.2160 : 0.2370;
+      sigmaIetaIetaCut = isEB ? 0.0114 : 0.0352;
+      hOverECut        = isEB ? 0.1810 : 0.1160;
+      ooEmooPCut       = isEB ? 0.2070 : 0.1740;
       break;
-    case kPhys14Loose:
-      deltaEtaCut      = isEB ? 0.009277 : 0.009833;
-      deltaPhiCut      = isEB ? 0.094739 : 0.149934;
-      sigmaIetaIetaCut = isEB ? 0.010331 : 0.031838;
-      hOverECut        = isEB ? 0.093068 : 0.115754;
-      ooEmooPCut       = isEB ? 0.189968 : 0.140662;
+    case kSummer15Loose:
+      deltaEtaCut      = isEB ? 0.0105 : 0.00814;
+      deltaPhiCut      = isEB ? 0.1150 : 0.18200;
+      sigmaIetaIetaCut = isEB ? 0.0103 : 0.03010;
+      hOverECut        = isEB ? 0.1040 : 0.08970;
+      ooEmooPCut       = isEB ? 0.1020 : 0.12600;
       break;
-    case kPhys14Medium:
-      deltaEtaCut      = isEB ? 0.008925 : 0.007429;
-      deltaPhiCut      = isEB ? 0.035973 : 0.067879;
-      sigmaIetaIetaCut = isEB ? 0.009996 : 0.030135;
-      hOverECut        = isEB ? 0.050537 : 0.086782;
-      ooEmooPCut       = isEB ? 0.091942 : 0.100683;
+    case kSummer15Fake:
+    case kSummer15Medium:
+      deltaEtaCut      = isEB ? 0.0103 : 0.00733;
+      deltaPhiCut      = isEB ? 0.0336 : 0.11400;
+      sigmaIetaIetaCut = isEB ? 0.0101 : 0.02830;
+      hOverECut        = isEB ? 0.0876 : 0.06780;
+      ooEmooPCut       = isEB ? 0.0174 : 0.08980;
       break;
-    case kPhys14Tight:
-      deltaEtaCut      = isEB ? 0.006046 : 0.007057;
-      deltaPhiCut      = isEB ? 0.028092 : 0.030159;
-      sigmaIetaIetaCut = isEB ? 0.009947 : 0.028237;
-      hOverECut        = isEB ? 0.045772 : 0.067778;
-      ooEmooPCut       = isEB ? 0.020118 : 0.098919;
+    case kSummer15Tight:
+      deltaEtaCut      = isEB ? 0.00926 : 0.00724;
+      deltaPhiCut      = isEB ? 0.03360 : 0.09180;
+      sigmaIetaIetaCut = isEB ? 0.01010 : 0.02790;
+      hOverECut        = isEB ? 0.05970 : 0.06150;
+      ooEmooPCut       = isEB ? 0.01200 : 0.00999;
       break;
     default:
       break;
@@ -448,22 +449,24 @@ mithep::ElectronTools::PassIsoRhoCorr(Electron const* ele, EElIsoType isoType, D
   case kPFIso_HggLeptonTag2012HCP:
     return IsolationTools::PFElectronIsolation2012LepTag(ele, vertex, pfCandidates, rho, kEleEAData2012, 0, 0, 0.3) < 0.15;
 
-  case kPhys14VetoIso:
-  case kPhys14LooseIso:
-  case kPhys14MediumIso:
-  case kPhys14TightIso:
+  case kSummer15VetoIso:
+  case kSummer15LooseIso:
+  case kSummer15MediumIso:
+  case kSummer15TightIso:
+  case kSummer15FakeIso:
     {
-      double relIso = IsolationTools::PFElectronIsolationRhoCorr(ele, rho, kEleEAPhys14) / ele->Pt();
-      if (isoType == kPhys14VetoIso)
-        return relIso < (isEB ? 0.158721 : 0.177032);
-      else if (isoType == kPhys14LooseIso)
-        return relIso < (isEB ? 0.130136 : 0.163368);
-      else if (isoType == kPhys14MediumIso)
-        return relIso < (isEB ? 0.107587 : 0.113254);
+      double relIso = IsolationTools::PFElectronIsolationRhoCorr(ele, rho, kEleEASummer15) / ele->Pt();
+      if (isoType == kSummer15VetoIso)
+        return relIso < (isEB ? 0.1260 : 0.1440);
+      else if (isoType == kSummer15LooseIso)
+        return relIso < (isEB ? 0.0893 : 0.1210);
+      else if (isoType == kSummer15MediumIso)
+        return relIso < (isEB ? 0.0766 : 0.0678);
+      else if (isoType == kSummer15FakeIso)
+        return relIso < (isEB ? 0.3500 : 0.3500);
       else
-        return relIso < (isEB ? 0.069537 : 0.078265);
+        return relIso < (isEB ? 0.0354 : 0.0646);
     }
-
   default:
     return false;
   }
@@ -594,17 +597,21 @@ mithep::ElectronTools::PassNExpectedHits(Electron const* ele, EElIdType idType, 
   int maxMissing = 0;
 
   switch (idType) {
-  case kPhys14Veto:
+  case kSummer15Veto:
     if (ele->SCluster()->AbsEta() < gkEleEBEtaMax)
       maxMissing = 2;
     else
       maxMissing = 3;
     break;
     
-  case kPhys14Loose:
-  case kPhys14Medium:
-  case kPhys14Tight:
-    maxMissing = 1;
+  case kSummer15Loose:
+  case kSummer15Medium:
+  case kSummer15Tight:
+  case kSummer15Fake:
+    if (ele->SCluster()->AbsEta() < gkEleEBEtaMax)
+      maxMissing = 2;
+    else
+      maxMissing = 1;
     break;
 
   default:
@@ -665,17 +672,20 @@ mithep::ElectronTools::PassD0Cut(const Electron *ele, Double_t d0, EElIdType idT
   bool isEB = ele->SCluster()->AbsEta() < gkEleEBEtaMax;
 
   switch (idType) {
-  case kPhys14Veto:
-    return d0 < (isEB ? 0.094095 : 0.342293);
+  case kSummer15Veto:
+    return d0 < (isEB ? 0.0564 : 0.2220);
 
-  case kPhys14Loose:
-    return d0 < (isEB ? 0.035904 : 0.099266);
+  case kSummer15Loose:
+    return d0 < (isEB ? 0.0261 : 0.1180);
 
-  case kPhys14Medium:
-    return d0 < (isEB ? 0.012235 : 0.036719);
+  case kSummer15Medium:
+    return d0 < (isEB ? 0.0118 : 0.0739);
 
-  case kPhys14Tight:
-    return d0 < (isEB ? 0.008790 : 0.027984);
+  case kSummer15Fake:
+    return d0 < (isEB ? 0.1000 : 0.2000);
+
+  case kSummer15Tight:
+    return d0 < (isEB ? 0.0111 : 0.0351);
 
   default:
     return d0 < 0.02;
@@ -711,17 +721,18 @@ mithep::ElectronTools::PassDZCut(const Electron *ele, Double_t dz, EElIdType idT
   bool isEB = ele->SCluster()->AbsEta() < gkEleEBEtaMax;
 
   switch (idType) {
-  case kPhys14Veto:
-    return dz < (isEB ? 0.713070 : 0.953461);
+  case kSummer15Veto:
+    return dz < (isEB ? 0.472 : 0.921);
 
-  case kPhys14Loose:
-    return dz < (isEB ? 0.075496 : 0.197897);
+  case kSummer15Loose:
+    return dz < (isEB ? 0.410 : 0.822);
 
-  case kPhys14Medium:
-    return dz < (isEB ? 0.042020 : 0.138142);
+  case kSummer15Medium:
+  case kSummer15Fake:
+    return dz < (isEB ? 0.373 : 0.602);
 
-  case kPhys14Tight:
-    return dz < (isEB ? 0.021226 : 0.133431);
+  case kSummer15Tight:
+    return dz < (isEB ? 0.0466 : 0.417);
 
   default:
     return dz < 0.1;
@@ -1393,7 +1404,6 @@ mithep::ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Do
 
   double etaBinning1[] = {0., 1., gkEleEBEtaMax, 2., 2.2, 2.3, 2.4, std::numeric_limits<double>::max()};
   double etaBinning2[] = {0., 1., gkEleEBEtaMax, 2., 2.2, 2.25, 2.5, std::numeric_limits<double>::max()};
-  double etaBinning3[] = {0., 0.8, 1.3, 2., 2.2, 2.5, std::numeric_limits<double>::max()};
 
   double* etaBinning = etaBinning1;
   std::vector<double> areas;
@@ -1574,12 +1584,12 @@ mithep::ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Do
     }
     break;
 
-  case kEleEAPhys14:
-    etaBinning = etaBinning3;
+  case kEleEASummer15:
+    etaBinning = etaBinning1;
 
     switch (type) {
     case kEleNeutralIso03:
-      areas = {0.1013, 0.0988, 0.0572, 0.0842, 0.1530, 0.};
+      areas = {0.1752, 0.1862, 0.1411, 0.1534, 0.1903, 0.2243, 0.2687};
       break;
     default:
       return 0.;
@@ -1634,6 +1644,7 @@ mithep::ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Do
   unsigned etaBin = 0;
   while (absEta >= etaBinning[etaBin + 1])
     ++etaBin;
+
   return areas.at(etaBin);
 }
 
