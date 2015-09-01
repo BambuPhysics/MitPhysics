@@ -52,10 +52,11 @@ namespace mithep {
       kHggLeptonTagId2012HCP,
       kMVAID_BDTG_IDHWW2012TrigV0,
       kMVAID_BDTG_IDIsoCombinedHWW2012TrigV4,
-      kPhys14Veto,
-      kPhys14Loose,
-      kPhys14Medium,
-      kPhys14Tight
+      kSummer15Veto,
+      kSummer15Loose,
+      kSummer15Medium,
+      kSummer15Tight,
+      kSummer15Fake
     };
 
     enum EElIsoType {
@@ -87,10 +88,11 @@ namespace mithep {
       kPFIso_HggLeptonTag2012,
       kPFIso_HggLeptonTag2012HCP,
       kMVAIso_BDTG_IDIsoCombinedHWW2012TrigV4,
-      kPhys14VetoIso,
-      kPhys14LooseIso,
-      kPhys14MediumIso,
-      kPhys14TightIso
+      kSummer15VetoIso,
+      kSummer15LooseIso,
+      kSummer15MediumIso,
+      kSummer15TightIso,
+      kSummer15FakeIso
     };
 
     enum EElectronIsoVar {
@@ -138,7 +140,7 @@ namespace mithep {
       kEleEAData2012,
       kEleEASummer11MC,
       kEleEAFall11MC,
-      kEleEAPhys14
+      kEleEASummer15
     };
 
     static Bool_t       PassChargeFilter(const Electron *el);

@@ -57,20 +57,20 @@ mithep::PhotonTools::PhotonEffectiveArea(EPhotonEffectiveAreaType type, Double_t
 Bool_t
 mithep::PhotonTools::PassID(Photon const* pho, EPhIdType type)
 {
-  if (type == kPhys14Tight || type == kPhys14Medium || type == kPhys14Loose) {
+  if (type == kSummer15Tight || type == kSummer15Medium || type == kSummer15Loose) {
     double hOverECut, sigmaIEtaIEtaCut;
     bool isEB = pho->SCluster()->AbsEta() < gkPhoEBEtaMax;
 
     switch (type) {
-    case kPhys14Loose:
+    case kSummer15Loose:
       hOverECut        = isEB ? 0.028  : 0.093;
       sigmaIEtaIEtaCut = isEB ? 0.0107 : 0.0272;
       break;
-    case kPhys14Medium:
+    case kSummer15Medium:
       hOverECut        = isEB ? 0.012  : 0.023;
       sigmaIEtaIEtaCut = isEB ? 0.0100 : 0.0267;
       break;
-    case kPhys14Tight:
+    case kSummer15Tight:
       hOverECut        = isEB ? 0.010  : 0.015;
       sigmaIEtaIEtaCut = isEB ? 0.0100 : 0.0265;
       break;
@@ -127,7 +127,7 @@ mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Doubl
   double nhEA = 0.;
   double phEA = 0.;
 
-  if (isoType == kPhys14TightIso || isoType == kPhys14MediumIso || isoType == kPhys14LooseIso) {
+  if (isoType == kSummer15TightIso || isoType == kSummer15MediumIso || isoType == kSummer15LooseIso) {
     chEA = PhotonEffectiveArea(kPhoChargedHadron03, scEta, kPhoEAPhys14);
     nhEA = PhotonEffectiveArea(kPhoNeutralHadron03, scEta, kPhoEAPhys14);
     phEA = PhotonEffectiveArea(kPhoPhoton03, scEta, kPhoEAPhys14);
@@ -138,17 +138,17 @@ mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Doubl
   double phIsoCut = 0.;
 
   switch (isoType){
-  case kPhys14LooseIso:
+  case kSummer15LooseIso:
     chIsoCut = isEB ? 2.67 : 1.79;
     nhIsoCut = isEB ? (7.23 + TMath::Exp(0.0028 * pEt + 0.5408)) : (8.89 + 0.01725 * pEt);
     phIsoCut = isEB ? (2.11 + 0.0014 * pEt) : (3.09 + 0.0091 * pEt);
     break;
-  case kPhys14MediumIso:
+  case kSummer15MediumIso:
     chIsoCut = isEB ? 1.79 : 1.09;
     nhIsoCut = isEB ? (0.16 + TMath::Exp(0.0028 * pEt + 0.5408)) : (4.31 + 0.0172 * pEt);
     phIsoCut = isEB ? (1.90 + 0.0014 * pEt) : (1.90 + 0.0091 * pEt);
     break;
-  case kPhys14TightIso:
+  case kSummer15TightIso:
     chIsoCut = isEB ? 1.66 : 1.04;
     nhIsoCut = isEB ? (0.14 + TMath::Exp(0.0028 * pEt + 0.5408)) : (3.89 + 0.0172 * pEt);
     phIsoCut = isEB ? (1.40 + 0.0014 * pEt) : (1.40 + 0.0091 * pEt);

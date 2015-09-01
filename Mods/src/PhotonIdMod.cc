@@ -80,9 +80,9 @@ Bool_t
 mithep::PhotonIdMod::PassIdCut(Photon const& pho)
 {
   switch (fIdType) {
-  case PhotonTools::kPhys14Tight:
-  case PhotonTools::kPhys14Medium:
-  case PhotonTools::kPhys14Loose:
+  case PhotonTools::kSummer15Tight:
+  case PhotonTools::kSummer15Medium:
+  case PhotonTools::kSummer15Loose:
     return PhotonTools::PassID(&pho, PhotonTools::EPhIdType(fIdType));
 
   default:
@@ -95,9 +95,9 @@ Bool_t
 mithep::PhotonIdMod::PassIsolationCut(Photon const& pho)
 {
   switch (fIsoType) {
-  case PhotonTools::kPhys14LooseIso:
-  case PhotonTools::kPhys14MediumIso:
-  case PhotonTools::kPhys14TightIso:
+  case PhotonTools::kSummer15LooseIso:
+  case PhotonTools::kSummer15MediumIso:
+  case PhotonTools::kSummer15TightIso:
     return PhotonTools::PassIsoFootprintRhoCorr(&pho, PhotonTools::EPhIsoType(fIsoType),
                                                 GetVertices()->At(0), GetPFCandidates(),
                                                 GetPileupEnergyDensity()->At(0)->Rho(fRhoAlgo));
