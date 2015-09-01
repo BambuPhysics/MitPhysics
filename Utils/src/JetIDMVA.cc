@@ -199,7 +199,7 @@ JetIDMVA::pass(const PFJet *iJet, const Vertex *iVertex, const VertexCol *iVerti
   if (lEta > 4.99)
     return false;
 
-  if(!JetTools::passPFLooseId(iJet))
+  if(!JetTools::passPFId(iJet, JetTools::kPFLoose))
     return false;
 
   double lPt = iJet->Pt(); // use corrected Pt
@@ -251,7 +251,7 @@ JetIDMVA::MVAValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is th
   if (iJet->Corrections() != fgCorrectionMask)
     throw std::runtime_error("JetIDMVA works only with L1+L2+L3 corrected jets");
 
-  if (!JetTools::passPFLooseId(iJet))
+  if (!JetTools::passPFId(iJet, JetTools::kPFLoose))
     return -2.;
 
   //set all input variables
@@ -309,7 +309,7 @@ JetIDMVA::QGValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is the
     std::cout << "Error: JetIDMVA not properly initialized.\n";
     return lId;
   }
-  if (!JetTools::passPFLooseId(iJet))
+  if (!JetTools::passPFId(iJet, JetTools::kPFLoose))
     return lId;
 
   fVariables[kJetPt]       = iJet->Pt();

@@ -1,5 +1,4 @@
 #include "MitPhysics/Mods/interface/JetIdMod.h"
-#include "MitPhysics/Utils/interface/JetTools.h"
 #include "MitPhysics/Utils/interface/JetIDMVA.h"
 #include "MitAna/DataTree/interface/CaloJet.h"
 #include "MitAna/DataTree/interface/PFJet.h"
@@ -43,7 +42,7 @@ mithep::JetIdMod::IdBegin()
   xaxis->SetBinLabel(cNeutralHFrac + 1, "neutralHadronFraction");
   xaxis->SetBinLabel(cChargedEMFrac + 1, "chargedEMFraction");
   xaxis->SetBinLabel(cNeutralEMFrac + 1, "neutralEMFraction");
-  xaxis->SetBinLabel(cPFLooseId + 1, "PFLooseId");
+  xaxis->SetBinLabel(cPFId + 1, "PFId");
   xaxis->SetBinLabel(cBeta + 1, "Beta");
   xaxis->SetBinLabel(cMVA + 1, "MVA");
 }
@@ -104,9 +103,9 @@ mithep::JetIdMod::IsGood(mithep::Jet const& jet)
       return false;
     fCutFlow->Fill(cNeutralEMFrac);
 
-    if (fApplyPFLooseId && !JetTools::passPFLooseId(pfJet))
+    if (fPFId != JetTools::nPFIdWorkingPoints && !JetTools::passPFId(pfJet, JetTools::PFIdWorkingPoint(fPFId)))
       return false;
-    fCutFlow->Fill(cPFLooseId);
+    fCutFlow->Fill(cPFId);
 
     if (fApplyBetaCut && !JetTools::PassBetaVertexAssociationCut(pfJet, GetVertices()->At(0), GetVertices(), 0.2))
       return false;

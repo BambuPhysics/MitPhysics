@@ -4,7 +4,7 @@ import os
 jetIdMod = mithep.JetIdMod(
     InputName = mithep.ModNames.gkCorrectedJetsName,
     OutputName = 'GoodJets',
-    ApplyPFLooseId = True,
+    PFId = mithep.JetTools.kPFLoose,
     MVATrainingSet = mithep.JetIDMVA.k53BDTCHSFullPlusRMS, # set to mithep.JetIDMVA.nMVATrainingTypes to turn off MVA
     MVACutWP = mithep.JetIDMVA.kLoose,
     MVAWeightsFile = os.environ['MIT_DATA'] + '/TMVAClassification_5x_BDT_chsFullPlusRMS.weights.xml',

@@ -21,6 +21,13 @@ namespace mithep {
 
   class JetTools {
   public:
+    enum PFIdWorkingPoint {
+      kPFLoose,
+      kPFTight,
+      kPFTightLepVeto,
+      nPFIdWorkingPoints
+    };
+
     JetTools();
     virtual ~JetTools();
     
@@ -55,7 +62,7 @@ namespace mithep {
     static Double_t           frac(const PFJet *iJet,Double_t iDRMax,Double_t iDRMin,Int_t iPFType);
     static Double_t           betaStar(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVertices,
 				       Double_t iDZCut=0.2);
-    static Bool_t             passPFLooseId(const PFJet *iJet);
+    static Bool_t             passPFId(const PFJet *iJet, PFIdWorkingPoint);
     static double             W(const PFJet *iJet,int iPFType,int iType);
     ClassDef(JetTools, 1)
   };
