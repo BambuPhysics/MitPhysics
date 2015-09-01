@@ -89,6 +89,7 @@ namespace mithep
       void SetDoQjets(Bool_t b)            { fDoQjets = b; }
       void SetNMaxMicrojets(unsigned int n)         { fNMaxMicrojets = n; }
       void SetDebugFlag(int i)   { fDebugFlag = i; }
+      void SetSDInputCard(const char *s)   { fInputCard = s;  }          
     protected:
       void Process();
       void SlaveBegin();
@@ -170,7 +171,8 @@ namespace mithep
       Deconstruction::TopGluonModel *fSignal;
       Deconstruction::BackgroundModel *fBackground;
       Deconstruction::ISRModel *fISR; 
-      
+      TString fInputCard;
+
       UInt_t fProcessNJets;
 
       Bool_t fDoShowerDeconstruction;

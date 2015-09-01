@@ -50,10 +50,12 @@ FatJetExtenderMod::FatJetExtenderMod(const char *name, const char *title) :
   fTrimPtFrac (0.05),
   fConeSize (0.8),
   fDeconstruct(0),
+  fInputCard(""),
   fProcessNJets (4),
   fDoShowerDeconstruction(kFALSE),
   fBeVerbose(kFALSE),
   fDoECF(kFALSE),
+  fDoQjets(kFALSE),
   fNMaxMicrojets(5)
 {
   // Constructor.
@@ -62,49 +64,6 @@ FatJetExtenderMod::FatJetExtenderMod(const char *name, const char *title) :
 
 FatJetExtenderMod::~FatJetExtenderMod()
 {
-  // Destructor
-  if (fXlSubJets){
-    for(int i=0; i<XlSubJet::nSubJetTypes; ++i) {
-      if (fSubJetFlags & (1<<i))
-        delete fXlSubJets[i];
-    }
-  }
-
-  if (fXlFatJets)
-    delete fXlFatJets;
-
-  if (fPruner)
-    delete fPruner;
-  if (fFilterer)
-    delete fFilterer;
-  if (fTrimmer)
-    delete fTrimmer ;
-  if (fCMSTopTagger)
-    delete fCMSTopTagger;
-  if (fCAJetDef)
-    delete fCAJetDef;
-
-  if (fActiveArea)
-    delete fActiveArea;
-  if (fAreaDefinition)
-    delete fAreaDefinition;
-
-  if (fQGTagger)
-    delete fQGTagger;
-
-  if (fDeconstruct)
-    delete fDeconstruct;
-  if (fParam)
-    delete fParam;
-  if (fSignal)
-    delete fSignal;
-  if (fBackground)
-    delete fBackground;
-  if (fISR)
-    delete fISR;
-
-  if (fStopwatch)
-    delete fStopwatch;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -212,9 +171,12 @@ void FatJetExtenderMod::SlaveBegin()
   fQGTagger = new QGTagger(fQGTaggerCHS);
 
   // set up shower deconstruction stuff
-  TString inputCard = Utils::GetEnv("MIT_DATA");
-  inputCard += TString::Format("/SDAlgorithm/input_card_%i.dat",int(fConeSize*10));
-  fParam = new AnalysisParameters(inputCard.Data());
+  if (fInputCard=="") {
+    // default was never changed
+    fInputCard = Utils::GetEnv("MIT_DATA");
+    fInputCard += TString::Format("/SDAlgorithm/input_card_%i.dat",int(fConeSize*10));
+  }
+  fParam = new AnalysisParameters(fInputCard.Data());
   fSignal = new Deconstruction::TopGluonModel(*fParam);
   fBackground = new Deconstruction::BackgroundModel(*fParam);
   fISR = new Deconstruction::ISRModel(*fParam);
@@ -228,6 +190,55 @@ void FatJetExtenderMod::SlaveBegin()
 //--------------------------------------------------------------------------------------------------
 void FatJetExtenderMod::SlaveTerminate()
 {
+  RetractObj(fXlFatJets->GetName());
+  for(int i=0; i<XlSubJet::nSubJetTypes; ++i) {
+    if (fSubJetFlags & (1<<i))
+      RetractObj(fXlSubJets[i]->GetName());
+  }
+
+  // Destructor
+  if (fXlSubJets){
+    for(int i=0; i<XlSubJet::nSubJetTypes; ++i) {
+      if (fSubJetFlags & (1<<i))
+        delete fXlSubJets[i];
+    }
+  }
+
+  if (fXlFatJets)
+    delete fXlFatJets;
+
+  if (fPruner)
+    delete fPruner;
+  if (fFilterer)
+    delete fFilterer;
+  if (fTrimmer)
+    delete fTrimmer ;
+  if (fCMSTopTagger)
+    delete fCMSTopTagger;
+  if (fCAJetDef)
+    delete fCAJetDef;
+
+  if (fActiveArea)
+    delete fActiveArea;
+  if (fAreaDefinition)
+    delete fAreaDefinition;
+
+  if (fQGTagger)
+    delete fQGTagger;
+
+  if (fDeconstruct)
+    delete fDeconstruct;
+  if (fParam)
+    delete fParam;
+  if (fSignal)
+    delete fSignal;
+  if (fBackground)
+    delete fBackground;
+  if (fISR)
+    delete fISR;
+
+  if (fStopwatch)
+    delete fStopwatch;
 }
 
 //--------------------------------------------------------------------------------------------------
