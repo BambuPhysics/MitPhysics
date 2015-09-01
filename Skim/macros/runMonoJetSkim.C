@@ -188,8 +188,8 @@ void runMonoJetSkim(const char *fileset    = "0000",
   vetoEleIdMod->SetPtMin(10.);  
   vetoEleIdMod->SetEtaMax(2.4);
   vetoEleIdMod->SetApplyEcalFiducial(true);
-  vetoEleIdMod->SetIdType(mithep::ElectronTools::kPhys14Veto);
-  vetoEleIdMod->SetIsoType(mithep::ElectronTools::kPhys14VetoIso);
+  vetoEleIdMod->SetIdType(mithep::ElectronTools::kSummer15Veto);
+  vetoEleIdMod->SetIsoType(mithep::ElectronTools::kSummer15VetoIso);
   vetoEleIdMod->SetConversionsName("Conversions");
   vetoEleIdMod->SetApplyConversionFilterType1(kTRUE);
   vetoEleIdMod->SetApplyConversionFilterType2(kFALSE);
@@ -205,8 +205,8 @@ void runMonoJetSkim(const char *fileset    = "0000",
   eleIdMod->SetPtMin(20.);
   eleIdMod->SetEtaMax(2.4);
   eleIdMod->SetApplyEcalFiducial(true);
-  eleIdMod->SetIdType(mithep::ElectronTools::kPhys14Medium);
-  eleIdMod->SetIsoType(mithep::ElectronTools::kPhys14MediumIso);
+  eleIdMod->SetIdType(mithep::ElectronTools::kSummer15Medium);
+  eleIdMod->SetIsoType(mithep::ElectronTools::kSummer15MediumIso);
   eleIdMod->SetConversionsName("Conversions");
   eleIdMod->SetApplyConversionFilterType1(kTRUE);
   eleIdMod->SetApplyConversionFilterType2(kFALSE);
@@ -225,8 +225,8 @@ void runMonoJetSkim(const char *fileset    = "0000",
   PhotonIdMod *vetoPhotonIdMod = new PhotonIdMod("VetoPhotonId");
   vetoPhotonIdMod->SetPtMin(15.);
   vetoPhotonIdMod->SetOutputName("VetoPhotons");
-  vetoPhotonIdMod->SetIdType(mithep::PhotonTools::kPhys14Loose);
-  vetoPhotonIdMod->SetIsoType(mithep::PhotonTools::kPhys14LooseIso);
+  vetoPhotonIdMod->SetIdType(mithep::PhotonTools::kSummer15Loose);
+  vetoPhotonIdMod->SetIsoType(mithep::PhotonTools::kSummer15LooseIso);
   vetoPhotonIdMod->SetApplyElectronVeto(kTRUE);
 
   modules.push_back(vetoPhotonIdMod);
@@ -235,8 +235,8 @@ void runMonoJetSkim(const char *fileset    = "0000",
   photonIdMod->SetInputName(vetoPhotonIdMod->GetOutputName());
   photonIdMod->SetPtMin(minMet);
   photonIdMod->SetOutputName("GoodPhotons");
-  photonIdMod->SetIdType(mithep::PhotonTools::kPhys14Medium);
-  photonIdMod->SetIsoType(mithep::PhotonTools::kPhys14MediumIso);
+  photonIdMod->SetIdType(mithep::PhotonTools::kSummer15Medium);
+  photonIdMod->SetIsoType(mithep::PhotonTools::kSummer15MediumIso);
   photonIdMod->SetApplyElectronVeto(kTRUE);
   photonIdMod->SetIsFilterMode(kFALSE);
 

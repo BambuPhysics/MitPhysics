@@ -650,7 +650,7 @@ Double_t IsolationTools::PFElectronIsolation2012LepTag(const Electron *ele, cons
 Double_t
 mithep::IsolationTools::PFElectronIsolationRhoCorr(mithep::Electron const* ele, Double_t rho, ElectronTools::EElectronEffectiveAreaTarget eaDef)
 {
-  double effArea = ElectronTools::ElectronEffectiveArea(ElectronTools::kEleNeutralIso03, ele->SCluster()->Eta(), ElectronTools::kEleEAPhys14);
+  double effArea = ElectronTools::ElectronEffectiveArea(ElectronTools::kEleNeutralIso03, ele->SCluster()->Eta(), ElectronTools::kEleEASummer15);
 
   double isolation = ele->PFNeutralHadronIso() + ele->PFPhotonIso() - effArea * rho;
   if (isolation < 0.) isolation = 0.;

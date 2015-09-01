@@ -404,7 +404,7 @@ Double_t MuonTools::GetSegmentCompatibility(const mithep::Muon *iMuon)
 
 //--------------------------------------------------------------------------------------------------
 Bool_t
-mithep::MuonTools::PassClass(const Muon *mu, EMuClassType classType)
+mithep::MuonTools::PassClass(const Muon *mu, EMuClassType classType, const VertexCol *vertices)
 {
   switch (classType) {
   case kAll:
@@ -441,6 +441,9 @@ mithep::MuonTools::PassClass(const Muon *mu, EMuClassType classType)
 
   case kPFGlobalorTracker:
     return mu->IsPFMuon() && (mu->HasGlobalTrk() || mu->IsTrackerMuon());
+
+  case kSoftMuon:
+    return PassSoftMuonCut(mu, vertices, kTRUE);
 
   default:
     break;
@@ -842,6 +845,9 @@ MuonTools::PassD0Cut(Muon const*, Double_t d0, EMuIdType idType)
   case kTight:
     return d0 < 0.02;
     break;
+  case kLoose:
+    return d0 < 0.20;
+    break;
   default:
     return kTRUE;
     break;
@@ -882,15 +888,18 @@ MuonTools::PassDZCut(Muon const*, Double_t dz, EMuIdType idType)
   case kMVAID_BDTG_IDIso:
   case kTight:
     return dz < 0.1;
-
+    break;
+  case kLoose:
+    return dz < 0.2;
+    break;
   default:
     return kTRUE;
+    break;
   }
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t MuonTools::PassSoftMuonCut(const Muon *mu, const VertexCol *vertices, const Double_t,
-                                  const Bool_t applyIso) 
+Bool_t MuonTools::PassSoftMuonCut(const Muon *mu, const VertexCol *vertices, const Bool_t applyIso) 
 {
   if(mu->Pt() <= 3.0) return kFALSE;
 
@@ -900,14 +909,14 @@ Bool_t MuonTools::PassSoftMuonCut(const Muon *mu, const VertexCol *vertices, con
 
   if(mu->NTrkLayersHit() <= 5) return kFALSE;
 
-  if(!PassD0Cut(mu, vertices, kMuonPOG2012CutBasedIdTight, 0)) return kFALSE;
+  if(!PassD0Cut(mu, vertices, kLoose, 0)) return kFALSE;
 
-  if(!PassDZCut(mu, vertices, kMuonPOG2012CutBasedIdTight, 0)) return kFALSE;
+  if(!PassDZCut(mu, vertices, kLoose, 0)) return kFALSE;
 
   if(applyIso == kTRUE){
     Double_t totalIso = 1.0 * mu->IsoR03SumPt() + 
-      1.0 * mu->IsoR03EmEt() + 
-      1.0 * mu->IsoR03HadEt();
+                        1.0 * mu->IsoR03EmEt() + 
+                        1.0 * mu->IsoR03HadEt();
     if (totalIso < (mu->Pt()*0.10) && mu->Pt() > 20.0) return kFALSE;
   }
 

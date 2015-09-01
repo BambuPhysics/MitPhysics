@@ -203,21 +203,22 @@ JetIDMVA::pass(const PFJet *iJet, const Vertex *iVertex, const VertexCol *iVerti
     return false;
 
   double lPt = iJet->Pt(); // use corrected Pt
-  int lPtId = 0;
-  if (lPt > 10. && lPt < 20.)
-    lPtId = 1;
-  else if (lPt < 30.)
-    lPtId = 2;
-  else
-    lPtId = 3;
 
-  int lEtaId = 0;
-  if (lEta > 2.5 && lEta < 2.75)
+  int lPtId = 3;
+  if (lPt <= 10.)
+    lPtId = 0;
+  else if (lPt <= 20.)
+    lPtId = 1;
+  else if (lPt <= 30.)
+    lPtId = 2;
+
+  int lEtaId = 3;
+  if (lEta <= 2.5)
+    lEtaId = 0;
+  else if (lEta <= 2.75)
     lEtaId = 1;
-  else if (lEta < 3.)
+  else if (lEta <= 3.)
     lEtaId = 2;
-  else
-    lEtaId = 3;
 
   if (fType == kCut) {
     float betaStarModified = JetTools::betaStarClassic(iJet,iVertex,iVertices)/log(iVertices ->GetEntries()-0.64);

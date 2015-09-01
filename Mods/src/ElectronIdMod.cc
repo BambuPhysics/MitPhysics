@@ -234,10 +234,11 @@ mithep::ElectronIdMod::PassIdCut(Electron const& ele)
   case ElectronTools::kVBTFWorkingPoint70Id:
     return ElectronTools::PassCustomID(&ele, ElectronTools::EElIdType(fIdType));
 
-  case ElectronTools::kPhys14Veto:
-  case ElectronTools::kPhys14Loose:
-  case ElectronTools::kPhys14Medium:
-  case ElectronTools::kPhys14Tight:
+  case ElectronTools::kSummer15Veto:
+  case ElectronTools::kSummer15Loose:
+  case ElectronTools::kSummer15Medium:
+  case ElectronTools::kSummer15Tight:
+  case ElectronTools::kSummer15Fake:
     return ElectronTools::PassID(&ele, ElectronTools::EElIdType(fIdType));
 
   default:
@@ -275,10 +276,11 @@ mithep::ElectronIdMod::PassIsolationCut(Electron const& ele)
   case ElectronTools::kVBTFWorkingPoint70CombinedIso:
     return ElectronTools::PassCustomIso(&ele, ElectronTools::EElIsoType(fIsoType));
 
-  case ElectronTools::kPhys14VetoIso:
-  case ElectronTools::kPhys14LooseIso:
-  case ElectronTools::kPhys14MediumIso:
-  case ElectronTools::kPhys14TightIso:
+  case ElectronTools::kSummer15VetoIso:
+  case ElectronTools::kSummer15LooseIso:
+  case ElectronTools::kSummer15MediumIso:
+  case ElectronTools::kSummer15TightIso:
+  case ElectronTools::kSummer15FakeIso:
     return ElectronTools::PassIsoRhoCorr(&ele, ElectronTools::EElIsoType(fIsoType),
                                          GetPileupEnergyDensity()->At(0)->Rho(fRhoAlgo));
 
