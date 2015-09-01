@@ -23,6 +23,7 @@
 #include "MitPhysics/Mods/interface/MuonIDModRun1.h"
 #include "MitPhysics/Mods/interface/PDFProducerMod.h"
 #include "MitPhysics/Mods/interface/PartonFlavorHistoryMod.h"
+#include "MitPhysics/Mods/interface/PuppiJetMod.h"
 #include "MitPhysics/Mods/interface/PhotonCleaningMod.h"
 #include "MitPhysics/Mods/interface/PhotonIdMod.h"
 #include "MitPhysics/Mods/interface/PhotonIDModRun1.h"
@@ -87,6 +88,8 @@
 #pragma link C++ class mithep::PhotonTreeWriterDiphotonEvent+;
 #pragma link C++ class mithep::PhotonTreeWriterVtx+;
 #pragma link C++ class mithep::PuppiMod+;
+#pragma link C++ class mithep::PuppiPFJetMod+;
+#pragma link C++ class mithep::PuppiFatJetMod+;
 #pragma link C++ class mithep::PFTauCleaningMod+;
 #pragma link C++ class mithep::TauIDMod+;
 #pragma link C++ class mithep::TauCleaningMod+;
