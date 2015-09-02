@@ -5,12 +5,29 @@
 ClassImp(mithep::BadEventsFilterMod)
 
 void
+mithep::BadEventsFilterMod::SlaveBegin()
+{
+  if (GetFillHist()) {
+    AddTH1(hCounter, "hMETFilterCounter", "Number of events flagged bad", nEvtSelFilters, 0., double(nEvtSelFilters));
+  }
+}
+
+void
 mithep::BadEventsFilterMod::Process()
 {
   auto* evtSelData = GetObject<mithep::EvtSelData>(fEvtSelDataName);
   if (!evtSelData) {
     SendError(kWarning, "Process", "EvtSelData " + fEvtSelDataName + " not found.");
     return;
+  }
+
+  if (GetFillHist()) {
+    Int_t w = evtSelData->metFiltersWord();
+    for (unsigned iF = 0; iF != nEvtSelFilters; ++iF) {
+      if ((w & 1) == 0)
+        hCounter->Fill(iF + 0.5);
+      w >>= 1;
+    }
   }
 
   if ((fBitMask & evtSelData->metFiltersWord()) != fBitMask)
