@@ -124,7 +124,258 @@ namespace mithep
 typedef PuppiJetMod<FatJet> PuppiFatJetMod;
 typedef PuppiJetMod<PFJet>  PuppiPFJetMod;
 
-#include "MitPhysics/Mods/src/PuppiJetMod.icc"
+
+//--------------------------------------------------------------------------------------------------
+template<typename JETTYPE> PuppiJetMod<JETTYPE>::PuppiJetMod(const char *name, const char *title) :
+  BaseMod (name,title),
+  fIsData (kFALSE),
+  fPublishOutput (kTRUE),
+  fPFCandidatesName ("PuppiParticles"),
+  fPFCandidates (0),
+  fJetsName ("PuppiJets"),
+  fR0(0.4),
+  fDoMatching(kFALSE),
+  fMatchingJetsName(""),
+  fMatchingJets(0),
+  fProcessNJets (4),
+  fJetAlgorithm(kAntiKT)
+{
+  // Constructor.
+
+}
+
+template<typename JETTYPE> PuppiJetMod<JETTYPE>::~PuppiJetMod()
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+template<typename JETTYPE> void PuppiJetMod<JETTYPE>::Process()
+{
+  if (fBeVerbose) fStopwatch->Start(kTRUE);
+
+  // make sure the out collections are empty before starting
+  fJets->Delete();
+  
+  fPFCandidates = GetObject<PFCandidateCol>(fPFCandidatesName);
+  if (fDoMatching)
+    fMatchingJets = GetObject<Collection<Jet>>(fMatchingJetsName);
+  
+  int nPFCandidates = fPFCandidates->GetEntries();
+  std::vector<fastjet::PseudoJet> inPseudoJets;
+
+  // Loop over PFCandidates and unmark them : necessary for skimming
+  // Convert PFCandidates into fastjet::PseudoJets
+  for (int iC=0; iC!=nPFCandidates; ++iC) {
+    const PFCandidate *pfCand = fPFCandidates->At((unsigned int)iC);
+    pfCand->UnmarkMe();
+    fastjet::PseudoJet newPseudoJet(pfCand->Px(),pfCand->Py(),pfCand->Pz(),pfCand->E());
+    newPseudoJet.set_user_index(iC);
+    inPseudoJets.push_back(newPseudoJet);
+  }
+  // cluster puppi jets
+  fastjet::ClusterSequenceArea fjClustering (inPseudoJets,*fJetDef,*fAreaDefinition);
+  std::vector<fastjet::PseudoJet> baseJets = sorted_by_pt(fjClustering.inclusive_jets(0.));
+
+  unsigned int nClusteredJets = baseJets.size();
+  for (unsigned int iJ=0; iJ!=nClusteredJets; ++iJ) {
+    // convert from pseudojets to Bambu jets
+    if (iJ>fProcessNJets)
+      break;
+    fastjet::PseudoJet baseJet = baseJets[iJ];
+    JETTYPE *newJet = fJets->AddNew();
+    newJet->SetRawPtEtaPhiM(baseJet.pt(),baseJet.eta(),baseJet.phi(),baseJet.m());
+    std::vector<fastjet::PseudoJet> baseConstituents = baseJet.constituents();
+
+    // add PFCandidates to the jet and keep track of energy fractions
+    const PFCandidate *pfCand = 0;
+    float chargedEMEnergy=0;
+    float chargedHadEnergy=0;
+    float neutralEMEnergy=0;
+    float neutralHadEnergy=0;
+    float muonEnergy=0;
+    int chargedMult=0;
+    int neutralMult=0;
+    int muonMult=0;
+    for (fastjet::PseudoJet &constituent : baseConstituents) {
+      if (constituent.user_index()<0) 
+        continue; // ghost particle
+      pfCand = fPFCandidates->At((unsigned int)constituent.user_index());
+      newJet->AddPFCand(pfCand);
+      switch (pfCand->PFType()) {
+        case PFCandidate::eHadron:
+          chargedHadEnergy+=pfCand->E();
+          ++chargedMult;
+          break;
+        case PFCandidate::eElectron:
+          chargedEMEnergy+=pfCand->E();
+          ++chargedMult;
+          break;
+        case PFCandidate::eMuon:
+          muonEnergy+=pfCand->E();
+          ++muonMult;
+          break;
+        case PFCandidate::eGamma:
+        case PFCandidate::eEGammaHF:
+          neutralEMEnergy+=pfCand->E();
+          ++neutralMult;
+          break;
+        case PFCandidate::eNeutralHadron:
+        case PFCandidate::eHadronHF:
+          neutralHadEnergy+=pfCand->E();
+          ++neutralMult;
+          break;
+        default:
+          break;
+      }
+    }
+    newJet->SetChargedEmEnergy(chargedEMEnergy);
+    newJet->SetChargedHadronEnergy(chargedHadEnergy);
+    newJet->SetNeutralEmEnergy(neutralEMEnergy);
+    newJet->SetNeutralHadronEnergy(neutralHadEnergy);
+    newJet->SetChargedMuEnergy(muonEnergy);
+    newJet->SetChargedMultiplicity(chargedMult);
+    newJet->SetNeutralMultiplicity(neutralMult);
+    newJet->SetMuonMultiplicity(muonMult);
+
+    if (fDoMatching) {
+      assert(fMatchingJets!=NULL);
+      RunMatching(newJet);
+    }
+  }
+
+  fJets->Trim();
+
+  if (fBeVerbose) fStopwatch->Stop();
+  return;
+}
+
+
+template <typename JETTYPE> void PuppiJetMod<JETTYPE>::RunMatching(PFJet *newJet) {
+  // dR matches a new jet with an existing collection
+  const PFJet *matchedJet = 0;
+  float bestDR2 = 999;
+  for (unsigned int iJ=0; iJ!=fMatchingJets->GetEntries(); ++iJ) {
+    // do dR Matching
+    const PFJet *tmpJet = dynamic_cast<const PFJet*>(fMatchingJets->At(iJ));
+    float dR2 = MathUtils::DeltaR2<const PFJet, PFJet>(tmpJet,newJet);
+    if (dR2<bestDR2) {
+      matchedJet = tmpJet;
+      bestDR2 = dR2;
+    }
+  }
+  if (matchedJet==NULL) {
+    Info("Process","Warning, could not match Puppi jet to a PF jet");
+    return;
+  }
+
+  // copy btags
+  for (unsigned int iBtag=0; iBtag!=(unsigned int)Jet::nBTagAlgos; ++iBtag) {
+    newJet->SetBJetTagsDisc(matchedJet->BJetTagsDisc(iBtag),iBtag);
+  }
+  return;
+}
+
+
+template<typename JETTYPE> void PuppiJetMod<JETTYPE>::RunMatching(FatJet *newJet) {
+  // dR matches a new jet with an existing collection
+  const FatJet *matchedJet = 0;
+  float bestDR2 = 999;
+  for (unsigned int iJ=0; iJ!=fMatchingJets->GetEntries(); ++iJ) {
+    // do dR Matching
+    const FatJet *tmpJet = dynamic_cast<const FatJet*>(fMatchingJets->At(iJ));
+    float dR2 = MathUtils::DeltaR2<const FatJet, FatJet>(tmpJet,newJet);
+    if (dR2<bestDR2) {
+      matchedJet = tmpJet;
+      bestDR2 = dR2;
+    }
+  }
+  if (matchedJet==NULL) {
+    Info("Process","Warning, could not match Puppi jet to a fatjet");
+    return;
+  }
+
+  // copy btags
+  for (unsigned int iBtag=0; iBtag!=(unsigned int)Jet::nBTagAlgos; ++iBtag) {
+    newJet->SetBJetTagsDisc(matchedJet->BJetTagsDisc(iBtag),iBtag);
+  }
+  // copy fatjet b-tagging infos
+  newJet->SetTau1IVF(matchedJet->Tau1IVF());
+  newJet->SetTau2IVF(matchedJet->Tau2IVF());
+  newJet->SetTau3IVF(matchedJet->Tau3IVF());
+  newJet->SetTauDot(matchedJet->tauDot());
+  newJet->SetZRatio(matchedJet->zRatio());
+
+  for (int i=0; i!=3; ++i)  
+    newJet->AddTauIVFAxis(matchedJet->GetTauIVFAxis(i));
+  
+  for (FatJet::TrackData track : matchedJet->GetTrackData()) 
+    newJet->AddTrackData(&track);
+  for (FatJet::SVData sv : matchedJet->GetSVData()) 
+    newJet->AddSVData(&sv);
+  for (FatJet::LeptonData lep : matchedJet->GetElectronData())
+    newJet->AddElectronData(&lep);
+  for (FatJet::LeptonData lep : matchedJet->GetMuonData())
+    newJet->AddMuonData(&lep);
+  
+  for (float sjBtag : matchedJet->GetSubJetBtags())
+    newJet->AddSubJetBtag(sjBtag);
+
+  return;
+}
+
+//--------------------------------------------------------------------------------------------------
+template<typename JETTYPE> void PuppiJetMod<JETTYPE>::SlaveBegin()
+{
+  // Run startup code on the computer (slave) doing the actual analysis.
+    
+  // Create the new output collection
+  fJets = new Array<JETTYPE>(16,fJetsName);
+  
+  // Publish collection for further usage in the analysis
+  if (fPublishOutput)
+    PublishObj(fJets);
+  
+  if (fJetAlgorithm==kCambridgeAachen)
+    fJetDef = new fastjet::JetDefinition(fastjet::cambridge_algorithm, fR0);
+  else if (fJetAlgorithm==kKT)
+    fJetDef = new fastjet::JetDefinition(fastjet::kt_algorithm, fR0);
+  else
+    fJetDef = new fastjet::JetDefinition(fastjet::antikt_algorithm,fR0);
+
+  // Initialize area caculation (done with ghost particles)
+  int activeAreaRepeats = 1;
+  double ghostArea = 0.01;
+  double ghostEtaMax = 7.0;
+  fActiveArea = new fastjet::GhostedAreaSpec(ghostEtaMax,activeAreaRepeats,ghostArea);
+  fAreaDefinition = new fastjet::AreaDefinition(fastjet::active_area_explicit_ghosts,*fActiveArea);
+
+
+  fStopwatch = new TStopwatch();
+
+  return;
+}
+
+//--------------------------------------------------------------------------------------------------
+template<typename JETTYPE> void PuppiJetMod<JETTYPE>::SlaveTerminate()
+{
+  RetractObj(fJets->GetName());
+
+  if (fJets)
+    delete fJets;
+
+  if (fJetDef)
+    delete fJetDef;
+
+  if (fActiveArea)
+    delete fActiveArea;
+  if (fAreaDefinition)
+    delete fAreaDefinition;
+
+  if (fStopwatch)
+    delete fStopwatch;
+}
+
+
 
 }
 
