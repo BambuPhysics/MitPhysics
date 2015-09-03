@@ -61,7 +61,7 @@ namespace mithep
       void SetInputName(const char *n)      { fPFCandidatesName = n;         }
 
       void SetOutputName(const char *n)   { fJetsName = n;    }
-      void SetR0(double d)                { fR0 = d;  }
+      void SetR0(float d)                { fR0 = d; fR0Squared = d*d;  }
       void SetBeVerbose(Bool_t b)          { fBeVerbose = b;  }
       void SetDebugFlag(int i)   { fDebugFlag = i; }
 
@@ -87,6 +87,8 @@ namespace mithep
       void RunMatching(PFJet*);
       void RunMatching(FatJet*);
 
+      Bool_t PassJet(fastjet::PseudoJet&);  // decide if we want to keep a jet before allocating space for it
+
 
     private:
       Bool_t fIsData;                      //is this data or MC?
@@ -99,7 +101,8 @@ namespace mithep
       Array<JETTYPE> *fJets;             //array of jets
 
       // Objects from fastjet we want to use
-      double fR0;                    //fastjet clustering radius
+      float fR0;                    //fastjet clustering radius
+      float fR0Squared;
       fastjet::JetDefinition *fJetDef;   //fastjet clustering definition
       fastjet::GhostedAreaSpec *fActiveArea;
       fastjet::AreaDefinition *fAreaDefinition;
@@ -117,6 +120,7 @@ namespace mithep
       TStopwatch *fStopwatch;
 
       int fDebugFlag = -1;
+      int globalJetCounter=0, globalMatchedJetCounter=0;
 
       ClassDef(PuppiJetMod, 0)         //Puppi jets filler
   };
@@ -134,6 +138,7 @@ template<typename JETTYPE> PuppiJetMod<JETTYPE>::PuppiJetMod(const char *name, c
   fPFCandidates (0),
   fJetsName ("PuppiJets"),
   fR0(0.4),
+  fR0Squared(0.16),
   fDoMatching(kFALSE),
   fMatchingJetsName(""),
   fMatchingJets(0),
@@ -147,6 +152,9 @@ template<typename JETTYPE> PuppiJetMod<JETTYPE>::PuppiJetMod(const char *name, c
 template<typename JETTYPE> PuppiJetMod<JETTYPE>::~PuppiJetMod()
 {
 }
+
+template<> Bool_t PuppiJetMod<FatJet>::PassJet(fastjet::PseudoJet&);
+template<> Bool_t PuppiJetMod<PFJet>::PassJet(fastjet::PseudoJet&);
 
 //--------------------------------------------------------------------------------------------------
 template<typename JETTYPE> void PuppiJetMod<JETTYPE>::Process()
@@ -174,7 +182,7 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::Process()
   }
   // cluster puppi jets
   fastjet::ClusterSequenceArea fjClustering (inPseudoJets,*fJetDef,*fAreaDefinition);
-  std::vector<fastjet::PseudoJet> baseJets = sorted_by_pt(fjClustering.inclusive_jets(0.));
+  std::vector<fastjet::PseudoJet> baseJets = sorted_by_pt(fjClustering.inclusive_jets(10.));
 
   unsigned int nClusteredJets = baseJets.size();
   for (unsigned int iJ=0; iJ!=nClusteredJets; ++iJ) {
@@ -182,6 +190,9 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::Process()
     if (iJ>fProcessNJets)
       break;
     fastjet::PseudoJet baseJet = baseJets[iJ];
+    if (!PassJet(baseJet))
+      continue;
+    ++globalJetCounter;
     JETTYPE *newJet = fJets->AddNew();
     newJet->SetRawPtEtaPhiM(baseJet.pt(),baseJet.eta(),baseJet.phi(),baseJet.m());
     std::vector<fastjet::PseudoJet> baseConstituents = baseJet.constituents();
@@ -258,7 +269,7 @@ template <typename JETTYPE> void PuppiJetMod<JETTYPE>::RunMatching(PFJet *newJet
     // do dR Matching
     const PFJet *tmpJet = dynamic_cast<const PFJet*>(fMatchingJets->At(iJ));
     float dR2 = MathUtils::DeltaR2<const PFJet, PFJet>(tmpJet,newJet);
-    if (dR2<bestDR2) {
+    if (dR2<bestDR2 && dR2<fR0Squared) {
       matchedJet = tmpJet;
       bestDR2 = dR2;
     }
@@ -267,6 +278,8 @@ template <typename JETTYPE> void PuppiJetMod<JETTYPE>::RunMatching(PFJet *newJet
     Info("Process","Warning, could not match Puppi jet to a PF jet");
     return;
   }
+
+  ++globalMatchedJetCounter;
 
   // copy btags
   for (unsigned int iBtag=0; iBtag!=(unsigned int)Jet::nBTagAlgos; ++iBtag) {
@@ -284,7 +297,7 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::RunMatching(FatJet *newJet
     // do dR Matching
     const FatJet *tmpJet = dynamic_cast<const FatJet*>(fMatchingJets->At(iJ));
     float dR2 = MathUtils::DeltaR2<const FatJet, FatJet>(tmpJet,newJet);
-    if (dR2<bestDR2) {
+    if (dR2<bestDR2 && dR2<fR0Squared) {
       matchedJet = tmpJet;
       bestDR2 = dR2;
     }
@@ -293,6 +306,8 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::RunMatching(FatJet *newJet
     Info("Process","Warning, could not match Puppi jet to a fatjet");
     return;
   }
+
+  ++globalMatchedJetCounter;
 
   // copy btags
   for (unsigned int iBtag=0; iBtag!=(unsigned int)Jet::nBTagAlgos; ++iBtag) {
@@ -358,6 +373,8 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::SlaveBegin()
 //--------------------------------------------------------------------------------------------------
 template<typename JETTYPE> void PuppiJetMod<JETTYPE>::SlaveTerminate()
 {
+  Info("SlaveTerminate","Matched %i/%i jets",globalMatchedJetCounter,globalJetCounter); 
+
   RetractObj(fJets->GetName());
 
   if (fJets)
