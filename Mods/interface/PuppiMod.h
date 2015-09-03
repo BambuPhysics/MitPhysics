@@ -26,10 +26,12 @@ namespace mithep
       const char   *GetVertexesName()              const     { return fVertexesName;           }
       const char   *GetInputName()                 const     { return fPFCandidatesName;       }   
       const char   *GetOutputName()                const     { return fPuppiParticlesName;     }
+      const char   *GetInvertedName()              const     { return fInvertedParticlesName;  }
       void SetEtaConfigName( const char *name )              { fEtaConfigName = name;          }
       void SetVertexesName( const char *name )               { fVertexesName = name;           }
       void SetInputName( const char *name )                  { fPFCandidatesName = name;       }
       void SetOutputName( const char *name )                 { fPuppiParticlesName = name;     }
+      void SetInvertedName( const char *name )               { fInvertedParticlesName = name;  }
 
       void SetRMin( Double_t RMin )                          { fRMin = RMin;                   }
       void SetR0( Double_t R0 )                              { fR0 = R0;                       }
@@ -51,6 +53,7 @@ namespace mithep
       void SetApplyLowPUCorr( Bool_t apply )                 { fApplyLowPUCorr = apply;        }
       void SetUseEtaForAlgo( Bool_t use )                    { fUseEtaForAlgo = use;           }
       void SetEtaForAlgo( Double_t eta )                     { fEtaForAlgo = eta;              }
+      void SetBothPVandPU( Bool_t both )                     { fBothPVandPU = both;            }
       void SetDump( Bool_t dump )                            { fDumpingPuppi = dump;           }
 
     protected:
@@ -73,6 +76,7 @@ namespace mithep
       TString               fVertexesName;           // Name of vertices collection used for PV
       TString               fPFCandidatesName;       // Name of PFCandidate collection (input)
       TString               fPuppiParticlesName;     // Name of Puppi Particle collection (output)
+      TString               fInvertedParticlesName;  // Name of Inverted Puppi Particle collection (output) if putting out both
 
       PFCandidateArr       *fPuppiParticles;         // The output collection for publishing
 
@@ -96,6 +100,7 @@ namespace mithep
       Bool_t   fApplyLowPUCorr;                      // This will cause a correction when lots of PV particles fall below median
       Bool_t   fUseEtaForAlgo;                       // Determines if you use eta cut or PFType to determine algorithm use
       Double_t fEtaForAlgo;                          // Eta cut to switch algorithms, if you want it
+      Bool_t   fBothPVandPU;                         // Bool set to output PUPPI and inverted PUPPI
       Bool_t   fDumpingPuppi;                        // If this is true, we dump particle information and weights
 
       // These are parameters that are functions of Eta hopefully we can be more clever some day
