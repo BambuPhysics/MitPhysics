@@ -11,6 +11,7 @@
 #define MITPHYSICS_SELMODS_BADEVENTSFILTERMOD_H
 
 #include "MitAna/TreeMod/interface/BaseMod.h"
+#include "TH1D.h"
 
 namespace mithep {
 
@@ -49,12 +50,15 @@ namespace mithep {
     void SetCSCLooseHaloFilter(Bool_t b = kTRUE) { SetMask(kCSCLooseHaloFilter, b); }
 
   protected:
+    void SlaveBegin() override;
     void Process() override;
 
     void SetMask(EvtSelFilter, Bool_t);
 
     TString fEvtSelDataName{"EvtSelData"};
     Int_t fBitMask{0};
+
+    TH1D* hCounter{0};
 
     ClassDef(BadEventsFilterMod, 0)
   };
