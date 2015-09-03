@@ -56,6 +56,7 @@ FatJetExtenderMod::FatJetExtenderMod(const char *name, const char *title) :
   fBeVerbose(kFALSE),
   fDoECF(kFALSE),
   fDoQjets(kFALSE),
+  fDoIota (kTRUE),
   fNMaxMicrojets(5)
 {
   // Constructor.
@@ -329,6 +330,13 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   			fprintf(stderr,"Finished ECF calculation in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
   		}
   }
+
+  if (fDoIota) {
+    ComputeIotas(xlFatJet);
+    if (fBeVerbose) {
+        fprintf(stderr,"Finished iota calculation in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
+    } 
+  }
   
   if (fDoQjets) {
     // Compute Q-jets volatility
@@ -338,11 +346,11 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
     fCounter++;
     constits.clear();
     xlFatJet->SetQJetVol(QJetVol);
-  }
 
     if (fBeVerbose) {
-			fprintf(stderr,"Finished Qjets in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
-		}
+      fprintf(stderr,"Finished Qjets in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
+    }
+  }
 
   // do grooming and subjetting
   double thisJEC = xlFatJet->Pt()/xlFatJet->RawMom().Pt();
@@ -374,9 +382,9 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   xlFatJet->SetMassFiltered(MassFiltered*thisJEC);
   xlFatJet->SetMassTrimmed(MassTrimmed*thisJEC);
 
-    if (fBeVerbose) {
-			fprintf(stderr,"Finished grooming in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
-		}
+  if (fBeVerbose) {
+		fprintf(stderr,"Finished grooming in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
+	}
 
   // do CMS and HEP top tagging
   std::vector<fastjet::PseudoJet> lOutJets = sorted_by_pt(fjClustering.inclusive_jets(0.0));
@@ -384,9 +392,9 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   HEPTopTagger hepTopJet = HEPTopTagger(fjClustering,iJet);;
   fastjet::PseudoJet cmsTopJet = fCMSTopTagger->result(iJet);
 
-    if (fBeVerbose) {
-			fprintf(stderr,"Finished CMSTT and HEPTT in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
-		}
+  if (fBeVerbose) {
+		fprintf(stderr,"Finished CMSTT and HEPTT in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
+	}
 
   // fill subjets
   Bool_t computedPullAngle = kFALSE;
@@ -418,15 +426,16 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
       FillXlSubJets(fjSubjets,xlFatJet,XlSubJet::kHEPTT);
     }
   }
-    if (fBeVerbose) {
-			fprintf(stderr,"Finished filling subjets in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
-		}
+
+  if (fBeVerbose) {
+		fprintf(stderr,"Finished filling subjets in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
+	}
 
   // take a shower
   if (fDoShowerDeconstruction) {
       // shower deconstruction
       double microconesize;
-      if  (fMicrojetR0<0){
+      if  (fMicrojetConeSize<0){
         // From Tobias:
         // 0..500   -> 0.3
         // 500..700 -> 0.2
@@ -438,7 +447,7 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
         else
          	 microconesize=0.1;
       } else {
-        microconesize = fMicrojetR0;
+        microconesize = fMicrojetConeSize;
       }
       fastjet::JetDefinition reclustering(fastjet::JetAlgorithm::kt_algorithm, microconesize);
       fastjet::ClusterSequence * cs_micro = new fastjet::ClusterSequence(fjParts, reclustering);
@@ -490,6 +499,22 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
 
   return;
 }
+
+void FatJetExtenderMod::ComputeIotas(XlFatJet *xlFatJet) {
+  std::vector<float> iotas;
+  for (int i=0; i<5; ++i) 
+    iotas.push_back(0);
+  for (unsigned int iPF=0; iPF!=fPFCandidates->GetEntries(); ++iPF) {
+    const PFCandidate *pfCand = fPFCandidates->At(iPF);
+    float dR = MathUtils::DeltaR<XlFatJet,const PFCandidate>(xlFatJet,pfCand);
+    if (dR>fConeSize && (dR-fConeSize)<0.5) {
+      iotas[(int)((dR-fConeSize)*10)]+=pfCand->Pt();
+    }
+  }
+  for (float iota : iotas)
+    xlFatJet->AddIota(iota);
+}
+
 
 //--------------------------------------------------------------------------------------------------
 
