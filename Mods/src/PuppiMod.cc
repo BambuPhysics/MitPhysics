@@ -132,6 +132,12 @@ PuppiMod::SlaveBegin()
   fPuppiParticles->SetName(fPuppiParticlesName);
   PublishObj(fPuppiParticles);
 
+  if (fBothPVandPU) {
+    fInvertedParticles = new PFCandidateArr(16);
+    fInvertedParticles->SetName(fInvertedParticlesName);
+    PublishObj(fInvertedParticles);
+  }
+
   Info("SlaveBegin", "Reading PUPPI config file " + fEtaConfigName);
 
   std::ifstream configFile;
@@ -177,6 +183,10 @@ PuppiMod::SlaveTerminate()
   RetractObj(fPuppiParticles->GetName());
   delete fPuppiParticles;
   delete fMapper;
+  if (fBothPVandPU) {
+    RetractObj(fInvertedParticles->GetName());
+    delete fInvertedParticles;
+  }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -190,32 +200,20 @@ PuppiMod::Process()
 
   auto* pv = vertexes->At(0);
 
-  PFCandidateArr *InvertedParticles = new PFCandidateArr;
-  InvertedParticles->SetName(fInvertedParticlesName);
-
   auto* inPfCandidates = GetObject<PFCandidateCol>(fPFCandidatesName);
   PFCandidateCol* pfCandidates = NULL;
-  PFCandidateArr* leptonCandidates = NULL;
+  PFCandidateOArr leptonCandidates;
+  PFCandidateOArr tempCandidates;
 
   if (fNoLepton) {                                                                              // This is the default behavior of Puppi
-    leptonCandidates = new PFCandidateArr(16);
-    PFCandidateArr* tempCandidates = new PFCandidateArr(16);
-
     for (UInt_t iCand = 0; iCand < inPfCandidates->GetEntries(); iCand++) { 
       auto* cand = inPfCandidates->At(iCand);
-      if (cand->PFType() != PFCandidate::eMuon && cand->PFType() != PFCandidate::eElectron) {   // Take out leptons
-        PFCandidate *tempParticle = tempCandidates->Allocate();
-        new (tempParticle) PFCandidate(*cand);
-      }
-      else {
-        PFCandidate *tempParticle = leptonCandidates->Allocate();                               // Store them to add back at the end
-        new (tempParticle) PFCandidate(*cand);
-      }
+      if (cand->PFType() != PFCandidate::eMuon && cand->PFType() != PFCandidate::eElectron)     // Take out leptons
+        tempCandidates.Add(cand);
+      else
+        leptonCandidates.Add(cand);                                                             // Store them to add back at the end
     }
-
-    tempCandidates->Trim();
-    leptonCandidates->Trim();
-    pfCandidates = tempCandidates;
+    pfCandidates = &tempCandidates;
   }
   else
     pfCandidates = inPfCandidates;
@@ -389,6 +387,8 @@ PuppiMod::Process()
   }
 
   fPuppiParticles->Delete();
+  if (fBothPVandPU)
+    fInvertedParticles->Delete();
 
   for (UInt_t iCand = 0; iCand < numCandidates; iCand++) {
     auto* cand = pfCandidates->At(iCand);
@@ -423,7 +423,7 @@ PuppiMod::Process()
        (cand->Pt() * weight < fMinNeutralPts[etaBin] + fMinNeutralPtSlopes[etaBin] * (vertexes->GetEntries())))
       weight = 0;                                                                   //   set weight to zero
 
-    if (fInvert || !fBothPVandPU)
+    if (fInvert && !fBothPVandPU)
       weight = 1.0 - weight;                                                        // Invert the weight here if asked for 
 
     if (weight != 0 || fKeepPileup) {
@@ -484,7 +484,7 @@ PuppiMod::Process()
       weight = 1.0 - weight;
       if (weight == 0)
         continue;
-      PFCandidate *PuppiParticle = InvertedParticles->Allocate();
+      PFCandidate *PuppiParticle = fInvertedParticles->Allocate();
       new (PuppiParticle) PFCandidate(*pfCandidates->At(iCand));
       if (weight < 1)                                                    // Weight the particle if required
         PuppiParticle->SetPtEtaPhiM(PuppiParticle->Pt() * weight,PuppiParticle->Eta(),
@@ -492,33 +492,28 @@ PuppiMod::Process()
     }
   }
 
-  if (fNoLepton) {                                                    // If no leptons were used, add them back in
-    for (UInt_t iLepton = 0; iLepton < leptonCandidates->GetEntries(); iLepton++) {
-      auto* cand = leptonCandidates->At(iLepton);
+  if (fNoLepton) {                                                     // If no leptons were used, add them back in
+    for (UInt_t iLepton = 0; iLepton < leptonCandidates.GetEntries(); iLepton++) {
+      auto* cand = leptonCandidates.At(iLepton);
       if (GetParticleType(cand, pv) != kChargedPU) {                   // From PV, simply add with weight 1
         PFCandidate *PuppiParticle = fPuppiParticles->Allocate();
         new (PuppiParticle) PFCandidate(*cand);
       }
       else if (fBothPVandPU) {                                         // If PU, but using Inverted Puppi, add to inverted
-        PFCandidate *PuppiParticle = InvertedParticles->Allocate();
+        PFCandidate *PuppiParticle = fInvertedParticles->Allocate();
         new (PuppiParticle) PFCandidate(*cand);
       }
       else if (fKeepPileup) {                                          // If keeping pileup, just add with weight 0
         PFCandidate *PuppiParticle = fPuppiParticles->Allocate();
         new (PuppiParticle) PFCandidate(*cand);
-        Double_t weight = 0;
-        PuppiParticle->SetPtEtaPhiM(PuppiParticle->Pt() * weight,PuppiParticle->Eta(),
-                                    PuppiParticle->Phi(),PuppiParticle->Mass() * weight);
+        PuppiParticle->SetPtEtaPhiM(0,PuppiParticle->Eta(),
+                                    PuppiParticle->Phi(),0);
       }
     }
   }
 
-  if (fBothPVandPU) {
-    InvertedParticles->Trim();
-    AddObjThisEvt(InvertedParticles);
-  }
-  else
-    delete InvertedParticles;
+  if (fBothPVandPU)
+    fInvertedParticles->Trim();
   
   fPuppiParticles->Trim();
 }

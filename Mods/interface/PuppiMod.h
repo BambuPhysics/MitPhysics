@@ -79,6 +79,7 @@ namespace mithep
       TString               fInvertedParticlesName;  // Name of Inverted Puppi Particle collection (output) if putting out both
 
       PFCandidateArr       *fPuppiParticles;         // The output collection for publishing
+      PFCandidateArr       *fInvertedParticles;      // The inverted output, if asking for both
 
       Double_t fRMin;                                // Minimum dR cut for summing up surrounding particles
       Double_t fR0;                                  // Maximum dR cut for summing up surrounding particles
