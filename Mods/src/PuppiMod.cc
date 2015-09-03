@@ -32,6 +32,7 @@ PuppiMod::PuppiMod(const char *name, const char *title) :
   fMinWeightCut(0.01),
   fRMSScaleFactor(1.0),
   fTrackUncertainty(1.0),
+  fNoLepton(kTRUE),
   fKeepPileup(kFALSE),
   fInvert(kFALSE),
   fApplyCHS(kTRUE),
@@ -75,14 +76,14 @@ PuppiMod::GetParticleType(const PFCandidate *cand, Vertex const* pv) const
       checkD0 = cand->GsfTrk()->D0Corrected(*pv);
     }
     if (fabs(checkDZ) < fDZCut && checkD0 < fD0Cut)
-      return kChargedPrimary;  // This is charged PV particle
+      return kChargedPrimary;    // This is charged PV particle
     else
-      return kChargedPU;       // This is charged PU particle
+      return kChargedPU;         // This is charged PU particle
   }
   else if (pfType != PFCandidate::eHadronHF && pfType != PFCandidate::eEGammaHF)
-    return kNeutralCentral;    // This is neutral particle in the center
+    return kNeutralCentral;      // This is neutral particle in the center
   else
-    return kNeutralForward;    // This is neutral particle in the forward region
+    return kNeutralForward;      // This is neutral particle in the forward region
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -93,7 +94,7 @@ PuppiMod::GetEtaBin(const PFCandidate *cand) const
   Double_t checkEta = cand->AbsEta();
   for (UInt_t iEtaBin = 0; iEtaBin < fNumEtaBins; iEtaBin++) {
     if (checkEta < fMaxEtas[iEtaBin]) {
-      etaBin = iEtaBin;                            // This relies on putting the eta bins
+      etaBin = iEtaBin;                       // This relies on putting the eta bins
       break;                                  //   in increasing order
     }
   }
@@ -186,7 +187,31 @@ PuppiMod::Process()
 
   auto* pv = vertexes->At(0);
 
-  auto* pfCandidates = GetObject<PFCandidateCol>(fPFCandidatesName);
+  auto* inPfCandidates = GetObject<PFCandidateCol>(fPFCandidatesName);
+  PFCandidateCol* pfCandidates = NULL;
+  PFCandidateArr* leptonCandidates = NULL;
+
+  if (fNoLeptons) {                                                                         // This is the default behavior of Puppi
+    PFCandidateArr* tempCandidates = new PFCandidateArr(16);
+
+    for (UInt_t iCand = 0; iCand < inPfCandidates->GetEntries(); iCand++) { 
+      auto* cand = pfCandidates->At(iCand);
+      if (cand->pfType != PFCandidate::eMuon && cand->pfType != PFCandidate::eElectron) {   // Take out leptons
+        PFCandidate *tempParticle = tempCandidates->Allocate();
+        new (tempParticle) PFCandidate(*cand);
+      }
+      else {
+        PFCandidate *tempParticle = leptonCandidates->Allocate();                           // Store them to add back at the end
+        new (tempParticle) PFCandidate(*cand);
+      }
+    }
+
+    tempCandiates->Trim();
+    leptonCandidates->Trim();
+    pfCandidates = tempCandidates;
+  }
+  else
+    pfCandidates = inPfCandidates;
 
   if (fDumpingPuppi) {
     std::cout << "Primary Vertex location: " << pv->Position().x() << ", ";
@@ -197,10 +222,10 @@ PuppiMod::Process()
   fMapper->InitEvent(*pfCandidates);
 
   UInt_t numCandidates = pfCandidates->GetEntries();
-  std::vector<Double_t> alphaF(numCandidates, 0.);                             // This is alpha(F) of all particles for particle i
-  std::vector<Double_t> alphaC(numCandidates, 0.);                             // This is alpha(C) of charged PV for particle i
-  std::vector<UInt_t> numFCHPUis0(fNumEtaBins, 0);                             // Number of alphas to ignore when finding the median for each
-  std::vector<UInt_t> numCCHPUis0(fNumEtaBins, 0);                             //   eta bin
+  std::vector<Double_t> alphaF(numCandidates, 0.);                       // This is alpha(F) of all particles for particle i
+  std::vector<Double_t> alphaC(numCandidates, 0.);                       // This is alpha(C) of charged PV for particle i
+  std::vector<UInt_t> numFCHPUis0(fNumEtaBins, 0);                       // Number of alphas to ignore when finding the median for each
+  std::vector<UInt_t> numCCHPUis0(fNumEtaBins, 0);                       //   eta bin
   std::vector<std::vector<Double_t>> alphaFCHPU(fNumEtaBins);            // This is alphaF for charged PU particles for eta bin
   std::vector<std::vector<Double_t>> alphaCCHPU(fNumEtaBins);            // This is alphaC for charged PU particles for eta bin
   std::vector<std::vector<Double_t>> alphaFCHPV(fNumEtaBins);            // This is alphaF for charged PV particles for eta bin
@@ -213,29 +238,30 @@ PuppiMod::Process()
     if (etaBin < 0)
       continue;
     if (iCandidate->Pt() < fMinPts[etaBin])
-      continue;                                               // if not meeting Pt cut, say it's PU
+      continue;                                                          // if not meeting Pt cut, say it's PU
 
     // Determine if the PFCandidate is charged PU. This will help characterize neutral PU.
     ParticleType iParticleType = GetParticleType(iCandidate, pv);
+
     // Mapper is getting nearby PFCandidates
     std::vector<UInt_t> nearList(fMapper->GetSurrounding(iCand));
     for (UInt_t iNeighbor : nearList) {
       if (iCand == iNeighbor)
-        continue;                                             // Don't bother comparing a particle to itself
+        continue;                                                        // Don't bother comparing a particle to itself
 
       const PFCandidate *jCandidate = pfCandidates->At(iNeighbor);
       Double_t dRTemp = MathUtils::DeltaR(iCandidate,jCandidate);
       if (dRTemp > fRMin && dRTemp < fR0) {                                          // Only look at other particles in this range
         ParticleType jParticleType = GetParticleType(jCandidate, pv);
         Double_t theAddition = (pow(jCandidate->Pt(),fAlpha))/(pow(dRTemp,fBeta));   // This is the thing we have to add inside the log
-        alphaF[iCand] += theAddition;                                       // First do the sum inside the log (alphaF)
-        if (jParticleType == kChargedPrimary)                                                      // if the particle is charged PV
-          alphaC[iCand] += theAddition;                                     //   add to alphaC
+        alphaF[iCand] += theAddition;                                                // First do the sum inside the log (alphaF)
+        if (jParticleType == kChargedPrimary)                                        // if the particle is charged PV
+          alphaC[iCand] += theAddition;                                              //   add to alphaC
       }
     }
-
+    
     if (alphaF[iCand] == 0)
-      alphaF[iCand] = -100;                                                             // Take the logs and ignore sum == 0 particles
+      alphaF[iCand] = -100;                                                        // Take the logs and ignore sum == 0 particles
     else
       alphaF[iCand] = TMath::Log(alphaF[iCand]);
 
@@ -244,14 +270,14 @@ PuppiMod::Process()
     else
       alphaC[iCand] = TMath::Log(alphaC[iCand]);
 
-    if (iParticleType == kChargedPU) {                                       // if charged PU, we might store it in the proper eta bin
+    if (iParticleType == kChargedPU) {                                  // if charged PU, we might store it in the proper eta bin
       Double_t checkEta = fabs(iCandidate->Eta());
       for (UInt_t iEtaBin = 0; iEtaBin < fNumEtaBins; iEtaBin++) {
         if (checkEta > fEtaMaxExtraps[iEtaBin])
-          continue;                                                 // if outside the binning that we are interested in, don't use CHPU
+          continue;                                                     // if outside the binning that we are interested in, don't use CHPU
 
         if (alphaF[iCand] <= 0)
-          numFCHPUis0[iEtaBin]++;                                        // Count particles to ignore when taking the median
+          numFCHPUis0[iEtaBin]++;                                       // Count particles to ignore when taking the median
 
         if (alphaC[iCand] <= 0)
           numCCHPUis0[iEtaBin]++;
@@ -260,11 +286,11 @@ PuppiMod::Process()
         alphaCCHPU[iEtaBin].push_back(alphaC[iCand]);
       }
     }
-    else if (iParticleType == kChargedPrimary && fApplyLowPUCorr) {               // if charged PV, and trying to correct
+    else if (iParticleType == kChargedPrimary && fApplyLowPUCorr) {     // if charged PV, and trying to correct
       Double_t checkEta = fabs(iCandidate->Eta());
       for (UInt_t iEtaBin = 0; iEtaBin < fNumEtaBins; iEtaBin++) {
         if (checkEta > fEtaMaxExtraps[iEtaBin])
-          continue;                                                 // if outside the binning that we are interested in, don't use CHPV
+          continue;                                                     // if outside the binning that we are interested in, don't use CHPV
 
         alphaFCHPV[iEtaBin].push_back(alphaF[iCand]);                   // Only intializing particles up to the number of charged PV
         alphaCCHPV[iEtaBin].push_back(alphaC[iCand]);
@@ -447,6 +473,16 @@ PuppiMod::Process()
     if (weight < 1)                                                    // Weight the particle if required
       PuppiParticle->SetPtEtaPhiM(PuppiParticle->Pt()*(weight),PuppiParticle->Eta(),
                                   PuppiParticle->Phi(),PuppiParticle->Mass()*(weight));
+  }
+
+  if (fNoLeptons) {                                                    // If no leptons were used, add them back in
+    for (UInt_t iLepton = 0; iLepton < leptonCandidates->GetEntries(); iLepton++) {
+      auto* cand = leptonCandidates->At(iLepton);
+      if (GetParticleType(cand, pv) != kChargedPU) {
+        PFCandidate *PuppiParticle = fPuppiParticles->Allocate();
+        new (PuppiParticle) PFCandidate(*cand);
+      }
+    }
   }
 
   fPuppiParticles->Trim();

@@ -44,6 +44,7 @@ namespace mithep
       void SetRMSScaleFactor( Double_t fact )                { fRMSScaleFactor = fact;         }
       void SetTrackUncertainty( Double_t sig )               { fTrackUncertainty = sig;        }
 
+      void SetNoLepton( Bool_t nolep )                       { fNoLepton = nolep;              }
       void SetKeepPileup( Bool_t keep )                      { fKeepPileup = keep;             }
       void SetInvert( Bool_t invert )                        { fInvert = invert;               }
       void SetApplyCHS( Bool_t apply )                       { fApplyCHS = apply;              }
@@ -88,6 +89,7 @@ namespace mithep
       Double_t fRMSScaleFactor;                      // A scale factor for RMS
       Double_t fTrackUncertainty;                    // The experimental uncertainty in the track fit to vertex distance
 
+      Bool_t   fNoLepton;                            // If set as true, don't use leptons in Puppi
       Bool_t   fKeepPileup;                          // Keep pileup with zero weight (for debugging)
       Bool_t   fInvert;                              // Option to invert weights
       Bool_t   fApplyCHS;                            // This will force weights to 0 or 1 for tracked particles
