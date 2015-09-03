@@ -198,10 +198,11 @@ PuppiMod::Process()
   PFCandidateArr* leptonCandidates = NULL;
 
   if (fNoLepton) {                                                                              // This is the default behavior of Puppi
+    leptonCandidates = new PFCandidateArr(16);
     PFCandidateArr* tempCandidates = new PFCandidateArr(16);
 
     for (UInt_t iCand = 0; iCand < inPfCandidates->GetEntries(); iCand++) { 
-      auto* cand = pfCandidates->At(iCand);
+      auto* cand = inPfCandidates->At(iCand);
       if (cand->PFType() != PFCandidate::eMuon && cand->PFType() != PFCandidate::eElectron) {   // Take out leptons
         PFCandidate *tempParticle = tempCandidates->Allocate();
         new (tempParticle) PFCandidate(*cand);
