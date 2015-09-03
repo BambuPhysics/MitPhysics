@@ -197,22 +197,22 @@ PuppiMod::Process()
   PFCandidateCol* pfCandidates = NULL;
   PFCandidateArr* leptonCandidates = NULL;
 
-  if (fNoLeptons) {                                                                         // This is the default behavior of Puppi
+  if (fNoLepton) {                                                                              // This is the default behavior of Puppi
     PFCandidateArr* tempCandidates = new PFCandidateArr(16);
 
     for (UInt_t iCand = 0; iCand < inPfCandidates->GetEntries(); iCand++) { 
       auto* cand = pfCandidates->At(iCand);
-      if (cand->pfType != PFCandidate::eMuon && cand->pfType != PFCandidate::eElectron) {   // Take out leptons
+      if (cand->PFType() != PFCandidate::eMuon && cand->PFType() != PFCandidate::eElectron) {   // Take out leptons
         PFCandidate *tempParticle = tempCandidates->Allocate();
         new (tempParticle) PFCandidate(*cand);
       }
       else {
-        PFCandidate *tempParticle = leptonCandidates->Allocate();                           // Store them to add back at the end
+        PFCandidate *tempParticle = leptonCandidates->Allocate();                               // Store them to add back at the end
         new (tempParticle) PFCandidate(*cand);
       }
     }
 
-    tempCandiates->Trim();
+    tempCandidates->Trim();
     leptonCandidates->Trim();
     pfCandidates = tempCandidates;
   }
@@ -491,7 +491,7 @@ PuppiMod::Process()
     }
   }
 
-  if (fNoLeptons) {                                                    // If no leptons were used, add them back in
+  if (fNoLepton) {                                                    // If no leptons were used, add them back in
     for (UInt_t iLepton = 0; iLepton < leptonCandidates->GetEntries(); iLepton++) {
       auto* cand = leptonCandidates->At(iLepton);
       if (GetParticleType(cand, pv) != kChargedPU) {                   // From PV, simply add with weight 1
