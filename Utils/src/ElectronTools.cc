@@ -363,6 +363,35 @@ mithep::ElectronTools::PassID(Electron const* ele, EElIdType type)
       hOverECut        = isEB ? 0.05970 : 0.06150;
       ooEmooPCut       = isEB ? 0.01200 : 0.00999;
       break;
+    case kSummer15Veto50ns:
+      deltaEtaCut      = isEB ? 0.0126 : 0.0109;
+      deltaPhiCut      = isEB ? 0.1070 : 0.2190;
+      sigmaIetaIetaCut = isEB ? 0.0120 : 0.0339;
+      hOverECut        = isEB ? 0.1860 : 0.0962;
+      ooEmooPCut       = isEB ? 0.2390 : 0.1410;
+      break;
+    case kSummer15Loose50ns:
+      deltaEtaCut      = isEB ? 0.00976 : 0.00952;
+      deltaPhiCut      = isEB ? 0.09290 : 0.18100;
+      sigmaIetaIetaCut = isEB ? 0.01050 : 0.03180;
+      hOverECut        = isEB ? 0.07650 : 0.08240;
+      ooEmooPCut       = isEB ? 0.18400 : 0.12500;
+      break;
+    case kSummer15Fake50ns:
+    case kSummer15Medium50ns:
+      deltaEtaCut      = isEB ? 0.0094 : 0.00733;
+      deltaPhiCut      = isEB ? 0.0296 : 0.14800;
+      sigmaIetaIetaCut = isEB ? 0.0101 : 0.02870;
+      hOverECut        = isEB ? 0.0372 : 0.05460;
+      ooEmooPCut       = isEB ? 0.1180 : 0.10400;
+      break;
+    case kSummer15Tight50ns:
+      deltaEtaCut      = isEB ? 0.00950 : 0.00762;
+      deltaPhiCut      = isEB ? 0.02910 : 0.04390;
+      sigmaIetaIetaCut = isEB ? 0.01010 : 0.02870;
+      hOverECut        = isEB ? 0.03720 : 0.05440;
+      ooEmooPCut       = isEB ? 0.01740 : 0.01000;
+      break;
     default:
       break;
     };

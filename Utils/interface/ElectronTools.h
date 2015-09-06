@@ -56,7 +56,12 @@ namespace mithep {
       kSummer15Loose,
       kSummer15Medium,
       kSummer15Tight,
-      kSummer15Fake
+      kSummer15Fake,
+      kSummer15Veto50ns,
+      kSummer15Loose50ns,
+      kSummer15Medium50ns,
+      kSummer15Tight50ns,
+      kSummer15Fake50ns
     };
 
     enum EElIsoType {
@@ -180,7 +185,7 @@ namespace mithep {
     static Bool_t       PassD0Cut(const Electron *el, Double_t d0, EElIdType);
     static Bool_t       PassDZCut(const Electron *el, Double_t dz, EElIdType);
     
-    ClassDef(ElectronTools, 1) // Muon tools
+    ClassDef(ElectronTools, 2) // Electron tools
   };
 }
 
