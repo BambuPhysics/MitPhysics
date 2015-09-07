@@ -87,7 +87,6 @@ namespace mithep
       void SetBeVerbose(Bool_t b)          { fBeVerbose = b;  }
       void SetDoECF(Bool_t b)              { fDoECF = b; }
       void SetDoQjets(Bool_t b)            { fDoQjets = b; }
-      void SetDoIota(Bool_t b)             { fDoIota = b; }
       void SetNMaxMicrojets(unsigned int n)         { fNMaxMicrojets = n; }
       void SetDebugFlag(int i)   { fDebugFlag = i; }
       void SetSDInputCard(const char *s)   { fInputCard = s;  }          
@@ -116,7 +115,6 @@ namespace mithep
       double FindRMS(std::vector<float>);
       double FindMean(std::vector<float>);
 
-      void ComputeIotas(XlFatJet*);
 
       Vect4M GetCorrectedMomentum(fastjet::PseudoJet fj_tmp, double thisJEC);
 
@@ -185,7 +183,6 @@ namespace mithep
       Bool_t fBeVerbose;
       Bool_t fDoECF;                      
       Bool_t fDoQjets;
-      Bool_t fDoIota;
       unsigned int fNMaxMicrojets;
       
       TStopwatch *fStopwatch;

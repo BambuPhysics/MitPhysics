@@ -56,7 +56,6 @@ FatJetExtenderMod::FatJetExtenderMod(const char *name, const char *title) :
   fBeVerbose(kFALSE),
   fDoECF(kFALSE),
   fDoQjets(kFALSE),
-  fDoIota (kTRUE),
   fNMaxMicrojets(5)
 {
   // Constructor.
@@ -331,12 +330,6 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   		}
   }
 
-  if (fDoIota) {
-    ComputeIotas(xlFatJet);
-    if (fBeVerbose) {
-        fprintf(stderr,"Finished iota calculation in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
-    } 
-  }
   
   if (fDoQjets) {
     // Compute Q-jets volatility
@@ -499,22 +492,6 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
 
   return;
 }
-
-void FatJetExtenderMod::ComputeIotas(XlFatJet *xlFatJet) {
-  std::vector<float> iotas;
-  for (int i=0; i<5; ++i) 
-    iotas.push_back(0);
-  for (unsigned int iPF=0; iPF!=fPFCandidates->GetEntries(); ++iPF) {
-    const PFCandidate *pfCand = fPFCandidates->At(iPF);
-    float dR = MathUtils::DeltaR<XlFatJet,const PFCandidate>(xlFatJet,pfCand);
-    if (dR>fConeSize && (dR-fConeSize)<0.5) {
-      iotas[(int)((dR-fConeSize)*10)]+=pfCand->Pt();
-    }
-  }
-  for (float iota : iotas)
-    xlFatJet->AddIota(iota);
-}
-
 
 //--------------------------------------------------------------------------------------------------
 

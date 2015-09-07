@@ -11,7 +11,13 @@ jetIdMod = mithep.JetIdMod(
     MVACutsFile = os.environ['MIT_DATA'] + '/jetIDCuts_121221.dat',
     UseClassicBetaForMVA = False,
     PtMin = 30.,
-    EtaMax = 2.5
+    EtaMax = 2.5,
+    MaxChargedEMFraction = 0.99,
+    MaxNeutralEMFraction = 0.99,
+    MaxNeutralHadronFraction = 0.99,
+    MaxMuonFraction = 0.80,
+    MinNPFCandidates = 2,
+    MinNChargedPFCandidates = 1,
 )
 
 # UseClassicBetaForMVA: set to true for MiniAOD input. Makes the MVA value agree
