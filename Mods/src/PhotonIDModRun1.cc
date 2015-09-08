@@ -1,5 +1,6 @@
 #include "MitPhysics/Mods/interface/PhotonIDModRun1.h"
 #include "MitAna/DataTree/interface/PhotonCol.h"
+#include "MitAna/DataTree/interface/EventHeader.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "MitPhysics/Utils/interface/IsolationTools.h"
 #include "MitPhysics/Utils/interface/PhotonTools.h"
