@@ -88,7 +88,7 @@ mithep::JetIDModRun1::Process()
       if (fApplyBetaCut && !JetTools::PassBetaVertexAssociationCut(pfJet, inVertices->At(0), inVertices, 0.2))
         continue;
 
-      if (fApplyPFLooseId && !JetTools::passPFLooseId(pfJet))
+      if (fApplyPFLooseId && !JetTools::passPFId(pfJet, JetTools::kPFLoose))
         continue;
       
       if (fApplyMVACut && !fJetIDMVA->pass(pfJet, inVertices->At(0), inVertices))

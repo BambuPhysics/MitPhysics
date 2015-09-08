@@ -5,6 +5,7 @@
 #include "MitAna/DataTree/interface/StableData.h"
 #include "MitAna/DataTree/interface/StableParticle.h"
 #include "MitAna/DataTree/interface/PFMet.h"
+#include "MitAna/DataTree/interface/EventHeader.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "MitPhysics/Utils/interface/IsolationTools.h"
 #include "MitPhysics/Utils/interface/PhotonTools.h"

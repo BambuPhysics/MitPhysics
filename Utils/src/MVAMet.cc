@@ -395,7 +395,7 @@ Met MVAMet::GetMet(	Bool_t iPhi,
   for(unsigned int i0 = 0; i0 < iJets->GetEntries(); i0++) {
     const PFJet *pJet = iJets->At(i0);
     Double_t pPt = pJet->Pt();
-    if(!JetTools::passPFLooseId(pJet)) continue;
+    if(!JetTools::passPFId(pJet, JetTools::kPFLoose)) continue;
     if(f42 && pPt > 1.) lNAllJet++;
     if(!f42)            lNAllJet++;
     if(pPt  > 30.)  lNJet++;
@@ -570,7 +570,7 @@ Met MVAMet::GetMet(	Bool_t iPhi,
     double pDPhi2 = fabs(pJet->Phi() - iPhi2); if(pDPhi2 > 2.*TMath::Pi()-pDPhi2) pDPhi2 = 2.*TMath::Pi()-pDPhi2;
     double pDR2   = sqrt(pDEta2*pDEta2 + pDPhi2*pDPhi2);
     if(pDR2 < 0.5) continue;  
-    if(!JetTools::passPFLooseId(pJet)) continue;
+    if(!JetTools::passPFId(pJet, JetTools::kPFLoose)) continue;
     if(f42 && pPt > 1.) lNAllJet++;
     if(!f42)            lNAllJet++;
     if(pPt  > 30.)  lNJet++;
