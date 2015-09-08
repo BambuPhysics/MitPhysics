@@ -310,7 +310,7 @@ Met RecoilTools::PUCMet( const PFJetCol       *iJets,const PFCandidateCol *iCand
 
   for (UInt_t i0 = 0; i0 < iJets->GetEntries(); i0++) {
     const PFJet *pJet = iJets->At(i0);
-    if (!JetTools::passPFLooseId(pJet))
+    if (!JetTools::passPFId(pJet, JetTools::kPFLoose))
       continue;
     if (fJetIDMVA->pass(pJet,iVertex,iVertices))
       continue;
@@ -368,7 +368,7 @@ Met RecoilTools::PUMet(const PFJetCol *iJets, const PFCandidateCol *iCands,const
   }
   for (UInt_t i0 = 0; i0 < iJets->GetEntries(); i0++) {
     const PFJet *pJet = iJets->At(i0);
-    if (!JetTools::passPFLooseId(pJet))
+    if (!JetTools::passPFId(pJet, JetTools::kPFLoose))
       continue;
     if (!filter(pJet,iPhi1,iEta1,iPhi2,iEta2))
       continue; //Quick cleaning
