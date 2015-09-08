@@ -43,6 +43,9 @@ mithep::JetIdMod::IdBegin()
   xaxis->SetBinLabel(cNeutralHFrac + 1, "neutralHadronFraction");
   xaxis->SetBinLabel(cChargedEMFrac + 1, "chargedEMFraction");
   xaxis->SetBinLabel(cNeutralEMFrac + 1, "neutralEMFraction");
+  xaxis->SetBinLabel(cMuonFrac + 1, "muonFraction");
+  xaxis->SetBinLabel(cNPFCandidates + 1, "nPFCandidates");
+  xaxis->SetBinLabel(cNChargedPFCandidates + 1, "nChargedPFCandidates");
   xaxis->SetBinLabel(cPFLooseId + 1, "PFLooseId");
   xaxis->SetBinLabel(cBeta + 1, "Beta");
   xaxis->SetBinLabel(cMVA + 1, "MVA");
@@ -85,7 +88,7 @@ mithep::JetIdMod::IsGood(mithep::Jet const& jet)
 
   if (pfJet) {
     double chargedHadronFraction = pfJet->ChargedHadronEnergy() / pfJet->E();
-    if (chargedHadronFraction < fMinChargedHadronFraction || chargedHadronFraction > fMaxChargedHadronFraction)
+    if (pfJet->AbsEta()<2.4 && (chargedHadronFraction < fMinChargedHadronFraction || chargedHadronFraction > fMaxChargedHadronFraction))
       return false;
     fCutFlow->Fill(cChargedHFrac);
 
@@ -95,7 +98,7 @@ mithep::JetIdMod::IsGood(mithep::Jet const& jet)
     fCutFlow->Fill(cNeutralHFrac);
 
     double chargedEMFraction = pfJet->ChargedEmEnergy() / pfJet->E();
-    if (chargedEMFraction < fMinChargedEMFraction || chargedEMFraction > fMaxChargedEMFraction)
+    if (pfJet->AbsEta()<2.4 && (chargedEMFraction < fMinChargedEMFraction || chargedEMFraction > fMaxChargedEMFraction))
       return false;
     fCutFlow->Fill(cChargedEMFrac);
 
@@ -103,6 +106,19 @@ mithep::JetIdMod::IsGood(mithep::Jet const& jet)
     if (neutralEMFraction < fMinNeutralEMFraction || neutralEMFraction > fMaxNeutralEMFraction)
       return false;
     fCutFlow->Fill(cNeutralEMFrac);
+
+    double muonFraction = pfJet->MuonEnergy() / pfJet->E();
+    if (muonFraction < fMinMuonFraction || muonFraction > fMaxMuonFraction)
+      return false;
+    fCutFlow->Fill(cMuonFrac);
+
+    if (pfJet->NPFCands() < fMinNPFCandidates)
+      return false;
+    fCutFlow->Fill(cNPFCandidates);
+
+    if (pfJet->AbsEta()<2.4 && pfJet->ChargedMultiplicity() < fMinNChargedPFCandidates)
+      return false;
+    fCutFlow->Fill(cNChargedPFCandidates);
 
     if (fApplyPFLooseId && !JetTools::passPFLooseId(pfJet))
       return false;

@@ -1,4 +1,4 @@
-//--------------------------------------------------------------------------------------------------
+
 // $Id: FatJetExtenderMod.h,v 1.9 2011/03/01 17:27:22 mzanetti Exp $
 //
 // FatJetExtender
@@ -108,12 +108,13 @@ namespace mithep
       // Color pull helpers
       TVector2 GetPull(fastjet::PseudoJet &jet, float constitsPtMin);
       double GetPullAngle(std::vector<fastjet::PseudoJet> &fjSubJets, float constitsPtMin);
-      double fMicrojetR0 = -1.0;
+      double fMicrojetConeSize = -1.0;
 
       double GetQjetVolatility (std::vector<fastjet::PseudoJet> &constits, int QJetsN = 25, int seed = 12345);
       void GetJetConstituents(fastjet::PseudoJet&, std::vector<fastjet::PseudoJet>&, float);
       double FindRMS(std::vector<float>);
       double FindMean(std::vector<float>);
+
 
       Vect4M GetCorrectedMomentum(fastjet::PseudoJet fj_tmp, double thisJEC);
 
@@ -180,7 +181,7 @@ namespace mithep
       QGTagger *fQGTagger;                 //QGTagger calculator
       
       Bool_t fBeVerbose;
-      Bool_t fDoECF;                       // this is now a user-set option, as it's quite slow 
+      Bool_t fDoECF;                      
       Bool_t fDoQjets;
       unsigned int fNMaxMicrojets;
       

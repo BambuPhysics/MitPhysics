@@ -89,7 +89,6 @@ namespace mithep
 
       Bool_t PassJet(fastjet::PseudoJet&);  // decide if we want to keep a jet before allocating space for it
 
-
     private:
       Bool_t fIsData;                      //is this data or MC?
       Bool_t fPublishOutput;               //=true if output collection are published
@@ -102,7 +101,7 @@ namespace mithep
 
       // Objects from fastjet we want to use
       float fR0;                    //fastjet clustering radius
-      float fR0Squared;
+      float fR0Squared;             //fastjet clustering radius, squared 
       fastjet::JetDefinition *fJetDef;   //fastjet clustering definition
       fastjet::GhostedAreaSpec *fActiveArea;
       fastjet::AreaDefinition *fAreaDefinition;
@@ -278,9 +277,7 @@ template <typename JETTYPE> void PuppiJetMod<JETTYPE>::RunMatching(PFJet *newJet
     Info("Process","Warning, could not match Puppi jet to a PF jet");
     return;
   }
-
   ++globalMatchedJetCounter;
-
   // copy btags
   for (unsigned int iBtag=0; iBtag!=(unsigned int)Jet::nBTagAlgos; ++iBtag) {
     newJet->SetBJetTagsDisc(matchedJet->BJetTagsDisc(iBtag),iBtag);
@@ -303,12 +300,10 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::RunMatching(FatJet *newJet
     }
   }
   if (matchedJet==NULL) {
-    Info("Process","Warning, could not match Puppi jet to a fatjet");
+    Info("Process","Warning, could not match Puppi jet to any of %i fatjets",fMatchingJets->GetEntries());
     return;
   }
-
   ++globalMatchedJetCounter;
-
   // copy btags
   for (unsigned int iBtag=0; iBtag!=(unsigned int)Jet::nBTagAlgos; ++iBtag) {
     newJet->SetBJetTagsDisc(matchedJet->BJetTagsDisc(iBtag),iBtag);
@@ -373,8 +368,7 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::SlaveBegin()
 //--------------------------------------------------------------------------------------------------
 template<typename JETTYPE> void PuppiJetMod<JETTYPE>::SlaveTerminate()
 {
-  Info("SlaveTerminate","Matched %i/%i jets",globalMatchedJetCounter,globalJetCounter); 
-
+  Info("SlaveTerminate","Matched %i/%i jets",globalMatchedJetCounter,globalJetCounter);
   RetractObj(fJets->GetName());
 
   if (fJets)
