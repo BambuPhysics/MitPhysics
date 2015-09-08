@@ -358,7 +358,7 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   softDropSDbm1.set_tagging_mode();
   
   double MassSDb0, MassSDb1;
-  if (fSoftDropR0==1.5) {
+  if (fSoftDropR0>1.2) {
     fjClusteredJets[XlSubJet::kSoftDrop] = softDropSDb1(fjJet);
     MassSDb1 = fjClusteredJets[XlSubJet::kSoftDrop].m();
     MassSDb0 = (softDropSDb0(fjJet)).m(); 
