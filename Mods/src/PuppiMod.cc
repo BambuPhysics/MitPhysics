@@ -473,7 +473,6 @@ PuppiMod::Process()
         std::cout << "Alpha RMS:";
         std::cout << sigma2C[GetEtaBin(PuppiParticle)] << "; " << sigma2F[GetEtaBin(PuppiParticle)] << std::endl;
         std::cout << "Weight: " << weight << "; " << alphaC[iCand] << "; " << alphaF[iCand] << std::endl;
-        fDumpingPuppi = false;                                           // You will not want to dump this more than once
       }
       
       if (weight < 1)                                                    // Weight the particle if required
@@ -511,6 +510,9 @@ PuppiMod::Process()
       }
     }
   }
+
+  if (fDumpingPuppi)
+    fDumpingPuppi = false;                                             // You will not want to dump this more than once
 
   if (fBothPVandPU)
     fInvertedParticles->Trim();
