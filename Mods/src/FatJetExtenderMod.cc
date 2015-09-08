@@ -356,9 +356,17 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   softDropSDb1.set_tagging_mode();
   softDropSDb2.set_tagging_mode();
   softDropSDbm1.set_tagging_mode();
-  fjClusteredJets[XlSubJet::kSoftDrop] = softDropSDb0(fjJet);
-  double MassSDb0 = fjClusteredJets[XlSubJet::kSoftDrop].m();
-  double MassSDb1 = (softDropSDb1(fjJet)).m();
+  
+  double MassSDb0, MassSDb1;
+  if (fSoftDropR0>1.2) {
+    fjClusteredJets[XlSubJet::kSoftDrop] = softDropSDb1(fjJet);
+    MassSDb1 = fjClusteredJets[XlSubJet::kSoftDrop].m();
+    MassSDb0 = (softDropSDb0(fjJet)).m(); 
+  } else {
+    fjClusteredJets[XlSubJet::kSoftDrop] = softDropSDb0(fjJet);
+    MassSDb0 = fjClusteredJets[XlSubJet::kSoftDrop].m();
+    MassSDb1 = (softDropSDb1(fjJet)).m(); 
+  }
   double MassSDb2 = (softDropSDb2(fjJet)).m();
   double MassSDbm1 = (softDropSDbm1(fjJet)).m();
   xlFatJet->SetMassSDb0(MassSDb0*thisJEC);
