@@ -50,6 +50,8 @@ namespace mithep {
     void SetMaxChargedEMFraction(Double_t m)     { fMaxChargedEMFraction = m; }
     void SetMinNeutralEMFraction(Double_t m)     { fMinNeutralEMFraction = m; }
     void SetMaxNeutralEMFraction(Double_t m)     { fMaxNeutralEMFraction = m; }
+    void SetMaxMuonFraction(Double_t m)          { fMaxMuonFraction = m; }
+    void SetMinMuonFraction(Double_t m)          { fMinMuonFraction = m; }
     void SetApplyBetaCut(Bool_t b)               { fApplyBetaCut = b; }
     void SetApplyPFLooseId(Bool_t b)             { fApplyPFLooseId = b; }
     void SetMVATrainingSet(UInt_t s)             { fMVATrainingSet = s; }
@@ -57,6 +59,8 @@ namespace mithep {
     void SetMVAWeightsFile(char const* n)        { fMVAWeightsFile = n; }
     void SetMVACutsFile(char const* n)           { fMVACutsFile = n; }
     void SetUseClassicBetaForMVA(Bool_t b)       { fUseClassicBetaForMVA = b; }
+    void SetMinNPFCandidates(UInt_t n)           { fMinNPFCandidates = n; }
+    void SetMinNChargedPFCandidates(UInt_t n)    { fMinNChargedPFCandidates = n; }
 
     void SetJetIDMVA(JetIDMVA* mva) { fJetIDMVA = mva; }
 
@@ -68,6 +72,8 @@ namespace mithep {
     { fMinChargedEMFraction = min; fMaxChargedEMFraction = max; }
     void SetNeutralEMFraction(Double_t min, Double_t max)
     { fMinNeutralEMFraction = min; fMaxNeutralEMFraction = max; }
+    void SetMuonFraction(Double_t min, Double_t max)
+    { fMinMuonFraction = min; fMaxMuonFraction = max; }
 
   protected:
     enum CutFlow {
@@ -79,6 +85,9 @@ namespace mithep {
       cNeutralHFrac,
       cChargedEMFrac,
       cNeutralEMFrac,
+      cMuonFrac,
+      cNPFCandidates,
+      cNChargedPFCandidates,
       cPFLooseId,
       cBeta,
       cMVA,
@@ -98,6 +107,10 @@ namespace mithep {
     Double_t fMaxChargedEMFraction = 1.;
     Double_t fMinNeutralEMFraction = 0.;
     Double_t fMaxNeutralEMFraction = 1.;
+    Double_t fMinMuonFraction = 0.;
+    Double_t fMaxMuonFraction = 1.;
+    UInt_t   fMinNPFCandidates = 0;
+    UInt_t   fMinNChargedPFCandidates = 0;
     Bool_t   fApplyBetaCut = kFALSE;          //=true then apply beta cut
     Bool_t   fApplyPFLooseId = kFALSE;        //=true then apply PF loose ID
     UInt_t   fMVATrainingSet = JetIDMVA::nMVATypes; //JetIDMVA::MVAType
@@ -109,7 +122,7 @@ namespace mithep {
     Bool_t    fOwnJetIDMVA = kFALSE;
     JetIDMVA* fJetIDMVA = 0;
 
-    ClassDef(JetIdMod, 0) // Jet identification module
+    ClassDef(JetIdMod, 1) // Jet identification module
   };
 }
 

@@ -239,6 +239,11 @@ mithep::ElectronIdMod::PassIdCut(Electron const& ele)
   case ElectronTools::kSummer15Medium:
   case ElectronTools::kSummer15Tight:
   case ElectronTools::kSummer15Fake:
+  case ElectronTools::kSummer15Veto50ns:
+  case ElectronTools::kSummer15Loose50ns:
+  case ElectronTools::kSummer15Medium50ns:
+  case ElectronTools::kSummer15Tight50ns:
+  case ElectronTools::kSummer15Fake50ns:
     return ElectronTools::PassID(&ele, ElectronTools::EElIdType(fIdType));
 
   default:
