@@ -1,6 +1,3 @@
-
-// $Id: FatJetExtenderMod.h,v 1.9 2011/03/01 17:27:22 mzanetti Exp $
-//
 // FatJetExtender
 //
 // This module processes a collection of input FatJets, compute the substrucure
@@ -21,6 +18,9 @@
 #include "fastjet/ClusterSequenceArea.hh"
 #include "fastjet/tools/Pruner.hh"
 #include "fastjet/tools/Filter.hh"
+#include "fastjet/contrib/Nsubjettiness.hh"
+#include "fastjet/contrib/SoftDrop.hh"
+#include "fastjet/contrib/EnergyCorrelator.hh"
 
 #include "MitAna/DataTree/interface/XlFatJetFwd.h"
 #include "MitAna/DataTree/interface/XlFatJet.h"
@@ -89,34 +89,35 @@ namespace mithep
       void SetDoQjets(Bool_t b)            { fDoQjets = b; }
       void SetNMaxMicrojets(unsigned int n)         { fNMaxMicrojets = n; }
       void SetDebugFlag(int i)   { fDebugFlag = i; }
-      void SetSDInputCard(const char *s)   { fInputCard = s;  }          
+      void SetSDInputCard(const char *s)   { fInputCard = s;  }
     protected:
+      typedef std::vector<fastjet::PseudoJet> VPseudoJet;
+      typedef std::vector<fastjet::PseudoJet const*> VPseudoJetPtr;
+
       void Process();
       void SlaveBegin();
       void SlaveTerminate();
 
       void FillXlFatJet (const FatJet *fatJet);
-      void FillXlSubJets(std::vector<fastjet::PseudoJet> &fjSubJets, XlFatJet *pFatJet, XlSubJet::ESubJetType subJetType);
+      void FillXlSubJets(VPseudoJetPtr const& fjSubJets, XlFatJet* pFatJet, XlSubJet::ESubJetType subJetType);
 
       // Jet collection helpers
-      std::vector <fastjet::PseudoJet>
-            Sorted_by_pt_min_pt(std::vector <fastjet::PseudoJet> &jets,
-                                float jetPtMin);
+      VPseudoJetPtr Sorted_by_pt_min_pt(VPseudoJet const& jets, float jetPtMin);
       // Subjet QGTagging helpers
-      void   FillSubjetQGTagging(fastjet::PseudoJet &jet, float constitsPtMin,
-                                 XlSubJet *pSubJet, XlFatJet *pFatJet);
+      void   FillSubjetQGTagging(fastjet::PseudoJet const& jet, float constitsPtMin,
+                                 XlSubJet *pSubJet, XlFatJet const* pFatJet);
       // Color pull helpers
-      TVector2 GetPull(fastjet::PseudoJet &jet, float constitsPtMin);
-      double GetPullAngle(std::vector<fastjet::PseudoJet> &fjSubJets, float constitsPtMin);
+      TVector2 GetPull(fastjet::PseudoJet const&, float constitsPtMin);
+      double GetPullAngle(VPseudoJetPtr const& fjSubJets, float constitsPtMin);
       double fMicrojetConeSize = -1.0;
 
-      double GetQjetVolatility (std::vector<fastjet::PseudoJet> &constits, int QJetsN = 25, int seed = 12345);
-      void GetJetConstituents(fastjet::PseudoJet&, std::vector<fastjet::PseudoJet>&, float);
+      double GetQjetVolatility (VPseudoJet const& constits, int QJetsN = 25, int seed = 12345);
+      void GetJetConstituents(fastjet::PseudoJet const&, VPseudoJet&, float);
       double FindRMS(std::vector<float>);
       double FindMean(std::vector<float>);
 
 
-      Vect4M GetCorrectedMomentum(fastjet::PseudoJet fj_tmp, double thisJEC);
+      Vect4M GetCorrectedMomentum(fastjet::PseudoJet const&, double thisJEC);
 
 
     private:
@@ -142,14 +143,31 @@ namespace mithep
       const VertexCol *fVertexes;          //vertex coll handle
 
       TString fXlFatJetsName;              //name of output fXlFatJets collection
-      XlFatJetArr *fXlFatJets;             //array of fXlFatJets
+      XlFatJetArr* fXlFatJets{0};             //array of fXlFatJets
+
+      fastjet::contrib::Nsubjettiness* fNSub1{0};
+      fastjet::contrib::Nsubjettiness* fNSub2{0};
+      fastjet::contrib::Nsubjettiness* fNSub3{0};
+      fastjet::contrib::Nsubjettiness* fNSub4{0};
+
+      fastjet::contrib::EnergyCorrelatorDoubleRatio* fECR2b0{0};
+      fastjet::contrib::EnergyCorrelatorDoubleRatio* fECR2b0p2{0};
+      fastjet::contrib::EnergyCorrelatorDoubleRatio* fECR2b0p5{0};
+      fastjet::contrib::EnergyCorrelatorDoubleRatio* fECR2b1{0};
+      fastjet::contrib::EnergyCorrelatorDoubleRatio* fECR2b2{0};
 
       // Objects from fastjet we want to use
-      fastjet::Pruner *fPruner;
-      fastjet::Filter *fFilterer;
-      fastjet::Filter *fTrimmer;           //no this is not a typo trimmers belong to fastjet Filter class
+      fastjet::Pruner* fPruner{0};
+      fastjet::Filter* fFilterer{0};
+      fastjet::Filter* fTrimmer{0};           //no this is not a typo trimmers belong to fastjet Filter class
+
       double fSoftDropZCut;                //soft-drop Z cut
       double fSoftDropR0;               //soft-drop angular distance normalisation
+      fastjet::contrib::SoftDrop* fSoftDropSDb0{0};
+      fastjet::contrib::SoftDrop* fSoftDropSDb1{0};
+      fastjet::contrib::SoftDrop* fSoftDropSDb2{0};
+      fastjet::contrib::SoftDrop* fSoftDropSDbm1{0};
+
       double fPruneZCut;                   //pruning Z cut
       double fPruneDistCut;                //pruning distance cut
       int fFilterN;                        //number of subjets after filtering
@@ -157,35 +175,35 @@ namespace mithep
       double fTrimRad;                     //trimmed subjet radius
       double fTrimPtFrac;                  //trimmed subjet pt fraction
       double fConeSize;                    //fastjet clustering radius
-      fastjet::JetDefinition *fCAJetDef;   //fastjet clustering definition
-      fastjet::GhostedAreaSpec *fActiveArea;
-      fastjet::AreaDefinition *fAreaDefinition;
-      fastjet::CMSTopTagger* fCMSTopTagger;
+      fastjet::JetDefinition* fCAJetDef{0};   //fastjet clustering definition
+      fastjet::GhostedAreaSpec* fActiveArea{0};
+      fastjet::AreaDefinition* fAreaDefinition{0};
+      fastjet::CMSTopTagger* fCMSTopTagger{0};
 
       unsigned short fSubJetFlags = 1;    // flags turning on subjet types
 
       TString fXlSubJetsName[XlSubJet::nSubJetTypes];              //name of output fXlSubJets collection
-      XlSubJetArr *fXlSubJets[XlSubJet::nSubJetTypes];             //array of fXlSubJets
-      
-      Deconstruction::Deconstruct *fDeconstruct;
-      AnalysisParameters *fParam;
-      Deconstruction::TopGluonModel *fSignal;
-      Deconstruction::BackgroundModel *fBackground;
-      Deconstruction::ISRModel *fISR; 
+      XlSubJetArr* fXlSubJets[XlSubJet::nSubJetTypes];             //array of fXlSubJets
+
+      Deconstruction::Deconstruct* fDeconstruct{0};
+      AnalysisParameters* fParam{0};
+      Deconstruction::TopGluonModel* fSignal{0};
+      Deconstruction::BackgroundModel* fBackground{0};
+      Deconstruction::ISRModel* fISR{0};
       TString fInputCard;
 
       UInt_t fProcessNJets;
 
       Bool_t fDoShowerDeconstruction;
 
-      QGTagger *fQGTagger;                 //QGTagger calculator
-      
+      QGTagger* fQGTagger{0};                 //QGTagger calculator
+
       Bool_t fBeVerbose;
-      Bool_t fDoECF;                      
+      Bool_t fDoECF;
       Bool_t fDoQjets;
       unsigned int fNMaxMicrojets;
-      
-      TStopwatch *fStopwatch;
+
+      TStopwatch* fStopwatch{0};
 
       // Counters : used to initialize seed for QJets volatility
       Long64_t fCounter;
