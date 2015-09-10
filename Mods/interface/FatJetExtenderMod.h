@@ -18,7 +18,7 @@
 #include "fastjet/ClusterSequenceArea.hh"
 #include "fastjet/tools/Pruner.hh"
 #include "fastjet/tools/Filter.hh"
-#include "fastjet/contrib/Nsubjettiness.hh"
+#include "fastjet/contrib/Njettiness.hh"
 #include "fastjet/contrib/SoftDrop.hh"
 #include "fastjet/contrib/EnergyCorrelator.hh"
 
@@ -112,7 +112,7 @@ namespace mithep
       double fMicrojetConeSize = -1.0;
 
       double GetQjetVolatility (VPseudoJet const& constits, int QJetsN = 25, int seed = 12345);
-      void GetJetConstituents(fastjet::PseudoJet const&, VPseudoJet&, float);
+      VPseudoJet FilterJetsByPt(VPseudoJet const&, double ptMin);
       double FindRMS(std::vector<float>);
       double FindMean(std::vector<float>);
 
@@ -145,10 +145,8 @@ namespace mithep
       TString fXlFatJetsName;              //name of output fXlFatJets collection
       XlFatJetArr* fXlFatJets{0};             //array of fXlFatJets
 
-      fastjet::contrib::Nsubjettiness* fNSub1{0};
-      fastjet::contrib::Nsubjettiness* fNSub2{0};
-      fastjet::contrib::Nsubjettiness* fNSub3{0};
-      fastjet::contrib::Nsubjettiness* fNSub4{0};
+      // used for nsubjettiness calculation
+      fastjet::contrib::Njettiness* fNJettiness{0};
 
       fastjet::contrib::EnergyCorrelatorDoubleRatio* fECR2b0{0};
       fastjet::contrib::EnergyCorrelatorDoubleRatio* fECR2b0p2{0};

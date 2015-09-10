@@ -10,7 +10,7 @@
 #include "QjetsPlugin.h"
 #include "Qjets.h"
 
-#include "fastjet/contrib/Njettiness.hh"
+#include "fastjet/contrib/NjettinessDefinition.hh"
 #include "fastjet/contrib/NjettinessPlugin.hh"
 #include "MitAna/PhysicsUtils/interface/HEPTopTagger.h"
 
@@ -146,10 +146,7 @@ void FatJetExtenderMod::SlaveBegin()
     }
   }
 
-  fNSub1 = new fastjet::contrib::Nsubjettiness(1, fastjet::contrib::Njettiness::onepass_kt_axes, 1., fConeSize, 10000.);
-  fNSub2 = new fastjet::contrib::Nsubjettiness(2, fastjet::contrib::Njettiness::onepass_kt_axes, 1., fConeSize, 10000.);
-  fNSub3 = new fastjet::contrib::Nsubjettiness(3, fastjet::contrib::Njettiness::onepass_kt_axes, 1., fConeSize, 10000.);
-  fNSub4 = new fastjet::contrib::Nsubjettiness(4, fastjet::contrib::Njettiness::onepass_kt_axes, 1., fConeSize, 10000.);
+  fNJettiness = new fastjet::contrib::Njettiness(fastjet::contrib::Njettiness::onepass_kt_axes, fastjet::contrib::NormalizedCutoffMeasure(1., fConeSize, 10000.));
 
   if (fDoECF) {
     fECR2b0 = new fastjet::contrib::EnergyCorrelatorDoubleRatio(2,0. ,fastjet::contrib::EnergyCorrelator::pt_R);
@@ -232,10 +229,7 @@ void FatJetExtenderMod::SlaveTerminate()
 
   delete fXlFatJets;
 
-  delete fNSub1;
-  delete fNSub2;
-  delete fNSub3;
-  delete fNSub4;
+  delete fNJettiness;
 
   delete fECR2b0;
   delete fECR2b0p2;
@@ -319,10 +313,14 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
 			fprintf(stderr,"Finished prepping fastjet in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
 		}
 
-  double tau1 = (*fNSub1)(*maxPtJet10);
-  double tau2 = (*fNSub2)(*maxPtJet10);
-  double tau3 = (*fNSub3)(*maxPtJet10);
-  double tau4 = (*fNSub4)(*maxPtJet10);
+  VPseudoJet constituents(maxPtJet10->constituents());
+
+  // internal implementation of Nsubjettiness::result
+  // getTau is getTauComponents().tau(), and there are bunch of unnecessary calculation done in the latter function. Can in principle go further here.
+  double tau1 = fNJettiness->getTau(1, constituents);
+  double tau2 = fNJettiness->getTau(2, constituents);
+  double tau3 = fNJettiness->getTau(3, constituents);
+  double tau4 = fNJettiness->getTau(4, constituents);
   xlFatJet->SetTau1(tau1);
   xlFatJet->SetTau2(tau2);
   xlFatJet->SetTau3(tau3);
@@ -353,12 +351,10 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
 
 
   if (fDoQjets) {
+    VPseudoJet constituentsNoGhost(FilterJetsByPt(constituents, 0.01));
     // Compute Q-jets volatility
-    VPseudoJet constits;
-    GetJetConstituents(*maxPtJet10, constits, 0.01);
-    double QJetVol = GetQjetVolatility(constits, 25, fCounter*25);
+    double QJetVol = GetQjetVolatility(constituentsNoGhost, 25, fCounter*25);
     fCounter++;
-    constits.clear();
     xlFatJet->SetQJetVol(QJetVol);
 
     if (fBeVerbose) {
@@ -576,17 +572,19 @@ FatJetExtenderMod::Sorted_by_pt_min_pt(VPseudoJet const& jets, float jetPtMin)
 }
 
 //--------------------------------------------------------------------------------------------------
-void FatJetExtenderMod::GetJetConstituents(fastjet::PseudoJet const& jet, VPseudoJet& constits,
-                                      float constitsPtMin)
+FatJetExtenderMod::VPseudoJet
+FatJetExtenderMod::FilterJetsByPt(VPseudoJet const& jets, double ptMin)
 {
   // Loop on input jet constituents vector and discard very soft particles (ghosts)
-  for (unsigned int iPart = 0; iPart < jet.constituents().size(); iPart++) {
-    if (jet.constituents()[iPart].perp() < constitsPtMin)
+  VPseudoJet result;
+  double ptMin2 = ptMin * ptMin;
+  for (auto&& jet : jets) {
+    if (jet.perp2() < ptMin2)
       continue;
-    constits.push_back(jet.constituents()[iPart]);
+    result.emplace_back(jet);
   }
 
-  return;
+  return result;
 }
 //--------------------------------------------------------------------------------------------------
 double FatJetExtenderMod::GetQjetVolatility(VPseudoJet const& constits, int QJetsN, int seed)
@@ -675,10 +673,13 @@ void FatJetExtenderMod::FillSubjetQGTagging(fastjet::PseudoJet const& jet, float
   pfJet.SetRawPtEtaPhiM(jet.pt(),jet.eta(),jet.phi(),jet.m());
 
   // Loop on input jet constituents vector and discard very soft particles (ghosts)
-  for (unsigned int iPart = 0; iPart < jet.constituents().size(); iPart++) {
-    if (jet.constituents()[iPart].perp() < constitsPtMin)
+  VPseudoJet constituents(jet.constituents());
+  double ptMin2 = constitsPtMin * constitsPtMin;
+
+  for (auto&& cons : constituents) {
+    if (cons.perp2() < ptMin2)
       continue;
-    int thisPFCandIndex = jet.constituents()[iPart].user_index();
+    int thisPFCandIndex = jet.user_index();
     // Add the constituent to the PF subjet
     pfJet.AddPFCand(pFatJet->PFCand(thisPFCandIndex));
   }
@@ -692,8 +693,6 @@ void FatJetExtenderMod::FillSubjetQGTagging(fastjet::PseudoJet const& jet, float
     pSubJet->SetQGAxis2(fQGTagger->GetAxis2());
     pSubJet->SetQGMult(fQGTagger->GetMult());
   }
-
-  return;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -702,15 +701,20 @@ TVector2 FatJetExtenderMod::GetPull(fastjet::PseudoJet const& jet, float constit
   double dYSum   = 0;
   double dPhiSum = 0;
   // Loop on input jet constituents vector and discard very soft particles (ghosts)
-  for (unsigned int iPart = 0; iPart < jet.constituents().size(); iPart++) {
-    if (jet.constituents()[iPart].perp() < constitsPtMin)
+  VPseudoJet constituents(jet.constituents());
+  double ptMin2 = constitsPtMin * constitsPtMin;
+
+  for (auto&& cons : constituents) {
+    if (cons.perp2() < ptMin2)
       continue;
-    double dY     = jet.constituents()[iPart].rapidity()-jet.rapidity();
-    double dPhi   = MathUtils::DeltaPhi(jet.constituents()[iPart].phi(),jet.phi());
-    double weight = jet.constituents()[iPart].pt()*sqrt(dY*dY + dPhi*dPhi);
+
+    double dY     = cons.rapidity()-jet.rapidity();
+    double dPhi   = MathUtils::DeltaPhi(cons.phi(),jet.phi());
+    double weight = cons.pt()*sqrt(dY*dY + dPhi*dPhi);
     dYSum   += weight*dY;
     dPhiSum += weight*dPhi;
   }
+
   return TVector2(dYSum/jet.pt(), dPhiSum/jet.pt());
 }
 
