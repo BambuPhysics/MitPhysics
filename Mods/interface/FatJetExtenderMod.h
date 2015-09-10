@@ -58,28 +58,29 @@ namespace mithep
 
       void IsData(Bool_t b)                { fIsData = b;           }
       void SetQGTaggingOn(Bool_t b)        { fQGTaggingActive = b;  }
-      void SetSubJetTypeOn(ESubJetType t) { fSubJetFlags |= (1<<t); }
+      void SetSubJetTypeOn(ESubJetType t)  { fSubJetFlags |= (1<<t); }
       void SetSubJetTypeOff(ESubJetType t) { fSubJetFlags &= ~(1<<t); }
-      void SetQGTaggerCHS(bool b)          { fQGTaggerCHS = b;      }
+      void SetQGTaggerCHS(Bool_t b)        { fQGTaggerCHS = b;      }
       void PublishOutput(Bool_t b)         { fPublishOutput = b;    }
 
       void SetProcessNJets(UInt_t n)       { fProcessNJets = n;     }
 
-      void SetInputName(const char *n)      { fFatJetsName = n;         }
-      void SetInputFromBranch(Bool_t b)     { fFatJetsFromBranch = b;   }
+      void SetInputName(const char *n)     { fFatJetsName = n;         }
+      void SetInputFromBranch(Bool_t b)    { fFatJetsFromBranch = b;   }
 
-      void SetOutputName(const char *n)   { fXlFatJetsName = n;    }
-      const char * GetOutputName()        { return fXlFatJetsName;  }
+      void SetOutputName(const char *n)    { fXlFatJetsName = n;    }
+      const char * GetOutputName()         { return fXlFatJetsName;  }
 
-      void SetSoftDropZCut(double d)       { fSoftDropZCut = d;     }
-      void SetSoftDropR0(double d)      { fSoftDropR0 = d;    }
-      void SetPruneZCut(double d)          { fPruneZCut = d;        }
-      void SetPruneDistCut(double d)       { fPruneDistCut = d;     }
+      void SetUseSoftDropLib(Bool_t b)     { fUseSoftDropLib = b; }
+      void SetSoftDropZCut(Double_t d)     { fSoftDropZCut = d;     }
+      void SetSoftDropR0(Double_t d)       { fSoftDropR0 = d;    }
+      void SetPruneZCut(Double_t d)        { fPruneZCut = d;        }
+      void SetPruneDistCut(Double_t d)     { fPruneDistCut = d;     }
       void SetFilterN(int n)               { fFilterN = n;          }
-      void SetFilterRad(double d)          { fFilterRad = d;        }
-      void SetTrimRad(double d)            { fTrimRad = d;          }
-      void SetTrimPtFrac(double d)         { fTrimPtFrac = d;       }
-      void SetConeSize(double d)           { fConeSize = d;         }
+      void SetFilterRad(Double_t d)        { fFilterRad = d;        }
+      void SetTrimRad(Double_t d)          { fTrimRad = d;          }
+      void SetTrimPtFrac(Double_t d)       { fTrimPtFrac = d;       }
+      void SetConeSize(Double_t d)         { fConeSize = d;         }
       void SetPFCandsName(const char *n)   { fPFCandidatesName = n; }
       void SetPileUpDenName(const char *n) { fPileUpDenName = n;    }
       void SetVertexesName(const char *n)  { fVertexesName = n;     }
@@ -108,19 +109,32 @@ namespace mithep
                                  XlSubJet *pSubJet, XlFatJet const* pFatJet);
       // Color pull helpers
       TVector2 GetPull(fastjet::PseudoJet const&, float constitsPtMin);
-      double GetPullAngle(VPseudoJetPtr const& fjSubJets, float constitsPtMin);
-      double fMicrojetConeSize = -1.0;
+      Double_t GetPullAngle(VPseudoJetPtr const& fjSubJets, float constitsPtMin);
+      Double_t fMicrojetConeSize = -1.0;
 
-      double GetQjetVolatility (VPseudoJet const& constits, int QJetsN = 25, int seed = 12345);
-      VPseudoJet FilterJetsByPt(VPseudoJet const&, double ptMin);
-      double FindRMS(std::vector<float>);
-      double FindMean(std::vector<float>);
+      Double_t GetQjetVolatility (VPseudoJet const& constits, int QJetsN = 25, int seed = 12345);
+      VPseudoJet FilterJetsByPt(VPseudoJet const&, Double_t ptMin);
+      Double_t FindRMS(std::vector<float>);
+      Double_t FindMean(std::vector<float>);
 
-
-      Vect4M GetCorrectedMomentum(fastjet::PseudoJet const&, double thisJEC);
-
+      Vect4M GetCorrectedMomentum(fastjet::PseudoJet const&, Double_t thisJEC);
 
     private:
+      class SoftDropCalculator {
+      public:
+        SoftDropCalculator(double symmetryCut, double r0) : symmetryCut_(symmetryCut), r0sq_(r0 * r0) {}
+        void addBeta(double beta);
+        void calculate(fastjet::PseudoJet const&);
+        VPseudoJet const& result() const { return groomedJets_; }
+
+      private:
+        double symmetryCut_;
+        double r0sq_;
+        std::vector<double> betas_{};
+        VPseudoJet groomedJets_{};
+        std::vector<bool> jetDone_{};
+      };
+
       Bool_t fIsData;                      //is this data or MC?
       Bool_t fQGTaggingActive;             //=true if QGTagging info is filled
       Bool_t fQGTaggerCHS;                 //=true if QGTagging weights are taken from CHS
@@ -159,12 +173,20 @@ namespace mithep
       fastjet::Filter* fFilterer{0};
       fastjet::Filter* fTrimmer{0};           //no this is not a typo trimmers belong to fastjet Filter class
 
+      bool fUseSoftDropLib; // default = true, use fastjet softdrop instead of the in-house reimplementation
       double fSoftDropZCut;                //soft-drop Z cut
       double fSoftDropR0;               //soft-drop angular distance normalisation
-      fastjet::contrib::SoftDrop* fSoftDropSDb0{0};
-      fastjet::contrib::SoftDrop* fSoftDropSDb1{0};
-      fastjet::contrib::SoftDrop* fSoftDropSDb2{0};
-      fastjet::contrib::SoftDrop* fSoftDropSDbm1{0};
+
+      enum SoftDropBeta {
+        kSD0,
+        kSD1,
+        kSD2,
+        kSDm1,
+        nSoftDropBetas
+      };
+
+      fastjet::contrib::SoftDrop* fSoftDrop[nSoftDropBetas] = {};
+      SoftDropCalculator* fSoftDropCalc{0};
 
       double fPruneZCut;                   //pruning Z cut
       double fPruneDistCut;                //pruning distance cut
