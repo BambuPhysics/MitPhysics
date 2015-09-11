@@ -10,12 +10,11 @@
 #include "QjetsPlugin.h"
 #include "Qjets.h"
 
-#include "fastjet/contrib/Njettiness.hh"
-#include "fastjet/contrib/EnergyCorrelator.hh"
-#include "fastjet/contrib/Nsubjettiness.hh"
+#include "fastjet/contrib/NjettinessDefinition.hh"
 #include "fastjet/contrib/NjettinessPlugin.hh"
-#include "fastjet/contrib/SoftDrop.hh"
 #include "MitAna/PhysicsUtils/interface/HEPTopTagger.h"
+
+#include <map>
 
 using namespace mithep;
 
@@ -23,35 +22,35 @@ ClassImp(mithep::FatJetExtenderMod)
 
 //--------------------------------------------------------------------------------------------------
 FatJetExtenderMod::FatJetExtenderMod(const char *name, const char *title) :
-  BaseMod (name,title),
-  fIsData (kFALSE),
-  fQGTaggingActive (kTRUE),
-  fQGTaggerCHS (kFALSE),
-  fPublishOutput (kTRUE),
-  fFatJetsName (""),
-  fFatJetsFromBranch (kFALSE),
-  fFatJets (0),
-  fPFCandidatesName (Names::gkPFCandidatesBrn),
-  fPFCandidates (0),
+BaseMod(name,title),
+  fIsData(kFALSE),
+  fQGTaggingActive(kTRUE),
+  fQGTaggerCHS(kFALSE),
+  fPublishOutput(kTRUE),
+  fFatJetsName(""),
+  fFatJetsFromBranch(kFALSE),
+  fFatJets(0),
+  fPFCandidatesName(Names::gkPFCandidatesBrn),
+  fPFCandidates(0),
   fPileUpDenName(Names::gkPileupEnergyDensityBrn),
   fPileUpDenFromBranch(kTRUE),
   fPileUpDen(0),
-  fVertexesName ("GoodVertexes"),
+  fVertexesName("GoodVertexes"),
   fVertexesFromBranch(kFALSE),
   fVertexes(0),
-  fXlFatJetsName ("XlFatJets"),
-  fSoftDropZCut (0.1),
-  fSoftDropR0 (.8),
-  fPruneZCut (0.1),
-  fPruneDistCut (0.5),
-  fFilterN (3),
-  fFilterRad (0.2),
-  fTrimRad (0.2),
-  fTrimPtFrac (0.05),
-  fConeSize (0.8),
-  fDeconstruct(0),
+  fXlFatJetsName("XlFatJets"),
+  fUseSoftDropLib(kTRUE),
+  fSoftDropZCut(0.1),
+  fSoftDropR0(.8),
+  fPruneZCut(0.1),
+  fPruneDistCut(0.5),
+  fFilterN(3),
+  fFilterRad(0.2),
+  fTrimRad(0.2),
+  fTrimPtFrac(0.05),
+  fConeSize(0.8),
   fInputCard(""),
-  fProcessNJets (4),
+  fProcessNJets(4),
   fDoShowerDeconstruction(kFALSE),
   fBeVerbose(kFALSE),
   fDoECF(kFALSE),
@@ -59,7 +58,6 @@ FatJetExtenderMod::FatJetExtenderMod(const char *name, const char *title) :
   fNMaxMicrojets(5)
 {
   // Constructor.
-
 }
 
 FatJetExtenderMod::~FatJetExtenderMod()
@@ -69,7 +67,9 @@ FatJetExtenderMod::~FatJetExtenderMod()
 //--------------------------------------------------------------------------------------------------
 void FatJetExtenderMod::Process()
 {
-  if (fBeVerbose) fStopwatch->Start(kTRUE);
+  if (fBeVerbose)
+    fStopwatch->Start(kTRUE);
+
   // make sure the out collections are empty before starting
   fXlFatJets->Delete();
   for(unsigned int i=0; i<XlSubJet::nSubJetTypes; ++i) {
@@ -90,44 +90,39 @@ void FatJetExtenderMod::Process()
   if (fQGTaggingActive)
     fQGTagger->SetRhoIso(fPileUpDen->At(0)->RhoRandomLowEta());
 
-
   // Loop over jets
   for (UInt_t i=0; i<fFatJets->GetEntries(); ++i) {
-
     // consider only the first fProcessNJets jets
     if (i >= fProcessNJets)
       break;
 
     const FatJet *jet = dynamic_cast<const FatJet*>(fFatJets->At(i));
-    if (! jet) {
-      printf(" FatJetExtenderMod::Process() - ERROR - jets provided are not FatJets.");
+    if (!jet) {
+      Error("Pocess", "Jets provided are not FatJets.");
       break;
     }
 
     // mark jet (and consequently its consituents) for further use in skim
     jet->Mark();
     if (fBeVerbose) {
-			fprintf(stderr,"Finished setup in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
-		}
+      Info("Process", "Finished setup in %f seconds\n",fStopwatch->RealTime());
+      fStopwatch->Start();
+    }
     FillXlFatJet(jet);
-
   }
-
-  return;
 }
 
 //--------------------------------------------------------------------------------------------------
 void FatJetExtenderMod::SlaveBegin()
 {
   // Run startup code on the computer (slave) doing the actual analysis.
-    // setup subjet branch names
-    fXlSubJetsName[0] = fXlFatJetsName+"_SoftDropSubjets";
-    fXlSubJetsName[1] = fXlFatJetsName+"_PrunedSubjets";
-    fXlSubJetsName[2] = fXlFatJetsName+"_TrimmedSubjets";
-    fXlSubJetsName[3] = fXlFatJetsName+"_CMSTTSubjets";
-    fXlSubJetsName[4] = fXlFatJetsName+"_HEPTTSubjets";
-    fXlSubJetsName[5] = fXlFatJetsName+"_NjettinessSubjets";
-
+  // setup subjet branch names
+  fXlSubJetsName[0] = fXlFatJetsName+"_SoftDropSubjets";
+  fXlSubJetsName[1] = fXlFatJetsName+"_PrunedSubjets";
+  fXlSubJetsName[2] = fXlFatJetsName+"_TrimmedSubjets";
+  fXlSubJetsName[3] = fXlFatJetsName+"_CMSTTSubjets";
+  fXlSubJetsName[4] = fXlFatJetsName+"_HEPTTSubjets";
+  fXlSubJetsName[5] = fXlFatJetsName+"_NjettinessSubjets";
 
   // Initialize area caculation (done with ghost particles)
 
@@ -147,18 +142,48 @@ void FatJetExtenderMod::SlaveBegin()
     }
   }
 
+  fNJettiness = new fastjet::contrib::Njettiness(fastjet::contrib::Njettiness::onepass_kt_axes, fastjet::contrib::NormalizedCutoffMeasure(1., fConeSize, 10000.));
+
+  if (fDoECF) {
+    fECR2b0 = new fastjet::contrib::EnergyCorrelatorDoubleRatio(2,0. ,fastjet::contrib::EnergyCorrelator::pt_R);
+    fECR2b0p2 = new fastjet::contrib::EnergyCorrelatorDoubleRatio(2,0.2,fastjet::contrib::EnergyCorrelator::pt_R);
+    fECR2b0p5 = new fastjet::contrib::EnergyCorrelatorDoubleRatio(2,0.5,fastjet::contrib::EnergyCorrelator::pt_R);
+    fECR2b1 = new fastjet::contrib::EnergyCorrelatorDoubleRatio(2,1.0,fastjet::contrib::EnergyCorrelator::pt_R);
+    fECR2b2 = new fastjet::contrib::EnergyCorrelatorDoubleRatio(2,2.0,fastjet::contrib::EnergyCorrelator::pt_R);
+  }
+
+  if (fUseSoftDropLib) {
+    fSoftDrop[kSD0] = new fastjet::contrib::SoftDrop(0.0, fSoftDropZCut, fSoftDropR0);
+    fSoftDrop[kSD1] = new fastjet::contrib::SoftDrop(1.0, fSoftDropZCut, fSoftDropR0);
+    fSoftDrop[kSD2] = new fastjet::contrib::SoftDrop(2.0, fSoftDropZCut, fSoftDropR0);
+    fSoftDrop[kSDm1] = new fastjet::contrib::SoftDrop(-1.0, fSoftDropZCut, fSoftDropR0);
+    fSoftDrop[kSD0]->set_tagging_mode();
+    fSoftDrop[kSD1]->set_tagging_mode();
+    fSoftDrop[kSD2]->set_tagging_mode();
+    fSoftDrop[kSDm1]->set_tagging_mode();
+  }
+  else {
+    fSoftDropCalc = new SoftDropCalculator(fSoftDropZCut, fSoftDropR0);
+    fSoftDropCalc->addBeta(0.);
+    fSoftDropCalc->addBeta(1.);
+    fSoftDropCalc->addBeta(2.);
+    fSoftDropCalc->addBeta(-1.);
+  }
+
   // Prepare pruner
   fPruner = new fastjet::Pruner(fastjet::cambridge_algorithm,fPruneZCut,fPruneDistCut);
   // Prepare filterer
   fFilterer = new fastjet::Filter(fastjet::JetDefinition(fastjet::cambridge_algorithm,fFilterRad),
                                   fastjet::SelectorNHardest(fFilterN));
   // Prepare trimmer
-  fTrimmer = new fastjet::Filter(fastjet::Filter(fastjet::JetDefinition(fastjet::kt_algorithm,fTrimRad),
-                                 fastjet::SelectorPtFractionMin(fTrimPtFrac)));
+  fTrimmer = new fastjet::Filter(fastjet::JetDefinition(fastjet::kt_algorithm,fTrimRad),
+                                 fastjet::SelectorPtFractionMin(fTrimPtFrac));
 
   // CA constructor (fConeSize = 0.6 for antiKt) - reproducing paper 1: http://arxiv.org/abs/1011.2268
   fCAJetDef = new fastjet::JetDefinition(fastjet::cambridge_algorithm, fConeSize);
-  fCMSTopTagger = new fastjet::CMSTopTagger();
+
+  if ((fSubJetFlags & (1 << XlSubJet::kCMSTT)) != 0)
+    fCMSTopTagger = new fastjet::CMSTopTagger();
 
   // Initialize area caculation (done with ghost particles)
   int activeAreaRepeats = 1;
@@ -168,23 +193,24 @@ void FatJetExtenderMod::SlaveBegin()
   fAreaDefinition = new fastjet::AreaDefinition(fastjet::active_area_explicit_ghosts,*fActiveArea);
 
   // Initialize QGTagger class
-  fQGTagger = new QGTagger(fQGTaggerCHS);
+  if (fQGTaggingActive)
+    fQGTagger = new QGTagger(fQGTaggerCHS);
 
-  // set up shower deconstruction stuff
-  if (fInputCard=="") {
-    // default was never changed
-    fInputCard = Utils::GetEnv("MIT_DATA");
-    fInputCard += TString::Format("/SDAlgorithm/input_card_%i.dat",int(fConeSize*10));
+  if (fDoShowerDeconstruction) {
+    // set up shower deconstruction stuff
+    if (fInputCard=="") {
+      // default was never changed
+      fInputCard = Utils::GetEnv("MIT_DATA");
+      fInputCard += TString::Format("/SDAlgorithm/input_card_%i.dat",int(fConeSize*10));
+    }
+    fParam = new AnalysisParameters(fInputCard.Data());
+    fSignal = new Deconstruction::TopGluonModel(*fParam);
+    fBackground = new Deconstruction::BackgroundModel(*fParam);
+    fISR = new Deconstruction::ISRModel(*fParam);
+    fDeconstruct = new Deconstruction::Deconstruct(*fParam, *fSignal, *fBackground, *fISR);
   }
-  fParam = new AnalysisParameters(fInputCard.Data());
-  fSignal = new Deconstruction::TopGluonModel(*fParam);
-  fBackground = new Deconstruction::BackgroundModel(*fParam);
-  fISR = new Deconstruction::ISRModel(*fParam);
-  fDeconstruct = new Deconstruction::Deconstruct(*fParam, *fSignal, *fBackground, *fISR);
 
   fStopwatch = new TStopwatch();
-
-  return;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -204,41 +230,38 @@ void FatJetExtenderMod::SlaveTerminate()
     }
   }
 
-  if (fXlFatJets)
-    delete fXlFatJets;
+  delete fXlFatJets;
 
-  if (fPruner)
-    delete fPruner;
-  if (fFilterer)
-    delete fFilterer;
-  if (fTrimmer)
-    delete fTrimmer ;
-  if (fCMSTopTagger)
-    delete fCMSTopTagger;
-  if (fCAJetDef)
-    delete fCAJetDef;
+  delete fNJettiness;
 
-  if (fActiveArea)
-    delete fActiveArea;
-  if (fAreaDefinition)
-    delete fAreaDefinition;
+  delete fECR2b0;
+  delete fECR2b0p2;
+  delete fECR2b0p5;
+  delete fECR2b1;
+  delete fECR2b2;
 
-  if (fQGTagger)
-    delete fQGTagger;
+  delete fPruner;
+  delete fFilterer;
+  delete fTrimmer ;
 
-  if (fDeconstruct)
-    delete fDeconstruct;
-  if (fParam)
-    delete fParam;
-  if (fSignal)
-    delete fSignal;
-  if (fBackground)
-    delete fBackground;
-  if (fISR)
-    delete fISR;
+  for (auto* fsd : fSoftDrop)
+    delete fsd;
+  delete fSoftDropCalc;
 
-  if (fStopwatch)
-    delete fStopwatch;
+  delete fCAJetDef;
+  delete fActiveArea;
+  delete fAreaDefinition;
+  delete fCMSTopTagger;
+
+  delete fQGTagger;
+
+  delete fDeconstruct;
+  delete fParam;
+  delete fSignal;
+  delete fBackground;
+  delete fISR;
+
+  delete fStopwatch;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -254,219 +277,260 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
     qgValue = fQGTagger->QGValue();
   }
   xlFatJet->SetQGTag(qgValue);
-    if (fBeVerbose) {
-			fprintf(stderr,"Finished QG-tagging in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
-		}
 
-  std::vector<fastjet::PseudoJet> fjParts;
+  if (fBeVerbose) {
+    Info("FillXlFatJet", "Finished QG-tagging in %f seconds\n", fStopwatch->RealTime());
+    fStopwatch->Start();
+  }
+
+  VPseudoJet fjParts;
   // Push all particle flow candidates of the input PFjet into fastjet particle collection
   for (UInt_t j=0; j<fatJet->NPFCands(); ++j) {
     const PFCandidate *pfCand = fatJet->PFCand(j);
-    fjParts.push_back(fastjet::PseudoJet(pfCand->Px(),pfCand->Py(),pfCand->Pz(),pfCand->E()));
+    fjParts.emplace_back(pfCand->Px(),pfCand->Py(),pfCand->Pz(),pfCand->E());
     fjParts.back().set_user_index(j);
   }
 
   // Setup the cluster for fastjet
-  fastjet::ClusterSequenceArea fjClustering (fjParts,*fCAJetDef,*fAreaDefinition);
+  fastjet::ClusterSequenceArea fjClustering(fjParts, *fCAJetDef, *fAreaDefinition);
   // ---- Fastjet is ready ----
 
+  VPseudoJet&& allJets(fjClustering.inclusive_jets(0.));
 
-  // Produce a new set of jets based on the fastjet particle collection and the defined clustering
-  // Cut off fat jets with pt < 10 GeV and consider only the hardest jet of the output collection
-  std::vector<fastjet::PseudoJet> fjOutJets = sorted_by_pt(fjClustering.inclusive_jets(10.));
+  // Consider only the hardest jet of the output collection
+  // For nsubjettiness etc use the hardest above 10 GeV
+  fastjet::PseudoJet* maxPtJet0 = 0;
+  fastjet::PseudoJet* maxPtJet10 = 0;
+  for (auto& jet : allJets) {
+    double pt2 = jet.perp2();
+    if (!maxPtJet0 || pt2 > maxPtJet0->perp2())
+      maxPtJet0 = &jet;
+
+    if (pt2 < 100.)
+      continue;
+    if (!maxPtJet10 || pt2 > maxPtJet10->perp2())
+      maxPtJet10 = &jet;
+  }
 
   // Check that the output collection size is non-null, otherwise nothing to be done further
-  if (fjOutJets.size() < 1) {
-    printf(" FatJetExtenderMod::FillXlFatJet() - WARNING - input FatJet produces null reclustering output!\n");
+  if (!maxPtJet10) {
+    Warning("FillXlFatJet", "Input FatJet produces null reclustering output!\n");
     return;
   }
-  fastjet::PseudoJet fjJet = fjOutJets[0];
 
-    if (fBeVerbose) {
-			fprintf(stderr,"Finished prepping fastjet in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
-		}
+  if (fBeVerbose) {
+    Info("FillXlFatJet", "Finished prepping fastjet in %f seconds\n",fStopwatch->RealTime());
+    fStopwatch->Start();
+  }
 
-  fastjet::contrib::Njettiness::AxesMode axisMode = fastjet::contrib::Njettiness::onepass_kt_axes;
-  double beta = 1.0;
-  double RNsub = fConeSize;
-  double Rcutoff = 10000.;
-  fastjet::contrib::Nsubjettiness  nSub1(1,axisMode,beta,RNsub,Rcutoff);
-  fastjet::contrib::Nsubjettiness  nSub2(2,axisMode,beta,RNsub,Rcutoff);
-  fastjet::contrib::Nsubjettiness  nSub3(3,axisMode,beta,RNsub,Rcutoff);
-  fastjet::contrib::Nsubjettiness  nSub4(4,axisMode,beta,RNsub,Rcutoff);
-  double tau1 = nSub1(fjJet);
-  double tau2 = nSub2(fjJet);
-  double tau3 = nSub3(fjJet);
-  double tau4 = nSub4(fjJet);
+  VPseudoJet constituents(maxPtJet10->constituents());
+
+  // internal implementation of Nsubjettiness::result
+  // getTau is getTauComponents().tau(), and there are bunch of unnecessary calculation done in the latter function. Can in principle go further here.
+  double tau1 = fNJettiness->getTau(1, constituents);
+  double tau2 = fNJettiness->getTau(2, constituents);
+  double tau3 = fNJettiness->getTau(3, constituents);
+  double tau4 = fNJettiness->getTau(4, constituents);
   xlFatJet->SetTau1(tau1);
   xlFatJet->SetTau2(tau2);
   xlFatJet->SetTau3(tau3);
   xlFatJet->SetTau4(tau4);
 
-    if (fBeVerbose) {
-			fprintf(stderr,"Finished njettiness calculation in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
-		}
+  if (fBeVerbose) {
+    Info("FillXlFatJet", "Finished njettiness calculation in %f seconds\n",fStopwatch->RealTime());
+    fStopwatch->Start();
+  }
 
   if (fDoECF) {
     // Compute the energy correlation function ratios
-    fastjet::contrib::EnergyCorrelatorDoubleRatio ECR2b0  (2,0. ,fastjet::contrib::EnergyCorrelator::pt_R);
-    fastjet::contrib::EnergyCorrelatorDoubleRatio ECR2b0p2(2,0.2,fastjet::contrib::EnergyCorrelator::pt_R);
-    fastjet::contrib::EnergyCorrelatorDoubleRatio ECR2b0p5(2,0.5,fastjet::contrib::EnergyCorrelator::pt_R);
-    fastjet::contrib::EnergyCorrelatorDoubleRatio ECR2b1  (2,1.0,fastjet::contrib::EnergyCorrelator::pt_R);
-    fastjet::contrib::EnergyCorrelatorDoubleRatio ECR2b2  (2,2.0,fastjet::contrib::EnergyCorrelator::pt_R);
-    double C2b0   = ECR2b0(fjJet);
-    double C2b0p2 = ECR2b0p2(fjJet);
-    double C2b0p5 = ECR2b0p5(fjJet);
-    double C2b1   = ECR2b1(fjJet);
-    double C2b2   = ECR2b2(fjJet);
+
+    double C2b0   = (*fECR2b0)(*maxPtJet10);
+    double C2b0p2 = (*fECR2b0p2)(*maxPtJet10);
+    double C2b0p5 = (*fECR2b0p5)(*maxPtJet10);
+    double C2b1   = (*fECR2b1)(*maxPtJet10);
+    double C2b2   = (*fECR2b2)(*maxPtJet10);
     xlFatJet->SetC2b0(C2b0);
     xlFatJet->SetC2b0p2(C2b0p2);
     xlFatJet->SetC2b0p5(C2b0p5);
     xlFatJet->SetC2b1(C2b1);
     xlFatJet->SetC2b2(C2b2);
 
-      if (fBeVerbose) {
-  			fprintf(stderr,"Finished ECF calculation in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
-  		}
+    if (fBeVerbose) {
+      Info("FillXlFatJet", "Finished ECF calculation in %f seconds\n",fStopwatch->RealTime());
+      fStopwatch->Start();
+    }
   }
 
-  
   if (fDoQjets) {
+    VPseudoJet constituentsNoGhost(FilterJetsByPt(constituents, 0.01));
     // Compute Q-jets volatility
-    std::vector<fastjet::PseudoJet> constits;
-    GetJetConstituents(fjJet, constits, 0.01);
-    double QJetVol = GetQjetVolatility(constits, 25, fCounter*25);
+    double QJetVol = GetQjetVolatility(constituentsNoGhost, 25, fCounter*25);
     fCounter++;
-    constits.clear();
     xlFatJet->SetQJetVol(QJetVol);
 
     if (fBeVerbose) {
-      fprintf(stderr,"Finished Qjets in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
+      Info("FillXlFatJet", "Finished Qjets in %f seconds\n",fStopwatch->RealTime());
+      fStopwatch->Start();
     }
   }
 
   // do grooming and subjetting
   double thisJEC = xlFatJet->Pt()/xlFatJet->RawMom().Pt();
-  fastjet::PseudoJet fjClusteredJets[XlSubJet::kTrimmed+1];
-  fastjet::contrib::SoftDrop softDropSDb0(0.0, fSoftDropZCut, fSoftDropR0);
-  fastjet::contrib::SoftDrop softDropSDb1(1.0, fSoftDropZCut, fSoftDropR0);
-  fastjet::contrib::SoftDrop softDropSDb2(2.0, fSoftDropZCut, fSoftDropR0);
-  fastjet::contrib::SoftDrop softDropSDbm1(-1.0, fSoftDropZCut, fSoftDropR0);
-  softDropSDb0.set_tagging_mode();
-  softDropSDb1.set_tagging_mode();
-  softDropSDb2.set_tagging_mode();
-  softDropSDbm1.set_tagging_mode();
-  
-  double MassSDb0, MassSDb1;
-  if (fSoftDropR0>1.2) {
-    fjClusteredJets[XlSubJet::kSoftDrop] = softDropSDb1(fjJet);
-    MassSDb1 = fjClusteredJets[XlSubJet::kSoftDrop].m();
-    MassSDb0 = (softDropSDb0(fjJet)).m(); 
-  } else {
-    fjClusteredJets[XlSubJet::kSoftDrop] = softDropSDb0(fjJet);
-    MassSDb0 = fjClusteredJets[XlSubJet::kSoftDrop].m();
-    MassSDb1 = (softDropSDb1(fjJet)).m(); 
-  }
-  double MassSDb2 = (softDropSDb2(fjJet)).m();
-  double MassSDbm1 = (softDropSDbm1(fjJet)).m();
-  xlFatJet->SetMassSDb0(MassSDb0*thisJEC);
-  xlFatJet->SetMassSDb1(MassSDb1*thisJEC);
-  xlFatJet->SetMassSDb2(MassSDb2*thisJEC);
-  xlFatJet->SetMassSDbm1(MassSDbm1*thisJEC);
+  fastjet::PseudoJet fjClusteredJets[XlSubJet::kTrimmed+1] = {
+    fastjet::PseudoJet(),
+    (*fPruner)(*maxPtJet10),
+    (*fTrimmer)(*maxPtJet10)
+  };
 
-  fjClusteredJets[XlSubJet::kPruned] = (*fPruner)(fjJet);
-  fjClusteredJets[XlSubJet::kTrimmed] = (*fTrimmer)(fjJet);
+  double MassSDb0, MassSDb1, MassSDb2, MassSDbm1;
+  if (fUseSoftDropLib) {
+    if (fSoftDropR0 > 1.2) {
+      fjClusteredJets[XlSubJet::kSoftDrop] = (*fSoftDrop[kSD1])(*maxPtJet10);
+      MassSDb0 = ((*fSoftDrop[kSD0])(*maxPtJet10)).m();
+      MassSDb1 = fjClusteredJets[XlSubJet::kSoftDrop].m();
+    }
+    else {
+      fjClusteredJets[XlSubJet::kSoftDrop] = (*fSoftDrop[kSD0])(*maxPtJet10);
+      MassSDb0 = fjClusteredJets[XlSubJet::kSoftDrop].m();
+      MassSDb1 = ((*fSoftDrop[kSD1])(*maxPtJet10)).m();
+    }
+
+    MassSDb2 = ((*fSoftDrop[kSD2])(*maxPtJet10)).m();
+    MassSDbm1 = ((*fSoftDrop[kSDm1])(*maxPtJet10)).m();
+  }
+  else {
+    fSoftDropCalc->calculate(*maxPtJet10);
+
+    if (fSoftDropR0 > 1.2) {
+      fjClusteredJets[XlSubJet::kSoftDrop] = fSoftDropCalc->result()[1];
+      MassSDb0 = fSoftDropCalc->result()[0].m();
+      MassSDb1 = fjClusteredJets[XlSubJet::kSoftDrop].m();
+    }
+    else {
+      fjClusteredJets[XlSubJet::kSoftDrop] = fSoftDropCalc->result()[0];
+      MassSDb0 = fjClusteredJets[XlSubJet::kSoftDrop].m();
+      MassSDb1 = fSoftDropCalc->result()[1].m();
+    }
+
+    MassSDb2 = fSoftDropCalc->result()[kSD2].m();
+    MassSDbm1 = fSoftDropCalc->result()[kSDm1].m();
+  }
+
+  xlFatJet->SetMassSDb0(MassSDb0 * thisJEC);
+  xlFatJet->SetMassSDb1(MassSDb1 * thisJEC);
+  xlFatJet->SetMassSDb2(MassSDb2 * thisJEC);
+  xlFatJet->SetMassSDbm1(MassSDbm1 * thisJEC);
+
   double MassPruned = fjClusteredJets[XlSubJet::kPruned].m();
-  double MassFiltered = ((*fFilterer)(fjJet)).m();
+  double MassFiltered = ((*fFilterer)(*maxPtJet10)).m();
   double MassTrimmed = fjClusteredJets[XlSubJet::kTrimmed].m();
   xlFatJet->SetMassPruned(MassPruned*thisJEC);
   xlFatJet->SetMassFiltered(MassFiltered*thisJEC);
   xlFatJet->SetMassTrimmed(MassTrimmed*thisJEC);
 
   if (fBeVerbose) {
-		fprintf(stderr,"Finished grooming in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
-	}
+    Info("FillXlFatJet", "Finished grooming in %f seconds\n",fStopwatch->RealTime());
+    fStopwatch->Start();
+  }
 
   // do CMS and HEP top tagging
-  std::vector<fastjet::PseudoJet> lOutJets = sorted_by_pt(fjClustering.inclusive_jets(0.0));
-  fastjet::PseudoJet iJet = lOutJets[0];
-  HEPTopTagger hepTopJet = HEPTopTagger(fjClustering,iJet);;
-  fastjet::PseudoJet cmsTopJet = fCMSTopTagger->result(iJet);
 
   if (fBeVerbose) {
-		fprintf(stderr,"Finished CMSTT and HEPTT in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
-	}
+    Info("FillXlFatJet", "Finished CMSTT and HEPTT in %f seconds\n",fStopwatch->RealTime());
+    fStopwatch->Start();
+  }
 
   // fill subjets
   Bool_t computedPullAngle = kFALSE;
   for (unsigned int iSJType = 0; iSJType!=XlSubJet::nSubJetTypes; ++iSJType) {
     if (!(fSubJetFlags & (1<<iSJType)))
       continue;
+
     // okay, we really do want to save this collection
-    std::vector<fastjet::PseudoJet> fjSubjets;
     if (iSJType <= XlSubJet::kTrimmed) {
       // these have a common interface
       if (!fjClusteredJets[iSJType].has_constituents())
         // if subjet finding failed, skip this step
         continue;
-      int nSubJets = std::min<unsigned int>(fjClusteredJets[iSJType].constituents().size(),3);
-      if (nSubJets>0) {
-        fjSubjets = fjClusteredJets[iSJType].associated_cluster_sequence()->exclusive_subjets(fjClusteredJets[iSJType],nSubJets);
-        std::vector<fastjet::PseudoJet> fjSubJetsSorted = Sorted_by_pt_min_pt(fjSubjets,0.01);
+
+      int nSubJets = fjClusteredJets[iSJType].constituents().size();
+      if (nSubJets > 3)
+        nSubJets = 3;
+
+      if (nSubJets != 0) {
+        auto&& fjSubjets(fjClusteredJets[iSJType].associated_cluster_sequence()->exclusive_subjets(fjClusteredJets[iSJType], nSubJets));
+        VPseudoJetPtr fjSubJetsSorted(Sorted_by_pt_min_pt(fjSubjets, 0.01));
         if (!computedPullAngle) {
-          xlFatJet->SetPullAngle(GetPullAngle(fjSubJetsSorted,0.01));
+          xlFatJet->SetPullAngle(GetPullAngle(fjSubJetsSorted, 0.01));
           computedPullAngle = kTRUE;
         }
-        FillXlSubJets(fjSubJetsSorted,xlFatJet,(ESubJetType)iSJType);
+        FillXlSubJets(fjSubJetsSorted, xlFatJet, (ESubJetType)iSJType);
       }
-    } else if (iSJType == XlSubJet::kCMSTT) {
-      fjSubjets = cmsTopJet.pieces();
-      FillXlSubJets(fjSubjets,xlFatJet,XlSubJet::kCMSTT);
-    } else if (iSJType == XlSubJet::kHEPTT) {
-      fjSubjets = hepTopJet.top_subjets();
-      FillXlSubJets(fjSubjets,xlFatJet,XlSubJet::kHEPTT);
+    }
+    else if (iSJType == XlSubJet::kCMSTT) {
+      fastjet::PseudoJet cmsTopJet = fCMSTopTagger->result(*maxPtJet0);
+
+      auto&& fjSubjets(cmsTopJet.pieces());
+      VPseudoJetPtr subjetPtrs;
+      for (auto&& fjSubjet : fjSubjets)
+        subjetPtrs.push_back(&fjSubjet);
+
+      FillXlSubJets(subjetPtrs, xlFatJet, XlSubJet::kCMSTT);
+    }
+    else if (iSJType == XlSubJet::kHEPTT) {
+      HEPTopTagger hepTopJet = HEPTopTagger(fjClustering, *maxPtJet0);;
+
+      auto&& fjSubjets(hepTopJet.top_subjets());
+      VPseudoJetPtr subjetPtrs;
+      for (auto&& fjSubjet : fjSubjets)
+        subjetPtrs.push_back(&fjSubjet);
+
+      FillXlSubJets(subjetPtrs, xlFatJet, XlSubJet::kHEPTT);
     }
   }
 
   if (fBeVerbose) {
-		fprintf(stderr,"Finished filling subjets in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
-	}
+    Info("FillXlFatJet", "Finished filling subjets in %f seconds\n",fStopwatch->RealTime());
+    fStopwatch->Start();
+  }
 
   // take a shower
   if (fDoShowerDeconstruction) {
-      // shower deconstruction
-      double microconesize;
-      if  (fMicrojetConeSize<0){
-        // From Tobias:
-        // 0..500   -> 0.3
-        // 500..700 -> 0.2
-        // 700..inf -> 0.
-        if (fatJet->Pt() < 500)
-         	 microconesize=0.3;
-        else if (fatJet->Pt() < 700)
-         	 microconesize=0.2;
-        else
-         	 microconesize=0.1;
-      } else {
-        microconesize = fMicrojetConeSize;
-      }
-      fastjet::JetDefinition reclustering(fastjet::JetAlgorithm::kt_algorithm, microconesize);
-      fastjet::ClusterSequence * cs_micro = new fastjet::ClusterSequence(fjParts, reclustering);
-      std::vector<fastjet::PseudoJet> microjets = fastjet::sorted_by_pt(cs_micro->inclusive_jets(10.));
-      xlFatJet->SetNMicrojets(microjets.size());
-      if (microjets.size()>fNMaxMicrojets)
-        microjets.erase(microjets.begin()+fNMaxMicrojets,microjets.end());
-      double Psignal = 0.0;
-      double Pbackground = 0.0;
-      try {
-        double chi = fDeconstruct->deconstruct(microjets, Psignal, Pbackground);
-        xlFatJet->SetChi(chi);
-      } catch(Deconstruction::Exception &e) {
-        std::cout << "Exception while running SD: " << e.what() << std::endl;
-      }
+    // shower deconstruction
+    double microconesize;
+    if  (fMicrojetConeSize<0){
+      // From Tobias:
+      // 0..500   -> 0.3
+      // 500..700 -> 0.2
+      // 700..inf -> 0.
+      if (fatJet->Pt() < 500)
+        microconesize=0.3;
+      else if (fatJet->Pt() < 700)
+        microconesize=0.2;
+      else
+        microconesize=0.1;
+    } else {
+      microconesize = fMicrojetConeSize;
+    }
+    fastjet::JetDefinition reclustering(fastjet::JetAlgorithm::kt_algorithm, microconesize);
+    fastjet::ClusterSequence * cs_micro = new fastjet::ClusterSequence(fjParts, reclustering);
+    VPseudoJet microjets = fastjet::sorted_by_pt(cs_micro->inclusive_jets(10.));
+    xlFatJet->SetNMicrojets(microjets.size());
+    if (microjets.size()>fNMaxMicrojets)
+      microjets.erase(microjets.begin()+fNMaxMicrojets,microjets.end());
+    double Psignal = 0.0;
+    double Pbackground = 0.0;
+    try {
+      double chi = fDeconstruct->deconstruct(microjets, Psignal, Pbackground);
+      xlFatJet->SetChi(chi);
+    } catch(Deconstruction::Exception &e) {
+      std::cout << "Exception while running SD: " << e.what() << std::endl;
+    }
     if (fBeVerbose) {
-			fprintf(stderr,"Finished shower deconstruction in %f seconds\n",fStopwatch->RealTime()); fStopwatch->Start();
-		}
+      Info("FillXlFatJet", "Finished shower deconstruction in %f seconds\n",fStopwatch->RealTime());
+      fStopwatch->Start();
+    }
+
     if (cs_micro->inclusive_jets(0.).size()>0)
       cs_micro->delete_self_when_unused();
     delete cs_micro;
@@ -474,80 +538,75 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
 
   // Store groomed 4-momenta, apply JEC
   fastjet::PseudoJet fj_tmp;
-  if (fSubJetFlags & (1<<XlSubJet::kSoftDrop)){
-    fj_tmp = fjClusteredJets[XlSubJet::kSoftDrop];
-    xlFatJet->SetSoftDropP(GetCorrectedMomentum(fj_tmp,thisJEC));
-  }
-  if (fSubJetFlags & (1<<XlSubJet::kPruned)){
-    fj_tmp = fjClusteredJets[XlSubJet::kPruned];
-    xlFatJet->SetPrunedP(GetCorrectedMomentum(fj_tmp,thisJEC));
-  }
-  if (fSubJetFlags & (1<<XlSubJet::kTrimmed)){
-    fj_tmp = fjClusteredJets[XlSubJet::kTrimmed];
-    xlFatJet->SetTrimmedP(GetCorrectedMomentum(fj_tmp,thisJEC));
-  }
-  \
+  if (fSubJetFlags & (1<<XlSubJet::kSoftDrop))
+    xlFatJet->SetSoftDropP(GetCorrectedMomentum(fjClusteredJets[XlSubJet::kSoftDrop], thisJEC));
+  if (fSubJetFlags & (1<<XlSubJet::kPruned))
+    xlFatJet->SetPrunedP(GetCorrectedMomentum(fjClusteredJets[XlSubJet::kPruned], thisJEC));
+  if (fSubJetFlags & (1<<XlSubJet::kTrimmed))
+    xlFatJet->SetTrimmedP(GetCorrectedMomentum(fjClusteredJets[XlSubJet::kTrimmed], thisJEC));
+
   // Store the color pull
-  xlFatJet->SetPull(GetPull(fjJet,0.01).Mod());
+  xlFatJet->SetPull(GetPull(*maxPtJet10,0.01).Mod());
 
   // Trim the output collections
   fXlFatJets->Trim();
 
   // Memory cleanup
-    if (fBeVerbose) {
-			fprintf(stderr,"Finished filling and cleanup in %f seconds\n",fStopwatch->RealTime());
-    }
+  if (fBeVerbose) {
+    fprintf(stderr,"Finished filling and cleanup in %f seconds\n",fStopwatch->RealTime());
+  }
 
   return;
 }
 
 //--------------------------------------------------------------------------------------------------
 
-inline Vect4M FatJetExtenderMod::GetCorrectedMomentum(fastjet::PseudoJet fj_tmp, double thisJEC) {
+inline Vect4M FatJetExtenderMod::GetCorrectedMomentum(fastjet::PseudoJet const& fj_tmp, double thisJEC) {
   return Vect4M(thisJEC*fj_tmp.pt(),fj_tmp.eta(), fj_tmp.phi(),thisJEC*fj_tmp.m());
 }
 
 //--------------------------------------------------------------------------------------------------
 
-void FatJetExtenderMod::FillXlSubJets(std::vector<fastjet::PseudoJet> &fjSubJets,
-                                 XlFatJet *pFatJet, XlSubJet::ESubJetType subJetType)
+void FatJetExtenderMod::FillXlSubJets(VPseudoJetPtr const& fjSubJets,
+                                      XlFatJet* pFatJet, XlSubJet::ESubJetType subJetType)
 {
-  for (int iSJet=0; iSJet < (int) fjSubJets.size(); iSJet++) {
-    XlSubJet *subJet = fXlSubJets[(unsigned int)subJetType]->AddNew();
-    subJet->SetRawPtEtaPhiM(fjSubJets[iSJet].pt(),
-                            fjSubJets[iSJet].eta(),
-                            fjSubJets[iSJet].phi(),
-                            fjSubJets[iSJet].m());
+  for (auto* fjSubJet : fjSubJets) {
+    XlSubJet *subJet = fXlSubJets[subJetType]->AddNew();
+    subJet->SetRawPtEtaPhiM(fjSubJet->pt(),
+                            fjSubJet->eta(),
+                            fjSubJet->phi(),
+                            fjSubJet->m());
 
     // Store the QG tagging variable
     if (fQGTaggingActive)
-      FillSubjetQGTagging(fjSubJets[iSJet], 0.01, subJet, pFatJet);
+      FillSubjetQGTagging(*fjSubJet, 0.01, subJet, pFatJet);
 
     // Store the subjet type value
     subJet->SetSubJetType(subJetType);
 
     // Add the subjet to the relative fatjet
     pFatJet->AddSubJet(subJet,subJetType);
-
   }
 
   return;
 }
 
 //--------------------------------------------------------------------------------------------------
-std::vector <fastjet::PseudoJet>   FatJetExtenderMod::Sorted_by_pt_min_pt(std::vector <fastjet::PseudoJet> &jets,
-                                                                     float jetPtMin)
+FatJetExtenderMod::VPseudoJetPtr
+FatJetExtenderMod::Sorted_by_pt_min_pt(VPseudoJet const& jets, float jetPtMin)
 {
-  // First order collection by pt
-  std::vector<fastjet::PseudoJet> sortedJets = sorted_by_pt(jets);
+  std::map<double, fastjet::PseudoJet const*> sorter;
+  for (auto&& jet : jets)
+    sorter.emplace(jet.perp2(), &jet);
 
-  // Loop on the sorted collection and erase jets below jetPtMin
-  std::vector<fastjet::PseudoJet>::iterator it = sortedJets.begin();
-  for ( ;  it != sortedJets.end(); ) {
-    if (it->perp() < jetPtMin)
-      it = sortedJets.erase(it);
-    else
-      it++;
+  double pt2Min = jetPtMin * jetPtMin;
+
+  VPseudoJetPtr sortedJets;
+  auto rEnd(sorter.rend());
+  for (auto rItr(sorter.rbegin()); rItr != rEnd; ++rItr) {
+    if (rItr->second->perp2() < pt2Min)
+      break;
+    sortedJets.push_back(rItr->second);
   }
 
   // Return the reduced and sorted jet collection
@@ -555,20 +614,22 @@ std::vector <fastjet::PseudoJet>   FatJetExtenderMod::Sorted_by_pt_min_pt(std::v
 }
 
 //--------------------------------------------------------------------------------------------------
-void FatJetExtenderMod::GetJetConstituents(fastjet::PseudoJet &jet, std::vector <fastjet::PseudoJet> &constits,
-                                      float constitsPtMin)
+FatJetExtenderMod::VPseudoJet
+FatJetExtenderMod::FilterJetsByPt(VPseudoJet const& jets, double ptMin)
 {
   // Loop on input jet constituents vector and discard very soft particles (ghosts)
-  for (unsigned int iPart = 0; iPart < jet.constituents().size(); iPart++) {
-    if (jet.constituents()[iPart].perp() < constitsPtMin)
+  VPseudoJet result;
+  double ptMin2 = ptMin * ptMin;
+  for (auto&& jet : jets) {
+    if (jet.perp2() < ptMin2)
       continue;
-    constits.push_back(jet.constituents()[iPart]);
+    result.emplace_back(jet);
   }
 
-  return;
+  return result;
 }
 //--------------------------------------------------------------------------------------------------
-double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &constits, int QJetsN, int seed)
+double FatJetExtenderMod::GetQjetVolatility(VPseudoJet const& constits, int QJetsN, int seed)
 {
   std::vector<float> qjetmasses;
 
@@ -586,7 +647,7 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
       return -(seed+ii);  // this will be the error value for when too many jets are left unmerged...needs more investigation
     }
 
-    vector<fastjet::PseudoJet> inclusive_jets2 = sorted_by_pt(qjet_seq.inclusive_jets(10.0));
+    VPseudoJet inclusive_jets2 = fastjet::sorted_by_pt(qjet_seq.inclusive_jets(10.0));
     // skip failed recombinations (with no output jets)
     if (inclusive_jets2.size() == 0) {
       nFailed++;
@@ -594,8 +655,8 @@ double FatJetExtenderMod::GetQjetVolatility(std::vector <fastjet::PseudoJet> &co
     }
     else if (inclusive_jets2.size() > 1) {
       if (inclusive_jets2[1].pt() > inclusive_jets2[0].pt()*0.1) {
-      // if more than one jet were found, probably don't trust the mass of the leading one
-      // unless the subleading one is really small:
+        // if more than one jet were found, probably don't trust the mass of the leading one
+        // unless the subleading one is really small:
         nFailed++;
         continue;
       }
@@ -639,25 +700,28 @@ double FatJetExtenderMod::FindMean(std::vector<float> qjetmasses)
   float total = 0.;
   float ctr = 0.;
   for (unsigned int i = 0; i < qjetmasses.size(); i++){
-      total = total + qjetmasses[i];
-      ctr++;
+    total = total + qjetmasses[i];
+    ctr++;
   }
   return total/ctr;
 }
 
 //--------------------------------------------------------------------------------------------------
-void FatJetExtenderMod::FillSubjetQGTagging(fastjet::PseudoJet &jet, float constitsPtMin,
-                                       XlSubJet *pSubJet, XlFatJet *pFatJet)
+void FatJetExtenderMod::FillSubjetQGTagging(fastjet::PseudoJet const& jet, float constitsPtMin,
+                                            XlSubJet *pSubJet, XlFatJet const* pFatJet)
 {
   // Prepare a PFJet to compute the QGTagging
   PFJet pfJet;
   pfJet.SetRawPtEtaPhiM(jet.pt(),jet.eta(),jet.phi(),jet.m());
 
   // Loop on input jet constituents vector and discard very soft particles (ghosts)
-  for (unsigned int iPart = 0; iPart < jet.constituents().size(); iPart++) {
-    if (jet.constituents()[iPart].perp() < constitsPtMin)
+  VPseudoJet constituents(jet.constituents());
+  double ptMin2 = constitsPtMin * constitsPtMin;
+
+  for (auto&& cons : constituents) {
+    if (cons.perp2() < ptMin2)
       continue;
-    int thisPFCandIndex = jet.constituents()[iPart].user_index();
+    int thisPFCandIndex = jet.user_index();
     // Add the constituent to the PF subjet
     pfJet.AddPFCand(pFatJet->PFCand(thisPFCandIndex));
   }
@@ -671,30 +735,33 @@ void FatJetExtenderMod::FillSubjetQGTagging(fastjet::PseudoJet &jet, float const
     pSubJet->SetQGAxis2(fQGTagger->GetAxis2());
     pSubJet->SetQGMult(fQGTagger->GetMult());
   }
-
-  return;
 }
 
 //--------------------------------------------------------------------------------------------------
-TVector2 FatJetExtenderMod::GetPull(fastjet::PseudoJet &jet, float constitsPtMin)
+TVector2 FatJetExtenderMod::GetPull(fastjet::PseudoJet const& jet, float constitsPtMin)
 {
   double dYSum   = 0;
   double dPhiSum = 0;
   // Loop on input jet constituents vector and discard very soft particles (ghosts)
-  for (unsigned int iPart = 0; iPart < jet.constituents().size(); iPart++) {
-    if (jet.constituents()[iPart].perp() < constitsPtMin)
+  VPseudoJet constituents(jet.constituents());
+  double ptMin2 = constitsPtMin * constitsPtMin;
+
+  for (auto&& cons : constituents) {
+    if (cons.perp2() < ptMin2)
       continue;
-    double dY     = jet.constituents()[iPart].rapidity()-jet.rapidity();
-    double dPhi   = MathUtils::DeltaPhi(jet.constituents()[iPart].phi(),jet.phi());
-    double weight = jet.constituents()[iPart].pt()*sqrt(dY*dY + dPhi*dPhi);
+
+    double dY     = cons.rapidity()-jet.rapidity();
+    double dPhi   = MathUtils::DeltaPhi(cons.phi(),jet.phi());
+    double weight = cons.pt()*sqrt(dY*dY + dPhi*dPhi);
     dYSum   += weight*dY;
     dPhiSum += weight*dPhi;
   }
+
   return TVector2(dYSum/jet.pt(), dPhiSum/jet.pt());
 }
 
 //--------------------------------------------------------------------------------------------------
-double FatJetExtenderMod::GetPullAngle(std::vector<fastjet::PseudoJet> &fjSubJets, float constitsPtMin)
+double FatJetExtenderMod::GetPullAngle(VPseudoJetPtr const& fjSubJets, float constitsPtMin)
 {
   // Subject collection already sorted by pt
   // Consider only the leading and the subleading for the pull angle computation
@@ -704,9 +771,107 @@ double FatJetExtenderMod::GetPullAngle(std::vector<fastjet::PseudoJet> &fjSubJet
   if (fjSubJets.size() < 2)
     return -20.;
 
-  TVector2 lPull = GetPull(fjSubJets[0],constitsPtMin);
-  TVector2 lJet(fjSubJets[1].rapidity()-fjSubJets[0].rapidity(),
-                MathUtils::DeltaPhi(fjSubJets[1].phi(), fjSubJets[0].phi()));
+  TVector2 lPull = GetPull(*fjSubJets[0], constitsPtMin);
+  TVector2 lJet(fjSubJets[1]->rapidity() - fjSubJets[0]->rapidity(),
+                MathUtils::DeltaPhi(fjSubJets[1]->phi(), fjSubJets[0]->phi()));
   double lThetaP = lPull.DeltaPhi(lJet);
   return lThetaP;
+}
+
+void
+FatJetExtenderMod::SoftDropCalculator::addBeta(double beta)
+{
+  betas_.push_back(beta);
+  jetDone_.push_back(false);
+  groomedJets_.push_back(fastjet::PseudoJet());
+}
+
+void
+FatJetExtenderMod::SoftDropCalculator::calculate(PseudoJet const& inJet)
+{
+  // "parallelization" of RecursiveSymmetryCutBase (base class of SoftDrop) for
+  // multiple beta values.
+  // taking (mostly) the default setup for SoftDrop, i.e.
+  //  _do_reclustering = true
+  //  _recluster = 0 (uses C/A)
+  //  _mu_cut = infinity
+  //  _symmetry_measure = scalar_z
+  //  _recursion_choice = larger_pt
+  //  _subtractor = 0
+  //  _grooming_mode = false (non-default)
+
+  // IMPORTANT: at the moment we care only about the soft drop mass, and therefore
+  // the groomed jets are not given the StructureType object.
+
+  jetDone_.assign(jetDone_.size(), false);
+
+  auto&& inJetAlgo(inJet.validated_cs()->jet_def().jet_algorithm());
+  fastjet::PseudoJet jet(inJetAlgo == fastjet::cambridge_algorithm ? fastjet::contrib::Recluster(cambridge_algorithm, JetDefinition::max_allowable_R)(inJet) : inJet);
+
+  // variables for tracking what will happen
+  fastjet::PseudoJet piece1, piece2;
+  
+  // now recurse into the jet's structure
+  while (jet.has_parents(piece1, piece2)) {
+    
+    // first sanity check: 
+    // - zero or negative pts are not allowed for the input subjet
+    // - zero or negative masses are not allowed for configurations
+    //   in which the mass will effectively appear in a denominator
+    //   (The masses will be checked later)
+    if (jet.pt2() <= 0) {
+      for (unsigned iJ = 0; iJ != jetDone_.size(); ++iJ) {
+        if (!jetDone_[iJ])
+          groomedJets_[iJ] = fastjet::PseudoJet();
+      }
+
+      return;
+    }
+
+    // determine the symmetry parameter
+    // min(pt1, pt2)/(pt1+pt2), where the denominator is a scalar sum
+    // of the two subjets
+    double pt1 = piece1.pt();
+    double pt2 = piece2.pt();
+    // make sure denominator is non-zero
+    if (pt1 + pt2 == 0.) {
+      for (unsigned iJ = 0; iJ != jetDone_.size(); ++iJ) {
+        if (!jetDone_[iJ])
+          groomedJets_[iJ] = fastjet::PseudoJet();
+      }
+
+      return;
+    }
+    double sym = std::min(pt1, pt2) / (pt1 + pt2);
+
+    double cutBase = piece1.squared_distance(piece2) / r0sq_;
+    
+    bool done = true;
+    for (unsigned iJ = 0; iJ != betas_.size(); ++iJ) {
+      if (jetDone_[iJ])
+        continue;
+
+      // make a tagging decision based on symmetry cut
+      if (sym > symmetryCut_ * std::pow(cutBase, 0.5 * betas_[iJ])) {
+        groomedJets_[iJ] = jet;
+        jetDone_[iJ] = true;
+        continue;
+      }
+
+      done = false;
+    }
+
+    if (done)
+      break;
+    
+    // continue unclustering
+    jet = pt1 > pt2 ? piece1 : piece2;
+  }
+
+  for (unsigned iJ = 0; iJ != jetDone_.size(); ++iJ) {
+    if (!jetDone_[iJ]) {
+      groomedJets_[iJ] = fastjet::PseudoJet();
+      jetDone_[iJ] = true;
+    }
+  }
 }

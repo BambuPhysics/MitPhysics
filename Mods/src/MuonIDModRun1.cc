@@ -3,6 +3,7 @@
 #include "MitAna/DataTree/interface/MuonFwd.h"
 #include "MitAna/DataTree/interface/ElectronFwd.h"
 #include "MitAna/DataTree/interface/VertexCol.h"
+#include "MitAna/DataTree/interface/EventHeader.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 
 #include "TSystem.h"

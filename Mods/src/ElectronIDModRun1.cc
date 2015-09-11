@@ -6,6 +6,7 @@
 #include "MitAna/DataTree/interface/TriggerObjectCol.h"
 #include "MitAna/DataTree/interface/DecayParticleCol.h"
 #include "MitAna/DataTree/interface/PFCandidateCol.h"
+#include "MitAna/DataTree/interface/EventHeader.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "TMVA/Tools.h"
 #include "TMVA/Reader.h"

@@ -3,6 +3,7 @@
 #include <TNtuple.h>
 #include "MitAna/DataTree/interface/Names.h"
 #include "MitAna/DataTree/interface/ElectronCol.h"
+#include "MitAna/DataTree/interface/EventHeader.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 #include "MitPhysics/Mods/interface/ElectronCorrectionMod.h"
 

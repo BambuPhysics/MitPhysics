@@ -12,6 +12,7 @@
 #include "MitPhysics/Mods/interface/IdMod.h"
 
 #include "MitAna/DataTree/interface/Jet.h"
+#include "MitPhysics/Utils/interface/JetTools.h"
 #include "MitPhysics/Utils/interface/JetIDMVA.h"
 
 namespace mithep {
@@ -32,7 +33,7 @@ namespace mithep {
     Double_t    GetMinNeutralEMFraction() const     { return fMinNeutralEMFraction; }
     Double_t    GetMaxNeutralEMFraction() const     { return fMaxNeutralEMFraction; }
     Bool_t      GetApplyBetaCut() const             { return fApplyBetaCut; }
-    Bool_t      GetApplyPFLooseId() const           { return fApplyPFLooseId; }
+    Bool_t      GetPFId() const                     { return fPFId; }
     UInt_t      GetMVATrainingSet() const           { return fMVATrainingSet; }
     UInt_t      GetMVACutWP() const                 { return fMVACutWP; }
     char const* GetMVAWeightsFile() const           { return fMVAWeightsFile; }
@@ -53,7 +54,7 @@ namespace mithep {
     void SetMaxMuonFraction(Double_t m)          { fMaxMuonFraction = m; }
     void SetMinMuonFraction(Double_t m)          { fMinMuonFraction = m; }
     void SetApplyBetaCut(Bool_t b)               { fApplyBetaCut = b; }
-    void SetApplyPFLooseId(Bool_t b)             { fApplyPFLooseId = b; }
+    void SetPFId(UInt_t w)                       { fPFId = w; }
     void SetMVATrainingSet(UInt_t s)             { fMVATrainingSet = s; }
     void SetMVACutWP(UInt_t w)                   { fMVACutWP = w; }
     void SetMVAWeightsFile(char const* n)        { fMVAWeightsFile = n; }
@@ -88,7 +89,7 @@ namespace mithep {
       cMuonFrac,
       cNPFCandidates,
       cNChargedPFCandidates,
-      cPFLooseId,
+      cPFId,
       cBeta,
       cMVA,
       nCuts
@@ -112,7 +113,7 @@ namespace mithep {
     UInt_t   fMinNPFCandidates = 0;
     UInt_t   fMinNChargedPFCandidates = 0;
     Bool_t   fApplyBetaCut = kFALSE;          //=true then apply beta cut
-    Bool_t   fApplyPFLooseId = kFALSE;        //=true then apply PF loose ID
+    UInt_t   fPFId = JetTools::nPFIdWorkingPoints; // PF Id working point
     UInt_t   fMVATrainingSet = JetIDMVA::nMVATypes; //JetIDMVA::MVAType
     UInt_t   fMVACutWP = JetIDMVA::kLoose; //JetIDMVA::CutType
     TString  fMVAWeightsFile = "";
