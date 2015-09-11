@@ -2,10 +2,10 @@ import os
 from MitAna.TreeMod.bambu import mithep
 
 puppiMod = mithep.PuppiMod(
-    EtaConfigName = os.getenv("MIT_DATA")+'/PuppiEta_150701.cfg',
+    EtaConfigName = os.getenv("MIT_DATA")+'/Puppi/PuppiEta_150813.cfg',
     OutputName = 'PuppiParticles',
     RMin = 0.02,
-    R0 = 0.3,
+    R0 = 0.4,
     Alpha = 2.0,
     Beta = 2.0,
     D0Cut = 0.1,
