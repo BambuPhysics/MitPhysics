@@ -105,7 +105,7 @@ mithep::PhotonTools::PassIsoFootprintRhoCorr(Photon const* pho, EPhIsoType isoTy
   double nhIso = 0.;
   double phIso = 0.;
 
-  IsolationTools::PFPhotonIsoFootprintRemoved(pho, pv, pfCands, 0.3, chIso, nhIso, phIso);
+  IsolationTools::PFEGIsoFootprintRemoved(pho, pv, pfCands, 0.3, chIso, nhIso, phIso);
 
   return PassIsoRhoCorr(pho, isoType, rho, chIso, nhIso, phIso);
 }
@@ -123,14 +123,14 @@ mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Doubl
   bool isEB = scEta < gkPhoEBEtaMax;
   double pEt = pho->Et();
 
-  double chEA = 0.;
-  double nhEA = 0.;
-  double phEA = 0.;
+  double chIsoCor = 0.;
+  double nhIsoCor = 0.;
+  double phIsoCor = 0.;
 
   if (isoType == kSummer15TightIso || isoType == kSummer15MediumIso || isoType == kSummer15LooseIso) {
-    chEA = PhotonEffectiveArea(kPhoChargedHadron03, scEta, kPhoEAPhys14);
-    nhEA = PhotonEffectiveArea(kPhoNeutralHadron03, scEta, kPhoEAPhys14);
-    phEA = PhotonEffectiveArea(kPhoPhoton03, scEta, kPhoEAPhys14);
+    chIsoCor = IsolationTools::PFPhotonIsolationRhoCorr(scEta, chIso, rho, kPhoEAPhys14, kPhoChargedHadron03);
+    nhIsoCor = IsolationTools::PFPhotonIsolationRhoCorr(scEta, nhIso, rho, kPhoEAPhys14, kPhoNeutralHadron03);
+    phIsoCor = IsolationTools::PFPhotonIsolationRhoCorr(scEta, phIso, rho, kPhoEAPhys14, kPhoPhoton03);
   }
 
   double chIsoCut = 0.;
@@ -157,10 +157,6 @@ mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Doubl
     break;
   }
 
-  double chIsoCor = TMath::Max(chIso - rho * chEA, 0.0);
-  double nhIsoCor = TMath::Max(nhIso - rho * nhEA , 0.0);
-  double phIsoCor = TMath::Max(phIso - rho * phEA , 0.0);
-  
   if (chIsoCor > chIsoCut)
     return false;
   if (nhIsoCor > nhIsoCut)
