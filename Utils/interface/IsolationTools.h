@@ -24,6 +24,7 @@
 #include "MitAna/DataTree/interface/PileupEnergyDensityFwd.h"
 #include "MitPhysics/Utils/interface/ElectronTools.h"
 #include "MitPhysics/Utils/interface/MuonTools.h"
+#include "MitPhysics/Utils/interface/PhotonTools.h"
 
 namespace mithep
 {
@@ -73,14 +74,16 @@ namespace mithep
                                                   Double_t dRMax = 0.3, Bool_t isDebug=kFALSE);
     static Double_t PFElectronIsolationRhoCorr(Electron const*, Double_t rho, ElectronTools::EElectronEffectiveAreaTarget);
 
+    static Double_t PFPhotonIsolationRhoCorr(Double_t eta, Double_t iso, Double_t rho, PhotonTools::EPhotonEffectiveAreaTarget, PhotonTools::EPhotonEffectiveAreaType);
+
     static Double_t PFMuonIsolationRhoCorr(Muon const*, Double_t rho, MuonTools::EMuonEffectiveAreaTarget);
 
-    static void PFPhotonIsoFootprintRemoved(Photon const*, Vertex const*, PFCandidateCol const*, Double_t dR, Double_t& chIso, Double_t& nhIso, Double_t& phIso);
+    static void PFEGIsoFootprintRemoved(Particle const*, Vertex const*, PFCandidateCol const*, Double_t dR, Double_t& chIso, Double_t& nhIso, Double_t& phIso);
 
     static Double_t BetaM(const TrackCol *tracks, const Muon *p, const Vertex *vertex, 
                           Double_t ptMin, Double_t  delta_z, Double_t extRadius,
                           Double_t intRadius);
-    static Double_t BetaMwithPUCorrection(const PFCandidateCol *PFNoPileUP, const PFCandidateCol *PFPileUP, const Muon *p, Double_t extRadius);
+    static Double_t BetaMwithPUCorrection(const PFCandidateCol *PFNoPileUP, const PFCandidateCol *PFPileUP, const Muon *p, Double_t extRadius, Double_t* isoArr = 0);
     static Double_t BetaE(const TrackCol *tracks, const Electron *p, const Vertex *vertex, 
                           Double_t ptMin, Double_t  delta_z, Double_t extRadius,
                           Double_t intRadius);

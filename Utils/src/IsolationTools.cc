@@ -1,5 +1,4 @@
 #include "MitPhysics/Utils/interface/IsolationTools.h"
-#include "MitPhysics/Utils/interface/PhotonTools.h"
 #include "MitAna/DataTree/interface/VertexCol.h"
 #include "MitAna/DataTree/interface/MuonCol.h"
 #include "MitAna/DataTree/interface/ElectronCol.h"
@@ -8,6 +7,8 @@
 #include "MitAna/DataTree/interface/DecayParticleCol.h"
 #include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
+
+#include <functional>
 
 using namespace mithep;
 
@@ -650,7 +651,8 @@ Double_t IsolationTools::PFElectronIsolation2012LepTag(const Electron *ele, cons
 Double_t
 mithep::IsolationTools::PFElectronIsolationRhoCorr(mithep::Electron const* ele, Double_t rho, ElectronTools::EElectronEffectiveAreaTarget eaDef)
 {
-  double effArea = ElectronTools::ElectronEffectiveArea(ElectronTools::kEleNeutralIso03, ele->SCluster()->Eta(), ElectronTools::kEleEASummer15);
+  double eta = ele->SCluster()->Eta();
+  double effArea = ElectronTools::ElectronEffectiveArea(ElectronTools::kEleNeutralIso03, eta, ElectronTools::kEleEASummer15);
 
   double isolation = ele->PFNeutralHadronIso() + ele->PFPhotonIso() - effArea * rho;
   if (isolation < 0.) isolation = 0.;
@@ -658,6 +660,17 @@ mithep::IsolationTools::PFElectronIsolationRhoCorr(mithep::Electron const* ele, 
 
   // this function is expected to return the absolute iso
   return isolation;
+}
+
+Double_t
+mithep::IsolationTools::PFPhotonIsolationRhoCorr(Double_t eta, Double_t iso, Double_t rho, PhotonTools::EPhotonEffectiveAreaTarget eaDef, PhotonTools::EPhotonEffectiveAreaType eaType)
+{
+  double effArea = PhotonTools::PhotonEffectiveArea(eaType, std::abs(eta), eaDef);
+
+  double correctedIso = iso - rho * effArea;
+  if (correctedIso < 0.) correctedIso = 0.;
+  
+  return correctedIso;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -702,7 +715,7 @@ Double_t IsolationTools::BetaM(const TrackCol *tracks, const Muon *p, const Vert
 
 
 //--------------------------------------------------------------------------------------------------
-Double_t IsolationTools::BetaMwithPUCorrection(const PFCandidateCol *PFNoPileUp, const PFCandidateCol *PFPileUp, const Muon *p, Double_t extRadius){
+Double_t IsolationTools::BetaMwithPUCorrection(const PFCandidateCol *PFNoPileUp, const PFCandidateCol *PFPileUp, const Muon *p, Double_t extRadius, Double_t* isoArr/* = 0*/){
 
   //Computes the PF Isolation: Summed Transverse Momentum of all PF candidates inside an 
   //annulus around the particle seed track.  
@@ -764,10 +777,15 @@ Double_t IsolationTools::BetaMwithPUCorrection(const PFCandidateCol *PFNoPileUp,
   //     const PFCandidate *pfpu = PFPUCand->At(i);
   //     ptsumPU += pfpu->Pt();
   //   }
-  //printf("ChHad    Gamma     Neu      PU    \n");
-  // printf("%f       %f       %f        %f     \n",ptSumChHadnoPU,ptsumGamma,etsumNeuHad,ptsumPU);
+
   ptSum=ptSumChHadnoPU+ TMath::Max(0.,ptsumGamma+etsumNeuHad - 0.5*ptsumPU);
-  //printf("ming muon check isolation is %f \n",ptSum);
+
+  if (isoArr) {
+    isoArr[0] = ptSumChHadnoPU;
+    isoArr[1] = etsumNeuHad;
+    isoArr[2] = ptsumGamma;
+    isoArr[3] = ptsumPU;
+  }
   
   return ptSum;
 }
@@ -1379,13 +1397,33 @@ Double_t IsolationTools::PFNeutralHadronIsolation(const Photon *p, Double_t extR
 }
 
 void
-IsolationTools::PFPhotonIsoFootprintRemoved(Photon const* photon, Vertex const* pv, PFCandidateCol const* pfCands, Double_t dR,
+IsolationTools::PFEGIsoFootprintRemoved(Particle const* part, Vertex const* pv, PFCandidateCol const* pfCands, Double_t dR,
                                             Double_t& chIso, Double_t& nhIso, Double_t& phIso)
 {
-  ThreeVectorC&& caloPosition = photon->SCluster()->Point();
-  ThreeVector phoDir(caloPosition.X() - pv->X(), caloPosition.Y() - pv->Y(), caloPosition.Z() - pv->Z());
-  double phoEta = phoDir.Eta();
-  double phoPhi = phoDir.Phi();
+  SuperCluster const* sc = 0;
+  std::function<bool(PFCandidate const&)> inFootprint;
+
+  switch (part->ObjType()) {
+  case kPhoton:
+    sc = static_cast<Photon const*>(part)->SCluster();
+    inFootprint = [part](PFCandidate const& cand)->bool {
+      return static_cast<Photon const*>(part)->IsInFootprint(&cand);
+    };
+    break;
+  case kElectron:
+    sc = static_cast<Electron const*>(part)->SCluster();
+    inFootprint = [part](PFCandidate const& cand)->bool {
+      return static_cast<Electron const*>(part)->IsInFootprint(&cand);
+    };
+    break;
+  default:
+    throw std::runtime_error("PFEGIsoFootprintRemoved called for non-EG object");
+  }
+    
+  ThreeVectorC&& caloPosition = sc->Point();
+  ThreeVector dir(caloPosition.X() - pv->X(), caloPosition.Y() - pv->Y(), caloPosition.Z() - pv->Z());
+  double eta = dir.Eta();
+  double phi = dir.Phi();
   double dR2 = dR * dR;
 
   chIso = 0.;
@@ -1403,10 +1441,10 @@ IsolationTools::PFPhotonIsoFootprintRemoved(Photon const* photon, Vertex const* 
       continue;
     }
 
-    if (photon->IsInFootprint(&pf))
+    if (inFootprint(pf))
       continue;
     
-    if (MathUtils::DeltaR2(pf.Phi(), pf.Eta(), phoPhi, phoEta) > dR2)
+    if (MathUtils::DeltaR2(pf.Phi(), pf.Eta(), phi, eta) > dR2)
       continue;
 
     if (pf.PFType() == PFCandidate::eHadron) {
