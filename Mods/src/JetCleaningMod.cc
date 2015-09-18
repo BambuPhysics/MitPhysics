@@ -1,8 +1,6 @@
 #include "MitPhysics/Mods/interface/JetCleaningMod.h"
-#include "MitAna/DataTree/interface/PhotonCol.h"
-#include "MitAna/DataTree/interface/MuonCol.h"
-#include "MitAna/DataTree/interface/ElectronCol.h"
-#include "MitAna/DataTree/interface/TauCol.h"
+#include "MitAna/DataTree/interface/ParticleCol.h"
+#include "MitAna/DataTree/interface/Photon.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitPhysics/Init/interface/ModNames.h"
 
@@ -11,20 +9,15 @@ using namespace mithep;
 ClassImp(mithep::JetCleaningMod)
 
 //--------------------------------------------------------------------------------------------------
-JetCleaningMod::JetCleaningMod(const char *name, const char *title) : 
-  BaseMod(name,title),
-  fCleanElectronsName(ModNames::gkCleanElectronsName),        
-  fCleanMuonsName(ModNames::gkCleanMuonsName),        
-  fCleanPhotonsName(ModNames::gkCleanPhotonsName),        
-  fCleanTausName(ModNames::gkCleanTausName),        
-  fGoodJetsName(ModNames::gkGoodJetsName),        
+JetCleaningMod::JetCleaningMod(const char *name, const char *title) :
+  BaseMod(name, title),
+  fCleanElectronsName(ModNames::gkCleanElectronsName),
+  fCleanMuonsName(ModNames::gkCleanMuonsName),
+  fCleanPhotonsName(ModNames::gkCleanPhotonsName),
+  fCleanTausName(ModNames::gkCleanTausName),
+  fGoodJetsName(ModNames::gkGoodJetsName),
   fCleanJets(new JetOArr),
-  fMinDeltaRToElectron(0.3),
-  fMinDeltaRToMuon(0.3),
-  fMinDeltaRToPhoton(0.3),
-  fMinDeltaRToTau(0.3),
-  fApplyPhotonRemoval(kFALSE),
-  fApplyTauRemoval(kFALSE)
+  fMinDeltaR{0.3, 0.3, 0.3, 0.3}
 {
   fCleanJets->SetName(ModNames::gkCleanJetsName);
 }
@@ -35,116 +28,77 @@ JetCleaningMod::~JetCleaningMod()
 }
 
 //--------------------------------------------------------------------------------------------------
-void JetCleaningMod::Process()
+void
+JetCleaningMod::Process()
 {
   // Process entries of the tree.
-  
+
   fCleanJets->Reset();
 
   // get input collections
-  const JetCol  *GoodJets       = GetObject<JetCol>(fGoodJetsName);
-  const ElectronCol *CleanElectrons = 0;
+  const JetCol* GoodJets = GetObject<JetCol>(fGoodJetsName);
+
+  ParticleCol const* cleanCollections[4]{};
   if (!fCleanElectronsName.IsNull())
-    CleanElectrons = GetObject<ElectronCol>(fCleanElectronsName);
-  const MuonCol *CleanMuons = 0;
+    cleanCollections[0] = GetObject<ParticleCol>(fCleanElectronsName);
   if (!fCleanMuonsName.IsNull())
-    CleanMuons = GetObject<MuonCol>(fCleanMuonsName);
-  const PhotonCol   *CleanPhotons   = 0;
+    cleanCollections[1] = GetObject<ParticleCol>(fCleanMuonsName);
+  if (!fCleanTausName.IsNull())
+    cleanCollections[2] = GetObject<ParticleCol>(fCleanTausName);
   if (!fCleanPhotonsName.IsNull())
-    CleanPhotons    = GetObject<PhotonCol>(fCleanPhotonsName);
-  const TauCol   *CleanTaus   = 0;
-  if (fApplyTauRemoval && !fCleanTausName.IsNull())
-    CleanTaus    = GetObject<TauCol>(fCleanTausName);
+    cleanCollections[3] = GetObject<ParticleCol>(fCleanPhotonsName);
 
   // create output collection
-
-  // remove any jet that overlaps in eta, phi with an isolated electron.    
+  // remove any jet that overlaps in eta, phi with an isolated electron.
   for (UInt_t i=0; i<GoodJets->GetEntries(); ++i) {
-    const Jet *jet = GoodJets->At(i);        
+    const Jet *jet = GoodJets->At(i);
 
-    // check for overlap with an Electron
-    Bool_t isElectronOverlap = kFALSE;
-    if (CleanElectrons) {
-      UInt_t n = CleanElectrons->GetEntries();
-      for (UInt_t j=0; j<n; ++j) {
-        Double_t deltaR = MathUtils::DeltaR(CleanElectrons->At(j)->Phi(),
-                                            CleanElectrons->At(j)->Eta(), 
-                                            jet->Phi(), jet->Eta());  
-        if (deltaR < fMinDeltaRToElectron) {
-          isElectronOverlap = kTRUE;
-          break;	 	 
-        }      
+    // check for overlap with clean objects
+    unsigned iC = 0;
+    for (; iC != 4; ++iC) {
+      auto* collection = cleanCollections[iC];
+      if (!collection)
+        continue;
+
+      unsigned iO = 0;
+      for (; iO != collection->GetEntries(); ++iO) {
+        auto* part = collection->At(iO);
+        if (part->ObjType() == kPhoton) {
+          if (MathUtils::DeltaR(static_cast<Photon const*>(part)->SCluster(), jet) < fMinDeltaR[iC])
+            break;
+        }
+        else {
+          if (MathUtils::DeltaR(part, jet) < fMinDeltaR[iC])
+            break;
+        }
+      }
+
+      if (iO != collection->GetEntries()) {
+        // had a match
+        break;
       }
     }
 
-    if (isElectronOverlap) continue;
-
-    // check for overlap with an Muon
-    Bool_t isMuonOverlap = kFALSE;
-    if (CleanMuons) {
-      UInt_t n = CleanMuons->GetEntries();
-      for (UInt_t j=0; j<n; ++j) {
-        Double_t deltaR = MathUtils::DeltaR(CleanMuons->At(j)->Mom(),jet->Mom());  
-        if (deltaR < fMinDeltaRToMuon) {
-          isMuonOverlap = kTRUE;
-          break;	 	 
-        }      
-      }
-    }
-
-    if (isMuonOverlap) continue;
-
-    // check for overlap with a photon
-    Bool_t isPhotonOverlap = kFALSE;
-    if (fApplyPhotonRemoval && CleanPhotons) {
-      UInt_t n = CleanPhotons->GetEntries();
-      for (UInt_t j=0; j<n; ++j) {
-        Double_t deltaR = MathUtils::DeltaR(CleanPhotons->At(j)->SCluster()->Phi(), 
-                                            CleanPhotons->At(j)->SCluster()->Eta(),
-                                            jet->Phi(), jet->Eta());  
-        if (deltaR < fMinDeltaRToPhoton) {
-          isPhotonOverlap = kTRUE;
-          break;	 	 
-        }      
-      }
-    }
-
-    if (isPhotonOverlap)
+    if (iC != 4) {
+      // one of the collections had a match
       continue;
-
-    // check for overlap with a tau
-    Bool_t isTauOverlap = kFALSE;
-    if (fApplyTauRemoval && CleanTaus) {
-      UInt_t n = CleanTaus->GetEntries();
-      for (UInt_t j=0; j<n; ++j) {
-        Double_t deltaR = MathUtils::DeltaR(CleanTaus->At(j)->Mom(),jet->Mom());  
-        if (deltaR < fMinDeltaRToTau) {
-          isTauOverlap = kTRUE;
-          break;	 	 
-        }      
-      }
     }
-
-    if (isTauOverlap)
-      continue;
 
     fCleanJets->Add(jet);
   }
 
   // sort according to pt
   fCleanJets->Sort();
-
 }
 
 void
-JetCleaningMod::SlaveBegin ()
+JetCleaningMod::SlaveBegin()
 {
   PublishObj(fCleanJets);
 }
 
-void 
-JetCleaningMod::SlaveEnd ()
+void
+JetCleaningMod::SlaveTerminate()
 {
   RetractObj(fCleanJets->GetName());
 }
-
