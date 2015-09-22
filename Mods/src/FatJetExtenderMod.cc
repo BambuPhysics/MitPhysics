@@ -7,6 +7,7 @@
 #include "MitCommon/DataFormats/interface/Types.h"
 #include "MitCommon/Utils/interface/Utils.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
+
 #include "QjetsPlugin.h"
 #include "Qjets.h"
 
@@ -55,7 +56,8 @@ BaseMod(name,title),
   fBeVerbose(kFALSE),
   fDoECF(kFALSE),
   fDoQjets(kFALSE),
-  fNMaxMicrojets(5)
+  fNMaxMicrojets(5),
+  fNQjets(25)
 {
   // Constructor.
 }
@@ -85,7 +87,6 @@ void FatJetExtenderMod::Process()
   // Loop over PFCandidates and unmark them : necessary for skimming
   for (UInt_t i=0; i<fPFCandidates->GetEntries(); ++i)
     fPFCandidates->At(i)->UnmarkMe();
-
   // Setup pileup density for QG computation
   if (fQGTaggingActive)
     fQGTagger->SetRhoIso(fPileUpDen->At(0)->RhoRandomLowEta());
@@ -364,7 +365,7 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   if (fDoQjets) {
     VPseudoJet constituentsNoGhost(FilterJetsByPt(constituents, 0.01));
     // Compute Q-jets volatility
-    double QJetVol = GetQjetVolatility(constituentsNoGhost, 25, fCounter*25);
+    double QJetVol = GetQjetVolatility(constituentsNoGhost, fNQjets, fCounter*fNQjets);
     fCounter++;
     xlFatJet->SetQJetVol(QJetVol);
 
@@ -553,7 +554,7 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
 
   // Memory cleanup
   if (fBeVerbose) {
-    fprintf(stderr,"Finished filling and cleanup in %f seconds\n",fStopwatch->RealTime());
+    Info("Process","Finished filling and cleanup in %f seconds\n",fStopwatch->RealTime());
   }
 
   return;
@@ -721,7 +722,7 @@ void FatJetExtenderMod::FillSubjetQGTagging(fastjet::PseudoJet const& jet, float
   for (auto&& cons : constituents) {
     if (cons.perp2() < ptMin2)
       continue;
-    int thisPFCandIndex = jet.user_index();
+    int thisPFCandIndex = cons.user_index();
     // Add the constituent to the PF subjet
     pfJet.AddPFCand(pFatJet->PFCand(thisPFCandIndex));
   }
