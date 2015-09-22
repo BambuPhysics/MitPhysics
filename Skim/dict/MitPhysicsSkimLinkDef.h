@@ -6,7 +6,7 @@
 #include "MitPhysics/Skim/interface/H4lMuTagProbeSkim.h"
 #include "MitPhysics/Skim/interface/H4lZPlusFakeSkim.h"
 #include "MitPhysics/Skim/interface/H4lLightFlavorSkim.h"
-#include "MitPhysics/Skim/interface/MonoJetAnalysisMod.h"
+#include "MitPhysics/Skim/interface/MonoXSkimMod.h"
 #endif
 
 #ifdef __CLING__
@@ -22,5 +22,5 @@
 #pragma link C++ class mithep::H4lMuTagProbeSkim+;
 #pragma link C++ class mithep::H4lZPlusFakeSkim+;
 #pragma link C++ class mithep::H4lLightFlavorSkim+;
-#pragma link C++ class mithep::MonoJetAnalysisMod+;
+#pragma link C++ class mithep::MonoXSkimMod+;
 #endif

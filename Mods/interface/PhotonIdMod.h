@@ -21,15 +21,15 @@ namespace mithep {
     ~PhotonIdMod();
 
     Bool_t GetApplyTriggerMatching() const   { return fApplyTriggerMatching; }
-    Bool_t GetApplyPixelVeto() const         { return (fElectronVeto & (1 << PhotonTools::kPixelVeto)) == 1; }
-    Bool_t GetApplyElectronVeto() const      { return (fElectronVeto & (1 << PhotonTools::kElectronVeto)) == 1; }
-    Bool_t GetApplyCSafeElectronVeto() const { return (fElectronVeto & (1 << PhotonTools::kCSafeElectronVeto)) == 1; }
+    Bool_t GetApplyPixelVeto() const         { return fElectronVeto.TestBit(PhotonTools::kPixelVeto); }
+    Bool_t GetApplyElectronVeto() const      { return fElectronVeto.TestBit(PhotonTools::kElectronVeto); }
+    Bool_t GetApplyCSafeElectronVeto() const { return fElectronVeto.TestBit(PhotonTools::kCSafeElectronVeto); }
     UInt_t GetRhoAlgo() const                { return fRhoAlgo; }
 
     void SetApplyTriggerMatching(Bool_t b)   { fApplyTriggerMatching = b; }
-    void SetApplyPixelVeto(Bool_t b)         { fElectronVeto |= (1 << PhotonTools::kPixelVeto); }
-    void SetApplyElectronVeto(Bool_t b)      { fElectronVeto |= (1 << PhotonTools::kElectronVeto); }
-    void SetApplyCSafeElectronVeto(Bool_t b) { fElectronVeto |= (1 << PhotonTools::kCSafeElectronVeto); }
+    void SetApplyPixelVeto(Bool_t b)         { fElectronVeto.SetBit(PhotonTools::kPixelVeto, b); }
+    void SetApplyElectronVeto(Bool_t b)      { fElectronVeto.SetBit(PhotonTools::kElectronVeto, b); }
+    void SetApplyCSafeElectronVeto(Bool_t b) { fElectronVeto.SetBit(PhotonTools::kCSafeElectronVeto, b); }
     void SetRhoAlgo(UInt_t algo)             { fRhoAlgo = algo; }
 
   protected:
