@@ -91,6 +91,7 @@ namespace mithep
       void SetNMaxMicrojets(unsigned int n)         { fNMaxMicrojets = n; }
       void SetDebugFlag(int i)   { fDebugFlag = i; }
       void SetSDInputCard(const char *s)   { fInputCard = s;  }
+      void SetNQjets(unsigned int n)       { fNQjets = n;           }
     protected:
       typedef std::vector<fastjet::PseudoJet> VPseudoJet;
       typedef std::vector<fastjet::PseudoJet const*> VPseudoJetPtr;
@@ -222,7 +223,7 @@ namespace mithep
       Bool_t fDoECF;
       Bool_t fDoQjets;
       unsigned int fNMaxMicrojets;
-
+      unsigned int fNQjets;
       TStopwatch* fStopwatch{0};
 
       // Counters : used to initialize seed for QJets volatility
