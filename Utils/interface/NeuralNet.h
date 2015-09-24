@@ -13,12 +13,12 @@ public:
   NeuralNet(unsigned int in, unsigned int out);
   ~NeuralNet();
  
-  void AddLayer(unsigned int in, unsigned int out, float **W, float *b, bool isFinal = false);
-  void AddBranchAddress(float *input, float mean, float stdev, const char *name="");
+  void AddLayer(unsigned int in, unsigned int out, double **W, double *b, bool isFinal = false);
+  void AddBranchAddress(float *input, double mean, double stdev, const char *name="");
   void AllocateMemory();
 
   bool CheckIntegrity () const;
-  float* Evaluate () const;
+  double* Evaluate () const;
 
 protected:
   unsigned int nIn;
@@ -26,11 +26,11 @@ protected:
   std::vector<unsigned int> hiddenLayerSizes;
   std::vector<float*> inputs;
   std::vector<const char*> inputNames;
-  std::vector<float**> Ws;
-  std::vector<float*> bs;
-  std::vector<float*> layers;
-  std::vector<float> mus;
-  std::vector<float> sigmas;
+  std::vector<double**> Ws;
+  std::vector<double*> bs;
+  std::vector<double*> layers;
+  std::vector<double> mus;
+  std::vector<double> sigmas;
 
   mutable  bool integrityChecked;
 
