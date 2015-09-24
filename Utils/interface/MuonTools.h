@@ -56,7 +56,8 @@ namespace mithep {
         kCustomIso,                         //"Custom"
         kPFIso,                             //"PFIso"
         kPFRadialIso,                       //"PFRadialIso"
-        kPFIsoBetaPUCorrected,              //"PFISo with PUcorrection using delta Beta
+        kPFIsoBetaPUCorrected,              //"PFISo with PUcorrection using delta Beta, super loose cut (0.4)
+        kPFIsoBetaPUCorrectedLoose,         //"PFISo with PUcorrection using delta Beta, loose cut (0.2)
         kPFIsoBetaPUCorrectedTight,         //"PFISo with PUcorrection using delta Beta, tight cut (0.12)
         kPFIsoEffectiveAreaCorrected,       //"PFIso with EffectiveArea Pileup Correction"
         kPFIsoNoL,                          //"PFIsoNoL"
@@ -76,6 +77,7 @@ namespace mithep {
         kCaloMuon,
         kTrackerBased,
         kGlobalOnly,
+        kPFGlobal,
         kPFGlobalorTracker,
 	kSoftMuon
       };
