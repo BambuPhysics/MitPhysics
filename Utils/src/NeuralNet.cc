@@ -22,6 +22,9 @@ NeuralNet::~NeuralNet() {
       delete[]Ws[i][j];
     }
   }
+  for (float **W : Ws) {
+    delete[] W;
+  }
 }
 
 void NeuralNet::AddLayer(unsigned int in, unsigned int out, float **W, float *b, bool isFinal) {
