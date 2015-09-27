@@ -329,88 +329,93 @@ Bool_t ElectronTools::PassCustomIso(const Electron *ele, EElIsoType isoType)
 Bool_t
 mithep::ElectronTools::PassID(Electron const* ele, EElIdType type)
 {
-  if (type >= kSummer15Veto && type <= kSummer15Fake) {
-    double deltaEtaCut, deltaPhiCut, sigmaIetaIetaCut, hOverECut, ooEmooPCut;
-    bool isEB = ele->SCluster()->AbsEta() < gkEleEBEtaMax;
+  double deltaEtaCut, deltaPhiCut, sigmaIetaIetaCut, hOverECut, ooEmooPCut;
+  bool isEB = ele->SCluster()->AbsEta() < gkEleEBEtaMax;
 
-    switch (type) {
-    case kSummer15Veto:
-      deltaEtaCut      = isEB ? 0.0152 : 0.0113;
-      deltaPhiCut      = isEB ? 0.2160 : 0.2370;
-      sigmaIetaIetaCut = isEB ? 0.0114 : 0.0352;
-      hOverECut        = isEB ? 0.1810 : 0.1160;
-      ooEmooPCut       = isEB ? 0.2070 : 0.1740;
-      break;
-    case kSummer15Loose:
-      deltaEtaCut      = isEB ? 0.0105 : 0.00814;
-      deltaPhiCut      = isEB ? 0.1150 : 0.18200;
-      sigmaIetaIetaCut = isEB ? 0.0103 : 0.03010;
-      hOverECut        = isEB ? 0.1040 : 0.08970;
-      ooEmooPCut       = isEB ? 0.1020 : 0.12600;
-      break;
-    case kSummer15Fake:
-    case kSummer15Medium:
-      deltaEtaCut      = isEB ? 0.0103 : 0.00733;
-      deltaPhiCut      = isEB ? 0.0336 : 0.11400;
-      sigmaIetaIetaCut = isEB ? 0.0101 : 0.02830;
-      hOverECut        = isEB ? 0.0876 : 0.06780;
-      ooEmooPCut       = isEB ? 0.0174 : 0.08980;
-      break;
-    case kSummer15Tight:
-      deltaEtaCut      = isEB ? 0.00926 : 0.00724;
-      deltaPhiCut      = isEB ? 0.03360 : 0.09180;
-      sigmaIetaIetaCut = isEB ? 0.01010 : 0.02790;
-      hOverECut        = isEB ? 0.05970 : 0.06150;
-      ooEmooPCut       = isEB ? 0.01200 : 0.00999;
-      break;
-    case kSummer15Veto50ns:
-      deltaEtaCut      = isEB ? 0.0126 : 0.0109;
-      deltaPhiCut      = isEB ? 0.1070 : 0.2190;
-      sigmaIetaIetaCut = isEB ? 0.0120 : 0.0339;
-      hOverECut        = isEB ? 0.1860 : 0.0962;
-      ooEmooPCut       = isEB ? 0.2390 : 0.1410;
-      break;
-    case kSummer15Loose50ns:
-      deltaEtaCut      = isEB ? 0.00976 : 0.00952;
-      deltaPhiCut      = isEB ? 0.09290 : 0.18100;
-      sigmaIetaIetaCut = isEB ? 0.01050 : 0.03180;
-      hOverECut        = isEB ? 0.07650 : 0.08240;
-      ooEmooPCut       = isEB ? 0.18400 : 0.12500;
-      break;
-    case kSummer15Fake50ns:
-    case kSummer15Medium50ns:
-      deltaEtaCut      = isEB ? 0.0094 : 0.00733;
-      deltaPhiCut      = isEB ? 0.0296 : 0.14800;
-      sigmaIetaIetaCut = isEB ? 0.0101 : 0.02870;
-      hOverECut        = isEB ? 0.0372 : 0.05460;
-      ooEmooPCut       = isEB ? 0.1180 : 0.10400;
-      break;
-    case kSummer15Tight50ns:
-      deltaEtaCut      = isEB ? 0.00950 : 0.00762;
-      deltaPhiCut      = isEB ? 0.02910 : 0.04390;
-      sigmaIetaIetaCut = isEB ? 0.01010 : 0.02870;
-      hOverECut        = isEB ? 0.03720 : 0.05440;
-      ooEmooPCut       = isEB ? 0.01740 : 0.01000;
-      break;
-    default:
-      break;
-    };
+  switch (type) {
+  case kSummer15Veto:
+    deltaEtaCut      = isEB ? 0.0152 : 0.0113;
+    deltaPhiCut      = isEB ? 0.2160 : 0.2370;
+    sigmaIetaIetaCut = isEB ? 0.0114 : 0.0352;
+    hOverECut        = isEB ? 0.1810 : 0.1160;
+    ooEmooPCut       = isEB ? 0.2070 : 0.1740;
+    break;
+  case kSummer15Loose:
+    deltaEtaCut      = isEB ? 0.0105 : 0.00814;
+    deltaPhiCut      = isEB ? 0.1150 : 0.18200;
+    sigmaIetaIetaCut = isEB ? 0.0103 : 0.03010;
+    hOverECut        = isEB ? 0.1040 : 0.08970;
+    ooEmooPCut       = isEB ? 0.1020 : 0.12600;
+    break;
+  case kSummer15Fake:
+  case kSummer15Fake50ns:
+    deltaEtaCut      = isEB ? 0.0103 : 0.01000;
+    deltaPhiCut      = isEB ? 0.0400 : 0.11400;
+    sigmaIetaIetaCut = isEB ? 0.0110 : 0.03100;
+    hOverECut	     = isEB ? 0.0876 : 0.08000;
+    ooEmooPCut       = isEB ? 0.0174 : 0.08980;
+    break;
+  case kSummer15Medium:
+    deltaEtaCut      = isEB ? 0.0103 : 0.00733;
+    deltaPhiCut      = isEB ? 0.0336 : 0.11400;
+    sigmaIetaIetaCut = isEB ? 0.0101 : 0.02830;
+    hOverECut        = isEB ? 0.0876 : 0.06780;
+    ooEmooPCut       = isEB ? 0.0174 : 0.08980;
+    break;
+  case kSummer15Tight:
+    deltaEtaCut      = isEB ? 0.00926 : 0.00724;
+    deltaPhiCut      = isEB ? 0.03360 : 0.09180;
+    sigmaIetaIetaCut = isEB ? 0.01010 : 0.02790;
+    hOverECut        = isEB ? 0.05970 : 0.06150;
+    ooEmooPCut       = isEB ? 0.01200 : 0.00999;
+    break;
+  case kSummer15Veto50ns:
+    deltaEtaCut      = isEB ? 0.0126 : 0.0109;
+    deltaPhiCut      = isEB ? 0.1070 : 0.2190;
+    sigmaIetaIetaCut = isEB ? 0.0120 : 0.0339;
+    hOverECut        = isEB ? 0.1860 : 0.0962;
+    ooEmooPCut       = isEB ? 0.2390 : 0.1410;
+    break;
+  case kSummer15Loose50ns:
+    deltaEtaCut      = isEB ? 0.00976 : 0.00952;
+    deltaPhiCut      = isEB ? 0.09290 : 0.18100;
+    sigmaIetaIetaCut = isEB ? 0.01050 : 0.03180;
+    hOverECut        = isEB ? 0.07650 : 0.08240;
+    ooEmooPCut       = isEB ? 0.18400 : 0.12500;
+    break;
+  case kSummer15Medium50ns:
+    deltaEtaCut      = isEB ? 0.0094 : 0.00733;
+    deltaPhiCut      = isEB ? 0.0296 : 0.14800;
+    sigmaIetaIetaCut = isEB ? 0.0101 : 0.02870;
+    hOverECut        = isEB ? 0.0372 : 0.05460;
+    ooEmooPCut       = isEB ? 0.1180 : 0.10400;
+    break;
+  case kSummer15Tight50ns:
+    deltaEtaCut      = isEB ? 0.00950 : 0.00762;
+    deltaPhiCut      = isEB ? 0.02910 : 0.04390;
+    sigmaIetaIetaCut = isEB ? 0.01010 : 0.02870;
+    hOverECut        = isEB ? 0.03720 : 0.05440;
+    ooEmooPCut       = isEB ? 0.01740 : 0.01000;
+    break;
+  default:
+    return false;
+  };
 
-    if (std::abs(ele->DeltaEtaSuperClusterTrackAtVtx()) > deltaEtaCut)
-      return false;
-    if (std::abs(ele->DeltaPhiSuperClusterTrackAtVtx()) > deltaPhiCut)
-      return false;
-    if (ele->CoviEtaiEta5x5() > sigmaIetaIetaCut)
-      return false;
-    if (ele->HadOverEmTow() > hOverECut)
-      return false;
-    if (std::abs(1. / ele->SCluster()->Energy() - 1. / ele->GsfTrk()->P()) > ooEmooPCut)
-      return false;
+  if (std::abs(ele->DeltaEtaSuperClusterTrackAtVtx()) > deltaEtaCut)
+    return false;
+  if (std::abs(ele->DeltaPhiSuperClusterTrackAtVtx()) > deltaPhiCut)
+    return false;
+  double sigmaIetaIeta = ele->CoviEtaiEta5x5();
+  if (sigmaIetaIeta < 0.) // backward compatibility
+    sigmaIetaIeta = ele->CoviEtaiEta();
+  if (sigmaIetaIeta > sigmaIetaIetaCut)
+    return false;
+  if (ele->HadOverEmTow() > hOverECut)
+    return false;
+  if (std::abs(1. / ele->SCluster()->Energy() - 1. / ele->GsfTrk()->P()) > ooEmooPCut)
+    return false;
 
-    return true;
-  }
-
-  return false;
+  return true;
 }
 
 Bool_t
@@ -439,22 +444,21 @@ mithep::ElectronTools::PassIso(Electron const* ele, EElIsoType isoType)
 
 Bool_t
 mithep::ElectronTools::PassPFIso(Electron const* ele, EElIsoType isoType,
-                                 PFCandidateCol const* pfCandidates, Vertex const* vertex,
+                                 PFCandidateCol const* pfCandidates/* = 0*/, Vertex const* vertex/* = 0*/,
                                  MuonCol const* nonisolatedMuons/* = 0*/, ElectronCol const* nonisolatedElectrons/* = 0*/)
 {
-  double cutvalue;
-
-  if (ele->SCluster()->AbsEta() < gkEleEBEtaMax)
-    cutvalue = 0.13 * ele->Pt();
-  else
-    cutvalue = 0.09 * ele->Pt();
+  bool isEB = ele->SCluster()->AbsEta() < gkEleEBEtaMax;
 
   switch (isoType) {
   case kPFIso:
-    return IsolationTools::PFElectronIsolation(ele, pfCandidates, vertex, 0.1, 1.0, 0.4, 0.3) * ele->Pt() < cutvalue;
+    return IsolationTools::PFElectronIsolation(ele, pfCandidates, vertex, 0.1, 1.0, 0.4, 0.3) < (isEB ? 0.13 : 0.09);
 
   case kPFIsoNoL:
-    return IsolationTools::PFElectronIsolation(ele, pfCandidates, nonisolatedMuons, nonisolatedElectrons, vertex, 0.1, 1.0, 0.4, 0.3) < cutvalue;
+    return IsolationTools::PFElectronIsolation(ele, pfCandidates, nonisolatedMuons, nonisolatedElectrons, vertex, 0.1, 1.0, 0.4, 0.3) / ele->Pt() < (isEB ? 0.13 : 0.09);
+
+  case kSummer15FakeIso:
+  case kSummer15Fake50nsIso:
+    return ele->PFPhotonIso() / ele->Pt() < 0.45 && ele->PFNeutralHadronIso() / ele->Pt() < 0.25 && ele->PFChargedHadronIso() / ele->Pt() < 0.2;
 
   default:
     return false;
@@ -477,25 +481,67 @@ mithep::ElectronTools::PassIsoRhoCorr(Electron const* ele, EElIsoType isoType, D
     //fallthrough
   case kPFIso_HggLeptonTag2012HCP:
     return IsolationTools::PFElectronIsolation2012LepTag(ele, vertex, pfCandidates, rho, kEleEAData2012, 0, 0, 0.3) < 0.15;
+  default:
+    break;
+  }
 
+  // below: Summer15, without footprint correction
+
+  double combRelIso = IsolationTools::PFEleCombinedIsolationRhoCorr(ele, rho, kEleEASummer15) / ele->Pt();
+
+  switch (isoType) {
   case kSummer15VetoIso:
+    return combRelIso < (isEB ? 0.1260 : 0.1440);
   case kSummer15LooseIso:
+    return combRelIso < (isEB ? 0.0893 : 0.1210);
   case kSummer15MediumIso:
+    return combRelIso < (isEB ? 0.0766 : 0.0678);
   case kSummer15TightIso:
-  case kSummer15FakeIso:
-    {
-      double relIso = IsolationTools::PFElectronIsolationRhoCorr(ele, rho, kEleEASummer15) / ele->Pt();
-      if (isoType == kSummer15VetoIso)
-        return relIso < (isEB ? 0.1260 : 0.1440);
-      else if (isoType == kSummer15LooseIso)
-        return relIso < (isEB ? 0.0893 : 0.1210);
-      else if (isoType == kSummer15MediumIso)
-        return relIso < (isEB ? 0.0766 : 0.0678);
-      else if (isoType == kSummer15FakeIso)
-        return relIso < (isEB ? 0.3500 : 0.3500);
-      else
-        return relIso < (isEB ? 0.0354 : 0.0646);
-    }
+    return combRelIso < (isEB ? 0.0354 : 0.0646);
+  case kSummer15Veto50nsIso:
+    return combRelIso < (isEB ? 0.161 : 0.193);
+  case kSummer15Loose50nsIso:
+    return combRelIso < (isEB ? 0.118 : 0.118);
+  case kSummer15Medium50nsIso:
+    return combRelIso < (isEB ? 0.0987 : 0.0902);
+  case kSummer15Tight50nsIso:
+    return combRelIso < (isEB ? 0.0591 : 0.0759);
+  default:
+    return false;
+  }
+}
+
+Bool_t
+mithep::ElectronTools::PassIsoFootprintRhoCorr(Electron const* ele, EElIsoType isoType, Double_t rho,
+                                               PFCandidateCol const* pfCandidates, Vertex const* vertex)
+{
+  double scEta = ele->SCluster()->Eta();
+  bool isEB = std::abs(scEta) < gkEleEBEtaMax;
+
+  double chIso = 0.;
+  double nhIso = 0.;
+  double phIso = 0.;
+  IsolationTools::PFEGIsoFootprintRemoved(ele, vertex, pfCandidates, 0.3, chIso, nhIso, phIso);
+
+  double combRelIso = IsolationTools::PFEleCombinedIsolationRhoCorr(chIso, nhIso + phIso, rho, scEta, kEleEASummer15) / ele->Pt();
+
+  switch (isoType) {
+  case kSummer15VetoIso:
+    return combRelIso < (isEB ? 0.1260 : 0.1440);
+  case kSummer15LooseIso:
+    return combRelIso < (isEB ? 0.0893 : 0.1210);
+  case kSummer15MediumIso:
+    return combRelIso < (isEB ? 0.0766 : 0.0678);
+  case kSummer15TightIso:
+    return combRelIso < (isEB ? 0.0354 : 0.0646);
+  case kSummer15Veto50nsIso:
+    return combRelIso < (isEB ? 0.161 : 0.193);
+  case kSummer15Loose50nsIso:
+    return combRelIso < (isEB ? 0.118 : 0.118);
+  case kSummer15Medium50nsIso:
+    return combRelIso < (isEB ? 0.0987 : 0.0902);
+  case kSummer15Tight50nsIso:
+    return combRelIso < (isEB ? 0.0591 : 0.0759);
   default:
     return false;
   }
