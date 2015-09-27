@@ -293,9 +293,12 @@ mithep::ElectronIdMod::PassIsolationCut(Electron const& ele)
   case ElectronTools::kSummer15Loose50nsIso:
   case ElectronTools::kSummer15Medium50nsIso:
   case ElectronTools::kSummer15Tight50nsIso:
-    return ElectronTools::PassIsoFootprintRhoCorr(&ele, ElectronTools::EElIsoType(fIsoType),
-                                                  GetPileupEnergyDensity()->At(0)->Rho(fRhoAlgo),
-                                                  GetPFCandidates(), GetVertices()->At(0));
+    // EGM does not apply the footprint correction as of Fall 2015 (Even though everyone admits it is better to do so).
+    // return ElectronTools::PassIsoFootprintRhoCorr(&ele, ElectronTools::EElIsoType(fIsoType),
+    //                                               GetPileupEnergyDensity()->At(0)->Rho(fRhoAlgo),
+    //                                               GetPFCandidates(), GetVertices()->At(0));
+    return ElectronTools::PassIsoRhoCorr(&ele, ElectronTools::EElIsoType(fIsoType),
+                                         GetPileupEnergyDensity()->At(0)->Rho(fRhoAlgo));
 
   case ElectronTools::kNoIso:
     return true;

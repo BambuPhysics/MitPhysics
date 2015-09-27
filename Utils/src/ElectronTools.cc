@@ -482,6 +482,31 @@ mithep::ElectronTools::PassIsoRhoCorr(Electron const* ele, EElIsoType isoType, D
   case kPFIso_HggLeptonTag2012HCP:
     return IsolationTools::PFElectronIsolation2012LepTag(ele, vertex, pfCandidates, rho, kEleEAData2012, 0, 0, 0.3) < 0.15;
   default:
+    break;
+  }
+
+  // below: Summer15, without footprint correction
+
+  double combRelIso = IsolationTools::PFEleCombinedIsolationRhoCorr(ele, rho, kEleEASummer15) / ele->Pt();
+
+  switch (isoType) {
+  case kSummer15VetoIso:
+    return combRelIso < (isEB ? 0.1260 : 0.1440);
+  case kSummer15LooseIso:
+    return combRelIso < (isEB ? 0.0893 : 0.1210);
+  case kSummer15MediumIso:
+    return combRelIso < (isEB ? 0.0766 : 0.0678);
+  case kSummer15TightIso:
+    return combRelIso < (isEB ? 0.0354 : 0.0646);
+  case kSummer15Veto50nsIso:
+    return combRelIso < (isEB ? 0.161 : 0.193);
+  case kSummer15Loose50nsIso:
+    return combRelIso < (isEB ? 0.118 : 0.118);
+  case kSummer15Medium50nsIso:
+    return combRelIso < (isEB ? 0.0987 : 0.0902);
+  case kSummer15Tight50nsIso:
+    return combRelIso < (isEB ? 0.0591 : 0.0759);
+  default:
     return false;
   }
 }
