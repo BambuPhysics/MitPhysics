@@ -57,45 +57,41 @@ mithep::PhotonTools::PhotonEffectiveArea(EPhotonEffectiveAreaType type, Double_t
 Bool_t
 mithep::PhotonTools::PassID(Photon const* pho, EPhIdType type)
 {
-  if (type == kSummer15Tight || type == kSummer15Medium || type == kSummer15Loose) {
-    double hOverECut, sigmaIEtaIEtaCut;
-    bool isEB = pho->SCluster()->AbsEta() < gkPhoEBEtaMax;
+  double hOverECut, sigmaIEtaIEtaCut;
+  bool isEB = pho->SCluster()->AbsEta() < gkPhoEBEtaMax;
 
-    switch (type) {
-    case kSummer15Loose:
-      hOverECut        = isEB ? 0.028  : 0.093;
-      sigmaIEtaIEtaCut = isEB ? 0.0107 : 0.0272;
-      break;
-    case kSummer15Medium:
-      hOverECut        = isEB ? 0.012  : 0.023;
-      sigmaIEtaIEtaCut = isEB ? 0.0100 : 0.0267;
-      break;
-    case kSummer15Tight:
-      hOverECut        = isEB ? 0.010  : 0.015;
-      sigmaIEtaIEtaCut = isEB ? 0.0100 : 0.0265;
-      break;
-    default:
-      break;
-    }
-
-    if (pho->HadOverEm() > hOverECut)
-      return false;
-
-    //This is for backwards compatibility
-    double ietaieta = -1;
-    if (pho->CoviEtaiEta5x5() < 0) 
-      ietaieta = pho->CoviEtaiEta();
-    else 
-      ietaieta = pho->CoviEtaiEta5x5();
-
-    //check the cut
-    if (ietaieta > sigmaIEtaIEtaCut)
-      return false;
-
-    return true;
+  switch (type) {
+  case kSummer15Loose:
+    hOverECut        = isEB ? 0.028  : 0.093;
+    sigmaIEtaIEtaCut = isEB ? 0.0107 : 0.0272;
+    break;
+  case kSummer15Medium:
+    hOverECut        = isEB ? 0.012  : 0.023;
+    sigmaIEtaIEtaCut = isEB ? 0.0100 : 0.0267;
+    break;
+  case kSummer15Tight:
+    hOverECut        = isEB ? 0.010  : 0.015;
+    sigmaIEtaIEtaCut = isEB ? 0.0100 : 0.0265;
+    break;
+  default:
+    return false;
   }
 
-  return false;
+  if (pho->HadOverEmTow() > hOverECut)
+    return false;
+
+  //This is for backwards compatibility
+  double ietaieta = -1;
+  if (pho->CoviEtaiEta5x5() < 0) 
+    ietaieta = pho->CoviEtaiEta();
+  else 
+    ietaieta = pho->CoviEtaiEta5x5();
+
+  //check the cut
+  if (ietaieta > sigmaIEtaIEtaCut)
+    return false;
+
+  return true;
 }
 
 Bool_t
@@ -123,16 +119,6 @@ mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Doubl
   bool isEB = scEta < gkPhoEBEtaMax;
   double pEt = pho->Et();
 
-  double chIsoCor = 0.;
-  double nhIsoCor = 0.;
-  double phIsoCor = 0.;
-
-  if (isoType == kSummer15TightIso || isoType == kSummer15MediumIso || isoType == kSummer15LooseIso) {
-    chIsoCor = IsolationTools::PFPhotonIsolationRhoCorr(scEta, chIso, rho, kPhoEAPhys14, kPhoChargedHadron03);
-    nhIsoCor = IsolationTools::PFPhotonIsolationRhoCorr(scEta, nhIso, rho, kPhoEAPhys14, kPhoNeutralHadron03);
-    phIsoCor = IsolationTools::PFPhotonIsolationRhoCorr(scEta, phIso, rho, kPhoEAPhys14, kPhoPhoton03);
-  }
-
   double chIsoCut = 0.;
   double nhIsoCut = 0.;
   double phIsoCut = 0.;
@@ -154,14 +140,14 @@ mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Doubl
     phIsoCut = isEB ? (1.40 + 0.0014 * pEt) : (1.40 + 0.0091 * pEt);
     break;
   default:
-    break;
+    return false;
   }
 
-  if (chIsoCor > chIsoCut)
+  if (IsolationTools::PFPhotonIsolationRhoCorr(scEta, chIso, rho, kPhoEAPhys14, kPhoChargedHadron03) > chIsoCut)
     return false;
-  if (nhIsoCor > nhIsoCut)
+  if (IsolationTools::PFPhotonIsolationRhoCorr(scEta, nhIso, rho, kPhoEAPhys14, kPhoNeutralHadron03) > nhIsoCut)
     return false;
-  if (phIsoCor > phIsoCut)
+  if (IsolationTools::PFPhotonIsolationRhoCorr(scEta, phIso, rho, kPhoEAPhys14, kPhoPhoton03) > phIsoCut)
     return false;
 
   return true;

@@ -281,13 +281,21 @@ mithep::ElectronIdMod::PassIsolationCut(Electron const& ele)
   case ElectronTools::kVBTFWorkingPoint70CombinedIso:
     return ElectronTools::PassCustomIso(&ele, ElectronTools::EElIsoType(fIsoType));
 
+  case ElectronTools::kSummer15FakeIso:
+  case ElectronTools::kSummer15Fake50nsIso:
+    return ElectronTools::PassPFIso(&ele, ElectronTools::EElIsoType(fIsoType));
+
   case ElectronTools::kSummer15VetoIso:
   case ElectronTools::kSummer15LooseIso:
   case ElectronTools::kSummer15MediumIso:
   case ElectronTools::kSummer15TightIso:
-  case ElectronTools::kSummer15FakeIso:
-    return ElectronTools::PassIsoRhoCorr(&ele, ElectronTools::EElIsoType(fIsoType),
-                                         GetPileupEnergyDensity()->At(0)->Rho(fRhoAlgo));
+  case ElectronTools::kSummer15Veto50nsIso:
+  case ElectronTools::kSummer15Loose50nsIso:
+  case ElectronTools::kSummer15Medium50nsIso:
+  case ElectronTools::kSummer15Tight50nsIso:
+    return ElectronTools::PassIsoFootprintRhoCorr(&ele, ElectronTools::EElIsoType(fIsoType),
+                                                  GetPileupEnergyDensity()->At(0)->Rho(fRhoAlgo),
+                                                  GetPFCandidates(), GetVertices()->At(0));
 
   case ElectronTools::kNoIso:
     return true;

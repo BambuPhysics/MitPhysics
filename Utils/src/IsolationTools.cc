@@ -649,14 +649,21 @@ Double_t IsolationTools::PFElectronIsolation2012LepTag(const Electron *ele, cons
 }
 
 Double_t
-mithep::IsolationTools::PFElectronIsolationRhoCorr(mithep::Electron const* ele, Double_t rho, ElectronTools::EElectronEffectiveAreaTarget eaDef)
+mithep::IsolationTools::PFEleCombinedIsolationRhoCorr(mithep::Electron const* ele, Double_t rho, ElectronTools::EElectronEffectiveAreaTarget eaDef)
 {
-  double eta = ele->SCluster()->Eta();
+  return PFEleCombinedIsolationRhoCorr(ele->PFChargedHadronIso(),
+                                       ele->PFNeutralHadronIso() + ele->PFPhotonIso(),
+                                       rho, ele->SCluster()->Eta(), eaDef);
+}
+
+Double_t
+mithep::IsolationTools::PFEleCombinedIsolationRhoCorr(Double_t chargedIso, Double_t neutralIso, Double_t rho, Double_t eta, ElectronTools::EElectronEffectiveAreaTarget eaDef)
+{
   double effArea = ElectronTools::ElectronEffectiveArea(ElectronTools::kEleNeutralIso03, eta, ElectronTools::kEleEASummer15);
 
-  double isolation = ele->PFNeutralHadronIso() + ele->PFPhotonIso() - effArea * rho;
+  double isolation = neutralIso - effArea * rho;
   if (isolation < 0.) isolation = 0.;
-  isolation += ele->PFChargedHadronIso();
+  isolation += chargedIso;
 
   // this function is expected to return the absolute iso
   return isolation;
@@ -1398,7 +1405,7 @@ Double_t IsolationTools::PFNeutralHadronIsolation(const Photon *p, Double_t extR
 
 void
 IsolationTools::PFEGIsoFootprintRemoved(Particle const* part, Vertex const* pv, PFCandidateCol const* pfCands, Double_t dR,
-                                            Double_t& chIso, Double_t& nhIso, Double_t& phIso)
+                                        Double_t& chIso, Double_t& nhIso, Double_t& phIso)
 {
   SuperCluster const* sc = 0;
   std::function<bool(PFCandidate const&)> inFootprint;
