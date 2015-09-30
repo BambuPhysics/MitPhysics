@@ -690,10 +690,7 @@ mithep::MuonTools::PassId(const Muon *mu, EMuIdType idType)
   case kLoose:
     return mu->BestTrk() != 0 &&
       mu->IsPFMuon() == kTRUE &&
-      (
-        mu->Quality().Quality(MuonQuality::AllGlobalMuons) ||
-        mu->Quality().Quality(MuonQuality::AllTrackerMuons)
-      );
+      (mu->HasGlobalTrk() || mu->HasTrackerTrk());
 
   // 2015 POG Medium ID for Run-2 as of 2015-07-24
   // Loose muon with a few additional requirements
@@ -719,20 +716,13 @@ mithep::MuonTools::PassId(const Muon *mu, EMuIdType idType)
         );
     }
 
-  // 2015 POG Tight ID for Run-2 as of 2015-07-24
+  // 2012 & 2015 POG Tight ID for Run-2 as of 2015-07-24
   // Global muon with additional muon-quality requirements.
   // Tight Muon ID selects a subset of the Particle-Flow muons.
+  // Tight IP selection uses identical track quality cuts, but
+  // the impact parameter cut is tighter.
   case kTight:
-    return mu->BestTrk() != 0 &&
-      mu->Quality().Quality(MuonQuality::AllGlobalMuons) &&
-      mu->IsPFMuon() == kTRUE &&
-      normChi2 < 10.0 && 
-      mu->NValidHits() > 0 && // number of valid muon hits on the muon chambers in the global track:
-      mu->NMatches() > 2 &&
-      mu->BestTrk()->NPixelHits() > 0 &&
-      mu->NTrkLayersHit() > 5;
-
-  case kMuonPOG2012CutBasedIdTight:
+  case kTightIP:
     return mu->IsGlobalMuon() &&
       mu->IsPFMuon() &&
       mu->GlobalTrk()->RChi2() < 10 &&
@@ -822,7 +812,7 @@ MuonTools::PassD0Cut(Muon const* mu, VertexCol const* vertices, EMuIdType idType
     }
   }
 
-  return PassD0Cut(mu, d0, idType);
+  return PassD0Cut(d0, idType);
 }
 
 Bool_t
@@ -840,19 +830,20 @@ MuonTools::PassD0Cut(Muon const* mu, BeamSpotCol const* beamspots, EMuIdType idT
       d0 = TMath::Abs(pD0);
   }
 
-  return PassD0Cut(mu, d0, idType);
+  return PassD0Cut(d0, idType);
 }
 
 Bool_t
-MuonTools::PassD0Cut(Muon const*, Double_t d0, EMuIdType idType)
+MuonTools::PassD0Cut(Double_t d0, EMuIdType idType)
 {
   switch (idType) {
-  case kMuonPOG2012CutBasedIdTight:
   case kMVAID_BDTG_IDIso:
-  case kTight:
+  case kTightIP:
     return d0 < 0.02;
     break;
-  case kLoose:
+  case kTight:
+  case kMedium:
+  case kLooseIP:
     return d0 < 0.20;
     break;
   default:
@@ -884,20 +875,21 @@ MuonTools::PassDZCut(Muon const* mu, VertexCol const* vertices, EMuIdType idType
     }
   }
 
-  return PassDZCut(mu, dz, idType);
+  return PassDZCut(dz, idType);
 }
 
 Bool_t
-MuonTools::PassDZCut(Muon const*, Double_t dz, EMuIdType idType)
+MuonTools::PassDZCut(Double_t dz, EMuIdType idType)
 {
   switch (idType) {
-  case kMuonPOG2012CutBasedIdTight:
   case kMVAID_BDTG_IDIso:
-  case kTight:
+  case kTightIP:
     return dz < 0.1;
     break;
-  case kLoose:
-    return dz < 0.2;
+  case kTight:
+  case kMedium:
+  case kLooseIP:
+    return dz < 0.5;
     break;
   default:
     return kTRUE;
@@ -922,9 +914,9 @@ Bool_t MuonTools::PassSoftMuonCut(const Muon *mu, const VertexCol *vertices, con
 
   //  if(!mu->TrackerTrk()->Quality().Quality(TrackQuality::highPurity)) return kFALSE;
 
-  if(!PassD0Cut(mu, vertices, kLoose, 0)) return kFALSE;
+  if(!PassD0Cut(mu, vertices, kLooseIP, 0)) return kFALSE;
 
-  if(!PassDZCut(mu, vertices, kLoose, 0)) return kFALSE;
+  if(!PassDZCut(mu, vertices, kLooseIP, 0)) return kFALSE;
 
   if(applyIso == kTRUE){
     Double_t totalIso = 1.0 * mu->IsoR03SumPt() + 

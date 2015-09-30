@@ -267,13 +267,6 @@ void MuonIDModRun1::Process()
 	mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
       break;
     case MuonTools::kTight:
-      idpass = mu->BestTrk() != 0 &&
-	mu->NTrkLayersHit() > 5 &&
-	mu->IsPFMuon() == kTRUE &&
-	mu->BestTrk()->NPixelHits() > 0 &&
-	RChi2 < 10.0;
-      break;
-    case MuonTools::kMuonPOG2012CutBasedIdTight:
       idpass = mu->IsGlobalMuon() &&
 	mu->IsPFMuon() &&
 	mu->GlobalTrk()->RChi2() < 10 &&
@@ -619,8 +612,6 @@ void MuonIDModRun1::SlaveBegin()
     fMuIDType = MuonTools::kZMuId;
   else if (fMuonIDType.CompareTo("Tight") == 0)
     fMuIDType = MuonTools::kTight;
-  else if (fMuonIDType.CompareTo("muonPOG2012CutBasedIDTight") == 0)
-    fMuIDType = MuonTools::kMuonPOG2012CutBasedIdTight;
   else if (fMuonIDType.CompareTo("Loose") == 0)
     fMuIDType = MuonTools::kLoose;
   else if (fMuonIDType.CompareTo("WWMuIdV1") == 0)
