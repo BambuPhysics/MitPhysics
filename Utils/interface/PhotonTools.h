@@ -36,6 +36,7 @@ namespace mithep {
 
     enum EPhIdType {
       kIdUndef = 0,       //not defined
+      kNoId,
       kTight,             //"Tight"
       kLoose,             //"Loose"
       kLooseEM,           //"LooseEM"
