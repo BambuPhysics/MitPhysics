@@ -34,10 +34,11 @@ namespace mithep {
         kWMuId,             //"WMuId"
         kZMuId,             //"ZMuId"
         kTight,             //"Tight"
-        kMedium,             //"Medium"
+        kMedium,            //"Medium"
         kLoose,             //"Loose"
-        kTightIP,           // Tight with tighter IP cut than POG recommendation
-        kLooseIP,           // Loose with an IP cut
+        kTightIP,           //"Tight with tighter IP cut than POG recommendation"
+        kMediumIP,          //"Medium with tighter IP cut than POG recommendation"
+        kLooseIP,           //"Loose with an IP cut"
         kWWMuIdV1,          //"WWMuIdV1"
         kWWMuIdV2,          //"WWMuIdV2"
         kWWMuIdV3,          //"WWMuIdV3"
