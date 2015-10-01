@@ -22,8 +22,8 @@ namespace mithep {
     ElectronIdMod(const char* name="ElectronIdMod",
                   const char* title="Electron identification module");
 
-    Bool_t   GetApplyConversionFilterType1() const  { return fApplyConvFilterType1; }
-    Bool_t   GetApplyConversionFilterType2() const  { return fApplyConvFilterType2; }
+    Bool_t   GetApplyConvFilterType1() const        { return fApplyConvFilterType1; }
+    Bool_t   GetApplyConvFilterType2() const        { return fApplyConvFilterType2; }
     Bool_t   GetApplyNExpectedHitsInnerCut() const  { return fApplyNExpectedHitsInnerCut; }
     Bool_t   GetInvertNExpectedHitsInnerCut() const { return fInvertNExpectedHitsInnerCut; }
     Bool_t   GetApplySpikeRemoval() const           { return fApplySpikeRemoval; }
@@ -40,8 +40,8 @@ namespace mithep {
 
     ElectronLikelihood* GetLH() const { return fLH; }
 
-    void SetApplyConversionFilterType1(Bool_t b)   { fApplyConvFilterType1 = b; }
-    void SetApplyConversionFilterType2(Bool_t b)   { fApplyConvFilterType2 = b; }
+    void SetApplyConvFilterType1(Bool_t b)         { fApplyConvFilterType1 = b; }
+    void SetApplyConvFilterType2(Bool_t b)         { fApplyConvFilterType2 = b; }
     void SetApplyNExpectedHitsInnerCut(Bool_t b)   { fApplyNExpectedHitsInnerCut = b; }
     void SetInvertNExpectedHitsInnerCut(Bool_t b)  { fInvertNExpectedHitsInnerCut = b; }
     void SetApplySpikeRemoval(Bool_t b)            { fApplySpikeRemoval = b; }

@@ -583,6 +583,7 @@ mithep::MuonTools::PassPFIso(Muon const* mu, EMuIsoType type, PFCandidateCol con
                              ElectronCol const* nonisolatedElectrons/* = 0*/,
                              MuonCol const* nonisolatedMuons/* = 0*/)
 {
+
   switch (type) {
   case kPFIso:
     {
@@ -688,6 +689,7 @@ mithep::MuonTools::PassId(const Muon *mu, EMuIdType idType)
   // between the muon pairs (DeltaR<0.02) in order to suppress contribution from split tracks."
   // for more info: "https://indico.cern.ch/event/203424/material-old/slides/1?contribId=0"
   case kLoose:
+  case kLooseIP:
     return mu->BestTrk() != 0 &&
       mu->IsPFMuon() == kTRUE &&
       (mu->HasGlobalTrk() || mu->HasTrackerTrk());
@@ -695,18 +697,19 @@ mithep::MuonTools::PassId(const Muon *mu, EMuIdType idType)
   // 2015 POG Medium ID for Run-2 as of 2015-07-24
   // Loose muon with a few additional requirements
   case kMedium:
+  case kMediumIP:
     {
       double segComp = GetSegmentCompatibility(mu);
       return mu->BestTrk() != 0 &&
         mu->IsPFMuon() == kTRUE &&
         (
-         mu->Quality().Quality(MuonQuality::AllGlobalMuons) ||
-         mu->Quality().Quality(MuonQuality::AllTrackerMuons)
+         mu->IsGlobalMuon() ||
+         mu->IsTrackerMuon()
         ) && 
         mu->ValidFraction() > 0.8 &&
         (
          (
-          mu->Quality().Quality(MuonQuality::AllGlobalMuons) &&
+          mu->IsGlobalMuon() &&
           normChi2 < 3.0 && 
           mu->Chi2LocalPosition() < 12.0 &&
           mu->TrkKink() < 20.0 &&
@@ -838,6 +841,7 @@ MuonTools::PassD0Cut(Double_t d0, EMuIdType idType)
 {
   switch (idType) {
   case kMVAID_BDTG_IDIso:
+  case kMediumIP:
   case kTightIP:
     return d0 < 0.02;
     break;
@@ -883,6 +887,7 @@ MuonTools::PassDZCut(Double_t dz, EMuIdType idType)
 {
   switch (idType) {
   case kMVAID_BDTG_IDIso:
+  case kMediumIP:
   case kTightIP:
     return dz < 0.1;
     break;
