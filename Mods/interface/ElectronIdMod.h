@@ -93,12 +93,12 @@ namespace mithep {
     Bool_t   fApplySpikeRemoval = kFALSE;      //whether spike removal - uses SC seed which can be absent in ged electrons
     Bool_t   fApplyD0Cut = kTRUE;             //whether apply d0 cut
     Bool_t   fApplyDZCut = kTRUE;             //whether apply dz cut
-    Bool_t   fChargeFilter = kTRUE;           //whether apply GSF and CFT equal requirement
+    Bool_t   fChargeFilter = kFALSE;           //whether apply GSF and CFT equal requirement
     Bool_t   fApplyTriggerMatching = kFALSE;   //match to hlt electron (default=0)
     Bool_t   fApplyEcalSeeded = kFALSE;        //require ecal seeded flag
     Bool_t   fApplyEcalFiducial = kFALSE;      //apply ecal fiducial cuts on supercluster eta
     UInt_t   fRhoAlgo = mithep::PileupEnergyDensity::kFixedGridFastjetAll;
-    Int_t    fWhichVertex = -1;            //vertex to use (-2: beamspot, -1: closest in Z)
+    Int_t    fWhichVertex = 0;            //vertex to use (-2: beamspot, -1: closest in Z)
     Double_t fElectronEtMin = 0.;          //min pt cut
     Double_t fIdLikelihoodCut = -999.;        //cut value for Id likelihood
 
