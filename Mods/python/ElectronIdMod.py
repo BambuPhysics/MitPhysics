@@ -13,5 +13,13 @@ electronIdMod = mithep.ElectronIdMod(
     ApplyConvFilterType1 = False,
     ApplyConvFilterType2 = False,
     ApplyNExpectedHitsInnerCut = False,
+    InvertNExpectedHitsInnerCut = False,
+    ApplySpikeRemoval = False,
+    ChargeFilter = False,
+    ApplyTriggerMatching = False,
+    ApplyEcalSeeded = False,
+    RhoAlgo = mithep.PileupEnergyDensity.kFixedGridFastjetAll,
+    EtMin = 0.,
+    IdLikelihoodCut = -999.,
     ConversionsName = 'Conversions'
 )
