@@ -111,7 +111,7 @@ mithep::MuonIdMod::PassIsolation(mithep::Muon const& muon)
   case MuonTools::kPFRadialIso:
     return MuonTools::PassPFIso(&muon, MuonTools::kPFRadialIso, GetPFNoPileupCandidates());
 
-  case MuonTools::kPFIsoBetaPUCorrected:
+  case MuonTools::kPFIsoBetaPUCorrectedFake:
   case MuonTools::kPFIsoBetaPUCorrectedLoose:
   case MuonTools::kPFIsoBetaPUCorrectedTight:
     return MuonTools::PassPFIso(&muon, MuonTools::EMuIsoType(fIsoType), GetPFNoPileupCandidates(), 0, GetPFPileupCandidates());
