@@ -616,9 +616,9 @@ mithep::MuonTools::PassPFIso(Muon const* mu, EMuIsoType type, PFCandidateCol con
       return IsolationTools::PFRadialMuonIsolation(mu, pfCandidates, 1.0, 0.3) < mu->Pt() * cutValue;
     }
 
-  case kPFIsoBetaPUCorrected:
+  case kPFIsoBetaPUCorrectedFake:
     // pfCandidates here should be NoPileupCandidates
-    return IsolationTools::BetaMwithPUCorrection(pfCandidates, pileupCands, mu, 0.4) < mu->Pt() * 0.4;
+    return (mu->IsoR03SumPt() < mu->Pt() * 0.4 && IsolationTools::BetaMwithPUCorrection(pfCandidates, pileupCands, mu, 0.4) < mu->Pt() * 0.4);
 
   case kPFIsoBetaPUCorrectedLoose:
     // pfCandidates here should be NoPileupCandidates
