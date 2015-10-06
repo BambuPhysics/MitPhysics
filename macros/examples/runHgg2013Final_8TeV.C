@@ -324,7 +324,7 @@ void runHgg2013Final_8TeV(const char *fileset    = "0000",
   muonIdMod -> SetWhichVertex(-1); // this is a 'hack'.. but hopefully good enough...
   muonIdMod -> SetD0Cut(0.2);
   muonIdMod -> SetDZCut(0.5);
-  muonIdMod -> SetIsoType("PFIsoBetaPUCorrected"); //h
+  muonIdMod -> SetIsoType("PFIsoBetaPUCorrectedTight"); //h
   muonIdMod -> SetPFIsoCut(0.2); //h
   muonIdMod -> SetOutputName("HggLeptonTagMuons");
   muonIdMod -> SetPFNoPileUpName("pfnopileupcands");
@@ -341,7 +341,7 @@ void runHgg2013Final_8TeV(const char *fileset    = "0000",
   softMuonIdMod -> SetWhichVertex(-1); // this is a 'hack'.. but hopefully good enough...
   softMuonIdMod -> SetD0Cut(0.2);
   softMuonIdMod -> SetDZCut(0.5);
-  softMuonIdMod -> SetIsoType("PFIsoBetaPUCorrected"); //h
+  softMuonIdMod -> SetIsoType("PFIsoBetaPUCorrectedTight"); //h
   softMuonIdMod -> SetPFIsoCut(0.2); //h
   softMuonIdMod -> SetOutputName("HggLeptonTagSoftMuons");
   softMuonIdMod -> SetPFNoPileUpName("pfnopileupcands");

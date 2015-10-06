@@ -124,7 +124,7 @@ void MuonIDModRun1::Process()
   }
   if (fMuIsoType == MuonTools::kPFRadialIso ||
       fMuIsoType == MuonTools::kIsoDeltaR   ||
-      fMuIsoType == MuonTools::kPFIsoBetaPUCorrected) {
+      fMuIsoType == MuonTools::kPFIsoBetaPUCorrectedTight) {
     fPFNoPileUpCands = GetObject<PFCandidateCol>(fPFNoPileUpName);
     fPFPileUpCands   = GetObject<PFCandidateCol>(fPFPileUpName);
   }
@@ -267,13 +267,6 @@ void MuonIDModRun1::Process()
 	mu->Quality().Quality(MuonQuality::GlobalMuonPromptTight);
       break;
     case MuonTools::kTight:
-      idpass = mu->BestTrk() != 0 &&
-	mu->NTrkLayersHit() > 5 &&
-	mu->IsPFMuon() == kTRUE &&
-	mu->BestTrk()->NPixelHits() > 0 &&
-	RChi2 < 10.0;
-      break;
-    case MuonTools::kMuonPOG2012CutBasedIdTight:
       idpass = mu->IsGlobalMuon() &&
 	mu->IsPFMuon() &&
 	mu->GlobalTrk()->RChi2() < 10 &&
@@ -450,7 +443,7 @@ void MuonIDModRun1::Process()
           isocut = kTRUE;
       }
       break;
-    case MuonTools::kPFIsoBetaPUCorrected:
+    case MuonTools::kPFIsoBetaPUCorrectedTight:
       {
         Double_t pfIsoCutValue = 9999;
         if (fPFIsolationCut > 0) {
@@ -619,8 +612,6 @@ void MuonIDModRun1::SlaveBegin()
     fMuIDType = MuonTools::kZMuId;
   else if (fMuonIDType.CompareTo("Tight") == 0)
     fMuIDType = MuonTools::kTight;
-  else if (fMuonIDType.CompareTo("muonPOG2012CutBasedIDTight") == 0)
-    fMuIDType = MuonTools::kMuonPOG2012CutBasedIdTight;
   else if (fMuonIDType.CompareTo("Loose") == 0)
     fMuIDType = MuonTools::kLoose;
   else if (fMuonIDType.CompareTo("WWMuIdV1") == 0)
@@ -661,8 +652,8 @@ void MuonIDModRun1::SlaveBegin()
     fMuIsoType = MuonTools::kPFIso;
   else if (fMuonIsoType.CompareTo("PFRadialIso") == 0)
     fMuIsoType = MuonTools::kPFRadialIso;
-  else if (fMuonIsoType.CompareTo("PFIsoBetaPUCorrected") == 0)
-    fMuIsoType = MuonTools::kPFIsoBetaPUCorrected;
+  else if (fMuonIsoType.CompareTo("PFIsoBetaPUCorrectedTight") == 0)
+    fMuIsoType = MuonTools::kPFIsoBetaPUCorrectedTight;
   else if (fMuonIsoType.CompareTo("PFIsoEffectiveAreaCorrected") == 0)
     fMuIsoType = MuonTools::kPFIsoEffectiveAreaCorrected;
   else if (fMuonIsoType.CompareTo("PFIsoNoL") == 0)

@@ -97,7 +97,12 @@ namespace mithep {
       kSummer15LooseIso,
       kSummer15MediumIso,
       kSummer15TightIso,
-      kSummer15FakeIso
+      kSummer15FakeIso,
+      kSummer15Veto50nsIso,
+      kSummer15Loose50nsIso,
+      kSummer15Medium50nsIso,
+      kSummer15Tight50nsIso,
+      kSummer15Fake50nsIso
     };
 
     enum EElectronIsoVar {
@@ -160,8 +165,9 @@ namespace mithep {
     static Bool_t       PassCustomIso(const Electron *el, EElIsoType isoType);
     static Bool_t       PassID(Electron const*, EElIdType); // new implementation to get rid of PassCustomID
     static Bool_t       PassIso(Electron const*, EElIsoType); // new implementation to get rid of PassCustomIso
-    static Bool_t       PassPFIso(Electron const*, EElIsoType, PFCandidateCol const*, Vertex const*, MuonCol const* = 0, ElectronCol const* = 0);
-    static Bool_t       PassIsoRhoCorr(Electron const*, EElIsoType, Double_t rho, PFCandidateCol const* = 0, Vertex const* = 0); // new implementation to get rid of PassCustomIso
+    static Bool_t       PassPFIso(Electron const*, EElIsoType, PFCandidateCol const* = 0, Vertex const* = 0, MuonCol const* = 0, ElectronCol const* = 0);
+    static Bool_t       PassIsoRhoCorr(Electron const*, EElIsoType, Double_t rho, PFCandidateCol const* = 0, Vertex const* = 0);
+    static Bool_t       PassIsoFootprintRhoCorr(Electron const*, EElIsoType, Double_t rho, PFCandidateCol const*, Vertex const*);
     static Bool_t       PassD0Cut(Electron const*, VertexCol const*, EElIdType, Int_t iVertex = 0);
     static Bool_t       PassD0Cut(Electron const*, BeamSpotCol const*, EElIdType);
     static Bool_t       PassDZCut(Electron const*, VertexCol const*, EElIdType, Int_t iVertex = 0);

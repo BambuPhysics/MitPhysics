@@ -34,9 +34,11 @@ namespace mithep {
         kWMuId,             //"WMuId"
         kZMuId,             //"ZMuId"
         kTight,             //"Tight"
-        kMedium,             //"Medium"
-        kMuonPOG2012CutBasedIdTight,             //"muonPOG2012CutBasedIDTight"
+        kMedium,            //"Medium"
         kLoose,             //"Loose"
+        kTightIP,           //"Tight with tighter IP cut than POG recommendation"
+        kMediumIP,          //"Medium with tighter IP cut than POG recommendation"
+        kLooseIP,           //"Loose with an IP cut"
         kWWMuIdV1,          //"WWMuIdV1"
         kWWMuIdV2,          //"WWMuIdV2"
         kWWMuIdV3,          //"WWMuIdV3"
@@ -56,9 +58,9 @@ namespace mithep {
         kCustomIso,                         //"Custom"
         kPFIso,                             //"PFIso"
         kPFRadialIso,                       //"PFRadialIso"
-        kPFIsoBetaPUCorrected,              //"PFISo with PUcorrection using delta Beta, super loose cut (0.4)
-        kPFIsoBetaPUCorrectedLoose,         //"PFISo with PUcorrection using delta Beta, loose cut (0.2)
-        kPFIsoBetaPUCorrectedTight,         //"PFISo with PUcorrection using delta Beta, tight cut (0.12)
+        kPFIsoBetaPUCorrectedFake,          //"PFISo with PUcorrection using delta Beta, super loose cut (0.4)+trackerIso cut"
+        kPFIsoBetaPUCorrectedLoose,         //"PFISo with PUcorrection using delta Beta, loose cut (0.2)"
+        kPFIsoBetaPUCorrectedTight,         //"PFISo with PUcorrection using delta Beta, tight cut (0.12)"
         kPFIsoEffectiveAreaCorrected,       //"PFIso with EffectiveArea Pileup Correction"
         kPFIsoNoL,                          //"PFIsoNoL"
         kNoIso,                             //"NoIso"
@@ -157,9 +159,9 @@ namespace mithep {
       static Double_t GetSegmentCompatibility(const mithep::Muon *iMuon);
       static Bool_t   PassD0Cut(const Muon *mu, const VertexCol *vertices, EMuIdType, Int_t iVertex = 0);
       static Bool_t   PassD0Cut(const Muon *mu, const BeamSpotCol *beamspots, EMuIdType);
-      static Bool_t   PassD0Cut(const Muon *mu, Double_t d0, EMuIdType);
+      static Bool_t   PassD0Cut(Double_t d0, EMuIdType);
       static Bool_t   PassDZCut(const Muon *mu, const VertexCol *vertices, EMuIdType, Int_t iVertex = 0);
-      static Bool_t   PassDZCut(const Muon *mu, Double_t dz, EMuIdType);
+      static Bool_t   PassDZCut(Double_t dz, EMuIdType);
       static Bool_t   PassSoftMuonCut(const Muon *mu, const VertexCol *vertices, const Bool_t applyIso = kTRUE);
       static Double_t MuonEffectiveArea(EMuonEffectiveAreaType type, Double_t Eta, 
                                         EMuonEffectiveAreaTarget EffectiveAreaTarget = kMuEAData2011);

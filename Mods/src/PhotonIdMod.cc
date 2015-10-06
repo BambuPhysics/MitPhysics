@@ -85,6 +85,9 @@ mithep::PhotonIdMod::PassIdCut(Photon const& pho)
   case PhotonTools::kSummer15Loose:
     return PhotonTools::PassID(&pho, PhotonTools::EPhIdType(fIdType));
 
+  case PhotonTools::kNoId:
+    return true;
+
   default:
     return false;
   }
