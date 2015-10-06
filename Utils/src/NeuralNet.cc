@@ -87,6 +87,22 @@ bool NeuralNet::CheckIntegrity() const {
 double *NeuralNet::Evaluate() const {
 	if (!integrityChecked)
   	assert(CheckIntegrity());
+/*  fprintf(stderr,"0: [");
+  for (unsigned int iIn=0; iIn!=nIn; ++iIn) {
+      fprintf(stderr,"%f,", *(inputs[iIn]));
+  }
+  fprintf(stderr,"]\n");
+  fprintf(stderr,"0: [");
+  for (unsigned int iIn=0; iIn!=nIn; ++iIn) {
+      fprintf(stderr,"%f,", (mus[iIn]));
+  }
+  fprintf(stderr,"]\n");
+  fprintf(stderr,"0: [");
+  for (unsigned int iIn=0; iIn!=nIn; ++iIn) {
+      fprintf(stderr,"%f,", (sigmas[iIn]));
+  }
+  fprintf(stderr,"]\n");
+  fprintf(stderr,"1: [");  */
   for (unsigned int iOut=0; iOut!=hiddenLayerSizes[0]; ++iOut) {
     double outVal = bs[0][iOut];
     for (unsigned int iIn=0; iIn!=nIn; ++iIn) {
@@ -94,7 +110,9 @@ double *NeuralNet::Evaluate() const {
       outVal += tmpIn * Ws[0][iIn][iOut];
     }
     layers[0][iOut] = TMath::TanH(outVal);
+//      fprintf(stderr,"%f,", layers[0][iOut]);
   }
+//  fprintf(stderr,"]\n");
   for (unsigned int iLayer=1; iLayer!=hiddenLayerSizes.size(); ++iLayer) {
    for (unsigned int iOut=0; iOut!=hiddenLayerSizes[iLayer]; ++iOut) {
       double outVal = bs[iLayer][iOut];
@@ -120,6 +138,7 @@ double *NeuralNet::Evaluate() const {
   for (unsigned int iOut=0; iOut!=nOut; ++iOut) {
   	outLayer[iOut] /= Z;
   }
+//  fprintf(stderr,"out: %f\n",outLayer[1]);
   return outLayer;
 }
 
