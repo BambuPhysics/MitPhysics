@@ -40,6 +40,14 @@ void NeuralNet::AddLayer(unsigned int in, unsigned int out, double **W, double *
   integrityChecked = false;
 }
 
+void NeuralNet::ResetBranches() {
+  inputs.clear();
+  mus.clear();
+  sigmas.clear();
+  inputNames.clear();
+  integrityChecked = false;
+}
+
 void NeuralNet::AddBranchAddress(float *input, double mean, double stdev, const char *name/*=""*/) {
   inputs.push_back(input);
   mus.push_back(mean);
