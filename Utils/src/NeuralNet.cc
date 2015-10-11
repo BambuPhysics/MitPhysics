@@ -45,6 +45,16 @@ void NeuralNet::ResetBranches() {
   mus.clear();
   sigmas.clear();
   inputNames.clear();
+}
+
+void NeuralNet::AddBranchAddress(float *input) {
+  inputs.push_back(input);
+  integrityChecked = false;
+}
+
+void NeuralNet::AddMuSigma(double mean, double stdev) {
+  mus.push_back(mean);
+  sigmas.push_back(stdev);
   integrityChecked = false;
 }
 
@@ -73,7 +83,7 @@ void NeuralNet::AllocateMemory() {
 
 bool NeuralNet::CheckIntegrity() const {
   // TODO: check input variables are ordered correctly
-  if (inputs.size()!=nIn) {
+  if (inputs.size()!=nIn || inputs.size()!=mus.size() || inputs.size()!=sigmas.size()) {
     fprintf(stderr,"Network has inconsistent structure: %i!=%i\n",(int)inputs.size(),(int)nIn);
     return false;
   }
