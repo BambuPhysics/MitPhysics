@@ -71,6 +71,7 @@ namespace mithep {
     void SetMaxEMFraction(Double_t m)          { fMaxEMFraction = m; }
     void SetSkipMuons(Bool_t s)                { fSkipMuons = s; }
     void SetMaxJetEta(Double_t m)              { fMaxJetEta = m; }
+    void SetMinJetPt(Double_t m)               { fMinJetPt = m; }
     // shift parameters
     void IsData(bool b)                        { fIsData = b; }
 
@@ -107,6 +108,7 @@ namespace mithep {
                                         //for jet to be in Type1 corr (< 0 -> does not skip jets)
     Bool_t        fSkipMuons = kFALSE; //remove muon P4 from jet P4 in Type 1 corr
     Double_t      fMaxJetEta = std::numeric_limits<double>::max();
+    Double_t      fMinJetPt = 15.;
                   
     Bool_t        fIsData = kTRUE; //flag for data/MC distinction
     Bool_t        fPrint = kFALSE; //flag for debug print out
