@@ -14,6 +14,15 @@ mithep::JetIdMod::JetIdMod(const char *name, const char *title) :
   fInputName = mithep::Names::gkPFJetBrn;
 }
 
+void
+mithep::JetIdMod::SetMVAWeightsFile(char const* name, UInt_t idx/* = 0*/)
+{
+  if (idx >= fMVAWeightsFile.size())
+    fMVAWeightsFile.resize(idx + 1, "");
+
+  fMVAWeightsFile[idx] = name;
+}
+
 //--------------------------------------------------------------------------------------------------
 void
 mithep::JetIdMod::IdBegin()

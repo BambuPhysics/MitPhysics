@@ -28,6 +28,15 @@ namespace mithep {
       nPFIdWorkingPoints
     };
 
+    struct Covariance {
+      double majW{0.};
+      double minW{0.};
+      double etaW{0.};
+      double phiW{0.};
+      double jetW{0.};
+      double ptD{0.};
+    };
+
     JetTools();
     virtual ~JetTools();
     
@@ -55,15 +64,17 @@ namespace mithep {
     static Int_t    JetToPVAssociation(const PFJet *jet, const VertexCol *vertices, Double_t  delta_z);    
     static Double_t betaStarClassic(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVertices);
     
-    static Double_t           impactParameter(const PFJet *iJet,const Vertex *iVertex,bool iDZ=false);
-    static const PFCandidate* leadCand(const PFJet *iJet,int iPFType,bool i2nd=false);
-    static Double_t           dRMean(const PFJet *iJet,int iPFType);
-    static Double_t           dR2Mean(const PFJet *iJet,int iPFType);
-    static Double_t           frac(const PFJet *iJet,Double_t iDRMax,Double_t iDRMin,Int_t iPFType);
-    static Double_t           betaStar(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVertices,
+    static Double_t impactParameter(const PFJet *iJet,const Vertex *iVertex,bool iDZ=false);
+    static const PFCandidate* leadCand(const PFJet *iJet, bool wantSecond, int iPFType, bool isBitMask = false);
+    static const PFCandidate* trailCand(const PFJet *iJet, int iPFType, bool isBitMask = false);
+    static Double_t dRMean(const PFJet *iJet,int iPFType, bool isBitMask = false);
+    static Double_t dR2Mean(const PFJet *iJet,int iPFType, bool isBitMask = false);
+    static Double_t sumPt(PFJet const*, int iPFType, bool isBitMask = false);
+    static Double_t frac(const PFJet *iJet,Double_t iDRMax,Double_t iDRMin, int iPFType, bool isBitMask = false);
+    static Double_t betaStar(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVertices,
 				       Double_t iDZCut=0.2);
-    static Bool_t             passPFId(const PFJet *iJet, PFIdWorkingPoint);
-    static double             W(const PFJet *iJet,int iPFType,int iType);
+    static Bool_t passPFId(const PFJet *iJet, PFIdWorkingPoint);
+    static Covariance W(const PFJet *iJet, int iPFType, bool isBitMask = false);
     ClassDef(JetTools, 1)
   };
 

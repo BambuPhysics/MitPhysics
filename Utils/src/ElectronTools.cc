@@ -349,11 +349,11 @@ mithep::ElectronTools::PassID(Electron const* ele, EElIdType type)
     break;
   case kSummer15Fake:
   case kSummer15Fake50ns:
-    deltaEtaCut      = isEB ? 0.0103 : 0.01000;
-    deltaPhiCut      = isEB ? 0.0400 : 0.11400;
-    sigmaIetaIetaCut = isEB ? 0.0110 : 0.03100;
-    hOverECut	     = isEB ? 0.0876 : 0.08000;
-    ooEmooPCut       = isEB ? 0.0174 : 0.08980;
+    deltaEtaCut      = isEB ? 0.010 : 0.010;
+    deltaPhiCut      = isEB ? 0.040 : 0.080;
+    sigmaIetaIetaCut = isEB ? 0.011 : 0.031;
+    hOverECut	     = isEB ? 0.080 : 0.080;
+    ooEmooPCut       = isEB ? 0.010 : 0.010;
     break;
   case kSummer15Medium:
     deltaEtaCut      = isEB ? 0.0103 : 0.00733;

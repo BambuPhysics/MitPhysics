@@ -31,6 +31,7 @@ namespace mithep {
     };
 
     enum AnalysisType {
+      kMetOnly,
       kMonoJet,
       kMonoPhoton,
       nAnalysisTypes

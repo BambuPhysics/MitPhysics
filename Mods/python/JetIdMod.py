@@ -5,10 +5,9 @@ jetIdMod = mithep.JetIdMod(
     InputName = mithep.ModNames.gkCorrectedJetsName,
     OutputName = 'GoodJets',
     PFId = mithep.JetTools.kPFLoose,
-    MVATrainingSet = mithep.JetIDMVA.k53BDTCHSFullPlusRMS, # set to mithep.JetIDMVA.nMVATrainingTypes to turn off MVA
+    MVATrainingSet = mithep.JetIDMVA.k74CHS, # set to mithep.JetIDMVA.nMVATrainingTypes to turn off MVA
     MVACutWP = mithep.JetIDMVA.kLoose,
-    MVAWeightsFile = os.environ['MIT_DATA'] + '/TMVAClassification_5x_BDT_chsFullPlusRMS.weights.xml',
-    MVACutsFile = os.environ['MIT_DATA'] + '/jetIDCuts_121221.dat',
+    MVACutsFile = os.environ['MIT_DATA'] + '/JetId/jetIDCuts_150807.dat',
     UseClassicBetaForMVA = False,
     PtMin = 30.,
     EtaMax = 2.5,
@@ -19,6 +18,10 @@ jetIdMod = mithep.JetIdMod(
     MinNPFCandidates = 2,
     MinNChargedPFCandidates = 1,
 )
+jetIdMod.SetMVAWeightsFile(os.environ['MIT_DATA'] + '/JetId/TMVAClassificationCategory_BDTG.weights_jteta_0_2.xml', 0)
+jetIdMod.SetMVAWeightsFile(os.environ['MIT_DATA'] + '/JetId/TMVAClassificationCategory_BDTG.weights_jteta_2_2p5.xml', 1)
+jetIdMod.SetMVAWeightsFile(os.environ['MIT_DATA'] + '/JetId/TMVAClassificationCategory_BDTG.weights_jteta_2p5_3.xml', 2)
+jetIdMod.SetMVAWeightsFile(os.environ['MIT_DATA'] + '/JetId/TMVAClassificationCategory_BDTG.weights_jteta_3_5.xml', 3)
 
 # UseClassicBetaForMVA: set to true for MiniAOD input. Makes the MVA value agree
 # with what CMSSW would give if Jet Id was calculated on MiniAOD. This is not the
