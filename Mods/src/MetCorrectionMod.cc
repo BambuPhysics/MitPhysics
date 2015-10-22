@@ -260,7 +260,7 @@ MetCorrectionMod::Process()
       auto fullCorrMom = inJetRawMom * fullCorr;
 
       // do not propagate JEC for soft jets
-      if (fullCorrMom.Pt() < 10.) continue;
+      if (fullCorrMom.Pt() < fMinJetPt) continue;
 
       auto offsetCorrMom = inJetRawMom * offsetCorr;
 
