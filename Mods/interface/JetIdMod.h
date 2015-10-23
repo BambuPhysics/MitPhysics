@@ -36,7 +36,7 @@ namespace mithep {
     Bool_t      GetPFId() const                     { return fPFId; }
     UInt_t      GetMVATrainingSet() const           { return fMVATrainingSet; }
     UInt_t      GetMVACutWP() const                 { return fMVACutWP; }
-    char const* GetMVAWeightsFile() const           { return fMVAWeightsFile; }
+    char const* GetMVAWeightsFile(UInt_t idx = 0) const { return fMVAWeightsFile.at(idx); }
     char const* GetMVACutsFile() const              { return fMVACutsFile; }
     Bool_t      GetUseClassicBetaForMVA() const     { return fUseClassicBetaForMVA; }
     
@@ -57,7 +57,7 @@ namespace mithep {
     void SetPFId(UInt_t w)                       { fPFId = w; }
     void SetMVATrainingSet(UInt_t s)             { fMVATrainingSet = s; }
     void SetMVACutWP(UInt_t w)                   { fMVACutWP = w; }
-    void SetMVAWeightsFile(char const* n)        { fMVAWeightsFile = n; }
+    void SetMVAWeightsFile(char const*, UInt_t idx = 0);
     void SetMVACutsFile(char const* n)           { fMVACutsFile = n; }
     void SetUseClassicBetaForMVA(Bool_t b)       { fUseClassicBetaForMVA = b; }
     void SetMinNPFCandidates(UInt_t n)           { fMinNPFCandidates = n; }
@@ -116,7 +116,7 @@ namespace mithep {
     UInt_t   fPFId = JetTools::nPFIdWorkingPoints; // PF Id working point
     UInt_t   fMVATrainingSet = JetIDMVA::nMVATypes; //JetIDMVA::MVAType
     UInt_t   fMVACutWP = JetIDMVA::kLoose; //JetIDMVA::CutType
-    TString  fMVAWeightsFile = "";
+    std::vector<TString>  fMVAWeightsFile{""};
     TString  fMVACutsFile = "";
     Bool_t   fUseClassicBetaForMVA = kFALSE; //set to true to replicate CMSSW PU jet ID on MiniAOD
 

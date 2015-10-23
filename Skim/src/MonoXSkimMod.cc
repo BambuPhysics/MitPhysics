@@ -166,22 +166,27 @@ MonoXSkimMod::Process()
     monoX = goodPhotons;
     break;
 
+  case kMetOnly:
+    break;
+
   default:
     SendError(kAbortAnalysis, "Process", "No analysis type set!");
   }
 
-  if (!monoX)
-    SendError(kAbortAnalysis, "Process", "Main object collection is NULL");
+  if (fAnalysisType != kMetOnly) {
+    if (!monoX)
+      SendError(kAbortAnalysis, "Process", "Main object collection is NULL");
 
-  unsigned iMono = 0;
-  for (; iMono != monoX->GetEntries(); ++iMono) {
-    if (monoX->At(iMono)->Pt() > fMinMonoXPt)
-      break;
-  }
+    unsigned iMono = 0;
+    for (; iMono != monoX->GetEntries(); ++iMono) {
+      if (monoX->At(iMono)->Pt() > fMinMonoXPt)
+        break;
+    }
 
-  if (iMono == monoX->GetEntries()) {
-    SkipEvent();
-    return;
+    if (iMono == monoX->GetEntries()) {
+      SkipEvent();
+      return;
+    }
   }
 
   // Met calculators for control regions

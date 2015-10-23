@@ -20,7 +20,8 @@ JetTools::~JetTools()
 }
 
 //Remember to remove the signal from particles before inputting into the function
-Double_t JetTools::NJettiness(const ParticleOArr *particles, const JetOArr *jets, double Q, double Y)
+Double_t
+JetTools::NJettiness(const ParticleOArr *particles, const JetOArr *jets, double Q, double Y)
 {
   if (particles->GetEntries() <= 0)
     return 0.0;
@@ -43,7 +44,8 @@ Double_t JetTools::NJettiness(const ParticleOArr *particles, const JetOArr *jets
   return fval;
 }
 
-Double_t JetTools::NJettiness(const PFCandidateOArr *pfCandidates, const JetOArr *jets, double Q, double Y)
+Double_t
+JetTools::NJettiness(const PFCandidateOArr *pfCandidates, const JetOArr *jets, double Q, double Y)
 {
   if (pfCandidates->GetEntries() <= 0)
     return 0.0;
@@ -66,7 +68,8 @@ Double_t JetTools::NJettiness(const PFCandidateOArr *pfCandidates, const JetOArr
   return fval;
 }
 
-Double_t JetTools::NJettiness(const TrackOArr *tracks, const JetOArr *jets, double Q, double Y)
+Double_t
+JetTools::NJettiness(const TrackOArr *tracks, const JetOArr *jets, double Q, double Y)
 {
   if (tracks->GetEntries() <= 0)
     return 0.0;
@@ -89,7 +92,8 @@ Double_t JetTools::NJettiness(const TrackOArr *tracks, const JetOArr *jets, doub
   return fval;
 }
 
-Double_t JetTools::NJettiness(const JetOArr *jetsS, const JetOArr *jets, double Q, double Y)
+Double_t
+JetTools::NJettiness(const JetOArr *jetsS, const JetOArr *jets, double Q, double Y)
 {
   if (jetsS->GetEntries() <= 0)
     return 0.0;
@@ -112,7 +116,8 @@ Double_t JetTools::NJettiness(const JetOArr *jetsS, const JetOArr *jets, double 
   return fval;
 }
 
-Double_t JetTools::NJettiness(const CaloTowerOArr *calos, const JetOArr *jets, double Q, double Y)
+Double_t
+JetTools::NJettiness(const CaloTowerOArr *calos, const JetOArr *jets, double Q, double Y)
 {
   if (calos->GetEntries() <= 0)
     return 0.0;
@@ -136,7 +141,8 @@ Double_t JetTools::NJettiness(const CaloTowerOArr *calos, const JetOArr *jets, d
 }
 
 //M_r
-Double_t JetTools::M_r(const ParticleOArr *particles)
+Double_t
+JetTools::M_r(const ParticleOArr *particles)
 {
   if (particles->GetEntries() < 2)
     return -999.;
@@ -153,7 +159,8 @@ Double_t JetTools::M_r(const ParticleOArr *particles)
 }
 
 //Beta_r
-Double_t JetTools::Beta_r(const ParticleOArr *particles)
+Double_t
+JetTools::Beta_r(const ParticleOArr *particles)
 {
   if(particles->GetEntries() < 2) return -999.;
 
@@ -166,8 +173,9 @@ Double_t JetTools::Beta_r(const ParticleOArr *particles)
 }
 
 //M_r_t
-Double_t JetTools::M_r_t(const ParticleOArr *particles, const Met *met){
-
+Double_t
+JetTools::M_r_t(const ParticleOArr *particles, const Met *met)
+{
   if(particles->GetEntries() < 2) return -999.;
 
   Double_t Pt0    = particles->At(0)->Pt();
@@ -185,7 +193,9 @@ Double_t JetTools::M_r_t(const ParticleOArr *particles, const Met *met){
 }
 
 //Razor
-Double_t JetTools::Razor(const ParticleOArr *particles, const Met *met){
+Double_t
+JetTools::Razor(const ParticleOArr *particles, const Met *met)
+{
   if(particles->GetEntries() < 2) return -999.;
 
   Double_t mr  = M_r(particles);
@@ -197,8 +207,9 @@ Double_t JetTools::Razor(const ParticleOArr *particles, const Met *met){
 }
 
 //Cosine Omega
-Double_t JetTools::CosineOmega(const Particle *particles0, const Particle *particles1){
-
+Double_t
+JetTools::CosineOmega(const Particle *particles0, const Particle *particles1)
+{
   TLorentzVector v_L1(particles0->Px(),particles0->Py(),particles0->Pz(),particles0->E());
   TLorentzVector v_L2(particles1->Px(),particles1->Py(),particles1->Pz(),particles1->E());
 
@@ -216,8 +227,10 @@ Double_t JetTools::CosineOmega(const Particle *particles0, const Particle *parti
 }
 
 //Transverse Higgs mass
-Double_t JetTools::MtHiggs(const ParticleOArr * leptons,
-                           const Met *met, double metFraction[2], int nsel){
+Double_t
+JetTools::MtHiggs(const ParticleOArr * leptons,
+                  const Met *met, double metFraction[2], int nsel)
+{
   if(leptons->Entries() < 2) return -999.0;
 
   double mtHiggs = -999.0;
@@ -317,7 +330,9 @@ Double_t JetTools::MtHiggs(const ParticleOArr * leptons,
   return mtHiggs;
 }
 
-Double_t JetTools::Beta(const PFJet *jet, const Vertex *vertex, Double_t delta_z){
+Double_t
+JetTools::Beta(const PFJet *jet, const Vertex *vertex, Double_t delta_z)
+{
   // (sum pt of jet tracks associated to PV) / (sum of pt of jet tracks)
   // association is defined by |dZ| < delta_z
 
@@ -344,7 +359,9 @@ Double_t JetTools::Beta(const PFJet *jet, const Vertex *vertex, Double_t delta_z
     return 0.;
 }
 
-Double_t JetTools::BetaClassic(const PFJet *jet, const Vertex *vertex){
+Double_t
+JetTools::BetaClassic(const PFJet *jet, const Vertex *vertex)
+{
   // (sum pt of jet tracks associated to PV) / (sum of pt of jet tracks)
   // association is defined by the track being used in vertex fitting (weight > 0)
 
@@ -373,7 +390,9 @@ Double_t JetTools::BetaClassic(const PFJet *jet, const Vertex *vertex){
     return 0.;
 }
 
-Double_t JetTools::Beta2(const PFJet *jet, const Vertex *vertex, Double_t  delta_z){  
+Double_t
+JetTools::Beta2(const PFJet *jet, const Vertex *vertex, Double_t  delta_z)
+{
   double Pt_jets= 0. ;
   double Pt_jetsTot = 0. ;
 
@@ -395,9 +414,9 @@ Double_t JetTools::Beta2(const PFJet *jet, const Vertex *vertex, Double_t  delta
   return beta;
 }
 
-
-Bool_t  JetTools::PassBetaVertexAssociationCut(const PFJet *jet, const Vertex *referenceVertex, const VertexCol *vertices, Double_t delta_z) {
-
+Bool_t
+JetTools::PassBetaVertexAssociationCut(const PFJet *jet, const Vertex *referenceVertex, const VertexCol *vertices, Double_t delta_z)
+{
   Bool_t passBetaCut = kTRUE;
   if(vertices->GetEntries() > 0) {
     Double_t Beta = JetTools::Beta(jet, referenceVertex, 0.2);
@@ -414,8 +433,9 @@ Bool_t  JetTools::PassBetaVertexAssociationCut(const PFJet *jet, const Vertex *r
 
 }
 
-Bool_t  JetTools::PassBeta2VertexAssociationCut(const PFJet *jet, const Vertex *referenceVertex, const VertexCol *vertices, Double_t delta_z) {
-
+Bool_t
+JetTools::PassBeta2VertexAssociationCut(const PFJet *jet, const Vertex *referenceVertex, const VertexCol *vertices, Double_t delta_z)
+{
   Bool_t passBetaCut = kTRUE;
   if(vertices->GetEntries() > 0) {
     Double_t Beta = JetTools::Beta2(jet, referenceVertex, 0.2);
@@ -429,12 +449,11 @@ Bool_t  JetTools::PassBeta2VertexAssociationCut(const PFJet *jet, const Vertex *
   }
 
   return passBetaCut; 
-
 }
 
-
-Int_t JetTools::MaxBetaVertexIndex(const PFJet *jet, const VertexCol *vertices, Double_t  delta_z=0.2){  
-  
+Int_t
+JetTools::MaxBetaVertexIndex(const PFJet *jet, const VertexCol *vertices, Double_t  delta_z=0.2)
+{ 
   Int_t vertexIndex = -1;
   double beta = -0.1;
   for (UInt_t v=0; v < vertices->GetEntries(); v++){
@@ -445,11 +464,11 @@ Int_t JetTools::MaxBetaVertexIndex(const PFJet *jet, const VertexCol *vertices, 
     }
   }
   return vertexIndex;
-
 }
 
-Int_t JetTools::MaxBeta2VertexIndex(const PFJet *jet, const VertexCol *vertices, Double_t  delta_z=0.2){  
-  
+Int_t
+JetTools::MaxBeta2VertexIndex(const PFJet *jet, const VertexCol *vertices, Double_t  delta_z=0.2)
+{  
   Int_t vertexIndex = -1;
   double beta = -0.1;
   for (UInt_t v=0; v < vertices->GetEntries(); v++){
@@ -460,12 +479,11 @@ Int_t JetTools::MaxBeta2VertexIndex(const PFJet *jet, const VertexCol *vertices,
     }
   }
   return vertexIndex;
-
 }
 
-
-Int_t JetTools::JetToPVAssociation(const PFJet *jet, const VertexCol *vertices, Double_t  delta_z=0.2){  
-
+Int_t
+JetTools::JetToPVAssociation(const PFJet *jet, const VertexCol *vertices, Double_t  delta_z=0.2)
+{
   std::vector<float> verticesPt2(vertices->GetEntries());
   for(UInt_t i=0;i<jet->NPFCands();i++){
     if(jet->PFCand(i)->BestTrk()){
@@ -492,19 +510,61 @@ Int_t JetTools::JetToPVAssociation(const PFJet *jet, const VertexCol *vertices, 
   }
   return vertexIndex;
 }
-const PFCandidate* JetTools::leadCand(const PFJet *iJet,int iPFType,bool i2nd) { 
-  int lCount = 0;
-  const PFCandidate *lCand = 0;
-  for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) { 
-    lCand = iJet->PFCand(i0);
-    if(iPFType != -1 && lCand->PFType() != iPFType) continue;
-    if(lCount == 0 && !i2nd) break;
-    if(lCount >  0)          break;
-    lCount++;
+
+const PFCandidate*
+JetTools::leadCand(const PFJet *iJet, bool wantSecond, int iPFType, bool isBitMask/* = false*/)
+{
+  PFCandidate const* lead = 0;
+  PFCandidate const* second = 0;
+
+  for(UInt_t iC = 0; iC != iJet->NPFCands(); ++iC) {
+    auto& cand(*iJet->PFCand(iC));
+    if (iPFType != -1) {
+      if (isBitMask) {
+        if ((iPFType & (1 << cand.PFType())) == 0)
+          continue;
+      }
+      else if (cand.PFType() != iPFType)
+        continue;
+    }
+
+    if (!lead || cand.Pt() > lead->Pt()) {
+      second = lead;
+      lead = &cand;
+    }
+    else if (!second || cand.Pt() > second->Pt())
+      second = &cand;
   }
-  return lCand; 
+
+  return wantSecond ? second : lead;
 }
-Double_t JetTools::impactParameter(const PFJet *iJet,const Vertex *iVertex,bool iDZ) { 
+
+const PFCandidate*
+JetTools::trailCand(const PFJet *iJet, int iPFType, bool isBitMask/* = false*/)
+{
+  PFCandidate const* trail = 0;
+
+  for(UInt_t iC = 0; iC != iJet->NPFCands(); ++iC) {
+    auto& cand(*iJet->PFCand(iC));
+    if (iPFType != -1) {
+      if (isBitMask) {
+        if ((iPFType & (1 << cand.PFType())) == 0)
+          continue;
+      }
+      else if (cand.PFType() != iPFType)
+        continue;
+    }
+
+    if (!trail || cand.Pt() < trail->Pt())
+      trail = &cand;
+  }
+
+  return trail;
+}
+
+Double_t
+JetTools::impactParameter(const PFJet *iJet,const Vertex *iVertex,bool iDZ)
+{
   double lDZCorr = -1000;
   for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) { 
     const PFCandidate *pCand = iJet->PFCand(i0);
@@ -516,22 +576,42 @@ Double_t JetTools::impactParameter(const PFJet *iJet,const Vertex *iVertex,bool 
   }
   return lDZCorr;
 }
-Double_t JetTools::dRMean(const PFJet *iJet,int iPFType) { 
+
+Double_t
+JetTools::dRMean(const PFJet *iJet,int iPFType, bool isBitMask/* = false*/)
+{
   double lDRMean = 0;
   for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) { 
     const PFCandidate *pCand = iJet->PFCand(i0);
-    if(iPFType != -1 && pCand->PFType() != iPFType) continue;
+    if(iPFType != -1) {
+      if (isBitMask) {
+        if ((iPFType & (1 << pCand->PFType())) == 0)
+          continue;
+      }
+      else if (pCand->PFType() != iPFType)
+        continue;
+    }
     double pDR = MathUtils::DeltaR(iJet->Mom(),pCand->Mom());
     lDRMean    += pDR*(pCand->Pt())/iJet->RawMom().Pt();
   }
   return lDRMean;
 }
-Double_t JetTools::dR2Mean(const PFJet *iJet,int iPFType) { 
+
+Double_t
+JetTools::dR2Mean(const PFJet *iJet,int iPFType, bool isBitMask/* = false*/)
+{
   double lDR2Mean = 0;
   double lSumPt2 = 0;
   for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) { 
     const PFCandidate *pCand = iJet->PFCand(i0);
-    if(iPFType != -1 && pCand->PFType() != iPFType) continue;
+    if(iPFType != -1) {
+      if (isBitMask) {
+        if ((iPFType & (1 << pCand->PFType())) == 0)
+          continue;
+      }
+      else if (pCand->PFType() != iPFType)
+        continue;
+    }
     lSumPt2   += pCand->Pt()*pCand->Pt();
     double pDR = MathUtils::DeltaR(iJet->Mom(),pCand->Mom());
     lDR2Mean    += pDR*pDR*(pCand->Pt()*pCand->Pt());
@@ -539,19 +619,53 @@ Double_t JetTools::dR2Mean(const PFJet *iJet,int iPFType) {
   lDR2Mean/=lSumPt2;
   return lDR2Mean;
 }
-Double_t JetTools::frac(const PFJet *iJet,Double_t iDRMax,Double_t iDRMin,Int_t iPFType) {
+
+Double_t
+JetTools::sumPt(PFJet const* iJet, int iPFType, bool isBitMask/* = false*/)
+{
+  double result = 0.;
+  for (unsigned iC = 0; iC != iJet->NPFCands(); ++iC) {
+    auto& cand(*iJet->PFCand(iC));
+    if (iPFType != -1) {
+      if (isBitMask) {
+        if ((iPFType & (1 << cand.PFType())) == 0)
+          continue;
+      }
+      else if (cand.PFType() != iPFType)
+        continue;
+    }
+
+    result += cand.Pt();
+  }
+
+  return result;
+}
+
+Double_t
+JetTools::frac(const PFJet *iJet, Double_t iDRMax, Double_t iDRMin, Int_t iPFType, bool isBitMask/* = false*/)
+{
   double lFrac = 0;
   for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) {
     const PFCandidate *pCand = iJet->PFCand(i0);
-    if(iPFType != -1 && pCand->PFType() != iPFType) continue;
+    if(iPFType != -1) {
+      if (isBitMask) {
+        if ((iPFType & (1 << pCand->PFType())) == 0)
+          continue;
+      }
+      else if (pCand->PFType() != iPFType)
+        continue;
+    }
     Double_t pDR = MathUtils::DeltaR(iJet->Mom(),pCand->Mom());
     if(pDR > iDRMax) continue;
-    if(pDR < iDRMax-0.1) continue;
+    if(pDR < iDRMin) continue;
     lFrac += pCand->Pt()/iJet->RawMom().Pt();
   }
   return lFrac;
 }
-Double_t JetTools::betaStar(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVertices,Double_t iDZCut) {
+
+Double_t
+JetTools::betaStar(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVertices,Double_t iDZCut)
+{
   // (sum pt of jet tracks associated to non-primary vertices) / (sum pt of jet tracks)
   // association is defined by |dZ| < iDZCut
   Double_t lTotal = 0;  
@@ -591,7 +705,9 @@ Double_t JetTools::betaStar(const PFJet *iJet,const Vertex *iVertex,const Vertex
   return lPileup / lTotal;
 }
 
-Double_t JetTools::betaStarClassic(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVertices) {
+Double_t
+JetTools::betaStarClassic(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVertices)
+{
   Double_t lTotal = 0;  
   Double_t lPileup = 0;
 
@@ -683,20 +799,33 @@ JetTools::passPFId(const PFJet* iJet, PFIdWorkingPoint wp)
 }
 
 //Jet Width Variables
-double JetTools::W(const PFJet *iJet,int iPFType,int iType) { 
-  double lPtD    = 0;
+JetTools::Covariance
+JetTools::W(const PFJet *iJet, int iPFType, bool isBitMask/* = false*/)
+{ 
+  Covariance cov;
+  double lPtD2   = 0;
   double lSumPt  = 0; 
   double lSumPt2 = 0;
-  TMatrixDSym lCovMatrix(2); lCovMatrix = 0.;
+  TMatrixDSym lCovMatrix(2);
+  lCovMatrix = 0.;
+
   for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) { 
     const PFCandidate *pCand = iJet->PFCand(i0);
-    if(iPFType != -1 && pCand->PFType() != iPFType) continue;
+    if(iPFType != -1) {
+      if (isBitMask) {
+        if ((iPFType & (1 << pCand->PFType())) == 0)
+          continue;
+      }
+      else if (pCand->PFType() != iPFType)
+        continue;
+    }
+
     double pDEta = iJet->Eta() - pCand->Eta(); 
     double pDPhi = fabs(iJet->Phi()-pCand->Phi()); if(pDPhi > 2.*TMath::Pi() - pDPhi) pDPhi =  2.*TMath::Pi() - pDPhi;
     lCovMatrix(0,0) += pCand->Pt()*pCand->Pt()*pDEta*pDEta;
     lCovMatrix(0,1) += pCand->Pt()*pCand->Pt()*pDEta*pDPhi;
     lCovMatrix(1,1) += pCand->Pt()*pCand->Pt()*pDPhi*pDPhi;
-    lPtD            += pCand->Pt()*pCand->Pt();
+    lPtD2           += pCand->Pt()*pCand->Pt();
     lSumPt          += pCand->Pt();
     lSumPt2         += pCand->Pt()*pCand->Pt();
   }
@@ -704,102 +833,14 @@ double JetTools::W(const PFJet *iJet,int iPFType,int iType) {
   lCovMatrix(0,1) /= lSumPt2;
   lCovMatrix(1,1) /= lSumPt2;
   lCovMatrix(1,0)  = lCovMatrix(0,1);
-  lPtD             = sqrt(lPtD);
-  lPtD            /= lSumPt;
-  double lEtaW     = sqrt(lCovMatrix(0,0));
-  double lPhiW     = sqrt(lCovMatrix(1,1));
-  double lJetW     = 0.5*(lEtaW+lPhiW);
-  TVectorD lEigVals(2);
-  lEigVals = TMatrixDSymEigen(lCovMatrix).GetEigenValues();
-  double lMajW     = sqrt(fabs(lEigVals(0)));
-  double lMinW     = sqrt(fabs(lEigVals(1)));
-  
-  if (iType == 1) return lMajW;
-  if (iType == 2) return lMinW;
-  if (iType == 3) return lEtaW;  
-  if (iType == 4) return lPhiW;  
-  if (iType == 5) return lJetW;  
-  return lPtD; //ptRMS
-}
-/*
-double JetTools::genFrac(const PFJet *iJet) { 
-  double lTrueFrac = 0;
-  for(UInt_t i0 = 0; i0 < fParticles->GetEntries(); i0++) { 
-    const MCParticle *p = fParticles->At(i0);
-    if(p->Status() != 1)
-      continue;
-    double pDEta = iJet->Eta() - p->Eta(); 
-    double pDPhi = fabs(iJet->Phi()-p->Phi()); if(pDPhi > 2.*TMath::Pi() - pDPhi) pDPhi =  2.*TMath::Pi() - pDPhi;
-    double pDR   = sqrt(pDEta*pDEta + pDPhi*pDPhi);
-    if (pDR > 0.5)
-      continue;
-    lTrueFrac += p->Pt();
-  }
-  lTrueFrac/=iJet->Pt();
-  return lTrueFrac;
-}
-*/
-/*
-double* JetTools::subStructure(const PFJet *iJet) { 
-  for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) { 
-    const PFCandidate *pCand = iJet->PFCand(i0);
-    //Fast Jet
-    FJparticles.push_back( fastjet::PseudoJet( pCand->Px(),pCand->Py(),pCand->Pz(),pCand->Energy() ) );
-  }
-  //ReCluster
-  fastjet::JetDefinition jetDef(fastjet::antikt_algorithm, 0.5);
-  int activeAreaRepeats = 1;
-  double ghostArea = 0.01;
-  double ghostEtaMax = 5.0;
-  fastjet::ActiveAreaSpec fjActiveArea(ghostEtaMax,activeAreaRepeats,ghostArea);
-  fjActiveArea.set_fj2_placement(true);
 
-  fastjet::AreaDefinition fjAreaDefinition(fastjet::active_area_explicit_ghosts, fjActiveArea );
-  fastjet::ClusterSequenceArea thisClustering(FJparticles, jetDef, fjAreaDefinition);
-  std::vector<fastjet::PseudoJet> out_jets = sorted_by_pt(thisClustering.inclusive_jets(0.0));
-  //std::cout << "===>  Size " << FJparticles.size() << " -- " << out_jets.size() << std::endl;
-  // Adding substructure
-  // define groomers                                                                                                                                                           
-  fastjet::Filter trimmer( fastjet::Filter(fastjet::JetDefinition(fastjet::kt_algorithm, 0.2), fastjet::SelectorPtFractionMin(0.03)));
-  fastjet::Filter filter( fastjet::Filter(fastjet::JetDefinition(fastjet::cambridge_algorithm, 0.3), fastjet::SelectorNHardest(3)));
-  fastjet::Pruner pruner(fastjet::cambridge_algorithm, 0.1, 0.5);
+  cov.ptD = sqrt(lPtD2) / lSumPt;
+  cov.etaW = sqrt(lCovMatrix(0,0));
+  cov.phiW = sqrt(lCovMatrix(1,1));
+  cov.jetW = 0.5 * (cov.etaW + cov.phiW);
+  TVectorD lEigVals(TMatrixDSymEigen(lCovMatrix).GetEigenValues());
+  cov.majW = sqrt(fabs(lEigVals(0)));
+  cov.minW = sqrt(fabs(lEigVals(1)));
 
-  std::vector<fastjet::Transformer const *> transformers;
-  transformers.push_back(&trimmer);
-  transformers.push_back(&filter);
-  transformers.push_back(&pruner);
-
-  // define n-subjettiness                                                                                                                                                   
-  NsubParameters paraNsub = NsubParameters(1.0, 0.8);
-  Nsubjettiness routine(nsub_kt_axes, paraNsub);
-  for (unsigned i0 = 0; i0 < out_jets.size(); i0++) {
-    int i1 = -1;
-    if(out_jets.at(i0).pt()  < 1.) continue; 
-    //std::cout << " ---> " << out_jets.at(i0).pt() << std::endl;
-    for ( std::vector<fastjet::Transformer const *>::const_iterator itransf = transformers.begin(), itransfEnd = transformers.end(); itransf != itransfEnd; ++itransf ) {
-      i1++;
-      fastjet::PseudoJet transformedJet = out_jets.at(i0);
-      transformedJet = (**itransf)(transformedJet);
-      TLorentzVector jetcorr(transformedJet.px() * jec,transformedJet.py() * jec,transformedJet.pz() * jec,transformedJet.e() * jec);
-      if(i1 == 0) internalId_.trimmass_   = jetcorr.M();
-      if(i1 == 0) internalId_.trimarea_   = transformedJet.area();
-      if(i1 == 1) internalId_.filtermass_ = jetcorr.M();
-      if(i1 == 1) internalId_.filterarea_ = transformedJet.area();
-      if(i1 == 2) internalId_.prunedmass_ = jetcorr.M();
-      if(i1 == 2) internalId_.prunedarea_ = transformedJet.area();
-      if (transformedJet.constituents().size() > 1 && i1 == 2 ) {
-        std::vector<fastjet::PseudoJet> subjets = transformedJet.associated_cluster_sequence()->exclusive_subjets(transformedJet,2);
-        internalId_.nsubjets_     = subjets.size();
-        internalId_.massdrop_     = subjets.at(0).m()/transformedJet.m();
-        internalId_.massdropcorr_ = subjets.at(0).m()/internalId_.prunedmass_;
-      }
-    }
-    internalId_.tau1_ = routine.getTau(1, out_jets.at(i0).constituents());
-    internalId_.tau2_ = routine.getTau(2, out_jets.at(i0).constituents());
-    internalId_.tau3_ = routine.getTau(3, out_jets.at(i0).constituents());
-    internalId_.tau4_ = routine.getTau(4, out_jets.at(i0).constituents());
-    internalId_.tau2tau1_ = internalId_.tau2_/internalId_.tau1_;
-  }
- }
+  return cov;
 }
-*/
