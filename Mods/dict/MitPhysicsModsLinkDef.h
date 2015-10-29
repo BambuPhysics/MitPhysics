@@ -42,6 +42,7 @@
 #include "MitPhysics/Mods/interface/SeparatePileUpMod.h"
 #include "MitPhysics/Mods/interface/VTagMod.h"
 #include "MitPhysics/Mods/interface/FatJetExtenderMod.h"
+#include "MitPhysics/Mods/interface/MetMod.h"
 #endif
 
 #ifdef __CLING__
@@ -101,4 +102,5 @@
 #pragma link C++ class mithep::SeparatePileUpMod+;
 #pragma link C++ class mithep::VTagMod+;
 #pragma link C++ class mithep::FatJetExtenderMod+;
+#pragma link C++ class mithep::MetMod+;
 #endif

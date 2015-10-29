@@ -31,7 +31,24 @@ JetIDMVA::JetIDMVA() :
     "frac03",
     "frac04",
     "frac05",
-    "dR2Mean"
+    "dR2Mean",
+    "DRweighted",
+    "rho",
+    "nTot",
+    "nCh",
+    "axisMajor",
+    "axisMinor",
+    "fRing0",
+    "fRing1",
+    "fRing2",
+    "fRing3",
+    "min(pull,0.1)",
+    "jetR",
+    "jetRchg",
+    "p4.fCoordinates.fPt",
+    "p4.fCoordinates.fEta",
+    "nTrueInt",
+    "dRMatch"
   }
 {
   assert(fVarNames[nVariables - 1] != ""); // checking for missing lines
@@ -39,14 +56,24 @@ JetIDMVA::JetIDMVA() :
 
 JetIDMVA::~JetIDMVA()
 {
-  delete fReader;
+  for (auto* reader : fReaders)
+    delete reader;
 }
 
 void
 JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
                      TString const& weightsConfig, TString const& cutConfig)
 {
-  if (weightsConfig.Length() == 0 || cutConfig.Length() == 0)
+  Initialize(cutType, mvaType, std::vector<TString>(1, weightsConfig), cutConfig);
+}
+
+void
+JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
+                     std::vector<TString> const& weightsConfig, TString const& cutConfig)
+{
+  // need to update this interface to allow eta-binned weights
+
+  if (cutConfig.Length() == 0)
     throw std::runtime_error("JetIDMVA missing necessary input files");
 
   if (fIsInitialized)
@@ -81,6 +108,9 @@ JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
   case k53METFull:
     lCutId = "metfull_53x_wp";
     break;
+  case k74CHS:
+    lCutId = "full_74x_chs_wp";
+    break;
   default:
      lCutId = "default";
     break;
@@ -112,55 +142,86 @@ JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
     return;
   }
 
-  fReader        = new TMVA::Reader("!Color:!Silent:Error" );
-
-  std::vector<unsigned> variables;
+  std::vector<std::vector<unsigned>> variables;
   std::vector<unsigned> spectators;
+  fEtaBins.assign(1, 0.);
+  std::vector<unsigned> varIndexForBin(1, 0);
     
   switch (fType) {
   case kBaseline:
-    variables = {kNvtx, kJetPt, kJetEta, kJetPhi, kDZ, kD0, kBeta, kBetaStar,
-                 kNCharged, kNNeutrals, kDRMean, kFrac01, kFrac02, kFrac03, kFrac04, kFrac05};
+    variables.push_back({kNvtx, kJetPt, kJetEta, kJetPhi, kDZ, kD0, kBeta, kBetaStar,
+          kNCharged, kNNeutrals, kDRMean, kFrac01, kFrac02, kFrac03, kFrac04, kFrac05});
     break;
   case k42:
-    variables = {kFrac01, kFrac02, kFrac03, kFrac04, kFrac05, kNvtx, kNNeutrals,
-                 kBeta, kBetaStar, kDZ, kNCharged};
+    variables.push_back({kFrac01, kFrac02, kFrac03, kFrac04, kFrac05, kNvtx, kNNeutrals,
+          kBeta, kBetaStar, kDZ, kNCharged});
     spectators = {kJetPt, kJetEta};
     break;
   case k52:
-    variables = {kFrac01, kFrac02, kFrac03, kFrac04, kFrac05, kDR2Mean, kNvtx, kNNeutrals,
-                 kBeta, kBetaStar, kDZ, kNCharged};
+    variables.push_back({kFrac01, kFrac02, kFrac03, kFrac04, kFrac05, kDR2Mean, kNvtx, kNNeutrals,
+          kBeta, kBetaStar, kDZ, kNCharged});
     spectators = {kJetPt, kJetEta};
     break;
   case k53:
   case k53CHS:
-    variables = {kNvtx, kDZ, kBeta, kBetaStar, kNCharged, kNNeutrals, kDR2Mean, kPtD,
-                 kFrac01, kFrac02, kFrac03, kFrac04, kFrac05};
+    variables.push_back({kNvtx, kDZ, kBeta, kBetaStar, kNCharged, kNNeutrals, kDR2Mean, kPtD,
+          kFrac01, kFrac02, kFrac03, kFrac04, kFrac05});
     spectators = {kJetPt, kJetEta, kJetPhi};
     break;
   case k53BDTCHSFullPlusRMS:
-    variables = {kFrac01, kFrac02, kFrac03, kFrac04, kFrac05, kDR2Mean, kNvtx, kNNeutrals,
-                 kBeta, kBetaStar, kDZ, kNCharged};
+    variables.push_back({kFrac01, kFrac02, kFrac03, kFrac04, kFrac05, kDR2Mean, kNvtx, kNNeutrals,
+          kBeta, kBetaStar, kDZ, kNCharged});
     spectators = {kJetPt, kJetEta};
     break;
+  case k74CHS:
+    variables.push_back({kDRWeighted, kRho, kNTot, kNCh, kAxisMajor, kAxisMinor,
+          kFRing0, kFRing1, kFRing2, kFRing3, kPtD, kBeta, kBetaStar,
+          kMinPull01, kJetR, kJetRchg});
+    variables.push_back({kDRWeighted, kRho, kNTot, kAxisMajor, kAxisMinor,
+          kFRing0, kFRing1, kFRing2, kFRing3, kPtD, kMinPull01, kJetR});
+    spectators = {kP4Pt, kP4Eta, kNTrueInt, kDRMatch};
+    fEtaBins.push_back(2.);
+    varIndexForBin.push_back(0);
+    fEtaBins.push_back(2.5);
+    varIndexForBin.push_back(0);
+    fEtaBins.push_back(3.);
+    varIndexForBin.push_back(1);
+    break;
   case k53MET:
-    variables = {kNvtx, kJetPt, kJetEta, kJetPhi, kDZ, kBeta, kBetaStar, kNCharged, kNNeutrals,
-                 kDR2Mean, kPtD, kFrac01, kFrac02, kFrac03, kFrac04, kFrac05};
+    variables.push_back({kNvtx, kJetPt, kJetEta, kJetPhi, kDZ, kBeta, kBetaStar, kNCharged, kNNeutrals,
+          kDR2Mean, kPtD, kFrac01, kFrac02, kFrac03, kFrac04, kFrac05});
     break;
   case kQGP:
-    variables = {kNvtx, kJetPt, kJetEta, kJetPhi, kBeta, kBetaStar, kNCharged, kNNeutrals,
-                 kDR2Mean, kPtD, kFrac01, kFrac02, kFrac03, kFrac04, kFrac05};
+    variables.push_back({kNvtx, kJetPt, kJetEta, kJetPhi, kBeta, kBetaStar, kNCharged, kNNeutrals,
+          kDR2Mean, kPtD, kFrac01, kFrac02, kFrac03, kFrac04, kFrac05});
     break;
   default:
     break;
   }
+  fEtaBins.push_back(5.);
 
-  for (auto iV : variables)
-    fReader->AddVariable(fVarNames[iV], fVariables + iV);
-  for (auto iS : spectators)
-    fReader->AddSpectator(fVarNames[iS], fVariables + iS);
+  if (weightsConfig.size() != fEtaBins.size() - 1)
+    throw std::runtime_error("JetIDMVA wrong number of weight files!");
 
-  fReader->BookMVA(fMethodName, weightsConfig);
+  for (bool& used : fVariableUsed)
+    used = false;
+
+  for (unsigned iBin(0); iBin != weightsConfig.size(); ++iBin) {
+    auto* reader = new TMVA::Reader("!Color:!Silent");
+
+    for (auto iV : variables[varIndexForBin[iBin]]) {
+      reader->AddVariable(fVarNames[iV], fVariables + iV);
+      fVariableUsed[iV] = true;
+    }
+    for (auto iS : spectators) {
+      reader->AddSpectator(fVarNames[iS], fVariables + iS);
+      fVariableUsed[iS] = true;
+    }
+
+    reader->BookMVA(fMethodName, weightsConfig[iBin]);
+
+    fReaders.push_back(reader);
+  }
 
   fIsInitialized = kTRUE;
 }
@@ -254,34 +315,87 @@ JetIDMVA::MVAValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is th
   if (!JetTools::passPFId(iJet, JetTools::kPFLoose))
     return -2.;
 
+  auto&& covariance(JetTools::W(iJet, -1));
+  double sumPt = JetTools::sumPt(iJet, -1);
+
   //set all input variables
-  fVariables[kNvtx]      = iVertices->GetEntries();
-  fVariables[kJetPt]     = iJet->Pt();
-  fVariables[kJetEta]    = iJet->Eta();
-  fVariables[kJetPhi]    = iJet->Phi();
-  fVariables[kD0]        = JetTools::impactParameter(iJet, iVertex);
-  fVariables[kDZ]        = JetTools::impactParameter(iJet, iVertex, true);
+  if (fVariableUsed[kNvtx] || fVariableUsed[kRho])
+    fVariables[kNvtx]  = fVariables[kRho] = iVertices->GetEntries();
+  if (fVariableUsed[kJetPt] || fVariableUsed[kP4Pt])
+    fVariables[kJetPt] = fVariables[kP4Pt] = iJet->Pt();
+  if (fVariableUsed[kJetEta] || fVariableUsed[kP4Eta])
+    fVariables[kJetEta] = fVariables[kP4Eta] = iJet->Eta();
+  if (fVariableUsed[kJetPhi])
+    fVariables[kJetPhi]    = iJet->Phi();
+  if (fVariableUsed[kD0])
+    fVariables[kD0]        = JetTools::impactParameter(iJet, iVertex);
+  if (fVariableUsed[kDZ])
+    fVariables[kDZ]        = JetTools::impactParameter(iJet, iVertex, true);
   if (fDZCut > 0.) {
-    fVariables[kBeta]      = JetTools::Beta(iJet, iVertex, fDZCut);
-    fVariables[kBetaStar]  = JetTools::betaStar(iJet, iVertex, iVertices, fDZCut);
+    if (fVariableUsed[kBeta])
+      fVariables[kBeta]      = JetTools::Beta(iJet, iVertex, fDZCut);
+    if (fVariableUsed[kBetaStar])
+      fVariables[kBetaStar]  = JetTools::betaStar(iJet, iVertex, iVertices, fDZCut);
   }
   else {
-    fVariables[kBeta]      = JetTools::BetaClassic(iJet, iVertex);
-    fVariables[kBetaStar]  = JetTools::betaStarClassic(iJet, iVertex, iVertices);
+    if (fVariableUsed[kBeta])
+      fVariables[kBeta]      = JetTools::BetaClassic(iJet, iVertex);
+    if (fVariableUsed[kBetaStar])
+      fVariables[kBetaStar]  = JetTools::betaStarClassic(iJet, iVertex, iVertices);
   }
-  fVariables[kNCharged]  = iJet->ChargedMultiplicity();
-  fVariables[kNNeutrals] = iJet->NeutralMultiplicity();
-  fVariables[kPtD]       = JetTools::W(iJet, -1, 0);
-  fVariables[kDRMean]    = JetTools::dRMean(iJet, -1);
-  fVariables[kDR2Mean]   = JetTools::dR2Mean(iJet, -1);
-  fVariables[kFrac01]    = JetTools::frac(iJet, 0.1, 0.,  -1);
-  fVariables[kFrac02]    = JetTools::frac(iJet, 0.2, 0.1, -1);
-  fVariables[kFrac03]    = JetTools::frac(iJet, 0.3, 0.2, -1);
-  fVariables[kFrac04]    = JetTools::frac(iJet, 0.4, 0.3, -1);
-  fVariables[kFrac05]    = JetTools::frac(iJet, 0.5, 0.4, -1);
+  if (fVariableUsed[kNCharged] || fVariableUsed[kNCh])
+    fVariables[kNCharged] = fVariables[kNCh] = iJet->ChargedMultiplicity();
+  if (fVariableUsed[kNNeutrals])
+    fVariables[kNNeutrals] = iJet->NeutralMultiplicity();
+  if (fVariableUsed[kPtD])
+    fVariables[kPtD] = covariance.ptD;
+  if (fVariableUsed[kDRMean] || fVariableUsed[kMinPull01])
+    fVariables[kDRMean] = fVariables[kMinPull01] = JetTools::dRMean(iJet, -1);
+  if (fVariableUsed[kDR2Mean] || fVariableUsed[kDRWeighted])
+    fVariables[kDR2Mean] = fVariables[kDRWeighted] = JetTools::dR2Mean(iJet, -1);
+  if (fVariableUsed[kFrac01] || fVariableUsed[kFRing0])
+    fVariables[kFrac01] = fVariables[kFRing0] = JetTools::frac(iJet, 0.1, 0.,  -1);
+  if (fVariableUsed[kFrac02] || fVariableUsed[kFRing1])
+    fVariables[kFrac02] = fVariables[kFRing1] = JetTools::frac(iJet, 0.2, 0.1, -1);
+  if (fVariableUsed[kFrac03] || fVariableUsed[kFRing2])
+    fVariables[kFrac03] = fVariables[kFRing2] = JetTools::frac(iJet, 0.3, 0.2, -1);
+  if (fVariableUsed[kFrac04] || fVariableUsed[kFRing3])
+    fVariables[kFrac04] = fVariables[kFRing3] = JetTools::frac(iJet, 0.4, 0.3, -1);
+  if (fVariableUsed[kFrac05])
+    fVariables[kFrac05] = JetTools::frac(iJet, 0.5, 0.4, -1);
+  if (fVariableUsed[kNTot])
+    fVariables[kNTot] = iJet->NConstituents();
+  if (fVariableUsed[kAxisMajor])
+    fVariables[kAxisMajor] = covariance.majW;
+  if (fVariableUsed[kAxisMinor])
+    fVariables[kAxisMinor] = covariance.minW;
+  if (fVariableUsed[kJetR]) {
+    auto* leadCand = JetTools::leadCand(iJet, false, -1);
+    if (leadCand) // has to be nonnull
+      fVariables[kJetR] = leadCand->Pt() / sumPt;
+  }
+  if (fVariableUsed[kJetRchg]) {
+    auto* leadEmCand = JetTools::leadCand(iJet, false, PFCandidate::eGamma);
+    if (!leadEmCand)
+      leadEmCand = JetTools::trailCand(iJet, -1);
+    fVariables[kJetRchg] = leadEmCand->Pt() / sumPt;
+  }
+  if (fVariableUsed[kNTrueInt]) // never used!
+    fVariables[kNTrueInt] = 0.;
+  if (fVariableUsed[kDRMatch]) {
+    int mask = (1 << PFCandidate::eHadron) | (1 << PFCandidate::eElectron) || (1 << PFCandidate::eMuon);
+    fVariables[kDRMatch] = JetTools::frac(iJet, 0.2, 0.1, mask, true);
+  }
 
-  double lMVA = 0;
-  lMVA = fReader->EvaluateMVA(fMethodName);
+  double absEta = iJet->AbsEta();
+  if (absEta >= 5.)
+    absEta = 4.99;
+
+  unsigned iBin = 0;
+  while (absEta < fEtaBins[iBin])
+    ++iBin;
+
+  double lMVA = fReaders[iBin]->EvaluateMVA(fMethodName);
 
   if (printDebug) {
     std::cout << "Debug Jet MVA:" << std::endl;
@@ -332,7 +446,7 @@ JetIDMVA::QGValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is the
   }
   fVariables[kNCharged]  = iJet->ChargedMultiplicity();
   fVariables[kNNeutrals] = iJet->NeutralMultiplicity();
-  fVariables[kPtD]       = JetTools::W(iJet,-1,0);
+  fVariables[kPtD]       = JetTools::W(iJet,-1).ptD;
   fVariables[kDRMean]    = JetTools::dRMean(iJet,-1);
   fVariables[kDR2Mean]   = JetTools::dR2Mean(iJet,-1);
   fVariables[kFrac01]    = JetTools::frac(iJet,0.1,0., -1);
@@ -341,17 +455,18 @@ JetIDMVA::QGValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is the
   fVariables[kFrac04]    = JetTools::frac(iJet,0.4,0.3,-1);
   fVariables[kFrac05]    = JetTools::frac(iJet,0.5,0.4,-1);
 
-  double lMVA = 0;
-  lId[0] = fReader->EvaluateMulticlass(fMethodName)[0];
-  lId[1] = fReader->EvaluateMulticlass(fMethodName)[1];
-  lId[2] = fReader->EvaluateMulticlass(fMethodName)[2];
-  if (printDebug) {
-    std::cout << "Debug Jet MVA:" << std::endl;
-    for (unsigned iV = 0; iV != nVariables; ++iV)
-      std::cout << fVarNames[iV] << " = " << fVariables[iV] << std::endl;
-    std::cout << "=== : === " << std::endl;
-    std::cout << "MVA value " << lMVA << std::endl;
-  }
+  double absEta = iJet->AbsEta();
+  if (absEta >= 5.)
+    absEta = 4.99;
+
+  unsigned iBin = 0;
+  while (absEta < fEtaBins[iBin])
+    ++iBin;
+
+  lId[0] = fReaders[iBin]->EvaluateMulticlass(fMethodName)[0];
+  lId[1] = fReaders[iBin]->EvaluateMulticlass(fMethodName)[1];
+  lId[2] = fReaders[iBin]->EvaluateMulticlass(fMethodName)[2];
+
   return lId;
 }
 

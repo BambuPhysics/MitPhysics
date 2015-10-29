@@ -32,6 +32,7 @@ namespace mithep {
       k53BDTCHSFullPlusRMS,
       k53MET,
       k53METFull,
+      k74CHS,
       nMVATypes
     };
 
@@ -62,6 +63,23 @@ namespace mithep {
       kFrac04,
       kFrac05,
       kDR2Mean,
+      kDRWeighted,
+      kRho,
+      kNTot,
+      kNCh,
+      kAxisMajor,
+      kAxisMinor,
+      kFRing0,
+      kFRing1,
+      kFRing2,
+      kFRing3,
+      kMinPull01,
+      kJetR,
+      kJetRchg,
+      kP4Pt,
+      kP4Eta,
+      kNTrueInt,
+      kDRMatch,
       nVariables
     };
 
@@ -71,6 +89,7 @@ namespace mithep {
     static BitMask8 fgCorrectionMask;
 
     void Initialize(JetIDMVA::CutType, JetIDMVA::MVAType, TString const& weightsConfig, TString const& cutConfig);
+    void Initialize(JetIDMVA::CutType, JetIDMVA::MVAType, std::vector<TString> const& weightsConfig, TString const& cutConfig);
 
     // obsolete
     void Initialize(JetIDMVA::CutType,
@@ -103,15 +122,17 @@ namespace mithep {
   protected:
     Bool_t InitializeCuts(TString const& fileName, TString const& cutId, TString const& cutType);
 
-    TMVA::Reader* fReader = 0;
+    std::vector<double> fEtaBins; // bin low edges (size fReaders + 1)
+    std::vector<TMVA::Reader*> fReaders;
     TString       fMethodName = "JetIDMVAHighPt";
     MVAType       fType = nMVATypes;
     Bool_t        fIsInitialized = kFALSE;
-    Float_t       fMVACut[4][4] = {}; //Fix the cut array
-    Float_t       fRMSCut[4][4] = {};
-    Float_t       fBetaStarCut[4][4] = {};
+    Float_t       fMVACut[4][4]{}; //Fix the cut array
+    Float_t       fRMSCut[4][4]{};
+    Float_t       fBetaStarCut[4][4]{};
 
-    Float_t       fVariables[nVariables] = {};
+    Float_t       fVariables[nVariables]{};
+    Bool_t        fVariableUsed[nVariables]{};
     TString       fVarNames[nVariables]; // initialized in the Ctor
 
     ClassDef(JetIDMVA,0)
