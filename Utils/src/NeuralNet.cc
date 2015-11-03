@@ -42,9 +42,7 @@ void NeuralNet::AddLayer(unsigned int in, unsigned int out, double **W, double *
 
 void NeuralNet::ResetBranches() {
   inputs.clear();
-  mus.clear();
-  sigmas.clear();
-  inputNames.clear();
+  integrityChecked = false;
 }
 
 void NeuralNet::AddBranchAddress(float *input) {
@@ -71,11 +69,11 @@ void NeuralNet::AllocateMemory() {
   // faster than using TMatrix, which allocates memory for each operation
   double *tmpLayer;
   for (unsigned int iL=0; iL!=hiddenLayerSizes.size(); ++iL) {
-    fprintf(stderr,"allocating layer of size %i\n",(int)hiddenLayerSizes[iL]);
+//    fprintf(stderr,"allocating layer of size %i\n",(int)hiddenLayerSizes[iL]);
     tmpLayer = new double[hiddenLayerSizes[iL]];
     layers.push_back(tmpLayer);
   }
-  fprintf(stderr,"allocating layer of size %i\n",(int)nOut);
+//  fprintf(stderr,"allocating layer of size %i\n",(int)nOut);
   tmpLayer = new double[nOut];
   layers.push_back(tmpLayer);
   integrityChecked = false;
