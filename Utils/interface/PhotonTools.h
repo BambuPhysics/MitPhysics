@@ -54,7 +54,8 @@ namespace mithep {
       kCustomId,             //"Custom"
       kSummer15Tight,            //Run 2 cut based tight id
       kSummer15Medium,           //Run 2 cut based medium id 
-      kSummer15Loose             //Run 2 cut based loose id      
+      kSummer15Loose,            //Run 2 cut based loose id      
+      kHighPtV2
     };
 
     enum EPhIsoType {
@@ -66,7 +67,8 @@ namespace mithep {
       kPFPUCorrected,
       kSummer15LooseIso,      //Run 2 cut based loose iso
       kSummer15MediumIso,     //Run 2 cut based medium iso
-      kSummer15TightIso       //Run 2 cut based tight iso
+      kSummer15TightIso,      //Run 2 cut based tight iso
+      kHighPtV2Iso
     };
 
     enum EPhotonEffectiveAreaType {
@@ -77,7 +79,8 @@ namespace mithep {
 
     enum EPhotonEffectiveAreaTarget {
       kPhoEANoCorr,
-      kPhoEAPhys14
+      kPhoEAPhys14,
+      kPhoEAHighPtV2
     };
 
     enum EElectronVetoType {

@@ -24,12 +24,14 @@ mithep::PhotonTools::PhotonEffectiveArea(EPhotonEffectiveAreaType type, Double_t
     return 0.;
 
   double etaBinning1[] = {0., 1., 1.479, 2., 2.2, 2.3, 2.4, std::numeric_limits<double>::max()};
+  double etaBinning2[] = {0., 0.9, 1.479, 2., 2.2, std::numeric_limits<double>::max()};
 
-  double* etaBinning = etaBinning1;
+  double* etaBinning = 0;
   std::vector<double> areas;
 
   switch (target) {
   case kPhoEAPhys14:
+    etaBinning = etaBinning1;
     switch (type) {
     case kPhoChargedHadron03:
       areas = {0.0234, 0.0189, 0.0171, 0.0129, 0.011, 0.0074, 0.0034};
@@ -39,6 +41,16 @@ mithep::PhotonTools::PhotonEffectiveArea(EPhotonEffectiveAreaType type, Double_t
       break;
     case kPhoPhoton03:
       areas = {0.078, 0.0629, 0.0264, 0.0462, 0.074, 0.0924, 0.1484};
+      break;
+    default:
+      return 0.;
+    }
+
+  case kPhoEAHighPtV2:
+    etaBinning = etaBinning2;
+    switch (type) {
+    case kPhoPhoton03:
+      areas = {0.17, 0.14, 0.11, 0.14, 0.22};
       break;
     default:
       return 0.;
@@ -72,6 +84,10 @@ mithep::PhotonTools::PassID(Photon const* pho, EPhIdType type)
   case kSummer15Tight:
     hOverECut        = isEB ? 0.010  : 0.015;
     sigmaIEtaIEtaCut = isEB ? 0.0100 : 0.0265;
+    break;
+  case kHighPtV2:
+    hOverECut        = isEB ? 0.05 : 0.05;
+    sigmaIEtaIEtaCut = isEB ? 0.0105 : 0.028;
     break;
   default:
     return false;
@@ -139,6 +155,10 @@ mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Doubl
     nhIsoCut = isEB ? (0.14 + TMath::Exp(0.0028 * pEt + 0.5408)) : (3.89 + 0.0172 * pEt);
     phIsoCut = isEB ? (1.40 + 0.0014 * pEt) : (1.40 + 0.0091 * pEt);
     break;
+  case kHighPtV2Iso:
+    chIsoCut = 5.;
+    nhIsoCut = std::numeric_limits<double>::max();
+    phIsoCut = 2.5 + (isEB ? 2.75 : 2.) - (scEta < 2. ? 0.0045 : 0.003) * pEt;
   default:
     return false;
   }
