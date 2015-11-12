@@ -70,6 +70,7 @@ namespace mithep {
     void SetRhoAlgo(UInt_t a)                  { fRhoAlgo = a; }
     void SetMaxEMFraction(Double_t m)          { fMaxEMFraction = m; }
     void SetSkipMuons(Bool_t s)                { fSkipMuons = s; }
+    void SetMuonGeometricMatch(Bool_t s)       { fMuonGeometricMatch = s; }
     void SetMaxJetEta(Double_t m)              { fMaxJetEta = m; }
     void SetMinJetPt(Double_t m)               { fMinJetPt = m; }
     // shift parameters
@@ -107,6 +108,7 @@ namespace mithep {
     Double_t      fMaxEMFraction = -1.; //maximum charged + neutral EM energy fraction
                                         //for jet to be in Type1 corr (< 0 -> does not skip jets)
     Bool_t        fSkipMuons = kFALSE; //remove muon P4 from jet P4 in Type 1 corr
+    Bool_t        fMuonGeometricMatch = kTRUE; //fix for 042 (PF-muon link broken)
     Double_t      fMaxJetEta = std::numeric_limits<double>::max();
     Double_t      fMinJetPt = 15.;
                   

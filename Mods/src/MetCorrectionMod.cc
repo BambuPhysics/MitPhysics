@@ -8,7 +8,8 @@
 #include "MitAna/DataTree/interface/VertexCol.h"
 #include "MitAna/DataTree/interface/PFCandidateCol.h"
 #include "MitAna/DataTree/interface/PFJet.h"
-#include "MitAna/DataTree/interface/Muon.h"
+#include "MitAna/DataTree/interface/MuonCol.h"
+#include "MitCommon/MathTools/interface/MathUtils.h"
 
 #include "TVector2.h"
 #include <cstring>
@@ -77,6 +78,17 @@ void
 MetCorrectionMod::Process()
 {
   // Process entries of the tree.
+
+  std::vector<Muon const*> goodMuons;
+
+  if (fMuonGeometricMatch) {
+    auto* muonCol = GetObject<MuonCol>("Muons");
+    for (unsigned iM = 0; iM != muonCol->GetEntries(); ++iM) {
+      auto& muon(*muonCol->At(iM));
+      if (muon.IsGlobalMuon() || muon.IsStandaloneMuon())
+        goodMuons.push_back(&muon);
+    }
+  }
 
   auto* metCol = GetObject<MetCol>(fMetName);
   if (!metCol) {
@@ -229,7 +241,21 @@ MetCorrectionMod::Process()
           auto& inPFJet = static_cast<PFJet const&>(inJet);
           for (unsigned iC = 0; iC != inPFJet.NConstituents(); ++iC) {
             auto* cand = inPFJet.PFCand(iC);
-            if (cand->Mu() && (cand->Mu()->IsGlobalMuon() || cand->Mu()->IsStandaloneMuon()))
+            bool isMuon = false;
+
+            if (fMuonGeometricMatch) {
+              for (auto* muon : goodMuons) {
+                if (MathUtils::DeltaR(*cand, *muon) < 0.01) {
+                  isMuon = true;
+                  break;
+                }
+              }
+            }
+            else {
+              isMuon = (cand->Mu() && (cand->Mu()->IsGlobalMuon() || cand->Mu()->IsStandaloneMuon()));
+            }
+
+            if (isMuon)
               inJetRawMom -= cand->Mom();
           }
         }
