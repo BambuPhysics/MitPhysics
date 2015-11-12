@@ -379,8 +379,12 @@ PuppiMod::Process()
           NumCorrC += 1.;
       }
 
-      Double_t quantF = ROOT::Math::chisquared_quantile(NumCorrF / double(numCHPV[iEtaBin] + numCHPU[iEtaBin] - numFCHPUis0[iEtaBin]), 1.);
-      Double_t quantC = ROOT::Math::chisquared_quantile(NumCorrC / double(numCHPV[iEtaBin] + numCHPU[iEtaBin] - numFCHPUis0[iEtaBin]), 1.);
+      Double_t quantF = 0.0;
+      Double_t quantC = 0.0;
+      if (numCHPV[iEtaBin] + numCHPU[iEtaBin] - numFCHPUis0[iEtaBin] != 0) {
+        quantF = ROOT::Math::chisquared_quantile(NumCorrF / double(numCHPV[iEtaBin] + numCHPU[iEtaBin] - numFCHPUis0[iEtaBin]), 1.);
+        quantC = ROOT::Math::chisquared_quantile(NumCorrC / double(numCHPV[iEtaBin] + numCHPU[iEtaBin] - numFCHPUis0[iEtaBin]), 1.);
+      }
       alphaFMed[iEtaBin] -= sqrt(quantF * sigma2F[iEtaBin]);
       alphaCMed[iEtaBin] -= sqrt(quantC * sigma2C[iEtaBin]);
     }
