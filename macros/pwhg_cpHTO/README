@@ -1,0 +1,17 @@
+Usage:
+
+To compile
+gfortran -c -o pwhg_cpHTO.o pwhg_cpHTO_reweight.f
+
+To call from C++
+program.cc:
+
+  extern"C" {
+    void pwhg_cphto_reweight_(double *mh, double *gh, double *mt, int *BWflag, double *m, double *w);
+  }
+
+  double w;
+  pwhg_cphto_reweight_(&mh, &gh, &mt, &BWflag, &m, &w); 
+
+then
+g++ -o program program.cc pwhg_cpHTO.o -lgfortran
