@@ -10,7 +10,7 @@
 <use   name="qjets"/>
 <use   name="root"/>
 <use   name="roottmva"/>
-<use   name="cpHTO"/>
+<use   name="pwhg_cphto_reweight"/>
 <export>
   <lib   name="1"/>
 </export>

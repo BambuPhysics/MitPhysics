@@ -67,7 +67,7 @@ void HKFactorProducer::Process()
 
       if(mH >= 0) {
 	Double_t MTop = 172.5;
-        pwhg_cphto_reweight_(&fMh, &fWidth, &MTop, &mH, &fBWflag, &theWeight);
+        pwhg_cphto_reweight_(&fMh, &fWidth, &MTop, &fBWflag, &mH, &theWeight);
 
 	if (theWeight > 3.0) {
       std::cout << "MHweights: " << fMh << " " << fWidth  << " " << MTop      << " " 

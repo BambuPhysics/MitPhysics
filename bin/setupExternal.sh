@@ -12,7 +12,7 @@
 # SET PARAMETERS HERE
 #
 # PACKAGES TO INSTALL
-PACKAGES="pwhg_cpHTO_reweight"
+PACKAGES="pwhg_cphto_reweight"
 #---------------------
 
 if ! [ "$CMSSW_BASE" ]
@@ -49,30 +49,30 @@ find-external() {
 ### Installer functions
 
 # Install fastjet
-install-pwhg_cpHTO_reweight() {
+install-pwhg_cphto_reweight() {
   # add local fastjet external to scarm config
 
-  local BASE=$(find-external pwhg_cpHTO_reweight)
-  local TARGET=$CMSSW_BASE/config/toolbox/$SCRAM_ARCH/tools/selected/pwhg_cpHTO_reweight.xml
+  local BASE=$(find-external pwhg_cphto_reweight)
+  local TARGET=$CMSSW_BASE/config/toolbox/$SCRAM_ARCH/tools/selected/pwhg_cphto_reweight.xml
 
   echo ""
-  echo " INFO - using pwhg_cpHTO_reweight at: $BASE"
+  echo " INFO - using pwhg_cphto_reweight at: $BASE"
   echo ""
 
   mv $TARGET ${TARGET}-last.$(date +%s) 2> /dev/null
 
   echo \
-'  <tool name="pwhg_cpHTO_reweight" version="1">
-    <lib name="cpHTO"/>
+'  <tool name="pwhg_cphto_reweight" version="1">
+    <lib name="cphto"/>
     <client>
-      <environment name="LIBDIR" default="$BASE/lib"/>
+      <environment name="LIBDIR" default="'$BASE'"/>
     </client>
   </tool>
 ' > $TARGET
 
   # commit the scram config changes
   cd $CMSSW_BASE/src
-  scram setup pwhg_cpHTO_reweight
+  scram setup pwhg_cphto_reweight
 }
 
 ### Loop over PACKAGES
@@ -80,8 +80,8 @@ install-pwhg_cpHTO_reweight() {
 for PACKAGE in $PACKAGES
 do
   case $PACKAGE in
-    pwhg_cpHTO_reweight)
-      install-pwhg_cpHTO_reweight
+    pwhg_cphto_reweight)
+      install-pwhg_cphto_reweight
       ;;
     *)
       echo "Unknown external $PACKAGE"
