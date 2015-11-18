@@ -13,7 +13,6 @@
 #include "MitAna/DataTree/interface/MCEventInfo.h"
 #include "MitAna/DataTree/interface/EmbedWeightCol.h"
 #include "MitPhysics/Mods/interface/HWWKFactorList.h"
-#include "MitPhysics/Mods/interface/PwhgWrapper.h"
 
 class TH1D;
 class TH2D;
@@ -62,7 +61,6 @@ namespace mithep
 
       float              fTreeVariables[8];     //Ntuple variables
       TTree             *fTree;                 //ntuple tree
-      pwhegwrapper       fWeightAlgo;           //Higgs reweighting algorithm
 
     ClassDef(HKFactorProducer, 1) // Module to produce k factors
   };

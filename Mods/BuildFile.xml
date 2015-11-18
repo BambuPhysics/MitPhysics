@@ -10,7 +10,7 @@
 <use   name="qjets"/>
 <use   name="root"/>
 <use   name="roottmva"/>
-<use   root=""/>
+<use   name="cpHTO"/>
 <export>
   <lib   name="1"/>
 </export>
