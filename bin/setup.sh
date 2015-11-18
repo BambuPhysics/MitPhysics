@@ -26,8 +26,6 @@ fi
 cd $CMSSW_BASE/src/MitPhysics
 tar -xf /cvmfs/cvmfs.cmsaf.mit.edu/hidsk0001/cmsprod/cms/external/SDAlgorithm/SDAlgorithm.0.6.tar.gz
 
-$CMSSW_BASE/src/MitPhysics/bin/setupExternal.sh
-
 # Generate ROOT dictionaries for classes defined in this module
 $CMSSW_BASE/src/MitCommon/bin/genDict.sh MitPhysics/{FakeMods,Init,Mods,SelMods,Skim,Utils,Validation}
 
