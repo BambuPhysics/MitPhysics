@@ -12,6 +12,10 @@ using namespace mithep;
 
 ClassImp(mithep::HKFactorProducer)
 
+extern "C" {
+  void pwhg_cphto_reweight_(double *mh, double *gh, double *mt, int *BWflag, double *m, double *w);
+}
+
 //--------------------------------------------------------------------------------------------------
 HKFactorProducer::HKFactorProducer(const char *name, const char *title) : 
   BaseMod(name,title),
@@ -63,7 +67,7 @@ void HKFactorProducer::Process()
 
       if(mH >= 0) {
 	Double_t MTop = 172.5;
-	theWeight = fWeightAlgo.getweight(fMh,fWidth,MTop,mH,fBWflag);
+        pwhg_cphto_reweight_(&fMh, &fWidth, &MTop, &fBWflag, &mH, &theWeight);
 
 	if (theWeight > 3.0) {
       std::cout << "MHweights: " << fMh << " " << fWidth  << " " << MTop      << " " 
