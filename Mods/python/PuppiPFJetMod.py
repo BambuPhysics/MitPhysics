@@ -1,5 +1,4 @@
 from MitAna.TreeMod.bambu import mithep
-import os
 
 puppiPFJetMod = mithep.PuppiPFJetMod(
     InputName = "PuppiParticles",
