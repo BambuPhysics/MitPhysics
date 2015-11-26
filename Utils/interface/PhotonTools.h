@@ -52,10 +52,16 @@ namespace mithep {
       kTrivialSelection,     // only pt & eta cuts
       kEgammaMedium,
       kCustomId,             //"Custom"
-      kSummer15Tight,            //Run 2 cut based tight id
-      kSummer15Medium,           //Run 2 cut based medium id 
-      kSummer15Loose,            //Run 2 cut based loose id      
-      kHighPtV2
+      kPhys14Tight,            //Phys14 (PU 25ns) cut based tight id
+      kPhys14Medium,           //Phys14 (PU 25ns) cut based medium id 
+      kPhys14Loose,            //Phys14 (PU 25ns) cut based loose id      
+      kHighPtV2,
+      kSpring15Tight,
+      kSpring15Medium,
+      kSpring15Loose,
+      kSpring15Tight50ns,
+      kSpring15Medium50ns,
+      kSpring15Loose50ns
     };
 
     enum EPhIsoType {
@@ -65,10 +71,16 @@ namespace mithep {
       kCustomIso,         //"Custom"
       kMITPUCorrected,     //PileUp Corrected Hgg Isolation
       kPFPUCorrected,
-      kSummer15LooseIso,      //Run 2 cut based loose iso
-      kSummer15MediumIso,     //Run 2 cut based medium iso
-      kSummer15TightIso,      //Run 2 cut based tight iso
-      kHighPtV2Iso
+      kPhys14LooseIso,      //Phys14 (PU 25ns) cut based loose iso
+      kPhys14MediumIso,     //Phys14 (PU 25ns) cut based medium iso
+      kPhys14TightIso,      //Phys14 (PU 25ns) cut based tight iso
+      kHighPtV2Iso,
+      kSpring15Tight50nsIso,
+      kSpring15Medium50nsIso,
+      kSpring15Loose50nsIso,
+      kSpring15TightIso,
+      kSpring15MediumIso,
+      kSpring15LooseIso
     };
 
     enum EPhotonEffectiveAreaType {
@@ -80,7 +92,9 @@ namespace mithep {
     enum EPhotonEffectiveAreaTarget {
       kPhoEANoCorr,
       kPhoEAPhys14,
-      kPhoEAHighPtV2
+      kPhoEAHighPtV2,
+      kPhoEASpring1550ns,
+      kPhoEASpring15
     };
 
     enum EElectronVetoType {
