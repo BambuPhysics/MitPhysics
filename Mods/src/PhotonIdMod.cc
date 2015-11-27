@@ -80,10 +80,16 @@ Bool_t
 mithep::PhotonIdMod::PassIdCut(Photon const& pho)
 {
   switch (fIdType) {
-  case PhotonTools::kSummer15Tight:
-  case PhotonTools::kSummer15Medium:
-  case PhotonTools::kSummer15Loose:
+  case PhotonTools::kPhys14Tight:
+  case PhotonTools::kPhys14Medium:
+  case PhotonTools::kPhys14Loose:
   case PhotonTools::kHighPtV2:
+  case PhotonTools::kSpring15Tight50ns:
+  case PhotonTools::kSpring15Medium50ns:
+  case PhotonTools::kSpring15Loose50ns:
+  case PhotonTools::kSpring15Tight:
+  case PhotonTools::kSpring15Medium:
+  case PhotonTools::kSpring15Loose:
     return PhotonTools::PassID(&pho, PhotonTools::EPhIdType(fIdType));
 
   case PhotonTools::kNoId:
@@ -99,10 +105,16 @@ Bool_t
 mithep::PhotonIdMod::PassIsolationCut(Photon const& pho)
 {
   switch (fIsoType) {
-  case PhotonTools::kSummer15LooseIso:
-  case PhotonTools::kSummer15MediumIso:
-  case PhotonTools::kSummer15TightIso:
+  case PhotonTools::kPhys14LooseIso:
+  case PhotonTools::kPhys14MediumIso:
+  case PhotonTools::kPhys14TightIso:
   case PhotonTools::kHighPtV2Iso:
+  case PhotonTools::kSpring15Loose50nsIso:
+  case PhotonTools::kSpring15Medium50nsIso:
+  case PhotonTools::kSpring15Tight50nsIso:
+  case PhotonTools::kSpring15LooseIso:
+  case PhotonTools::kSpring15MediumIso:
+  case PhotonTools::kSpring15TightIso:
     return PhotonTools::PassIsoFootprintRhoCorr(&pho, PhotonTools::EPhIsoType(fIsoType),
                                                 GetVertices()->At(0), GetPFCandidates(),
                                                 GetPileupEnergyDensity()->At(0)->Rho(fRhoAlgo));
