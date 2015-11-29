@@ -40,6 +40,22 @@ void NeuralNet::AddLayer(unsigned int in, unsigned int out, double **W, double *
   integrityChecked = false;
 }
 
+void NeuralNet::ResetBranches() {
+  inputs.clear();
+  integrityChecked = false;
+}
+
+void NeuralNet::AddBranchAddress(float *input) {
+  inputs.push_back(input);
+  integrityChecked = false;
+}
+
+void NeuralNet::AddMuSigma(double mean, double stdev) {
+  mus.push_back(mean);
+  sigmas.push_back(stdev);
+  integrityChecked = false;
+}
+
 void NeuralNet::AddBranchAddress(float *input, double mean, double stdev, const char *name/*=""*/) {
   inputs.push_back(input);
   mus.push_back(mean);
@@ -53,11 +69,11 @@ void NeuralNet::AllocateMemory() {
   // faster than using TMatrix, which allocates memory for each operation
   double *tmpLayer;
   for (unsigned int iL=0; iL!=hiddenLayerSizes.size(); ++iL) {
-    fprintf(stderr,"allocating layer of size %i\n",(int)hiddenLayerSizes[iL]);
+//    fprintf(stderr,"allocating layer of size %i\n",(int)hiddenLayerSizes[iL]);
     tmpLayer = new double[hiddenLayerSizes[iL]];
     layers.push_back(tmpLayer);
   }
-  fprintf(stderr,"allocating layer of size %i\n",(int)nOut);
+//  fprintf(stderr,"allocating layer of size %i\n",(int)nOut);
   tmpLayer = new double[nOut];
   layers.push_back(tmpLayer);
   integrityChecked = false;
@@ -65,7 +81,7 @@ void NeuralNet::AllocateMemory() {
 
 bool NeuralNet::CheckIntegrity() const {
   // TODO: check input variables are ordered correctly
-  if (inputs.size()!=nIn) {
+  if (inputs.size()!=nIn || inputs.size()!=mus.size() || inputs.size()!=sigmas.size()) {
     fprintf(stderr,"Network has inconsistent structure: %i!=%i\n",(int)inputs.size(),(int)nIn);
     return false;
   }
@@ -87,6 +103,22 @@ bool NeuralNet::CheckIntegrity() const {
 double *NeuralNet::Evaluate() const {
 	if (!integrityChecked)
   	assert(CheckIntegrity());
+/*  fprintf(stderr,"0: [");
+  for (unsigned int iIn=0; iIn!=nIn; ++iIn) {
+      fprintf(stderr,"%f,", *(inputs[iIn]));
+  }
+  fprintf(stderr,"]\n");
+  fprintf(stderr,"0: [");
+  for (unsigned int iIn=0; iIn!=nIn; ++iIn) {
+      fprintf(stderr,"%f,", (mus[iIn]));
+  }
+  fprintf(stderr,"]\n");
+  fprintf(stderr,"0: [");
+  for (unsigned int iIn=0; iIn!=nIn; ++iIn) {
+      fprintf(stderr,"%f,", (sigmas[iIn]));
+  }
+  fprintf(stderr,"]\n");
+  fprintf(stderr,"1: [");  */
   for (unsigned int iOut=0; iOut!=hiddenLayerSizes[0]; ++iOut) {
     double outVal = bs[0][iOut];
     for (unsigned int iIn=0; iIn!=nIn; ++iIn) {
@@ -94,7 +126,9 @@ double *NeuralNet::Evaluate() const {
       outVal += tmpIn * Ws[0][iIn][iOut];
     }
     layers[0][iOut] = TMath::TanH(outVal);
+//      fprintf(stderr,"%f,", layers[0][iOut]);
   }
+//  fprintf(stderr,"]\n");
   for (unsigned int iLayer=1; iLayer!=hiddenLayerSizes.size(); ++iLayer) {
    for (unsigned int iOut=0; iOut!=hiddenLayerSizes[iLayer]; ++iOut) {
       double outVal = bs[iLayer][iOut];
@@ -120,6 +154,7 @@ double *NeuralNet::Evaluate() const {
   for (unsigned int iOut=0; iOut!=nOut; ++iOut) {
   	outLayer[iOut] /= Z;
   }
+//  fprintf(stderr,"out: %f\n",outLayer[1]);
   return outLayer;
 }
 

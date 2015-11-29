@@ -14,7 +14,10 @@ public:
   ~NeuralNet();
  
   void AddLayer(unsigned int in, unsigned int out, double **W, double *b, bool isFinal = false);
+  void ResetBranches();
   void AddBranchAddress(float *input, double mean, double stdev, const char *name="");
+  void AddBranchAddress(float *input);
+  void AddMuSigma(double mean, double stdev);
   void AllocateMemory();
 
   bool CheckIntegrity () const;

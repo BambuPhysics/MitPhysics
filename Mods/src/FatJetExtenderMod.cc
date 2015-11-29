@@ -57,7 +57,9 @@ BaseMod(name,title),
   fDoECF(kFALSE),
   fDoQjets(kFALSE),
   fNMaxMicrojets(5),
-  fNQjets(25)
+  fNQjets(25),
+  fJetAlgo(kAntiKt),
+  fDoCMSandHTT(kFALSE)
 {
   // Constructor.
 }
@@ -180,10 +182,18 @@ void FatJetExtenderMod::SlaveBegin()
   fTrimmer = new fastjet::Filter(fastjet::JetDefinition(fastjet::kt_algorithm,fTrimRad),
                                  fastjet::SelectorPtFractionMin(fTrimPtFrac));
 
-  // CA constructor (fConeSize = 0.6 for antiKt) - reproducing paper 1: http://arxiv.org/abs/1011.2268
-  fCAJetDef = new fastjet::JetDefinition(fastjet::cambridge_algorithm, fConeSize);
+  if (fJetAlgo == kCambridgeAachen) {
+    fJetDef = new fastjet::JetDefinition(fastjet::cambridge_algorithm, fConeSize);
+    fCAJetDef = fJetDef;
+  } else if (fJetAlgo == kAntiKt) {
+    fJetDef = new fastjet::JetDefinition(fastjet::antikt_algorithm, fConeSize);
+    fCAJetDef = new fastjet::JetDefinition(fastjet::cambridge_algorithm, fConeSize);
+  } else if (fJetAlgo == kKt) {
+    fJetDef = new fastjet::JetDefinition(fastjet::kt_algorithm, fConeSize);
+    fCAJetDef = new fastjet::JetDefinition(fastjet::cambridge_algorithm, fConeSize);
+  }
 
-  if ((fSubJetFlags & (1 << XlSubJet::kCMSTT)) != 0)
+  if (fDoCMSandHTT)
     fCMSTopTagger = new fastjet::CMSTopTagger();
 
   // Initialize area caculation (done with ghost particles)
@@ -249,7 +259,10 @@ void FatJetExtenderMod::SlaveTerminate()
     delete fsd;
   delete fSoftDropCalc;
 
-  delete fCAJetDef;
+  if (fCAJetDef!=fJetDef)
+    delete fCAJetDef;
+  delete fJetDef;
+
   delete fActiveArea;
   delete fAreaDefinition;
   delete fCMSTopTagger;
@@ -292,11 +305,15 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
     fjParts.back().set_user_index(j);
   }
 
+
   // Setup the cluster for fastjet
-  fastjet::ClusterSequenceArea fjClustering(fjParts, *fCAJetDef, *fAreaDefinition);
+  fastjet::ClusterSequenceArea fjClustering(fjParts, *fJetDef, *fAreaDefinition);
+  fastjet::ClusterSequenceArea fjCAClustering(fjParts, *fCAJetDef, *fAreaDefinition);
+
   // ---- Fastjet is ready ----
 
   VPseudoJet&& allJets(fjClustering.inclusive_jets(0.));
+  VPseudoJet&& allCAJets(fjCAClustering.inclusive_jets(0.));
 
   // Consider only the hardest jet of the output collection
   // For nsubjettiness etc use the hardest above 10 GeV
@@ -312,44 +329,50 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
     if (!maxPtJet10 || pt2 > maxPtJet10->perp2())
       maxPtJet10 = &jet;
   }
+  fastjet::PseudoJet* maxCAPtJet0 = 0;
+  fastjet::PseudoJet* maxCAPtJet10 = 0;
+  if (fJetAlgo==kCambridgeAachen) {
+    //  no need to recompute anything
+    maxCAPtJet0 = maxPtJet0;
+    maxCAPtJet10 = maxPtJet10;
+  } else {
+    for (auto& jet : allCAJets) {
+      double pt2 = jet.perp2();
+      if (!maxCAPtJet0 || pt2 > maxCAPtJet0->perp2())
+        maxCAPtJet0 = &jet;
+
+      if (pt2 < 100.)
+        continue;
+      if (!maxCAPtJet10 || pt2 > maxCAPtJet10->perp2())
+        maxCAPtJet10 = &jet;
+    }
+  }
+
 
   // Check that the output collection size is non-null, otherwise nothing to be done further
-  if (!maxPtJet10) {
+  if (!maxPtJet10 || !maxCAPtJet10) {
     Warning("FillXlFatJet", "Input FatJet produces null reclustering output!\n");
     return;
   }
 
   if (fBeVerbose) {
-    Info("FillXlFatJet", "Finished prepping fastjet in %f seconds\n",fStopwatch->RealTime());
+    Info("FillXlFatJet", "Finished prepping fastjet in %f seconds",fStopwatch->RealTime());
     fStopwatch->Start();
   }
 
   VPseudoJet constituents(maxPtJet10->constituents());
+  VPseudoJet CAconstituents(maxCAPtJet10->constituents());
 
-  // internal implementation of Nsubjettiness::result
-  // getTau is getTauComponents().tau(), and there are bunch of unnecessary calculation done in the latter function. Can in principle go further here.
-  double tau1 = fNJettiness->getTau(1, constituents);
-  double tau2 = fNJettiness->getTau(2, constituents);
-  double tau3 = fNJettiness->getTau(3, constituents);
-  double tau4 = fNJettiness->getTau(4, constituents);
-  xlFatJet->SetTau1(tau1);
-  xlFatJet->SetTau2(tau2);
-  xlFatJet->SetTau3(tau3);
-  xlFatJet->SetTau4(tau4);
-
-  if (fBeVerbose) {
-    Info("FillXlFatJet", "Finished njettiness calculation in %f seconds\n",fStopwatch->RealTime());
-    fStopwatch->Start();
-  }
+  // we have now set up pseudo jets and jet definitions for CA and the XlFatJet algorithm (if different from CA)
 
   if (fDoECF) {
     // Compute the energy correlation function ratios
-
-    double C2b0   = (*fECR2b0)(*maxPtJet10);
-    double C2b0p2 = (*fECR2b0p2)(*maxPtJet10);
-    double C2b0p5 = (*fECR2b0p5)(*maxPtJet10);
-    double C2b1   = (*fECR2b1)(*maxPtJet10);
-    double C2b2   = (*fECR2b2)(*maxPtJet10);
+    // uses CA
+    double C2b0   = (*fECR2b0)(*maxCAPtJet10);
+    double C2b0p2 = (*fECR2b0p2)(*maxCAPtJet10);
+    double C2b0p5 = (*fECR2b0p5)(*maxCAPtJet10);
+    double C2b1   = (*fECR2b1)(*maxCAPtJet10);
+    double C2b2   = (*fECR2b2)(*maxCAPtJet10);
     xlFatJet->SetC2b0(C2b0);
     xlFatJet->SetC2b0p2(C2b0p2);
     xlFatJet->SetC2b0p5(C2b0p5);
@@ -363,6 +386,7 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   }
 
   if (fDoQjets) {
+    // uses jet algo
     VPseudoJet constituentsNoGhost(FilterJetsByPt(constituents, 0.01));
     // Compute Q-jets volatility
     double QJetVol = GetQjetVolatility(constituentsNoGhost, fNQjets, fCounter*fNQjets);
@@ -434,10 +458,20 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
     fStopwatch->Start();
   }
 
-  // do CMS and HEP top tagging
-
+  // internal implementation of Nsubjettiness::result
+  // getTau is getTauComponents().tau(), and there are bunch of unnecessary calculation done in the latter function. Can in principle go further here.
+  // uses CA
+  double tau1 = fNJettiness->getTau(1, CAconstituents);
+  double tau2 = fNJettiness->getTau(2, CAconstituents);
+  double tau3 = fNJettiness->getTau(3, CAconstituents);
+  double tau4 = fNJettiness->getTau(4, CAconstituents);
+  xlFatJet->SetTau1(tau1);
+  xlFatJet->SetTau2(tau2);
+  xlFatJet->SetTau3(tau3);
+  xlFatJet->SetTau4(tau4);
+  
   if (fBeVerbose) {
-    Info("FillXlFatJet", "Finished CMSTT and HEPTT in %f seconds\n",fStopwatch->RealTime());
+    Info("FillXlFatJet", "Finished njettiness calculation in %f seconds",fStopwatch->RealTime());
     fStopwatch->Start();
   }
 
@@ -467,26 +501,6 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
         }
         FillXlSubJets(fjSubJetsSorted, xlFatJet, (ESubJetType)iSJType);
       }
-    }
-    else if (iSJType == XlSubJet::kCMSTT) {
-      fastjet::PseudoJet cmsTopJet = fCMSTopTagger->result(*maxPtJet0);
-
-      auto&& fjSubjets(cmsTopJet.pieces());
-      VPseudoJetPtr subjetPtrs;
-      for (auto&& fjSubjet : fjSubjets)
-        subjetPtrs.push_back(&fjSubjet);
-
-      FillXlSubJets(subjetPtrs, xlFatJet, XlSubJet::kCMSTT);
-    }
-    else if (iSJType == XlSubJet::kHEPTT) {
-      HEPTopTagger hepTopJet = HEPTopTagger(fjClustering, *maxPtJet0);;
-
-      auto&& fjSubjets(hepTopJet.top_subjets());
-      VPseudoJetPtr subjetPtrs;
-      for (auto&& fjSubjet : fjSubjets)
-        subjetPtrs.push_back(&fjSubjet);
-
-      FillXlSubJets(subjetPtrs, xlFatJet, XlSubJet::kHEPTT);
     }
   }
 

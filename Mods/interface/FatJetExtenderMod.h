@@ -52,6 +52,11 @@ namespace mithep
   {
     public:
       typedef XlSubJet::ESubJetType ESubJetType;
+      enum JetAlgo {
+        kCambridgeAachen,
+        kAntiKt,
+        kKt
+      };
       FatJetExtenderMod(const char *name = "FatJetExtenderMod",
                    const char *title = "XlFatJets Filler module");
       ~FatJetExtenderMod();
@@ -87,6 +92,7 @@ namespace mithep
       void SetDoShowerDeconstruction(Bool_t b) { fDoShowerDeconstruction = b; }
       void SetBeVerbose(Bool_t b)          { fBeVerbose = b;  }
       void SetDoECF(Bool_t b)              { fDoECF = b; }
+      void SetDoCMSandHTT(Bool_t b)             { fDoCMSandHTT = b; }
       void SetDoQjets(Bool_t b)            { fDoQjets = b; }
       void SetNMaxMicrojets(unsigned int n)         { fNMaxMicrojets = n; }
       void SetDebugFlag(int i)   { fDebugFlag = i; }
@@ -196,6 +202,7 @@ namespace mithep
       double fTrimRad;                     //trimmed subjet radius
       double fTrimPtFrac;                  //trimmed subjet pt fraction
       double fConeSize;                    //fastjet clustering radius
+      fastjet::JetDefinition* fJetDef{0};   //fastjet clustering definition
       fastjet::JetDefinition* fCAJetDef{0};   //fastjet clustering definition
       fastjet::GhostedAreaSpec* fActiveArea{0};
       fastjet::AreaDefinition* fAreaDefinition{0};
@@ -224,6 +231,8 @@ namespace mithep
       Bool_t fDoQjets;
       unsigned int fNMaxMicrojets;
       unsigned int fNQjets;
+      JetAlgo fJetAlgo;
+      Bool_t fDoCMSandHTT;
       TStopwatch* fStopwatch{0};
 
       // Counters : used to initialize seed for QJets volatility

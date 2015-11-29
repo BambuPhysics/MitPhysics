@@ -138,8 +138,8 @@ template<typename JETTYPE> PuppiJetMod<JETTYPE>::PuppiJetMod(const char *name, c
   fJetsName ("PuppiJets"),
   fR0(0.4),
   fR0Squared(0.16),
-  fDoMatching(kFALSE),
-  fMatchingJetsName(""),
+  fDoMatching(kTRUE),
+  fMatchingJetsName("AKt4PFJetsCHS"),
   fMatchingJets(0),
   fProcessNJets (4),
   fJetAlgorithm(kAntiKT)
