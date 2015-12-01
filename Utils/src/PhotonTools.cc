@@ -45,6 +45,7 @@ mithep::PhotonTools::PhotonEffectiveArea(EPhotonEffectiveAreaType type, Double_t
     default:
       return 0.;
     }
+    break;
 
   case kPhoEAHighPtV2:
     etaBinning = etaBinning2;
@@ -55,6 +56,7 @@ mithep::PhotonTools::PhotonEffectiveArea(EPhotonEffectiveAreaType type, Double_t
     default:
       return 0.;
     }
+    break;
 
   case kPhoEASpring1550ns:
     etaBinning = etaBinning1;
@@ -71,6 +73,7 @@ mithep::PhotonTools::PhotonEffectiveArea(EPhotonEffectiveAreaType type, Double_t
     default:
       return 0.;
     }
+    break;
 
  case kPhoEASpring15:
     etaBinning = etaBinning1;
@@ -84,6 +87,7 @@ mithep::PhotonTools::PhotonEffectiveArea(EPhotonEffectiveAreaType type, Double_t
     default:
       return 0.;
     }
+    break;
 
   default:
     return 0.;
