@@ -182,19 +182,9 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::Process()
     pts.push_back(newPseudoJet.perp());
     inPseudoJets.push_back(newPseudoJet);
   }
-  std::sort(pts.begin(),pts.end());
-  fprintf(stderr,"PTs:\n");
-  for (auto pt : pts)
-    fprintf(stderr,"%.3f \n",pt);
-  // cluster puppi jets
+// cluster puppi jets
 
-  fastjet::ClusterSequence *fjClusteringPtr;
-  if (fDoGhosts) 
-    fjClusteringPtr = new fastjet::ClusterSequenceArea(inPseudoJets,*fJetDef,*fAreaDefinition);
-  else
-    fjClusteringPtr = new fastjet::ClusterSequence(inPseudoJets,*fJetDef);
-
-  fastjet::ClusterSequence fjClustering = *fjClusteringPtr;
+  fastjet::ClusterSequenceArea fjClustering(inPseudoJets,*fJetDef,*fAreaDefinition);
   std::vector<fastjet::PseudoJet>baseJets = sorted_by_pt(fjClustering.inclusive_jets(10.)); 
 
   unsigned int nClusteredJets = baseJets.size();
@@ -208,6 +198,8 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::Process()
     ++globalJetCounter;
     JETTYPE *newJet = fJets->AddNew();
     newJet->SetRawPtEtaPhiM(baseJet.pt(),baseJet.eta(),baseJet.phi(),baseJet.m());
+    if (baseJet.has_area())
+      newJet->SetJetArea(baseJet.area());
     std::vector<fastjet::PseudoJet> baseConstituents = baseJet.constituents();
     // add PFCandidates to the jet and keep track of energy fractions
     const PFCandidate *pfCand = 0;
@@ -267,9 +259,6 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::Process()
   }
 
   fJets->Trim();
-
-  if (fjClusteringPtr)
-    delete fjClusteringPtr;
 
   if (fBeVerbose) fStopwatch->Stop();
   return;
@@ -368,10 +357,11 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::SlaveBegin()
   int activeAreaRepeats = 1;
   double ghostArea = 0.01;
   double ghostEtaMax = 5.0;
-  if (fDoGhosts) {
-    fActiveArea = new fastjet::GhostedAreaSpec(ghostEtaMax,activeAreaRepeats,ghostArea);
+  fActiveArea = new fastjet::GhostedAreaSpec(ghostEtaMax,activeAreaRepeats,ghostArea);
+  if (fDoGhosts)
     fAreaDefinition = new fastjet::AreaDefinition(fastjet::active_area_explicit_ghosts,*fActiveArea);
-  }
+  else
+    fAreaDefinition = new fastjet::AreaDefinition(fastjet::active_area,*fActiveArea);
 
 
   fStopwatch = new TStopwatch();
@@ -391,12 +381,10 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::SlaveTerminate()
   if (fJetDef)
     delete fJetDef;
 
-  if (fDoGhosts) {
     if (fActiveArea)
       delete fActiveArea;
     if (fAreaDefinition)
       delete fAreaDefinition;
-  }
 
   if (fStopwatch)
     delete fStopwatch;

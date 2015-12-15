@@ -115,7 +115,6 @@ mithep::JetCorrector::CorrectionFactors(mithep::Jet& jet, Double_t rho/* = 0.*/)
     fCorrector->setJetEMF(-99.0);
 
   std::vector<float>&& corrections(fCorrector->getSubCorrections());
-
   // if MaxCorrLevel is specified, downsize the corrections array
   // for data L1+L2+L3+L2L3Residual, the last (residual) appears as L2
   // therefore must check for level > fMaxCorrLevel
