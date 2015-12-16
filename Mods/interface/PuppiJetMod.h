@@ -19,6 +19,7 @@
 #include "fastjet/GhostedAreaSpec.hh"
 #include "fastjet/AreaDefinition.hh"
 #include "fastjet/ClusterSequenceArea.hh"
+#include "fastjet/ClusterSequence.hh"
 
 #include "MitAna/TreeMod/interface/BaseMod.h"
 #include "MitAna/DataTree/interface/JetCol.h"
@@ -31,8 +32,6 @@
 #include "MitCommon/DataFormats/interface/Types.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
 #include "MitAna/DataTree/interface/Names.h"
-
-
 
 #include "TStopwatch.h"
 
@@ -69,7 +68,7 @@ namespace mithep
       void SetMatchingJetsName(const char *n)   { fMatchingJetsName = n;  }
 
       void SetJetAlgorithm(JetAlgorithm j)      { fJetAlgorithm = j; }
-
+      void SetDoGhosts(Bool_t b)                { fDoGhosts = b; }
       const char *GetOutputName()               { return fJetsName; }
 
     protected:
@@ -107,6 +106,7 @@ namespace mithep
       fastjet::AreaDefinition *fAreaDefinition;
 
       Bool_t fDoMatching;
+      Bool_t fDoGhosts;
       TString fMatchingJetsName;
       const Collection<Jet> *fMatchingJets;
 
@@ -139,6 +139,7 @@ template<typename JETTYPE> PuppiJetMod<JETTYPE>::PuppiJetMod(const char *name, c
   fR0(0.4),
   fR0Squared(0.16),
   fDoMatching(kTRUE),
+  fDoGhosts(kFALSE),
   fMatchingJetsName("AKt4PFJetsCHS"),
   fMatchingJets(0),
   fProcessNJets (4),
@@ -172,16 +173,19 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::Process()
 
   // Loop over PFCandidates and unmark them : necessary for skimming
   // Convert PFCandidates into fastjet::PseudoJets
+  std::vector<double> pts;
   for (int iC=0; iC!=nPFCandidates; ++iC) {
     const PFCandidate *pfCand = fPFCandidates->At((unsigned int)iC);
     pfCand->UnmarkMe();
     fastjet::PseudoJet newPseudoJet(pfCand->Px(),pfCand->Py(),pfCand->Pz(),pfCand->E());
     newPseudoJet.set_user_index(iC);
+    pts.push_back(newPseudoJet.perp());
     inPseudoJets.push_back(newPseudoJet);
   }
-  // cluster puppi jets
-  fastjet::ClusterSequenceArea fjClustering (inPseudoJets,*fJetDef,*fAreaDefinition);
-  std::vector<fastjet::PseudoJet> baseJets = sorted_by_pt(fjClustering.inclusive_jets(10.));
+// cluster puppi jets
+
+  fastjet::ClusterSequenceArea fjClustering(inPseudoJets,*fJetDef,*fAreaDefinition);
+  std::vector<fastjet::PseudoJet>baseJets = sorted_by_pt(fjClustering.inclusive_jets(10.)); 
 
   unsigned int nClusteredJets = baseJets.size();
   for (unsigned int iJ=0; iJ!=nClusteredJets; ++iJ) {
@@ -194,8 +198,9 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::Process()
     ++globalJetCounter;
     JETTYPE *newJet = fJets->AddNew();
     newJet->SetRawPtEtaPhiM(baseJet.pt(),baseJet.eta(),baseJet.phi(),baseJet.m());
+    if (baseJet.has_area())
+      newJet->SetJetArea(baseJet.area());
     std::vector<fastjet::PseudoJet> baseConstituents = baseJet.constituents();
-
     // add PFCandidates to the jet and keep track of energy fractions
     const PFCandidate *pfCand = 0;
     float chargedEMEnergy=0;
@@ -273,10 +278,8 @@ template <typename JETTYPE> void PuppiJetMod<JETTYPE>::RunMatching(PFJet *newJet
       bestDR2 = dR2;
     }
   }
-  if (matchedJet==NULL) {
-    Info("Process","Warning, could not match Puppi jet to a PF jet");
+  if (matchedJet==0)
     return;
-  }
   ++globalMatchedJetCounter;
   // copy btags
   for (unsigned int iBtag=0; iBtag!=(unsigned int)Jet::nBTagAlgos; ++iBtag) {
@@ -299,10 +302,8 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::RunMatching(FatJet *newJet
       bestDR2 = dR2;
     }
   }
-  if (matchedJet==NULL) {
-    Info("Process","Warning, could not match Puppi jet to any of %i fatjets",fMatchingJets->GetEntries());
+  if (matchedJet==0)
     return;
-  }
   ++globalMatchedJetCounter;
   // copy btags
   for (unsigned int iBtag=0; iBtag!=(unsigned int)Jet::nBTagAlgos; ++iBtag) {
@@ -355,9 +356,12 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::SlaveBegin()
   // Initialize area caculation (done with ghost particles)
   int activeAreaRepeats = 1;
   double ghostArea = 0.01;
-  double ghostEtaMax = 7.0;
+  double ghostEtaMax = 5.0;
   fActiveArea = new fastjet::GhostedAreaSpec(ghostEtaMax,activeAreaRepeats,ghostArea);
-  fAreaDefinition = new fastjet::AreaDefinition(fastjet::active_area_explicit_ghosts,*fActiveArea);
+  if (fDoGhosts)
+    fAreaDefinition = new fastjet::AreaDefinition(fastjet::active_area_explicit_ghosts,*fActiveArea);
+  else
+    fAreaDefinition = new fastjet::AreaDefinition(fastjet::active_area,*fActiveArea);
 
 
   fStopwatch = new TStopwatch();
@@ -377,10 +381,10 @@ template<typename JETTYPE> void PuppiJetMod<JETTYPE>::SlaveTerminate()
   if (fJetDef)
     delete fJetDef;
 
-  if (fActiveArea)
-    delete fActiveArea;
-  if (fAreaDefinition)
-    delete fAreaDefinition;
+    if (fActiveArea)
+      delete fActiveArea;
+    if (fAreaDefinition)
+      delete fAreaDefinition;
 
   if (fStopwatch)
     delete fStopwatch;

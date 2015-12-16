@@ -349,7 +349,6 @@ MetCorrectionMod::Process()
     new (corrected) PFMet(static_cast<PFMet&>(inMet));
     break;
   }
-
   double mex = inMet.Mex();
   double mey = inMet.Mey();
   double sumEt = inMet.SumEt();
