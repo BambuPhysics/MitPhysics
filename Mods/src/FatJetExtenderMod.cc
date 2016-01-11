@@ -11,7 +11,7 @@
 #include "QjetsPlugin.h"
 #include "Qjets.h"
 
-#include "fastjet/contrib/NjettinessDefinition.hh"
+#include "fastjet/contrib/MeasureDefinition.hh"
 #include "fastjet/contrib/NjettinessPlugin.hh"
 #include "MitAna/PhysicsUtils/interface/HEPTopTagger.h"
 
