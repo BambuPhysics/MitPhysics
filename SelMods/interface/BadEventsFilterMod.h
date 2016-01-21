@@ -20,42 +20,20 @@ namespace mithep {
     BadEventsFilterMod(char const* name = "BadEventsFilterMod", char const* title = "MET filters") : BaseMod(name, title) {}
     ~BadEventsFilterMod() {}
 
-    // Must be identical to MitProd/TreeFiller/interface/FillerEvtSelData
-    // -> One reason why the implementation is poor. At least this enum should be defined in MitAna/DataTree.
-    enum EvtSelFilter {
-      kHBHENoiseFilter,
-      kECALDeadCellFilter,
-      kTrackingFailureFilter,
-      kEEBadScFilter,
-      kECALaserCorrFilter,
-      kManyStripClusFilter,
-      kTooManyStripClusFilter,
-      kLogErrorTooManyClustersFilter,
-      kCSCTightHaloFilter,
-      kCSCLooseHaloFilter,
-      nEvtSelFilters
-    };
-
     void SetInputName(char const* n) { fEvtSelDataName = n; }
+    void SetLabelTreeName(char const* n) { fLabelTreeName = n; }
+    void SetLabelBranchName(char const* n) { fLabelBranchName = n; }
 
-    void SetHBHENoiseFilter(Bool_t b = kTRUE) { SetMask(kHBHENoiseFilter, b); }
-    void SetECALDeadCellFilter(Bool_t b = kTRUE) { SetMask(kECALDeadCellFilter, b); }
-    void SetTrackingFailureFilter(Bool_t b = kTRUE) { SetMask(kTrackingFailureFilter, b); }
-    void SetEEBadScFilter(Bool_t b = kTRUE) { SetMask(kEEBadScFilter, b); }
-    void SetECALaserCorrFilter(Bool_t b = kTRUE) { SetMask(kECALaserCorrFilter, b); }
-    void SetManyStripClusFilter(Bool_t b = kTRUE) { SetMask(kManyStripClusFilter, b); }
-    void SetTooManyStripClusFilter(Bool_t b = kTRUE) { SetMask(kTooManyStripClusFilter, b); }
-    void SetLogErrorTooManyClustersFilter(Bool_t b = kTRUE) { SetMask(kLogErrorTooManyClustersFilter, b); }
-    void SetCSCTightHaloFilter(Bool_t b = kTRUE) { SetMask(kCSCTightHaloFilter, b); }
-    void SetCSCLooseHaloFilter(Bool_t b = kTRUE) { SetMask(kCSCLooseHaloFilter, b); }
+    void SetFilter(char const* name, Bool_t enable = kTRUE);
 
   protected:
     void SlaveBegin() override;
     void Process() override;
 
-    void SetMask(EvtSelFilter, Bool_t);
-
     TString fEvtSelDataName{"EvtSelData"};
+    TString fLabelTreeName{"EvtSelBits"};
+    TString fLabelBranchName{"FilterLabels"};
+    std::vector<std::string> fEnabledFilters{};
     Int_t fBitMask{0};
 
     TH1D* hCounter{0};
