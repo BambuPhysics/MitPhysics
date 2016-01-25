@@ -7,133 +7,381 @@
 
 #include <stdexcept>
 #include <sys/stat.h>
+#include <fstream>
+
+#include "TROOT.h"
 
 ClassImp(mithep::JetCorrector)
 
-mithep::JetCorrector::~JetCorrector()
+mithep::JetCorrector::Corrector::Record::Record(unsigned nBinVars, unsigned nFormVars, unsigned nParameters, std::string const& inputLine)
 {
-  delete fCorrector;
-  delete fUncertainty;
-}
+  auto* words(TString(inputLine.c_str()).Tokenize(" "));
 
-void
-mithep::JetCorrector::AddParameterFile(char const* fileName)
-{
-  if (fLevels.size() != 0) {
-    mithep::Jet::ECorr lastLevel = fLevels.back();
-    if (lastLevel == mithep::Jet::Custom) { // = Uncertainty
-      std::cerr << "JetCorrector cannot add a correction level on top of Uncertainty." << std::endl;
-      throw std::runtime_error("Configuration error");
+  if (nParameters != unsigned(-1)) {
+    if (words->GetEntries() != int(nBinVars * 2 + nFormVars * 2 + nParameters + 1) || TString(words->At(nBinVars * 2)->GetName()).Atoi() != int(nFormVars * 2 + nParameters)) {
+      delete words;
+      throw std::exception();
     }
   }
 
+  auto readWord([words](unsigned idx)->double {
+      return TString(words->At(idx)->GetName()).Atof();
+    });
+
+  unsigned iW(0);
+
+  for (unsigned iV(0); iV != nBinVars; ++iV) {
+    fBinVarLimits.emplace_back(readWord(iW), readWord(iW + 1));
+    iW += 2;
+  }
+
+  ++iW;
+  if (nParameters == unsigned(-1))
+    nParameters = TString(words->At(iW)->GetName()).Atoi();
+
+  for (unsigned iV(0); iV != nFormVars; ++iV) {
+    fFormVarLimits.emplace_back(readWord(iW), readWord(iW + 1));
+    iW += 2;
+  }
+
+  for (unsigned iP(0); iP != nParameters; ++iP)
+    fParameters.push_back(readWord(iW++));
+
+  delete words;
+}
+
+mithep::JetCorrector::Corrector::Corrector(char const* fileName)
+{
   struct stat buffer;
   if (stat(fileName, &buffer) != 0) {
     std::cerr << "File " << fileName << " does not exist." << std::endl;
     throw std::runtime_error("Configuration error");
   }
 
+  std::ifstream source(fileName);
+  std::string linebuf;
+  unsigned iL(0);
+
+  while (std::getline(source, linebuf)) {
+    ++iL;
+
+    // read in the definition line
+    std::string::size_type open(linebuf.find('{'));
+    std::string::size_type close(linebuf.find('}'));
+    if (open != std::string::npos && close != std::string::npos && open < close) {
+      auto* words(TString(linebuf.substr(open + 1, close - open - 1).c_str()).Tokenize(" "));
+      if (words->GetEntries() < 6) {
+        std::cerr << "File " << fileName << " does not contain a proper JEC definition." << std::endl;
+        delete words;
+        throw std::runtime_error("Configuration error");
+      }
+
+      unsigned iW(0);
+
+      unsigned nBinVar(TString(words->At(iW++)->GetName()).Atoi());
+      if (nBinVar == 0) {
+        std::cerr << "File " << fileName << " does not contain a proper JEC definition." << std::endl;
+        delete words;
+        throw std::runtime_error("Configuration error");
+      }
+
+      for (unsigned iV(0); iV != nBinVar; ++iV)
+        fBinningVariables.push_back(ParseVariableName(words->At(iW++)->GetName()));
+
+      unsigned nFormVar(TString(words->At(iW++)->GetName()).Atoi());
+
+      for (unsigned iV(0); iV != nFormVar; ++iV)
+        fFormulaVariables.push_back(ParseVariableName(words->At(iW++)->GetName()));
+
+      TString formula(words->At(iW++)->GetName());
+      if (formula != "") {
+        // TFormula has a global namespace - keep one copy from each input file (which may be used multiple times in a job)
+        auto* func(gROOT->GetListOfFunctions()->FindObject(fileName));
+        if (func)
+          fFormula = static_cast<TFormula*>(func);
+        else
+          fFormula = new TFormula(fileName, formula);
+
+        if (fFormula->GetNdim() != int(fFormulaVariables.size())) {
+          std::cerr << "File " << fileName << " does not contain a proper JEC formula." << std::endl;
+          delete words;
+          throw std::runtime_error("Configuration error");
+        }
+      }
+
+      TString type(words->At(iW++)->GetName());
+      fIsResponse = (type == "Response");
+      
+      fLevel = ParseLevelName(words->At(iW)->GetName());
+
+      if (fLevel != mithep::Jet::Custom && !fFormula) {
+        std::cerr << "Cannot initialize JEC without a formula." << std::endl;
+        delete words;
+        throw std::runtime_error("Configuration error");
+      }
+      if (fLevel == mithep::Jet::Custom && fFormulaVariables.size() != 1) {
+        std::cerr << "JES uncertainty must be given as a grid of two variables." << std::endl;
+        delete words;
+        throw std::runtime_error("Configuration error");
+      }
+
+      delete words;
+
+      break;
+    }
+  }
+
+  while (std::getline(source, linebuf)) {
+    ++iL;
+
+    try {
+      if (fLevel == mithep::Jet::Custom) // is uncertainty
+        fRecords.emplace_back(fBinningVariables.size(), 0, -1, linebuf);
+      else
+        fRecords.emplace_back(fBinningVariables.size(), fFormulaVariables.size(), fFormula->GetNpar(), linebuf);
+    }
+    catch (std::exception& ex) {
+      std::cerr << "File " << fileName << " appears corrupt at line " << iL << std::endl;
+      throw std::runtime_error("Configuration error");
+    }
+  }
+}
+
+Double_t
+mithep::JetCorrector::Corrector::Eval(Double_t variables[nVarTypes]) const
+{
+  if (fLevel == mithep::Jet::Custom)
+    return EvalUncertainty(variables);
+  else
+    return EvalCorrection(variables);
+}
+
+Double_t
+mithep::JetCorrector::Corrector::EvalCorrection(Double_t variables[nVarTypes]) const
+{
+  unsigned iRecord(FindRecord(variables));
+
+  if (iRecord == fRecords.size()) // no record found
+    return 1.;
+      
+  if (fInterpolate) {
+    std::cerr << "JEC interpolation not implemented yet. You are welcome to write it for us! (ref. CondFormats/JetMETObjects/src/SimpleJetCorrector.cc" << std::endl;
+    throw std::runtime_error("NotImplemented");
+  }
+  else {
+    auto& record(fRecords[iRecord]);
+
+    double x[4];
+    std::vector<double> par;
+
+    for (unsigned iX(0); iX != fFormulaVariables.size(); ++iX) {
+      double val(variables[fFormulaVariables[iX]]);
+      auto& limits(record.fFormVarLimits[iX]);
+      if (val < limits.first)
+        x[iX] = limits.first;
+      else if (val >= limits.second)
+        x[iX] = limits.second;
+      else
+        x[iX] = val;
+    }
+
+    for (unsigned iP(0); iP != record.fParameters.size(); ++iP)
+      par.push_back(record.fParameters[iP]);
+
+    if (fIsResponse) {
+      std::cerr << "Response inversion not implemented yet. You are welcome to write it for us! (ref. CondFormats/JetMETObjects/src/SimpleJetCorrector.cc" << std::endl;
+      throw std::runtime_error("NotImplemented");
+    }
+
+    return fFormula->EvalPar(x, par.data());
+  }
+}
+
+Double_t
+mithep::JetCorrector::Corrector::EvalUncertainty(Double_t variables[nVarTypes]) const
+{
+  unsigned iRecord(FindRecord(variables));
+
+  if (iRecord == fRecords.size()) {
+    // no record found
+    std::cerr << "JetCorrector uncertainty out of range" << std::endl;
+    return -999.;
+  }
+
+  auto& record(fRecords[iRecord]);
+
+  double var(variables[fFormulaVariables[0]]);
+
+  unsigned iP(0);
+  unsigned iX(0);
+  while (iP < record.fParameters.size() && var < record.fParameters[iP]) {
+    iP += 3; // parameter array: pt0, uncertUp0, uncertDown0, pt1, uncertUp1, ...
+    ++iX;
+  }
+
+  unsigned pOffset(fUncertaintyUp ? 1 : 2);
+
+  if (iP == 0)
+    return record.fParameters.at(pOffset);
+  else if (iP >= record.fParameters.size())
+    return record.fParameters.at(iX * 3 - 3 + pOffset);
+  else {
+    // linear interpolation
+    double low(record.fParameters.at(iX * 3 - 3));
+    double high(record.fParameters.at(iX * 3));
+    double interval(high - low);
+    return (record.fParameters.at(iX * 3 + pOffset) * (var - low) + record.fParameters.at(iX * 3 - 3 + pOffset) * (high - var)) / interval;
+  }
+}
+
+UInt_t
+mithep::JetCorrector::Corrector::FindRecord(Double_t variables[nVarTypes]) const
+{
+  unsigned iRecord(0);
+  for (; iRecord != fRecords.size(); ++iRecord) {
+    auto& record(fRecords[iRecord]);
+
+    unsigned iVar(0);
+    for (; iVar != fBinningVariables.size(); ++iVar) {
+      double value(variables[fBinningVariables[iVar]]);
+      
+      if (record.fBinVarLimits[iVar].first > value || record.fBinVarLimits[iVar].second <= value)
+        break;
+    }
+    if (iVar == fBinningVariables.size()) // all bin variables are in the range
+      break;
+  }
+
+  return iRecord;
+}
+
+/*static*/
+mithep::Jet::ECorr
+mithep::JetCorrector::Corrector::ParseLevelName(char const* levelName)
+{
+  std::string name(levelName);
+  if (name == "L1Offset" || name == "L1FastJet" || name == "L1JPTOffset")
+    return mithep::Jet::L1;
+  else if (name == "L2Relative")
+    return mithep::Jet::L2;
+  else if (name == "L3Absolute")
+    return mithep::Jet::L3;
+  else if (name == "L4EMF")
+    return mithep::Jet::L4;
+  else if (name == "L5Flavor")
+    return mithep::Jet::L5;
+  else if (name == "L6SLB")
+    return mithep::Jet::L6;
+  else if (name == "L7Parton")
+    return mithep::Jet::L7;
+  else if (name == "Uncertainty")
+    return mithep::Jet::Custom;
+  else {
+    std::cerr << "Exception in JetCorrector::ParseLevelName(): Unknown correction level " << name << std::endl;
+    throw std::runtime_error("Unknown correction");
+  }
+}
+
+/*static*/
+mithep::JetCorrector::Corrector::VarType
+mithep::JetCorrector::Corrector::ParseVariableName(char const* varName)
+{
+  std::string name(varName);
+  if (name == "JetEta")
+    return mithep::JetCorrector::Corrector::kJetEta;
+  else if (name == "NPV")
+    return mithep::JetCorrector::Corrector::kNPV;
+  else if (name == "JetPt")
+    return mithep::JetCorrector::Corrector::kJetPt;
+  else if (name == "JetPhi")
+    return mithep::JetCorrector::Corrector::kJetPhi;
+  else if (name == "JetE")
+    return mithep::JetCorrector::Corrector::kJetE;
+  else if (name == "JetEMF")
+    return mithep::JetCorrector::Corrector::kJetEMF;
+  else if (name == "JetA")
+    return mithep::JetCorrector::Corrector::kJetA;
+  else if (name == "Rho")
+    return mithep::JetCorrector::Corrector::kRho;
+  else if (name == "RelLepPt")
+    return mithep::JetCorrector::Corrector::kRelLepPt;
+  else if (name == "PtRel")
+    return mithep::JetCorrector::Corrector::kPtRel;
+  else {
+    std::cerr << "Exception in JetCorrector::ParseVariableName(): Unknown variable " << name << std::endl;
+    throw std::runtime_error("Unknown correction");
+  }
+}
+
+void
+mithep::JetCorrector::AddParameterFile(char const* fileName)
+{
   try {
-    fParameters.emplace_back(std::string(fileName));
+    fCorrectors.emplace_back(fileName);
   }
   catch (std::exception& ex) {
     std::cerr << "Exception in JetCorrector::AddParameterFile(" << fileName << "):" << std::endl;
     std::cerr << ex.what() << std::endl;
     throw;
   }
+}
 
-  auto it = fParameters.rbegin();
-  mithep::Jet::ECorr level = TranslateLevel(it->definitions().level().c_str());
-
-  if (level == mithep::Jet::Custom) {
-    if (fLevels.size() == 0) {
-      std::cerr << "Cannot apply JEC uncertainty to empty JEC configuration (L1+L2+L3+(L2L3) corrections must come first)." << std::endl;
-      throw std::runtime_error("Configuration error");
-    }
-    else {
-      mithep::Jet::ECorr lastLevel = fLevels.back();
-      if (lastLevel != mithep::Jet::L2 && lastLevel != mithep::Jet::L3) {
-        // L2 for case of data L2L3 residual correction
-        std::cerr << "Uncertainty is currently only available on top of L3 (+L2L3Residual) correction." << std::endl;
-        throw std::runtime_error("Configuration error");
-      }
-    }
-  }
-
-  fLevels.push_back(level);
-
-// Not enforcing ordered corrections because L2L3Residual is seen as L2 by the JetCorrectionParameters
-//   // check correction ordering
-//   if (fParameters.size() > 1) {
-//     ++it;
-//     if (TranslateLevel(it->definitions().level().c_str()) >= level) {
-//       std::cerr << "Exception in JetCorrector::AddParameterFile(" << fileName << "):" << std::endl;
-//       std::cerr << "Correction parameters must be added in ascending order of correction levels" << std::endl;
-//       throw std::runtime_error("Configuration error");
-//     }
-//   }
+mithep::JetCorrector::JetCorrector()
+{
+  // Reserve enough space for all correctors. Otherwise emplace_back will
+  // attempt a re-construction of the correctors at some point, which leads to mysterious segfaults.
+  fCorrectors.reserve(mithep::Jet::nECorrs);
 }
 
 void
 mithep::JetCorrector::ClearParameters()
 {
-  fParameters.clear();
-  fLevels.clear();
-}
-
-void
-mithep::JetCorrector::Initialize()
-{
-  delete fCorrector;
-  fCorrector = new FactorizedJetCorrector(fParameters);
-  delete fUncertainty;
-  if (fLevels.size() != 0 && fLevels.back() == mithep::Jet::Custom)
-    fUncertainty = new JetCorrectionUncertainty(fParameters.back());
+  fCorrectors.clear();
+  fMaxCorrLevel = mithep::Jet::nECorrs;
+  fSigma = 0.;
 }
 
 std::vector<Float_t>
-mithep::JetCorrector::CorrectionFactors(mithep::Jet& jet, Double_t rho/* = 0.*/) const
+mithep::JetCorrector::CorrectionFactors(mithep::Jet const& jet, Double_t rho/* = 0.*/) const
 {
-  if (!IsInitialized())
-    throw std::runtime_error("JetCorrector not initialized");
-
-  auto&& rawMom = jet.RawMom();
+  auto&& rawMom(jet.RawMom());
 
   //compute correction factors
-  fCorrector->setJetEta(rawMom.Eta());
-  fCorrector->setJetPt(rawMom.Pt());
-  fCorrector->setJetPhi(rawMom.Phi());
-  fCorrector->setJetE(rawMom.E());
-
-  fCorrector->setRho(rho);
-  fCorrector->setJetA(jet.JetArea());
+  double vars[Corrector::nVarTypes];
+  vars[Corrector::kJetEta] = rawMom.Eta();
+  vars[Corrector::kJetPt] = rawMom.Pt();
+  vars[Corrector::kJetPhi] = rawMom.Phi();
+  vars[Corrector::kJetE] = rawMom.E();
+  vars[Corrector::kRho] = rho;
+  vars[Corrector::kJetA] = jet.JetArea();
     
   //emf only valid for CaloJets
   if (jet.ObjType() == mithep::kCaloJet)
-    fCorrector->setJetEMF(static_cast<mithep::CaloJet&>(jet).EnergyFractionEm());
+    vars[Corrector::kJetEMF] = static_cast<mithep::CaloJet const&>(jet).EnergyFractionEm();
   else
-    fCorrector->setJetEMF(-99.0);
+    vars[Corrector::kJetEMF] = -99.0;
 
-  std::vector<float>&& corrections(fCorrector->getSubCorrections());
-  // if MaxCorrLevel is specified, downsize the corrections array
-  // for data L1+L2+L3+L2L3Residual, the last (residual) appears as L2
-  // therefore must check for level > fMaxCorrLevel
-  // also if uncertainty (using Custom) is required that is the last level
-  // Uncertainty (Custom = 7) is not in corrections anyway so there is no worry of cutting it out
-  if (fMaxCorrLevel != Jet::nECorrs) {
-    for (unsigned iL = 0; iL != corrections.size(); ++iL) {
-      if (fLevels[iL] > fMaxCorrLevel) {
-        corrections.resize(iL);
-        break;
-      }
+  std::vector<float> corrections;
+  double factor(1.);
+  for (auto& corr : fCorrectors) {
+    if (corr.GetLevel() > fMaxCorrLevel)
+      break;
+
+    if (corr.GetEnabled()) {
+      double scale(corr.Eval(vars));
+      vars[Corrector::kJetPt] *= scale;
+      vars[Corrector::kJetE] *= scale;
+      factor *= scale;
     }
+
+    corrections.push_back(factor);
   }
 
   return corrections;
 }
 
 Float_t
-mithep::JetCorrector::CorrectionFactor(mithep::Jet& jet, Double_t rho/* = 0.*/) const
+mithep::JetCorrector::CorrectionFactor(mithep::Jet const& jet, Double_t rho/* = 0.*/) const
 {
   auto&& factors(CorrectionFactors(jet, rho));
   if (factors.size() != 0)
@@ -143,31 +391,42 @@ mithep::JetCorrector::CorrectionFactor(mithep::Jet& jet, Double_t rho/* = 0.*/) 
 }
 
 Float_t
-mithep::JetCorrector::UncertaintyFactor(mithep::Jet& jet) const
+mithep::JetCorrector::UncertaintyFactor(mithep::Jet const& jet) const
 {
-  if (!fUncertainty)
+  Corrector const* uncertainty(0);
+  for (auto& corr : fCorrectors) {
+    if (corr.GetLevel() == mithep::Jet::Custom) {
+      uncertainty = &corr;
+      break;
+    }
+  }
+
+  if (!uncertainty)
     return 1.;
 
   // uncertainty is calculated on fully corrected momentum
-  fUncertainty->setJetEta(jet.Eta());
-  fUncertainty->setJetPt(jet.Pt());
+  double vars[Corrector::nVarTypes];
+  vars[Corrector::kJetEta] = jet.Eta();
+  vars[Corrector::kJetPt] = jet.Pt();
 
   // last cumulative (up to L3 or L2L3) + fSigma * uncertainty
   // getUncertainty(true): Upside uncertainty.
   // Usually downside is not used; probably the uncertainty is symmetric anyway..
-  return 1. + fSigma * fUncertainty->getUncertainty(true);
+  return 1. + fSigma * uncertainty->Eval(vars);
 }
 
 Bool_t
-mithep::JetCorrector::IsInitialized() const
+mithep::JetCorrector::IsEnabled(mithep::Jet::ECorr l) const
 {
-  if (!fCorrector)
+  if (l >= fMaxCorrLevel)
     return false;
 
-  if (fLevels.size() != 0 && fLevels.back() == mithep::Jet::Custom && !fUncertainty)
-    return false;
+  for (auto& corr : fCorrectors) {
+    if (corr.GetLevel() == l && corr.GetEnabled())
+      return true;
+  }
 
-  return true;
+  return false;
 }
 
 void
@@ -179,9 +438,10 @@ mithep::JetCorrector::Correct(mithep::Jet& jet, Double_t rho/* = 0.*/) const
 
   auto lastLevel = mithep::Jet::nECorrs;
 
-  for (unsigned iC = 0; iC != corrections.size(); ++iC) {
-    auto currentLevel = fLevels.at(iC);
-    float currentCorrection = 1.;
+  for (unsigned iC(0); iC != corrections.size(); ++iC) {
+    auto currentLevel(fCorrectors[iC].GetLevel());
+
+    float currentCorrection(1.);
     if (lastLevel == mithep::Jet::L3 && currentLevel == mithep::Jet::L2) {
       // special case for L2L3Residual
       // store L3*L2L3 as L3 correction
@@ -206,35 +466,8 @@ mithep::JetCorrector::Correct(mithep::Jet& jet, Double_t rho/* = 0.*/) const
     lastLevel = currentLevel;
   }
 
-  if (fLevels.size() != 0 && corrections.size() != 0 && fLevels.back() == mithep::Jet::Custom) {
+  if (fSigma != 0.) {
     jet.SetCorrectionScale(UncertaintyFactor(jet), mithep::Jet::Custom);
     jet.EnableCorrection(mithep::Jet::Custom);
-  }
-}
-
-/*static*/
-mithep::Jet::ECorr
-mithep::JetCorrector::TranslateLevel(char const* levelName)
-{
-  std::string name(levelName);
-  if (name == "L1Offset" || name == "L1FastJet" || name == "L1JPTOffset")
-    return mithep::Jet::L1;
-  else if (name == "L2Relative")
-    return mithep::Jet::L2;
-  else if (name == "L3Absolute")
-    return mithep::Jet::L3;
-  else if (name == "L4EMF")
-    return mithep::Jet::L4;
-  else if (name == "L5Flavor")
-    return mithep::Jet::L5;
-  else if (name == "L6SLB")
-    return mithep::Jet::L6;
-  else if (name == "L7Parton")
-    return mithep::Jet::L7;
-  else if (name == "Uncertainty")
-    return mithep::Jet::Custom;
-  else {
-    std::cerr << "Exception in JetCorrector::TranslateLevel(): Unknown correction level " << name << std::endl;
-    throw std::runtime_error("Unknown correction");
   }
 }
