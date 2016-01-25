@@ -49,8 +49,6 @@ JetCorrectionMod::SlaveBegin()
   // fCorrector = 0 is alllowed but should not happen here - the module is useless in this case
   MakeCorrector();
 
-  fCorrector->Initialize();
-
   PublishObj(&fCorrectedJets);
 }
 

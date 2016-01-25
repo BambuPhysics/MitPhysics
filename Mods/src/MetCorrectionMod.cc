@@ -46,10 +46,8 @@ MetCorrectionMod::SlaveBegin()
       MakeFormula(0);
   }
 
-  if (fApplyType1) {
+  if (fApplyType1)
     MakeJetCorrector();
-    fJetCorrector->Initialize();
-  }
 
   if (fApplyShift) {
     //XY shift formula: function of nVtx
