@@ -29,12 +29,16 @@ namespace mithep {
   protected:
     void SlaveBegin() override;
     void Process() override;
+    void BeginRun() override;
+    Bool_t Notify() override;
 
     TString fEvtSelDataName{"EvtSelData"};
     TString fLabelTreeName{"EvtSelBits"};
     TString fLabelBranchName{"FilterLabels"};
     std::vector<std::string> fEnabledFilters{};
     Int_t fBitMask{0};
+    
+    UInt_t fReload{0};
 
     TH1D* hCounter{0};
 
