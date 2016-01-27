@@ -11,49 +11,112 @@ ClassImp(mithep::BadEventsFilterMod)
 void
 mithep::BadEventsFilterMod::SlaveBegin()
 {
-  fBitMask = 0;
-
-  auto* file = GetCurrentFile();
-  if (!file)
-    return;
-
-  auto* nameTree = dynamic_cast<TTree*>(file->Get(fLabelTreeName));
-  if (!nameTree) {
-    SendError(kWarning, "SlaveBegin", "EvtSelData label names are not stored in the file.");
-    return;
-  }
-
-  std::vector<std::string>* filterLabels(new std::vector<std::string>);
-  TBranch* labelBranch(0);
-  nameTree->SetBranchAddress(fLabelBranchName, &filterLabels, &labelBranch);
-  if (!labelBranch) {
-    SendError(kWarning, "SlaveBegin", "EvtSelData label names are not stored in the file.");
-    return;
-  }
-
-  labelBranch->GetEntry(0);
-
-  for (auto& filt : fEnabledFilters) {
-    auto itr(std::find(filterLabels->begin(), filterLabels->end(), filt));
-    if (itr == filterLabels->end()) {
-      SendError(kWarning, "SlaveBegin", ("MET filter with label " + filt + " is not defined.").c_str());
-      continue;
-    }
-
-    fBitMask |= (1 << (itr - filterLabels->begin()));
-  }
-
-  delete nameTree;
-  delete filterLabels;
-
   if (GetFillHist()) {
     AddTH1(hCounter, "hMETFilterCounter", "Number of events flagged bad", fEnabledFilters.size(), 0., double(fEnabledFilters.size()));
-    int iX = 1;
-    for (unsigned iB = 0; iB != filterLabels->size(); ++iB) {
-      if (((fBitMask >> iB) & 1) != 0)
-        hCounter->GetXaxis()->SetBinLabel(iX++, filterLabels->at(iB).c_str());
-    }
   }
+}
+
+void
+mithep::BadEventsFilterMod::BeginRun()
+{
+  if (fReload == 1) {
+    fBitMask = 0;
+
+    auto* file = GetCurrentFile();
+    if (!file)
+      return;
+
+    auto* nameTree = dynamic_cast<TTree*>(file->Get(fLabelTreeName));
+    if (!nameTree) {
+      // is bambu version <= 042
+      SendError(kWarning, "SlaveBegin", "EvtSelData label names are not stored in the file.");
+
+      enum StaticFilter {
+        kHBHENoiseFilter,
+        kECALDeadCellFilter,
+        kTrackingFailureFilter,
+        kEEBadScFilter,
+        kECALaserCorrFilter,
+        kManyStripClusFilter,
+        kTooManyStripClusFilter,
+        kLogErrorTooManyClustersFilter,
+        kCSCTightHaloFilter,
+        kCSCLooseHaloFilter,
+        nStaticFilters
+      };
+
+      TString filterNames[nStaticFilters] = {
+        "HBHENoiseFilter",
+        "ECALDeadCellFilter",
+        "TrackingFailureFilter",
+        "EEBadScFilter",
+        "ECALaserCorrFilter",
+        "ManyStripClusFilter",
+        "TooManyStripClusFilter",
+        "LogErrorTooManyClustersFilter",
+        "CSCTightHaloFilter",
+        "CSCLooseHaloFilter"
+      };
+
+      for (auto& filt : fEnabledFilters) {
+        unsigned iF = std::find(filterNames, filterNames + nStaticFilters, filt) - filterNames;
+        if (iF != nStaticFilters)
+          fBitMask |= (1 << iF);
+      }
+
+      if (hCounter) {
+        int iX = 1;
+        for (unsigned iB = 0; iB != nStaticFilters; ++iB) {
+          if (((fBitMask >> iB) & 1) != 0)
+            hCounter->GetXaxis()->SetBinLabel(iX++, filterNames[iB]);
+        }
+      }
+
+      // 2 -> never try reload again
+      fReload = 2;
+      return;
+    }
+
+    fReload = 0;
+
+    std::vector<std::string>* filterLabels(new std::vector<std::string>);
+    TBranch* labelBranch(0);
+    nameTree->SetBranchAddress(fLabelBranchName, &filterLabels, &labelBranch);
+    if (!labelBranch) {
+      SendError(kWarning, "SlaveBegin", "EvtSelData label names are not stored in the file.");
+      return;
+    }
+
+    labelBranch->GetEntry(0);
+
+    for (auto& filt : fEnabledFilters) {
+      auto itr(std::find(filterLabels->begin(), filterLabels->end(), filt));
+      if (itr == filterLabels->end()) {
+        SendError(kWarning, "SlaveBegin", ("MET filter with label " + filt + " is not defined.").c_str());
+        continue;
+      }
+
+      fBitMask |= (1 << (itr - filterLabels->begin()));
+    }
+
+    if (hCounter) {
+      int iX = 1;
+      for (unsigned iB = 0; iB != filterLabels->size(); ++iB) {
+        if (((fBitMask >> iB) & 1) != 0)
+          hCounter->GetXaxis()->SetBinLabel(iX++, filterLabels->at(iB).c_str());
+      }
+    }
+
+    delete nameTree;
+    delete filterLabels;
+  }
+}
+
+Bool_t
+mithep::BadEventsFilterMod::Notify()
+{
+  fReload = 1;
+  return true;
 }
 
 void
