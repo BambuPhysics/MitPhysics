@@ -72,10 +72,6 @@ namespace mithep
                                                   const ElectronCol *goodElectrons = 0,
                                                   const MuonCol *goodMuons = 0,
                                                   Double_t dRMax = 0.3, Bool_t isDebug=kFALSE);
-    static Double_t PFEleCombinedIsolationRhoCorr(Electron const*, Double_t rho, ElectronTools::EElectronEffectiveAreaTarget);
-    static Double_t PFEleCombinedIsolationRhoCorr(Double_t chargedIso, Double_t neutralIso, Double_t rho, Double_t eta, ElectronTools::EElectronEffectiveAreaTarget);
-
-    static Double_t PFPhotonIsolationRhoCorr(Double_t eta, Double_t iso, Double_t rho, PhotonTools::EPhotonEffectiveAreaTarget, PhotonTools::EPhotonEffectiveAreaType);
 
     static Double_t PFMuonIsolationRhoCorr(Muon const*, Double_t rho, MuonTools::EMuonEffectiveAreaTarget);
 

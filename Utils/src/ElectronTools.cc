@@ -487,7 +487,7 @@ mithep::ElectronTools::PassIsoRhoCorr(Electron const* ele, EElIsoType isoType, D
 
   // below: Summer15, without footprint correction
 
-  double combRelIso = IsolationTools::PFEleCombinedIsolationRhoCorr(ele, rho, kEleEASummer15) / ele->Pt();
+  double combRelIso = CombinedIsoRhoCorr(isoType, ele, rho) / ele->Pt();
 
   switch (isoType) {
   case kSummer15VetoIso:
@@ -523,7 +523,7 @@ mithep::ElectronTools::PassIsoFootprintRhoCorr(Electron const* ele, EElIsoType i
   double phIso = 0.;
   IsolationTools::PFEGIsoFootprintRemoved(ele, vertex, pfCandidates, 0.3, chIso, nhIso, phIso);
 
-  double combRelIso = IsolationTools::PFEleCombinedIsolationRhoCorr(chIso, nhIso + phIso, rho, scEta, kEleEASummer15) / ele->Pt();
+  double combRelIso = CombinedIsoRhoCorr(isoType, chIso, nhIso + phIso, rho, scEta) / ele->Pt();
 
   switch (isoType) {
   case kSummer15VetoIso:
@@ -1471,6 +1471,26 @@ mithep::ElectronTools::Likelihood(ElectronLikelihood *LH, const Electron *ele)
 
 }
 
+mithep::ElectronTools::EElectronEffectiveAreaTarget
+mithep::ElectronTools::EffectiveAreaTarget(EElIsoType isoType)
+{
+  switch (isoType) {
+  case kSummer15VetoIso:
+  case kSummer15LooseIso:
+  case kSummer15MediumIso:
+  case kSummer15TightIso:
+  case kSummer15FakeIso:
+  case kSummer15Veto50nsIso:
+  case kSummer15Loose50nsIso:
+  case kSummer15Medium50nsIso:
+  case kSummer15Tight50nsIso:
+  case kSummer15Fake50nsIso:
+    return kEleEASummer15;
+  default:
+    return kEleEANoCorr;
+  }
+}
+
 Double_t
 mithep::ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Double_t SCEta, EElectronEffectiveAreaTarget target)
 {
@@ -1723,6 +1743,28 @@ mithep::ElectronTools::ElectronEffectiveArea(EElectronEffectiveAreaType type, Do
   return areas.at(etaBin);
 }
 
+Double_t
+mithep::ElectronTools::CombinedIsoRhoCorr(EElIsoType isoType, Electron const* ele, Double_t rho)
+{
+  return CombinedIsoRhoCorr(isoType,
+                            ele->PFChargedHadronIso(),
+                            ele->PFNeutralHadronIso() + ele->PFPhotonIso(),
+                            rho, ele->SCluster()->Eta());
+}
+
+Double_t
+mithep::ElectronTools::CombinedIsoRhoCorr(EElIsoType isoType, Double_t chargedIso, Double_t neutralIso, Double_t rho, Double_t eta)
+{
+  EElectronEffectiveAreaTarget eaTarget = EffectiveAreaTarget(isoType);
+  double effArea = ElectronEffectiveArea(kEleNeutralIso03, eta, eaTarget);
+  
+  double isolation = neutralIso - effArea * rho;
+  if (isolation < 0.) isolation = 0.;
+  isolation += chargedIso;
+
+  // this function is expected to return the absolute iso
+  return isolation;
+}
 
 Bool_t
 mithep::ElectronTools::PassHggLeptonTagID(const Electron* ele)
