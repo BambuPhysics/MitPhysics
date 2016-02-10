@@ -328,7 +328,7 @@ mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Doubl
     phIsoCut = isEB ? 0.28 : 0.39;
     break;
   case kSpring15TightIso:
-    chIsoCut = isEB ? 1.66 : 1.04;
+    chIsoCut = isEB ? 0.76 : 0.56;
     nhIsoCut = isEB ? 0.97 : 2.09;
     phIsoCut = isEB ? 0.08 : 0.16;
     break;
