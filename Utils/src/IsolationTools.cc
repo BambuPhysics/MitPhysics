@@ -648,38 +648,6 @@ Double_t IsolationTools::PFElectronIsolation2012LepTag(const Electron *ele, cons
   return (IsoVar_ChargedIso_DR + IsoVar_NeutralIso_DR);
 }
 
-Double_t
-mithep::IsolationTools::PFEleCombinedIsolationRhoCorr(mithep::Electron const* ele, Double_t rho, ElectronTools::EElectronEffectiveAreaTarget eaDef)
-{
-  return PFEleCombinedIsolationRhoCorr(ele->PFChargedHadronIso(),
-                                       ele->PFNeutralHadronIso() + ele->PFPhotonIso(),
-                                       rho, ele->SCluster()->Eta(), eaDef);
-}
-
-Double_t
-mithep::IsolationTools::PFEleCombinedIsolationRhoCorr(Double_t chargedIso, Double_t neutralIso, Double_t rho, Double_t eta, ElectronTools::EElectronEffectiveAreaTarget eaDef)
-{
-  double effArea = ElectronTools::ElectronEffectiveArea(ElectronTools::kEleNeutralIso03, eta, ElectronTools::kEleEASummer15);
-
-  double isolation = neutralIso - effArea * rho;
-  if (isolation < 0.) isolation = 0.;
-  isolation += chargedIso;
-
-  // this function is expected to return the absolute iso
-  return isolation;
-}
-
-Double_t
-mithep::IsolationTools::PFPhotonIsolationRhoCorr(Double_t eta, Double_t iso, Double_t rho, PhotonTools::EPhotonEffectiveAreaTarget eaDef, PhotonTools::EPhotonEffectiveAreaType eaType)
-{
-  double effArea = PhotonTools::PhotonEffectiveArea(eaType, std::abs(eta), eaDef);
-
-  double correctedIso = iso - rho * effArea;
-  if (correctedIso < 0.) correctedIso = 0.;
-  
-  return correctedIso;
-}
-
 //--------------------------------------------------------------------------------------------------
 Double_t IsolationTools::BetaM(const TrackCol *tracks, const Muon *p, const Vertex *vertex, 
                                Double_t ptMin, Double_t  delta_z, Double_t extRadius,

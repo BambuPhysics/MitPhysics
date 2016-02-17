@@ -179,8 +179,11 @@ namespace mithep {
                                     Double_t beta = 1.0);
     static bool         compute_cut(double x, double et, double cut_min, double cut_max, bool gtn=false);
     static Double_t     Likelihood(ElectronLikelihood *LH, const Electron *ele);
+    static EElectronEffectiveAreaTarget EffectiveAreaTarget(EElIsoType);
     static Double_t     ElectronEffectiveArea(EElectronEffectiveAreaType type, Double_t Eta, 
                                               EElectronEffectiveAreaTarget EffectiveAreaTarget = kEleEAData2011);
+    static Double_t     CombinedIsoRhoCorr(EElIsoType, Electron const*x, Double_t rho);
+    static Double_t     CombinedIsoRhoCorr(EElIsoType, Double_t chargedIso, Double_t neutralIso, Double_t rho, Double_t eta);
     static std::pair<Double_t,Double_t> ComputeEPCombination( const Electron * ele, const float regression_energy, 
                                                               const float regression_energy_error);
 

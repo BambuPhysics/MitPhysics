@@ -243,8 +243,13 @@ namespace mithep {
 
     static bool PassVgamma2011Selection(const Photon* ph, double rho);
 
+    static EPhotonEffectiveAreaTarget EffectiveAreaTarget(EPhIsoType);
     static Double_t PhotonEffectiveArea(EPhotonEffectiveAreaType, Double_t absEta, EPhotonEffectiveAreaTarget);
     static Bool_t PassID(const Photon *ph, EPhIdType idType);
+    static void IsoLeakageCorrection(Photon const*, EPhIsoType, Double_t& chIso, Double_t& nhIso, Double_t& phIso);
+    static void IsoLeakageCorrection(EPhIsoType, Double_t et, Double_t scEta, Double_t& chIso, Double_t& nhIso, Double_t& phIso);
+    static void IsoRhoCorrection(Photon const*, EPhIsoType, Double_t rho, Double_t& chIso, Double_t& nhIso, Double_t& phIso);
+    static void IsoRhoCorrection(EPhIsoType, Double_t rho, Double_t scEta, Double_t& chIso, Double_t& nhIso, Double_t& phIso);
     static Bool_t PassIsoRhoCorr(Photon const*, EPhIsoType, Double_t rho);
     static Bool_t PassIsoRhoCorr(Photon const*, EPhIsoType, Double_t rho, Double_t chIso, Double_t nhIso, Double_t phIso);
     static Bool_t PassIsoFootprintRhoCorr(Photon const*, EPhIsoType, Vertex const*, PFCandidateCol const*, Double_t rho);
