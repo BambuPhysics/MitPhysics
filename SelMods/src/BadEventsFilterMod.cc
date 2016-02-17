@@ -71,7 +71,7 @@ mithep::BadEventsFilterMod::BeginRun()
     auto* nameTree = dynamic_cast<TTree*>(file->Get(fLabelTreeName));
     if (!nameTree) {
       // is bambu version <= 042
-      SendError(kWarning, "SlaveBegin", "EvtSelData label names are not stored in the file.");
+      SendError(kWarning, "BeginRun", "EvtSelData label names are not stored in the file.");
 
       enum StaticFilter {
         kHBHENoiseFilter,
@@ -104,6 +104,8 @@ mithep::BadEventsFilterMod::BeginRun()
         unsigned iF = std::find(filterNames, filterNames + nStaticFilters, filt) - filterNames;
         if (iF != nStaticFilters)
           fBitMask |= (1 << iF);
+        else
+          SendError(kAbortAnalysis, "BeginRun", ("MET filter with label " + filt + " is not defined.").c_str());
       }
 
       if (hCounter) {
@@ -140,19 +142,15 @@ mithep::BadEventsFilterMod::BeginRun()
     std::vector<std::string>* filterLabels(new std::vector<std::string>);
     TBranch* labelBranch(0);
     nameTree->SetBranchAddress(fLabelBranchName, &filterLabels, &labelBranch);
-    if (!labelBranch) {
-      SendError(kWarning, "SlaveBegin", "EvtSelData label names are not stored in the file.");
-      return;
-    }
+    if (!labelBranch)
+      SendError(kAbortAnalysis, "BeginRun", "EvtSelData label names are not stored in the file.");
 
     labelBranch->GetEntry(0);
 
     for (auto& filt : fEnabledFilters) {
       auto itr(std::find(filterLabels->begin(), filterLabels->end(), filt));
-      if (itr == filterLabels->end()) {
-        SendError(kWarning, "SlaveBegin", ("MET filter with label " + filt + " is not defined.").c_str());
-        continue;
-      }
+      if (itr == filterLabels->end())
+        SendError(kAbortAnalysis, "BeginRun", ("MET filter with label " + filt + " is not defined.").c_str());
 
       fBitMask |= (1 << (itr - filterLabels->begin()));
     }
