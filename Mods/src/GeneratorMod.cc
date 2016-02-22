@@ -250,7 +250,7 @@ void GeneratorMod::Process()
       }
 
       // qqH, information about the forward jets
-      else if (isqqH == kFALSE && p->Is(MCParticle::kH)) {
+      else if (isqqH == kFALSE && p->Is(MCParticle::kH) && i > 1) {
 	isqqH = kTRUE;
 	const MCParticle *pq1 = particles->At(i-1);
 	const MCParticle *pq2 = particles->At(i-2);
