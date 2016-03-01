@@ -27,6 +27,9 @@ mithep::BadEventsFilterMod::AddEventList(char const* name, char const* fileName)
   auto& list = fEventLists[name];
 
   std::ifstream input(fileName);
+  if (!input.is_open())
+    SendError(kAbortAnalysis, "AddEventList", "File %s not found.", fileName);
+
   std::string line;
 
   while (true) {
