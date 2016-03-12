@@ -46,6 +46,9 @@
 #include "MitAna/PhysicsUtils/interface/CMSTopTagger.h"
 #include "TStopwatch.h"
 
+#include "MitPhysics/Utils/interface/JetCorrector.h"
+
+
 namespace mithep
 {
   class FatJetExtenderMod : public BaseMod
@@ -56,6 +59,11 @@ namespace mithep
         kCambridgeAachen,
         kAntiKt,
         kKt
+      };
+      enum CorrectionLevel {
+        mNone,
+        mL2L3,
+        mAll
       };
       FatJetExtenderMod(const char *name = "FatJetExtenderMod",
                    const char *title = "XlFatJets Filler module");
@@ -98,6 +106,9 @@ namespace mithep
       void SetDebugFlag(int i)   { fDebugFlag = i; }
       void SetSDInputCard(const char *s)   { fInputCard = s;  }
       void SetNQjets(unsigned int n)       { fNQjets = n;           }
+      void SetCorrectionLevel(CorrectionLevel l) { fCorrLevel = l; }
+      void AddCorrectionFromFile(TString filename) { fJECFiles.push_back(filename); }
+      void SetJetAlgo(JetAlgo j) { fJetAlgo = j; }
     protected:
       typedef std::vector<fastjet::PseudoJet> VPseudoJet;
       typedef std::vector<fastjet::PseudoJet const*> VPseudoJetPtr;
@@ -125,7 +136,6 @@ namespace mithep
       Double_t FindMean(std::vector<float>);
 
       Vect4M GetCorrectedMomentum(fastjet::PseudoJet const&, Double_t thisJEC);
-
     private:
       class SoftDropCalculator {
       public:
@@ -234,13 +244,16 @@ namespace mithep
       JetAlgo fJetAlgo;
       Bool_t fDoCMSandHTT;
       TStopwatch* fStopwatch{0};
+      CorrectionLevel fCorrLevel; // correction level for groomed quantities
+      JetCorrector *fCorrector{0};
+      std::vector<TString> fJECFiles;
 
       // Counters : used to initialize seed for QJets volatility
       Long64_t fCounter;
 
       int fDebugFlag = -1;
 
-      ClassDef(FatJetExtenderMod, 0)         //XlJets, Fat and Sub, filler
+      ClassDef(FatJetExtenderMod, 2)         //XlJets, Fat and Sub, filler
   };
 }
 #endif
