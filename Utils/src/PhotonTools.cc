@@ -17,6 +17,33 @@ PhotonTools::PhotonTools()
   // Constructor.
 }
 
+mithep::PhotonTools::EPhotonEffectiveAreaTarget
+mithep::PhotonTools::EffectiveAreaTarget(EPhIsoType isoType)
+{
+  switch (isoType) {
+  case kPhys14LooseIso:
+  case kPhys14MediumIso:
+  case kPhys14TightIso:
+    return kPhoEAPhys14;
+
+  case kHighPtV2Iso:
+    return kPhoEAHighPtV2;
+
+  case kSpring15Loose50nsIso:
+  case kSpring15Medium50nsIso:
+  case kSpring15Tight50nsIso:
+    return kPhoEASpring1550ns;
+
+  case kSpring15LooseIso:
+  case kSpring15MediumIso:
+  case kSpring15TightIso:
+    return kPhoEASpring15;
+
+  default:
+    return kPhoEANoCorr;
+  }
+}
+
 Double_t
 mithep::PhotonTools::PhotonEffectiveArea(EPhotonEffectiveAreaType type, Double_t SCEta, EPhotonEffectiveAreaTarget target)
 {
@@ -186,92 +213,133 @@ mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Doubl
   return PassIsoRhoCorr(pho, isoType, rho, pho->PFChargedHadronIso(), pho->PFNeutralHadronIso(), pho->PFPhotonIso());
 }
 
+void
+mithep::PhotonTools::IsoLeakageCorrection(Photon const* pho, EPhIsoType isoType, Double_t& chIso, Double_t& nhIso, Double_t& phIso)
+{
+  IsoLeakageCorrection(isoType, pho->Et(), pho->SCluster()->AbsEta(), chIso, nhIso, phIso);
+}
+
+void
+mithep::PhotonTools::IsoLeakageCorrection(EPhIsoType isoType, Double_t et, Double_t scEta, Double_t& chIso, Double_t& nhIso, Double_t& phIso)
+{
+  bool isEB = scEta < gkPhoEBEtaMax;
+
+  switch (isoType){
+  case kPhys14LooseIso:
+  case kPhys14MediumIso:
+  case kPhys14TightIso:
+    nhIso -= isEB ? TMath::Exp(0.0028 * et + 0.5408) : (0.0172 * et);
+    phIso -= isEB ? (0.0014 * et) : (0.0091 * et);
+    break;
+  case kHighPtV2Iso:
+    phIso += (scEta < 2. ? 0.0045 : 0.003) * et;
+    break;
+  case kSpring15Loose50nsIso:
+  case kSpring15Medium50nsIso:
+  case kSpring15Tight50nsIso:
+    nhIso -= isEB ? TMath::Exp(0.0044 * et + 0.5809) : TMath::Exp(0.004 * et + 0.9402);
+    phIso -= isEB ? (0.0043 * et) : (0.0041 * et);
+    break;
+  case kSpring15LooseIso:
+  case kSpring15MediumIso:
+  case kSpring15TightIso:
+    nhIso -= isEB ? (0.014 * et + 0.000019 * et * et) : (0.0139 * et + 0.000025 * et * et);
+    phIso -= isEB ? (0.0053 * et) : (0.0034 * et);
+    break;
+  default:
+    return;
+  }
+}
+
+void
+mithep::PhotonTools::IsoRhoCorrection(Photon const* pho, EPhIsoType isoType, Double_t rho, Double_t& chIso, Double_t& nhIso, Double_t& phIso)
+{
+  IsoRhoCorrection(isoType, rho, pho->SCluster()->AbsEta(), chIso, nhIso, phIso);
+}
+
+void
+mithep::PhotonTools::IsoRhoCorrection(EPhIsoType isoType, Double_t rho, Double_t eta, Double_t& chIso, Double_t& nhIso, Double_t& phIso)
+{
+  EPhotonEffectiveAreaTarget eaTarget = EffectiveAreaTarget(isoType);
+
+  Double_t* iso[] = {&chIso, &nhIso, &phIso};
+  EPhotonEffectiveAreaType type[] = {kPhoChargedHadron03, kPhoNeutralHadron03, kPhoPhoton03};
+  for (unsigned iS = 0; iS != 3; ++iS) {
+    *(iso[iS]) -= rho * PhotonEffectiveArea(type[iS], std::abs(eta), eaTarget);
+    if (*(iso[iS]) < 0.)
+      *(iso[iS]) = 0.;
+  }
+}
+
 Bool_t
 mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Double_t rho, Double_t chIso, Double_t nhIso, Double_t phIso)
 {
   double scEta = pho->SCluster()->AbsEta();
   bool isEB = scEta < gkPhoEBEtaMax;
-  double pEt = pho->Et();
 
   double chIsoCut = 0.;
   double nhIsoCut = 0.;
   double phIsoCut = 0.;
 
-  EPhotonEffectiveAreaTarget eaTarget;
-
   switch (isoType){
   case kPhys14LooseIso:
     chIsoCut = isEB ? 2.67 : 1.79;
-    nhIsoCut = isEB ? (7.23 + TMath::Exp(0.0028 * pEt + 0.5408)) : (8.89 + 0.01725 * pEt);
-    phIsoCut = isEB ? (2.11 + 0.0014 * pEt) : (3.09 + 0.0091 * pEt);
-    eaTarget = kPhoEAPhys14;
+    nhIsoCut = isEB ? 7.23 : 8.89;
+    phIsoCut = isEB ? 2.11 : 3.09;
     break;
   case kPhys14MediumIso:
     chIsoCut = isEB ? 1.79 : 1.09;
-    nhIsoCut = isEB ? (0.16 + TMath::Exp(0.0028 * pEt + 0.5408)) : (4.31 + 0.0172 * pEt);
-    phIsoCut = isEB ? (1.90 + 0.0014 * pEt) : (1.90 + 0.0091 * pEt);
-    eaTarget = kPhoEAPhys14;
+    nhIsoCut = isEB ? 0.16 : 4.31;
+    phIsoCut = isEB ? 1.90 : 1.90;
     break;
   case kPhys14TightIso:
     chIsoCut = isEB ? 1.66 : 1.04;
-    nhIsoCut = isEB ? (0.14 + TMath::Exp(0.0028 * pEt + 0.5408)) : (3.89 + 0.0172 * pEt);
-    phIsoCut = isEB ? (1.40 + 0.0014 * pEt) : (1.40 + 0.0091 * pEt);
-    eaTarget = kPhoEAPhys14;
+    nhIsoCut = isEB ? 0.14 : 3.89;
+    phIsoCut = isEB ? 1.40 : 1.40;
     break;
   case kHighPtV2Iso:
     chIsoCut = 5.;
     nhIsoCut = std::numeric_limits<double>::max();
-    phIsoCut = 2.5 + (isEB ? 2.75 : 2.) - (scEta < 2. ? 0.0045 : 0.003) * pEt;
-    eaTarget = kPhoEAPhys14;
+    phIsoCut = 2.5 + (isEB ? 2.75 : 2.);
     break;
   case kSpring15Loose50nsIso:
     chIsoCut = isEB ? 2.44 : 1.84;
-    nhIsoCut = isEB ? (2.57 + TMath::Exp(0.0044 * pEt + 0.5809)) : (4. + TMath::Exp(0.004 * pEt + 0.9402));
-    phIsoCut = isEB ? (1.92 + 0.0043 * pEt) : (2.15 + 0.0041 * pEt);
-    eaTarget = kPhoEASpring1550ns;
+    nhIsoCut = isEB ? 2.57 : 4.;
+    phIsoCut = isEB ? 1.92 : 2.15;
     break;
   case kSpring15Medium50nsIso:
     chIsoCut = isEB ? 1.31 : 1.25;
-    nhIsoCut = isEB ? (0.60 + TMath::Exp(0.0044 * pEt + 0.5809)) : (1.65 + TMath::Exp(0.004 * pEt + 0.9402));
-    phIsoCut = isEB ? (1.33 + 0.0043 * pEt) : (1.02 + 0.0041 * pEt);
-    eaTarget = kPhoEASpring1550ns;
+    nhIsoCut = isEB ? 0.60 : 1.65;
+    phIsoCut = isEB ? 1.33 : 1.02;
     break;
   case kSpring15Tight50nsIso:
     chIsoCut = isEB ? 0.91 : 0.65;
-    nhIsoCut = isEB ? (0.33 + TMath::Exp(0.0044 * pEt + 0.5809)) : (0.93 + TMath::Exp(0.004 * pEt + 0.9402));
-    phIsoCut = isEB ? (0.61 + 0.0043 * pEt) : (0.54 + 0.0041 * pEt);
-    eaTarget = kPhoEASpring1550ns;
+    nhIsoCut = isEB ? 0.33 : 0.93;
+    phIsoCut = isEB ? 0.61 : 0.54;
     break;
   case kSpring15LooseIso:
     chIsoCut = isEB ? 3.32 : 1.97;
-    nhIsoCut = isEB ? (1.92 + 0.014 * pEt + 0.000019 * pEt * pEt) : (11.86 + 0.0139 * pEt + 0.000025 * pEt * pEt);
-    phIsoCut = isEB ? (0.81 + 0.0053 * pEt) : (0.83 + 0.0034 * pEt);
-    eaTarget = kPhoEASpring15;
+    nhIsoCut = isEB ? 1.92 : 11.86;
+    phIsoCut = isEB ? 0.81 : 0.83;
     break;
   case kSpring15MediumIso:
     chIsoCut = isEB ? 1.37 : 1.10;
-    nhIsoCut = isEB ? (1.06 + 0.014 * pEt + 0.000019 * pEt * pEt) : (2.69 + 0.0139 * pEt + 0.000025 * pEt * pEt);
-    phIsoCut = isEB ? (0.28 + 0.0053 * pEt) : (0.39 + 0.0034 * pEt);
-    eaTarget = kPhoEASpring15;
+    nhIsoCut = isEB ? 1.06 : 2.69;
+    phIsoCut = isEB ? 0.28 : 0.39;
     break;
   case kSpring15TightIso:
-    chIsoCut = isEB ? 1.66 : 1.04;
-    nhIsoCut = isEB ? (0.97 + 0.014 * pEt + 0.000019 * pEt * pEt) : (2.09 + 0.0139 * pEt + 0.000025 * pEt * pEt);
-    phIsoCut = isEB ? (0.08 + 0.0053 * pEt) : (0.16 + 0.0034 * pEt);
-    eaTarget = kPhoEASpring15;
+    chIsoCut = isEB ? 0.76 : 0.56;
+    nhIsoCut = isEB ? 0.97 : 2.09;
+    phIsoCut = isEB ? 0.08 : 0.16;
     break;
   default:
     return false;
   }
 
-  if (IsolationTools::PFPhotonIsolationRhoCorr(scEta, chIso, rho, eaTarget, kPhoChargedHadron03) > chIsoCut)
-    return false;
-  if (IsolationTools::PFPhotonIsolationRhoCorr(scEta, nhIso, rho, eaTarget, kPhoNeutralHadron03) > nhIsoCut)
-    return false;
-  if (IsolationTools::PFPhotonIsolationRhoCorr(scEta, phIso, rho, eaTarget, kPhoPhoton03) > phIsoCut)
-    return false;
+  IsoLeakageCorrection(pho, isoType, chIso, nhIso, phIso);
+  IsoRhoCorrection(isoType, rho, pho->SCluster()->AbsEta(), chIso, nhIso, phIso);
 
-  return true;
+  return chIso < chIsoCut && nhIso < nhIsoCut && phIso < phIsoCut;
 }
 
 //--------------------------------------------------------------------------------------------------
