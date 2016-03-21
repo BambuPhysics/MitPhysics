@@ -59,9 +59,12 @@ BaseMod(name,title),
   fNMaxMicrojets(5),
   fNQjets(25),
   fJetAlgo(kAntiKt),
-  fDoCMSandHTT(kFALSE)
+  fDoCMSandHTT(kFALSE),
+  fCorrLevel(mNone),
+  fCorrector(0)
 {
   // Constructor.
+  fJECFiles.clear();
 }
 
 FatJetExtenderMod::~FatJetExtenderMod()
@@ -199,7 +202,7 @@ void FatJetExtenderMod::SlaveBegin()
   // Initialize area caculation (done with ghost particles)
   int activeAreaRepeats = 1;
   double ghostArea = 0.01;
-  double ghostEtaMax = 7.0;
+  double ghostEtaMax = 5.0;
   fActiveArea = new fastjet::GhostedAreaSpec(ghostEtaMax,activeAreaRepeats,ghostArea);
   fAreaDefinition = new fastjet::AreaDefinition(fastjet::active_area_explicit_ghosts,*fActiveArea);
 
@@ -219,6 +222,16 @@ void FatJetExtenderMod::SlaveBegin()
     fBackground = new Deconstruction::BackgroundModel(*fParam);
     fISR = new Deconstruction::ISRModel(*fParam);
     fDeconstruct = new Deconstruction::Deconstruct(*fParam, *fSignal, *fBackground, *fISR);
+  }
+
+  if (fCorrLevel==mL2L3) {
+    if (fJECFiles.size()==0)
+      SendError(kAbortAnalysis,"SlaveBegin","L2/L3 corrections for groomed fatjets are requested but parameter files not provided.");
+    // only case we need to redo corrections
+    fCorrector = new JetCorrector();
+    for (auto filePath : fJECFiles) {
+      fCorrector->AddParameterFile(filePath.Data());
+    }
   }
 
   fStopwatch = new TStopwatch();
@@ -274,6 +287,9 @@ void FatJetExtenderMod::SlaveTerminate()
   delete fSignal;
   delete fBackground;
   delete fISR;
+
+  if (fCorrector)
+    delete fCorrector;
 
   delete fStopwatch;
 }
@@ -400,7 +416,14 @@ void FatJetExtenderMod::FillXlFatJet(const FatJet *fatJet)
   }
 
   // do grooming and subjetting
-  double thisJEC = xlFatJet->Pt()/xlFatJet->RawMom().Pt();
+  double thisJEC = 1;
+  if (fCorrLevel==mAll)
+    thisJEC = xlFatJet->Pt()/xlFatJet->RawMom().Pt();
+  else if (fCorrLevel==mL2L3) {
+    Jet *l2l3Jet = fatJet->MakeCopy();
+    fCorrector->Correct(*l2l3Jet);
+    thisJEC = l2l3Jet->Pt()/l2l3Jet->RawMom().Pt();
+  }
   fastjet::PseudoJet fjClusteredJets[XlSubJet::kTrimmed+1] = {
     fastjet::PseudoJet(),
     (*fPruner)(*maxPtJet10),
