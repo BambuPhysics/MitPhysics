@@ -122,23 +122,46 @@ MetCorrectionMod::Process()
     }
   }
 
-  // prepare the storage array for the corrected MET
-  fOutput->Reset();
-
-  TVector2 metCorrection[3] = {};
-  double sumEtCorrection[3] = {};
-
-  // ===== Type 0 corrections, to mitigate pileup ====
-  // https://hypernews.cern.ch/HyperNews/CMS/get/JetMET/1473/1.html
-  // !!! Not checked prior to Run 2 - use at your own risk
-  if (fApplyType0) {
-
-    auto* pfCandidates = GetObject<PFCandidateCol>(fPFCandidatesName);
+  PFCandidateCol const* pfCandidates = 0;
+  if (fApplyType0 || fApplyUnclustered) {
+    pfCandidates = GetObject<PFCandidateCol>(fPFCandidatesName);
     if (!pfCandidates) {
       SendError(kAbortModule, "Process","Pointer to input PFCandidates %s is null.",
                 fPFCandidatesName.Data());
       return;
     }
+  }
+  
+  JetCol const* jets = 0;
+  if (fApplyType1 || fApplyUnclustered) {
+    jets = GetObject<JetCol>(fJetsName);
+    if (!jets) {
+      SendError(kAbortModule, "Process",
+                "Pointer to input jet collection %s is null.",
+                fJetsName.Data());
+      return;
+    }
+  }
+
+  // prepare the storage array for the corrected MET
+  fOutput->Reset();
+
+  // type0, type1, shift, unclustered
+  enum CorrectionType {
+    kType0,
+    kType1,
+    kShift,
+    kUnclustered,
+    nCorrectionTypes
+  };
+
+  TVector2 metCorrection[nCorrectionTypes] = {};
+  double sumEtCorrection[nCorrectionTypes] = {};
+
+  // ===== Type 0 corrections, to mitigate pileup ====
+  // https://hypernews.cern.ch/HyperNews/CMS/get/JetMET/1473/1.html
+  // !!! Not checked prior to Run 2 - use at your own risk
+  if (fApplyType0) {
     // prepare the 4-mom sum of the charged PU candidates
     double puX = 0.;
     double puY = 0.;
@@ -180,8 +203,8 @@ MetCorrectionMod::Process()
     Double_t sumPUSumEtCorr = puSum * sumPUPtCorr / sumPUPt;
 
     // correct the MET
-    metCorrection[0].Set(sumPUPxCorr, sumPUPyCorr);
-    sumEtCorrection[0] -= sumPUSumEtCorr;
+    metCorrection[kType0].Set(sumPUPxCorr, sumPUPyCorr);
+    sumEtCorrection[kType0] -= sumPUSumEtCorr;
 
     // debug
     if (fPrint) {
@@ -194,18 +217,10 @@ MetCorrectionMod::Process()
 
   } // end Type 0 correction scope
 
-  // ===== Type 1 corrections, to propagate JEC to MET ====
+  // ===== Type 1 corrections, to propagate JEC to MET =====
+  // ===== Also collecting unclustered energy as we loop through jets =====
   // https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMetAnalysis#Type_I_Correction
-  if (fApplyType1) {
-
-    auto* inJets = GetObject<JetCol>(fJetsName);
-    if (!inJets) {
-      SendError(kAbortModule, "Process",
-                "Pointer to input jet collection %s is null.",
-                fJetsName.Data());
-      return;
-    }
-
+  if (fApplyType1 || fApplyUnclustered) {
     auto* inRho = GetObject<PileupEnergyDensityCol>(Names::gkPileupEnergyDensityBrn);
     if (!inRho) {
       SendError(kAbortModule, "Process",
@@ -215,15 +230,54 @@ MetCorrectionMod::Process()
 
     double rho = inRho->At(0)->Rho(fRhoAlgo);
 
-    for (unsigned iJ = 0; iJ != inJets->GetEntries(); ++iJ) {
-      auto& inJet = *inJets->At(iJ);
+    for (unsigned iJ = 0; iJ != jets->GetEntries(); ++iJ) {
+      auto& inJet = *jets->At(iJ);
       auto&& inJetRawMom(inJet.RawMom());
 
+      // filter on |eta|
       double absEta = inJet.AbsEta();
 
       if (absEta > fMaxJetEta)
         continue;
 
+      // filter on corrected pt
+
+      // save the current correction level first
+      auto currentMax = fJetCorrector->GetMaxCorrLevel();
+      fJetCorrector->SetMaxCorrLevel(Jet::L3);
+
+      double fullCorr; // L1L2L3
+      double offsetCorr; // L1 only
+      if (absEta < 9.9) {
+        std::vector<float>&& corr(fJetCorrector->CorrectionFactors(inJet, rho));
+        fullCorr = corr.back() * fJetCorrector->UncertaintyFactor(inJet);
+        offsetCorr = corr.front();
+      }
+      else {
+        auto modJet(inJet);
+        modJet.SetRawPtEtaPhiM(inJetRawMom.Pt(), inJet.Eta() / absEta * 9.9, inJetRawMom.Phi(), inJetRawMom.M());
+        std::vector<float>&& corr(fJetCorrector->CorrectionFactors(modJet, rho));
+        fullCorr = corr.back() * fJetCorrector->UncertaintyFactor(modJet);
+        offsetCorr = corr.front();
+      }
+
+      // recover the correction level
+      fJetCorrector->SetMaxCorrLevel(currentMax);
+
+      auto fullCorrMom = inJetRawMom * fullCorr;
+
+      if (fullCorrMom.Pt() < fMinJetPt) continue;
+
+      if (fApplyUnclustered) {
+        // this jet is considered "clustered". See below for unclustered energy computation.
+        metCorrection[kUnclustered] -= TVector2(inJetRawMom.Px(), inJetRawMom.Py());
+        sumEtCorrection[kUnclustered] -= inJetRawMom.Pt();
+      }
+
+      if (!fApplyType1)
+        continue;
+
+      // now filter on jet properties
       if (fMaxEMFraction > 0.) {
         if (inJet.ObjType() == kPFJet) {
           auto& inPFJet = static_cast<PFJet const&>(inJet);
@@ -261,36 +315,11 @@ MetCorrectionMod::Process()
           SendError(kWarning, "Process", "SkipMuons is set but the input jet correction is not PF.");
       }
 
-      auto currentMax = fJetCorrector->GetMaxCorrLevel();
-      fJetCorrector->SetMaxCorrLevel(Jet::L3);
-
-      double fullCorr;
-      double offsetCorr;
-      if (absEta < 9.9) {
-        std::vector<float>&& corr(fJetCorrector->CorrectionFactors(inJet, rho));
-        fullCorr = corr.back() * fJetCorrector->UncertaintyFactor(inJet);
-        offsetCorr = corr.front();
-      }
-      else {
-        auto modJet(inJet);
-        modJet.SetRawPtEtaPhiM(inJetRawMom.Pt(), inJet.Eta() / absEta * 9.9, inJetRawMom.Phi(), inJetRawMom.M());
-        std::vector<float>&& corr(fJetCorrector->CorrectionFactors(modJet, rho));
-        fullCorr = corr.back() * fJetCorrector->UncertaintyFactor(modJet);
-        offsetCorr = corr.front();
-      }
-
-      fJetCorrector->SetMaxCorrLevel(currentMax);
-
-      auto fullCorrMom = inJetRawMom * fullCorr;
-
-      // do not propagate JEC for soft jets
-      if (fullCorrMom.Pt() < fMinJetPt) continue;
-
       auto offsetCorrMom = inJetRawMom * offsetCorr;
 
       // compute the MET Type 1 correction
-      metCorrection[1] -= TVector2(fullCorrMom.Px() - offsetCorrMom.Px(), fullCorrMom.Py() - offsetCorrMom.Py());
-      sumEtCorrection[1] += (fullCorrMom.Et() - offsetCorrMom.Et());
+      metCorrection[kType1] -= TVector2(fullCorrMom.Px() - offsetCorrMom.Px(), fullCorrMom.Py() - offsetCorrMom.Py());
+      sumEtCorrection[kType1] += (fullCorrMom.Et() - offsetCorrMom.Et());
 
       // debug
       if (fPrint) {
@@ -301,9 +330,9 @@ MetCorrectionMod::Process()
     }
 
     // debug
-    if (fPrint) {
+    if (fApplyType1 && fPrint) {
       std::cout << "\n" << std::endl;
-      std::cout << "Final type1 cor Pt: " << metCorrection[1].Mod() << std::endl;
+      std::cout << "Final type1 cor Pt: " << metCorrection[kType1].Mod() << std::endl;
       std::cout << "raw Met Pt        : " << inMet.Pt() << std::endl;
       std::cout << "+++++++ End of type 1 correction scope +++++++\n\n" << std::endl;
     }
@@ -321,14 +350,39 @@ MetCorrectionMod::Process()
       xyShiftCorrX = fFormulaShiftPx->Eval(nVtx) * -1.;
       xyShiftCorrY = fFormulaShiftPy->Eval(nVtx) * -1.;
 
-    metCorrection[2].Set(xyShiftCorrX, xyShiftCorrY);
+    metCorrection[kShift].Set(xyShiftCorrX, xyShiftCorrY);
 
     // debug
     if (fPrint) {
-      std::cout << "XY shift cor Pt: " << metCorrection[2].Mod() << std::endl;
+      std::cout << "XY shift cor Pt: " << metCorrection[kShift].Mod() << std::endl;
       std::cout << "raw Met Pt     : " << inMet.Pt() << std::endl;
       std::cout << "+++++++ End of XY shift correction scope +++++++\n\n" << std::endl;
     }
+  }
+
+  if (fApplyUnclustered) {
+  // computation of unclustered energy:
+  // vec{Met} = - vec{unclustered} - vec{jets}
+  // SumEt = sumUnclustered + sumJets
+  // => vec{unclustered} = - vec{Met} - vec{jets}
+  //    SumUnclustered = SumEt - sumJets
+    if (fPrint) {
+      std::cout << "Unclustered cor for MET: (" << inMet.Mex() << ", " << inMet.Mey() << ")" << std::endl;
+      std::cout << " total jet pT:           (" << -metCorrection[kUnclustered].X() << ", " << -metCorrection[kUnclustered].Y() << ")" << std::endl;
+    }
+
+    metCorrection[kUnclustered] -= TVector2(inMet.Mex(), inMet.Mey());
+    sumEtCorrection[kUnclustered] += inMet.SumEt();
+
+    if (fPrint)
+      std::cout << " total unclustered:      (" << metCorrection[kUnclustered].X() << ", " << metCorrection[kUnclustered].Y() << ")" << std::endl;
+
+    // multiply by the variation rate to arrive at the actual correction
+    metCorrection[kUnclustered] *= fUnclusteredVariation;
+    sumEtCorrection[kUnclustered] *= fUnclusteredVariation;
+
+    if (fPrint)
+      std::cout << " correction:             (" << metCorrection[kUnclustered].X() << ", " << metCorrection[kUnclustered].Y() << ")" << std::endl;
   }
 
   // initialize the corrected met to the uncorrected one
@@ -350,11 +404,22 @@ MetCorrectionMod::Process()
   double mex = inMet.Mex();
   double mey = inMet.Mey();
   double sumEt = inMet.SumEt();
-  for (unsigned iC = 0; iC != 3; ++iC) {
+
+  if (fPrint)
+    std::cout << "Original MET: (" << mex << ", " << mey << ")" << std::endl;
+
+  for (unsigned iC = 0; iC != nCorrectionTypes; ++iC) {
+    if (fPrint)
+      std::cout << " correction " << iC << ": (" << metCorrection[iC].X() << ", " << metCorrection[iC].Y() << ")" << std::endl;
+
     mex += metCorrection[iC].X();
     mey += metCorrection[iC].Y();
     sumEt += sumEtCorrection[iC];
   }
+
+  if (fPrint)
+    std::cout << "Corrected MET: (" << mex << ", " << mey << ")" << std::endl;
+
   corrected->SetMex(mex);
   corrected->SetMey(mey);
   corrected->SetSumEt(sumEt);
