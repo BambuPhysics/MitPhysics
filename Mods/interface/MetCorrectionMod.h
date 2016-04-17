@@ -58,6 +58,7 @@ namespace mithep {
     void ApplyType0(bool b)                    { fApplyType0 = b; }
     void ApplyType1(bool b)                    { fApplyType1 = b; }
     void ApplyShift(bool b)                    { fApplyShift = b; }
+    void ApplyUnclustered(bool b)              { fApplyUnclustered = b; }
     // type 0 parameters
     void SetExprType0(const char *expr)        { MakeFormula(0, expr); }
     void SetPFCandidatesName(const char *name) { fPFCandidatesName = name; }
@@ -75,6 +76,8 @@ namespace mithep {
     void SetMinJetPt(Double_t m)               { fMinJetPt = m; }
     // shift parameters
     void IsData(bool b)                        { fIsData = b; }
+    // unclustered parameters
+    void SetUnclusteredVariation(Double_t v)   { fUnclusteredVariation = v; }
 
     void SetPrint(bool b)                      { fPrint = b; }
 
@@ -91,16 +94,17 @@ namespace mithep {
     TString       fJetsName{Names::gkPFJetBrn};                //name of uncorrected jet collection (input)
     TString       fPFCandidatesName{Names::gkPFCandidatesBrn}; //name of PF candidates collection (input)
     TString       fVertexName{ModNames::gkGoodVertexesName};   //name of vertex collection (input)
-    Double_t      fMinDz = 0.2;                                //delta Z for separating PU verteces from PV
                   
     Bool_t        fApplyType0 = kTRUE; //switch on type 0 correction
     Bool_t        fApplyType1 = kTRUE; //switch on type 1 correction
     Bool_t        fApplyShift = kTRUE; //switch on XY shift correction
-                  
-    TFormula*     fFormulaType0 = 0;
-    TFormula*     fFormulaShiftPx = 0;
-    TFormula*     fFormulaShiftPy = 0;
+    Bool_t        fApplyUnclustered = kFALSE; //switch on unclustered energy variation
 
+    // type 0 correction
+    TFormula*     fFormulaType0 = 0;
+    Double_t      fMinDz = 0.2;                                //delta Z for separating PU verteces from PV
+
+    // type 1 correction
     Bool_t        fOwnJetCorrector = kFALSE;
     JetCorrector* fJetCorrector = 0; //For type 1 correction. Can be created internally or set externally
     UInt_t        fRhoAlgo = PileupEnergyDensity::kFixedGridFastjetAll;
@@ -111,8 +115,15 @@ namespace mithep {
     Bool_t        fMuonGeometricMatch = kTRUE; //fix for 042 (PF-muon link broken)
     Double_t      fMaxJetEta = std::numeric_limits<double>::max();
     Double_t      fMinJetPt = 15.;
-                  
+
+    // shift correction
+    TFormula*     fFormulaShiftPx = 0;
+    TFormula*     fFormulaShiftPy = 0;
     Bool_t        fIsData = kTRUE; //flag for data/MC distinction
+
+    // unclustered correction
+    Double_t      fUnclusteredVariation = 0.1; // set to negative for "down" variation
+
     Bool_t        fPrint = kFALSE; //flag for debug print out
 
     UInt_t          fOutputType = kPFMet;
