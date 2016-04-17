@@ -1079,7 +1079,6 @@ Double_t IsolationTools::PFChargedIsolation(const Photon *p,
         Double_t dR   = MathUtils::DeltaR(*pf,photondir);
         //Double_t dEta = TMath::Abs(pf->Eta()-photondir.Eta());
         
-        if (dR<0.02) continue;
         if (dR<intRadius) continue;
         if (dR>extRadius) continue;
         
