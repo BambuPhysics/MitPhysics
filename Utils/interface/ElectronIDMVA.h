@@ -40,11 +40,12 @@ namespace mithep {
         kIDEGamma2012TrigV0,        // EGamma certified (Spring 2012) ID-only MVA
         kIDEGamma2012NonTrigV0,     // EGamma certified (Spring 2012) ID-only MVA
         kIDEGamma2012NonTrigV1,     // EGamma certified (Spring 2012) ID-only MVA, "official" version
+        kIDEGamma2015Trig25ns,
+        kIDEGamma2015NonTrig25ns,
         kIsoRingsV0,                // Isolation MVA with IsoRings as input
         kIDHWW2012TrigV0,           // HWW certified (Spring 2012) ID-only MVA
         kIDIsoCombinedHWW2012TrigV4 // HWW ID+Iso Combined for trig ele
       };
-
 
       void     Initialize(std::string const& methodName,
                           std::string const& weightsfile,
