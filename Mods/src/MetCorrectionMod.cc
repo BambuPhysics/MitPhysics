@@ -46,8 +46,8 @@ MetCorrectionMod::SlaveBegin()
       MakeFormula(0);
   }
 
-  if (fApplyType1)
-    MakeJetCorrector();
+  if (fApplyType1 && fJetCorrector)
+    fJetCorrector->SetUncertaintySigma(fJESUncertaintySigma);
 
   if (fApplyShift) {
     //XY shift formula: function of nVtx
@@ -240,44 +240,7 @@ MetCorrectionMod::Process()
       if (absEta > fMaxJetEta)
         continue;
 
-      // filter on corrected pt
-
-      // save the current correction level first
-      auto currentMax = fJetCorrector->GetMaxCorrLevel();
-      fJetCorrector->SetMaxCorrLevel(Jet::L3);
-
-      double fullCorr; // L1L2L3
-      double offsetCorr; // L1 only
-      if (absEta < 9.9) {
-        std::vector<float>&& corr(fJetCorrector->CorrectionFactors(inJet, rho));
-        fullCorr = corr.back() * fJetCorrector->UncertaintyFactor(inJet);
-        offsetCorr = corr.front();
-      }
-      else {
-        auto modJet(inJet);
-        modJet.SetRawPtEtaPhiM(inJetRawMom.Pt(), inJet.Eta() / absEta * 9.9, inJetRawMom.Phi(), inJetRawMom.M());
-        std::vector<float>&& corr(fJetCorrector->CorrectionFactors(modJet, rho));
-        fullCorr = corr.back() * fJetCorrector->UncertaintyFactor(modJet);
-        offsetCorr = corr.front();
-      }
-
-      // recover the correction level
-      fJetCorrector->SetMaxCorrLevel(currentMax);
-
-      auto fullCorrMom = inJetRawMom * fullCorr;
-
-      if (fullCorrMom.Pt() < fMinJetPt) continue;
-
-      if (fApplyUnclustered) {
-        // this jet is considered "clustered". See below for unclustered energy computation.
-        metCorrection[kUnclustered] -= TVector2(inJetRawMom.Px(), inJetRawMom.Py());
-        sumEtCorrection[kUnclustered] -= inJetRawMom.Pt();
-      }
-
-      if (!fApplyType1)
-        continue;
-
-      // now filter on jet properties
+      // filter on jet properties
       if (fMaxEMFraction > 0.) {
         if (inJet.ObjType() == kPFJet) {
           auto& inPFJet = static_cast<PFJet const&>(inJet);
@@ -315,17 +278,66 @@ MetCorrectionMod::Process()
           SendError(kWarning, "Process", "SkipMuons is set but the input jet correction is not PF.");
       }
 
-      auto offsetCorrMom = inJetRawMom * offsetCorr;
+      // filter on corrected pt
 
-      // compute the MET Type 1 correction
-      metCorrection[kType1] -= TVector2(fullCorrMom.Px() - offsetCorrMom.Px(), fullCorrMom.Py() - offsetCorrMom.Py());
-      sumEtCorrection[kType1] += (fullCorrMom.Et() - offsetCorrMom.Et());
+      double fullCorr = 1.; // L1L2L3
+      double offsetCorr = 1.; // L1 only
 
-      // debug
-      if (fPrint) {
-        std::cout << "Jet index " << iJ << " :: raw jet Pt:   " << inJetRawMom.Pt() << std::endl;
-        std::cout << "Jet index " << iJ << " :: cor jet Pt:   " << fullCorrMom.Pt() << std::endl;
-        std::cout << "Jet index " << iJ << " :: offset cor Pt: " << offsetCorrMom.Pt() << std::endl;
+      if (fJetCorrector) {
+        // will correct the jet pt internally
+        // save the current correction level first
+        auto currentMax = fJetCorrector->GetMaxCorrLevel();
+        fJetCorrector->SetMaxCorrLevel(Jet::L3);
+
+        if (absEta < 9.9) {
+          std::vector<float>&& corr(fJetCorrector->CorrectionFactors(inJet, rho));
+          fullCorr = corr.back() * fJetCorrector->UncertaintyFactor(inJet);
+          offsetCorr = corr.front();
+        }
+        else {
+          auto modJet(inJet);
+          modJet.SetRawPtEtaPhiM(inJetRawMom.Pt(), inJet.Eta() / absEta * 9.9, inJetRawMom.Phi(), inJetRawMom.M());
+          std::vector<float>&& corr(fJetCorrector->CorrectionFactors(modJet, rho));
+          fullCorr = corr.back() * fJetCorrector->UncertaintyFactor(modJet);
+          offsetCorr = corr.front();
+        }
+
+        // recover the correction level
+        fJetCorrector->SetMaxCorrLevel(currentMax);
+      }
+      else {
+        // use the correction already stored in the jet
+        // will cause potential discrepancy with the internal correction version for jets with |eta| > 9.9
+        // also will not use JEC uncertainty
+        for (unsigned iC : {Jet::L1, Jet::L2, Jet::L3})
+          fullCorr *= inJet.CorrectionScale(iC);
+
+        offsetCorr = inJet.L1OffsetCorrectionScale();
+      }
+
+      auto fullCorrMom = inJetRawMom * fullCorr;
+
+      if (fullCorrMom.Pt() < fMinJetPt) continue;
+
+      if (fApplyUnclustered) {
+        // this jet is considered "clustered". See below for unclustered energy computation.
+        metCorrection[kUnclustered] -= TVector2(inJetRawMom.Px(), inJetRawMom.Py());
+        sumEtCorrection[kUnclustered] -= inJetRawMom.Pt();
+      }
+
+      if (fApplyType1) {
+        auto offsetCorrMom = inJetRawMom * offsetCorr;
+
+        // compute the MET Type 1 correction
+        metCorrection[kType1] -= TVector2(fullCorrMom.Px() - offsetCorrMom.Px(), fullCorrMom.Py() - offsetCorrMom.Py());
+        sumEtCorrection[kType1] += (fullCorrMom.Et() - offsetCorrMom.Et());
+
+        // debug
+        if (fPrint) {
+          std::cout << "Jet index " << iJ << " :: raw jet Pt:   " << inJetRawMom.Pt() << std::endl;
+          std::cout << "Jet index " << iJ << " :: cor jet Pt:   " << fullCorrMom.Pt() << std::endl;
+          std::cout << "Jet index " << iJ << " :: offset cor Pt: " << offsetCorrMom.Pt() << std::endl;
+        }
       }
     }
 
@@ -448,7 +460,6 @@ MetCorrectionMod::MakeJetCorrector()
 {
   if (!fJetCorrector) {
     fJetCorrector = new JetCorrector;
-    fJetCorrector->SetUncertaintySigma(fJESUncertaintySigma);
     fOwnJetCorrector = true;
   }
 }

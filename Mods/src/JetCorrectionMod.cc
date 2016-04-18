@@ -1,6 +1,7 @@
 #include "MitPhysics/Mods/interface/JetCorrectionMod.h"
 
 #include "MitAna/DataTree/interface/JetCol.h"
+#include "MitAna/DataTree/interface/PFJetCol.h"
 #include "MitAna/DataTree/interface/GenJetCol.h"
 #include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
 
@@ -107,10 +108,10 @@ JetCorrectionMod::Process()
     //copy input jet, using special function to copy full derived class
     Jet* jet = inJets->At(iJ)->MakeCopy();
 
+    fCorrector->Correct(*jet, rho);
+
     if (fCorrector->HasSmearing())
       fCorrector->Smear(*jet, rho, genJets);
-
-    fCorrector->Correct(*jet, rho);
 
     // add corrected jet to collection
     fCorrectedJets.AddOwned(jet);             

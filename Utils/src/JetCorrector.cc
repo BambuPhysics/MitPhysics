@@ -37,11 +37,12 @@ mithep::JetCorrector::Corrector::Record::Record(unsigned nBinVars, unsigned nFor
     iW += 2;
   }
 
-  int nWords(iW + readWord(iW));
+  int nWords(iW + 1 + readWord(iW));
   if (nWords != words->GetEntries()) {
     fBinVarLimits.pop_back();
+    std::cerr << "Number of words do not match: " << nWords << " != " << words->GetEntries() << std::endl;
     delete words;
-    throw std::exception();
+    throw std::runtime_error("record");
   }
 
   ++iW;
@@ -51,7 +52,7 @@ mithep::JetCorrector::Corrector::Record::Record(unsigned nBinVars, unsigned nFor
     iW += 2;
   }
 
-  for (unsigned iP(0); iP != nWords - nBinVars * 2; ++iP)
+  while (iW != unsigned(nWords))
     fParameters.push_back(readWord(iW++));
 
   delete words;
@@ -160,7 +161,7 @@ mithep::JetCorrector::Corrector::Corrector(char const* fileName, FactorType fact
     }
     catch (std::exception& ex) {
       std::cerr << "File " << fileName << " appears corrupt at line " << iL << std::endl;
-      throw std::runtime_error("Configuration error");
+      throw;
     }
   }
 }
@@ -582,12 +583,13 @@ mithep::JetCorrector::Smear(mithep::Jet& jet, Double_t rho, mithep::GenJetCol co
     throw std::runtime_error("Configuration");
   }
 
-  auto&& rawMom(jet.RawMom());
+  // will compare fully corrected momentum to gen-level momentum
+  auto&& corrMom(jet.Mom());
 
   //compute correction factors
   double vars[Corrector::nVarTypes];
-  vars[Corrector::kJetEta] = rawMom.Eta();
-  vars[Corrector::kJetPt] = rawMom.Pt();
+  vars[Corrector::kJetEta] = corrMom.Eta();
+  vars[Corrector::kJetPt] = corrMom.Pt();
   vars[Corrector::kRho] = rho;
 
   double ptres = ptResolution->Eval(vars);
@@ -604,32 +606,33 @@ mithep::JetCorrector::Smear(mithep::Jet& jet, Double_t rho, mithep::GenJetCol co
     sf += (scaleFactor->Eval(vars) - sfNominal) * std::abs(fSigma);
   }
 
-  double newPt = jet.Pt();
-  double newPhi = jet.Phi();
+  double ptScale = 1.; // multiply the raw pt with the smearing scale on corrected pt
+  double newPhi = corrMom.Phi();
 
   mithep::GenJet const* genJet = 0;
 
   if (genJets) {
     for (unsigned iJ = 0; iJ != genJets->GetEntries(); ++iJ) {
       genJet = genJets->At(iJ);
-      if (mithep::MathUtils::DeltaR(*genJet, jet) < fGenJetMatchRadius && std::abs(genJet->Pt() - jet.Pt()) < 3. * ptres)
+      if (mithep::MathUtils::DeltaR(*genJet, jet) < fGenJetMatchRadius && std::abs(genJet->Pt() - corrMom.Pt()) < 3. * ptres)
         break;
     }
   }
 
   if (genJet) {
     // just enhance the gen/reco discrepancy
-    newPt = std::max(0., genJet->Pt() + (jet.Pt() - genJet->Pt()) * sf);
-    newPhi = TVector2::Phi_mpi_pi(genJet->Phi() + (jet.Phi() - genJet->Phi()) * sf);
+    ptScale = std::max(0., genJet->Pt() + (corrMom.Pt() - genJet->Pt()) * sf) / corrMom.Pt();
+    newPhi = TVector2::Phi_mpi_pi(genJet->Phi() + (corrMom.Phi() - genJet->Phi()) * sf);
   }
   else {
     // apply additional smearing
-    newPt = std::max(0., fRandom.Gaus(jet.Pt(), std::sqrt(sf * sf - 1.) * ptres));
+    ptScale = std::max(0., fRandom.Gaus(corrMom.Pt(), std::sqrt(sf * sf - 1.) * ptres)) / corrMom.Pt();
     if (phiResolution) {
       double phires = phiResolution->Eval(vars);
-      newPhi = TVector2::Phi_mpi_pi(fRandom.Gaus(jet.Phi(), std::sqrt(sf * sf - 1.) * phires));
+      newPhi = TVector2::Phi_mpi_pi(fRandom.Gaus(corrMom.Phi(), std::sqrt(sf * sf - 1.) * phires));
     }
   }
 
-  jet.SetRawPtEtaPhiM(newPt, jet.Eta(), newPhi, jet.Mass());
+  auto&& rawMom(jet.RawMom());
+  jet.SetRawPtEtaPhiM(rawMom.Pt() * ptScale, rawMom.Eta(), newPhi, rawMom.M() * ptScale);
 }
