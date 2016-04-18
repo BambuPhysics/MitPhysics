@@ -404,8 +404,7 @@ mithep::JetCorrector::AddParameterFile(char const* fileName, Corrector::FactorTy
     throw;
   }
 
-  auto type = fCorrectors.back().GetType();
-  if (type == Corrector::kPtResolution)
+  if (fCorrectors.back().GetType() == Corrector::kPtResolution)
     fHasSmearing = true;
 }
 
@@ -413,7 +412,7 @@ mithep::JetCorrector::JetCorrector()
 {
   // Reserve enough space for all correctors. Otherwise emplace_back will
   // attempt a re-construction of the correctors at some point, which leads to mysterious segfaults.
-  fCorrectors.reserve(mithep::Jet::nECorrs);
+  fCorrectors.reserve(mithep::Jet::nECorrs + Corrector::nFactorTypes);
 }
 
 void
@@ -448,6 +447,9 @@ mithep::JetCorrector::CorrectionFactors(mithep::Jet const& jet, Double_t rho/* =
   std::vector<float> corrections;
   double factor(1.);
   for (auto& corr : fCorrectors) {
+    if (corr.GetType() != Corrector::kCorrection)
+      continue;
+
     if (corr.GetLevel() > fMaxCorrLevel)
       break;
 
@@ -479,7 +481,7 @@ mithep::JetCorrector::UncertaintyFactor(mithep::Jet const& jet) const
 {
   Corrector const* uncertainty(0);
   for (auto& corr : fCorrectors) {
-    if (corr.GetLevel() == mithep::Jet::Custom) {
+    if (corr.GetType() == Corrector::kCorrection && corr.GetLevel() == mithep::Jet::Custom) {
       uncertainty = &corr;
       break;
     }
@@ -506,7 +508,7 @@ mithep::JetCorrector::IsEnabled(mithep::Jet::ECorr l) const
     return false;
 
   for (auto& corr : fCorrectors) {
-    if (corr.GetLevel() == l && corr.GetEnabled())
+    if (corr.GetType() == Corrector::kCorrection && corr.GetLevel() == l && corr.GetEnabled())
       return true;
   }
 
@@ -522,8 +524,12 @@ mithep::JetCorrector::Correct(mithep::Jet& jet, Double_t rho/* = 0.*/) const
 
   auto lastLevel = mithep::Jet::nECorrs;
 
-  for (unsigned iC(0); iC != corrections.size(); ++iC) {
-    auto currentLevel(fCorrectors[iC].GetLevel());
+  unsigned iC = 0;
+  for (auto& corr : fCorrectors) {
+    if (corr.GetType() != Corrector::kCorrection)
+      continue;
+    
+    auto currentLevel(corr.GetLevel());
 
     float currentCorrection(1.);
     if (lastLevel == mithep::Jet::L3 && currentLevel == mithep::Jet::L2) {
@@ -548,6 +554,7 @@ mithep::JetCorrector::Correct(mithep::Jet& jet, Double_t rho/* = 0.*/) const
     jet.EnableCorrection(currentLevel);
 
     lastLevel = currentLevel;
+    ++iC;
   }
 
   if (fSigma != 0.) {
@@ -587,11 +594,8 @@ mithep::JetCorrector::Smear(mithep::Jet& jet, Double_t rho, mithep::GenJetCol co
 
   scaleFactor->SetUncertainty(0);
   double sfNominal = scaleFactor->Eval(vars);
-  double sf = 1.;
-  if (fSigma == 0.) {
-    sf = sfNominal;
-  }
-  else {
+  double sf = sfNominal;
+  if (fSigma != 0.) {
     if (fSigma > 0.)
       scaleFactor->SetUncertainty(1);
     else
