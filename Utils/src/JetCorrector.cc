@@ -601,7 +601,7 @@ mithep::JetCorrector::Smear(mithep::Jet& jet, Double_t rho, mithep::GenJetCol co
     else
       scaleFactor->SetUncertainty(-1);
 
-    sf = sfNominal + (scaleFactor->Eval(vars) - sfNominal) * std::abs(fSigma);
+    sf += (scaleFactor->Eval(vars) - sfNominal) * std::abs(fSigma);
   }
 
   double newPt = jet.Pt();
