@@ -1,6 +1,8 @@
 #include "MitPhysics/Mods/interface/JetCorrectionMod.h"
 
 #include "MitAna/DataTree/interface/JetCol.h"
+#include "MitAna/DataTree/interface/PFJetCol.h"
+#include "MitAna/DataTree/interface/GenJetCol.h"
 #include "MitAna/DataTree/interface/PileupEnergyDensityCol.h"
 
 using namespace mithep;
@@ -50,6 +52,13 @@ JetCorrectionMod::SlaveBegin()
   MakeCorrector();
 
   PublishObj(&fCorrectedJets);
+
+  if (fCorrector->HasSmearing()) {
+    if (fGenJetsName == "")
+      Warning("SlaveBegin", "Applying JER smearing without gen jets.");
+
+    fCorrector->SetSmearingSeed(fSmearingSeed);
+  }
 }
 
 void JetCorrectionMod::SlaveTerminate()
@@ -88,6 +97,10 @@ JetCorrectionMod::Process()
     return;
   }
 
+  GenJetCol const* genJets = 0;
+  if (fCorrector->HasSmearing() && fGenJetsName != "")
+    genJets = GetObject<GenJetCol>(fGenJetsName);
+
   fCorrectedJets.Reset();
 
   // loop over jets
@@ -96,6 +109,9 @@ JetCorrectionMod::Process()
     Jet* jet = inJets->At(iJ)->MakeCopy();
 
     fCorrector->Correct(*jet, rho);
+
+    if (fCorrector->HasSmearing())
+      fCorrector->Smear(*jet, rho, genJets);
 
     // add corrected jet to collection
     fCorrectedJets.AddOwned(jet);             

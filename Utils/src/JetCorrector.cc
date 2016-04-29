@@ -1,28 +1,30 @@
 #include "MitPhysics/Utils/interface/JetCorrector.h"
 #include "MitAna/DataTree/interface/CaloJet.h"
 #include "MitAna/DataTree/interface/ObjTypes.h"
-
-#include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
-#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+#include "MitCommon/MathTools/interface/MathUtils.h"
 
 #include <stdexcept>
 #include <sys/stat.h>
 #include <fstream>
 
 #include "TROOT.h"
+#include "TVector2.h"
 
 ClassImp(mithep::JetCorrector)
 
-mithep::JetCorrector::Corrector::Record::Record(unsigned nBinVars, unsigned nFormVars, unsigned nParameters, std::string const& inputLine)
+mithep::JetCorrector::Corrector::Record::Record(unsigned nBinVars, unsigned nFormVars, std::string const& inputLine)
 {
-  auto* words(TString(inputLine.c_str()).Tokenize(" "));
+  // Record line formats
+  //  [JEC]
+  //   {binning (n = 2*nBinVars)} {# remaining words} {variable range (n = 2*nFormVars)} {parameters}
+  //  [JEC uncertainty]
+  //   {binning (n = 2*nBinVars)} {# remaining words} ({variable min} {uncertainty up} {uncertainty down}) x {# / 3}
+  //  [JER scale factor]
+  //   {binning (n = 2*nBinVars)} {# remaining words} {sf nominal} {sf down} {sf up}
+  //  [JER resolution]
+  //   {binning (n = 2*nBinVars)} {# remaining words} {variable range (n = 2*nFormVars)} {parameters}
 
-  if (nParameters != unsigned(-1)) {
-    if (words->GetEntries() != int(nBinVars * 2 + nFormVars * 2 + nParameters + 1) || TString(words->At(nBinVars * 2)->GetName()).Atoi() != int(nFormVars * 2 + nParameters)) {
-      delete words;
-      throw std::exception();
-    }
-  }
+  auto* words(TString(inputLine.c_str()).Tokenize(" "));
 
   auto readWord([words](unsigned idx)->double {
       return TString(words->At(idx)->GetName()).Atof();
@@ -35,22 +37,28 @@ mithep::JetCorrector::Corrector::Record::Record(unsigned nBinVars, unsigned nFor
     iW += 2;
   }
 
+  int nWords(iW + 1 + readWord(iW));
+  if (nWords != words->GetEntries()) {
+    fBinVarLimits.pop_back();
+    std::cerr << "Number of words do not match: " << nWords << " != " << words->GetEntries() << std::endl;
+    delete words;
+    throw std::runtime_error("record");
+  }
+
   ++iW;
-  if (nParameters == unsigned(-1))
-    nParameters = TString(words->At(iW)->GetName()).Atoi();
 
   for (unsigned iV(0); iV != nFormVars; ++iV) {
     fFormVarLimits.emplace_back(readWord(iW), readWord(iW + 1));
     iW += 2;
   }
 
-  for (unsigned iP(0); iP != nParameters; ++iP)
+  while (iW != unsigned(nWords))
     fParameters.push_back(readWord(iW++));
 
   delete words;
 }
 
-mithep::JetCorrector::Corrector::Corrector(char const* fileName)
+mithep::JetCorrector::Corrector::Corrector(char const* fileName, FactorType factorType/* = nFactorTypes*/)
 {
   struct stat buffer;
   if (stat(fileName, &buffer) != 0) {
@@ -94,7 +102,7 @@ mithep::JetCorrector::Corrector::Corrector(char const* fileName)
         fFormulaVariables.push_back(ParseVariableName(words->At(iW++)->GetName()));
 
       TString formula(words->At(iW++)->GetName());
-      if (formula != "") {
+      if (formula != "" && formula != "None") {
         // TFormula has a global namespace - keep one copy from each input file (which may be used multiple times in a job)
         auto* func(gROOT->GetListOfFunctions()->FindObject(fileName));
         if (func)
@@ -109,20 +117,31 @@ mithep::JetCorrector::Corrector::Corrector(char const* fileName)
         }
       }
 
-      TString type(words->At(iW++)->GetName());
-      fIsResponse = (type == "Response");
-      
-      fLevel = ParseLevelName(words->At(iW)->GetName());
+      fType = ParseTypeName(words->At(iW++)->GetName());
 
-      if (fLevel != mithep::Jet::Custom && !fFormula) {
-        std::cerr << "Cannot initialize JEC without a formula." << std::endl;
-        delete words;
-        throw std::runtime_error("Configuration error");
+      if (fType == kCorrection || fType == kResponse) {
+        fLevel = ParseLevelName(words->At(iW)->GetName());
+
+        if (fLevel != mithep::Jet::Custom && !fFormula) {
+          std::cerr << "Cannot initialize JEC without a formula." << std::endl;
+          delete words;
+          throw std::runtime_error("Configuration error");
+        }
+        if (fLevel == mithep::Jet::Custom && fFormulaVariables.size() != 1) {
+          std::cerr << "JES uncertainty must be given as a grid of two variables." << std::endl;
+          delete words;
+          throw std::runtime_error("Configuration error");
+        }
       }
-      if (fLevel == mithep::Jet::Custom && fFormulaVariables.size() != 1) {
-        std::cerr << "JES uncertainty must be given as a grid of two variables." << std::endl;
-        delete words;
-        throw std::runtime_error("Configuration error");
+      else if (fType == kResolution) {
+        if (factorType == nFactorTypes) {
+          std::cerr << "Resolution type (JetCorrector::Corrector::kPtResolution or kPhiResolution) must be set for resolution inputs." << std::endl;
+          // otherwise the code cannot know if the returned value is a relative or an absolute resolution
+          delete words;
+          throw std::runtime_error("Configuration error");
+        }
+
+        fType = factorType;
       }
 
       delete words;
@@ -135,14 +154,14 @@ mithep::JetCorrector::Corrector::Corrector(char const* fileName)
     ++iL;
 
     try {
-      if (fLevel == mithep::Jet::Custom) // is uncertainty
-        fRecords.emplace_back(fBinningVariables.size(), 0, -1, linebuf);
+      if (fType == kScaleFactor || (fType == kCorrection && fLevel == mithep::Jet::Custom))
+        fRecords.emplace_back(fBinningVariables.size(), 0, linebuf);
       else
-        fRecords.emplace_back(fBinningVariables.size(), fFormulaVariables.size(), fFormula->GetNpar(), linebuf);
+        fRecords.emplace_back(fBinningVariables.size(), fFormulaVariables.size(), linebuf);
     }
     catch (std::exception& ex) {
       std::cerr << "File " << fileName << " appears corrupt at line " << iL << std::endl;
-      throw std::runtime_error("Configuration error");
+      throw;
     }
   }
 }
@@ -150,10 +169,30 @@ mithep::JetCorrector::Corrector::Corrector(char const* fileName)
 Double_t
 mithep::JetCorrector::Corrector::Eval(Double_t variables[nVarTypes]) const
 {
-  if (fLevel == mithep::Jet::Custom)
-    return EvalUncertainty(variables);
-  else
+  switch (fType) {
+  case kCorrection:
+    if (fLevel == mithep::Jet::Custom)
+      return EvalUncertainty(variables);
+    else
+      return EvalCorrection(variables);
+
+  case kResponse:
+    std::cerr << "Response inversion not implemented yet. You are welcome to write it for us! (ref. CondFormats/JetMETObjects/src/SimpleJetCorrector.cc" << std::endl;
+    throw std::runtime_error("NotImplemented");
+
+  case kPtResolution:
+    return EvalCorrection(variables) * variables[kJetPt];
+
+  case kPhiResolution:
     return EvalCorrection(variables);
+
+  case kScaleFactor:
+    return EvalScaleFactor(variables);
+
+  default:
+    std::cerr << "Corrector type is not specified" << std::endl;
+    throw std::runtime_error("NotImplemented");    
+  }
 }
 
 Double_t
@@ -188,11 +227,6 @@ mithep::JetCorrector::Corrector::EvalCorrection(Double_t variables[nVarTypes]) c
     for (unsigned iP(0); iP != record.fParameters.size(); ++iP)
       par.push_back(record.fParameters[iP]);
 
-    if (fIsResponse) {
-      std::cerr << "Response inversion not implemented yet. You are welcome to write it for us! (ref. CondFormats/JetMETObjects/src/SimpleJetCorrector.cc" << std::endl;
-      throw std::runtime_error("NotImplemented");
-    }
-
     return fFormula->EvalPar(x, par.data());
   }
 }
@@ -219,7 +253,7 @@ mithep::JetCorrector::Corrector::EvalUncertainty(Double_t variables[nVarTypes]) 
     ++iX;
   }
 
-  unsigned pOffset(fUncertaintyUp ? 1 : 2);
+  unsigned pOffset(fUncertaintyV >= 0 ? 1 : 2);
 
   if (iP == 0)
     return record.fParameters.at(pOffset);
@@ -232,6 +266,31 @@ mithep::JetCorrector::Corrector::EvalUncertainty(Double_t variables[nVarTypes]) 
     double interval(high - low);
     return (record.fParameters.at(iX * 3 + pOffset) * (var - low) + record.fParameters.at(iX * 3 - 3 + pOffset) * (high - var)) / interval;
   }
+}
+
+Double_t
+mithep::JetCorrector::Corrector::EvalScaleFactor(Double_t variables[nVarTypes]) const
+{
+  unsigned iRecord(FindRecord(variables));
+
+  if (iRecord == fRecords.size()) {
+    // no record found
+    std::cerr << "JetCorrector uncertainty out of range" << std::endl;
+    return 1.;
+  }
+
+  auto& record(fRecords[iRecord]);
+  
+  switch (fUncertaintyV) {
+  case 0:
+    return record.fParameters.at(0);
+  case -1:
+    return record.fParameters.at(1);
+  case 1:
+    return record.fParameters.at(2);
+  default:
+    return record.fParameters.at(0);
+  };
 }
 
 UInt_t
@@ -313,24 +372,48 @@ mithep::JetCorrector::Corrector::ParseVariableName(char const* varName)
   }
 }
 
+/*static*/
+mithep::JetCorrector::Corrector::FactorType
+mithep::JetCorrector::Corrector::ParseTypeName(char const* typeName)
+{
+  TString name(typeName);
+  name.ToLower();
+
+  if (name == "correction")
+    return mithep::JetCorrector::Corrector::kCorrection;
+  else if (name == "response")
+    return mithep::JetCorrector::Corrector::kResponse;
+  else if (name == "resolution")
+    return mithep::JetCorrector::Corrector::kResolution;
+  else if (name == "scalefactor")
+    return mithep::JetCorrector::Corrector::kScaleFactor;
+  else {
+    std::cerr << "Exception in JetCorrector::ParseTypeName(): Unknown factor type " << name << std::endl;
+    throw std::runtime_error("Unknown correction");
+  }
+}
+
 void
-mithep::JetCorrector::AddParameterFile(char const* fileName)
+mithep::JetCorrector::AddParameterFile(char const* fileName, Corrector::FactorType factorType/* = Corrector::nFactorTypes*/)
 {
   try {
-    fCorrectors.emplace_back(fileName);
+    fCorrectors.emplace_back(fileName, factorType);
   }
   catch (std::exception& ex) {
     std::cerr << "Exception in JetCorrector::AddParameterFile(" << fileName << "):" << std::endl;
     std::cerr << ex.what() << std::endl;
     throw;
   }
+
+  if (fCorrectors.back().GetType() == Corrector::kPtResolution)
+    fHasSmearing = true;
 }
 
 mithep::JetCorrector::JetCorrector()
 {
   // Reserve enough space for all correctors. Otherwise emplace_back will
   // attempt a re-construction of the correctors at some point, which leads to mysterious segfaults.
-  fCorrectors.reserve(mithep::Jet::nECorrs);
+  fCorrectors.reserve(mithep::Jet::nECorrs + Corrector::nFactorTypes);
 }
 
 void
@@ -339,6 +422,7 @@ mithep::JetCorrector::ClearParameters()
   fCorrectors.clear();
   fMaxCorrLevel = mithep::Jet::nECorrs;
   fSigma = 0.;
+  fHasSmearing = false;
 }
 
 std::vector<Float_t>
@@ -364,6 +448,9 @@ mithep::JetCorrector::CorrectionFactors(mithep::Jet const& jet, Double_t rho/* =
   std::vector<float> corrections;
   double factor(1.);
   for (auto& corr : fCorrectors) {
+    if (corr.GetType() != Corrector::kCorrection)
+      continue;
+
     if (corr.GetLevel() > fMaxCorrLevel)
       break;
 
@@ -395,7 +482,7 @@ mithep::JetCorrector::UncertaintyFactor(mithep::Jet const& jet) const
 {
   Corrector const* uncertainty(0);
   for (auto& corr : fCorrectors) {
-    if (corr.GetLevel() == mithep::Jet::Custom) {
+    if (corr.GetType() == Corrector::kCorrection && corr.GetLevel() == mithep::Jet::Custom) {
       uncertainty = &corr;
       break;
     }
@@ -422,7 +509,7 @@ mithep::JetCorrector::IsEnabled(mithep::Jet::ECorr l) const
     return false;
 
   for (auto& corr : fCorrectors) {
-    if (corr.GetLevel() == l && corr.GetEnabled())
+    if (corr.GetType() == Corrector::kCorrection && corr.GetLevel() == l && corr.GetEnabled())
       return true;
   }
 
@@ -438,8 +525,12 @@ mithep::JetCorrector::Correct(mithep::Jet& jet, Double_t rho/* = 0.*/) const
 
   auto lastLevel = mithep::Jet::nECorrs;
 
-  for (unsigned iC(0); iC != corrections.size(); ++iC) {
-    auto currentLevel(fCorrectors[iC].GetLevel());
+  unsigned iC = 0;
+  for (auto& corr : fCorrectors) {
+    if (corr.GetType() != Corrector::kCorrection)
+      continue;
+    
+    auto currentLevel(corr.GetLevel());
 
     float currentCorrection(1.);
     if (lastLevel == mithep::Jet::L3 && currentLevel == mithep::Jet::L2) {
@@ -464,10 +555,84 @@ mithep::JetCorrector::Correct(mithep::Jet& jet, Double_t rho/* = 0.*/) const
     jet.EnableCorrection(currentLevel);
 
     lastLevel = currentLevel;
+    ++iC;
   }
 
   if (fSigma != 0.) {
     jet.SetCorrectionScale(UncertaintyFactor(jet), mithep::Jet::Custom);
     jet.EnableCorrection(mithep::Jet::Custom);
   }
+}
+
+void
+mithep::JetCorrector::Smear(mithep::Jet& jet, Double_t rho, mithep::GenJetCol const* genJets/* = 0*/)
+{
+  Corrector const* ptResolution = 0;
+  Corrector const* phiResolution = 0;
+  Corrector* scaleFactor = 0;
+  for (auto& corr : fCorrectors) {
+    if (corr.GetType() ==  Corrector::kPtResolution)
+      ptResolution = &corr;
+    if (corr.GetType() ==  Corrector::kPhiResolution)
+      phiResolution = &corr;
+    if (corr.GetType() ==  Corrector::kScaleFactor)
+      scaleFactor = &corr;
+  }
+  if (ptResolution == 0 || scaleFactor == 0) {
+    std::cerr << "Jet smearing requires pt resolution and scale factor input" << std::endl;
+    throw std::runtime_error("Configuration");
+  }
+
+  // will compare fully corrected momentum to gen-level momentum
+  auto&& corrMom(jet.Mom());
+
+  //compute correction factors
+  double vars[Corrector::nVarTypes];
+  vars[Corrector::kJetEta] = corrMom.Eta();
+  vars[Corrector::kJetPt] = corrMom.Pt();
+  vars[Corrector::kRho] = rho;
+
+  double ptres = ptResolution->Eval(vars);
+
+  scaleFactor->SetUncertainty(0);
+  double sfNominal = scaleFactor->Eval(vars);
+  double sf = sfNominal;
+  if (fSigma != 0.) {
+    if (fSigma > 0.)
+      scaleFactor->SetUncertainty(1);
+    else
+      scaleFactor->SetUncertainty(-1);
+
+    sf += (scaleFactor->Eval(vars) - sfNominal) * std::abs(fSigma);
+  }
+
+  double ptScale = 1.; // multiply the raw pt with the smearing scale on corrected pt
+  double newPhi = corrMom.Phi();
+
+  mithep::GenJet const* genJet = 0;
+
+  if (genJets) {
+    for (unsigned iJ = 0; iJ != genJets->GetEntries(); ++iJ) {
+      genJet = genJets->At(iJ);
+      if (mithep::MathUtils::DeltaR(*genJet, jet) < fGenJetMatchRadius && std::abs(genJet->Pt() - corrMom.Pt()) < 3. * ptres)
+        break;
+    }
+  }
+
+  if (genJet) {
+    // just enhance the gen/reco discrepancy
+    ptScale = std::max(0., genJet->Pt() + (corrMom.Pt() - genJet->Pt()) * sf) / corrMom.Pt();
+    newPhi = TVector2::Phi_mpi_pi(genJet->Phi() + (corrMom.Phi() - genJet->Phi()) * sf);
+  }
+  else {
+    // apply additional smearing
+    ptScale = std::max(0., fRandom.Gaus(corrMom.Pt(), std::sqrt(sf * sf - 1.) * ptres)) / corrMom.Pt();
+    if (phiResolution) {
+      double phires = phiResolution->Eval(vars);
+      newPhi = TVector2::Phi_mpi_pi(fRandom.Gaus(corrMom.Phi(), std::sqrt(sf * sf - 1.) * phires));
+    }
+  }
+
+  auto&& rawMom(jet.RawMom());
+  jet.SetRawPtEtaPhiM(rawMom.Pt() * ptScale, rawMom.Eta(), newPhi, rawMom.M() * ptScale);
 }
