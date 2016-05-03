@@ -116,7 +116,11 @@ mithep::PFTauIdMod::IdBegin()
     int iX = fCutFlow->GetNbinsX() + 1;
     for (auto& disc : fDiscriminators) {
       fCutFlow->SetBins(iX, 0., iX);
-      xaxis->SetBinLabel(iX, PFTau::PFTauDiscriminatorName(disc.first));
+      if (disc.first < PFTau::nDiscriminants)
+        xaxis->SetBinLabel(iX, PFTau::PFTauDiscriminantName(disc.first));
+      else
+        xaxis->SetBinLabel(iX, PFTau::PFTauIdentifierName(disc.first));
+
       ++iX;
     }
   }

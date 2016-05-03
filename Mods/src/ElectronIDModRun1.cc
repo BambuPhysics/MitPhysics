@@ -363,43 +363,43 @@ Bool_t ElectronIDModRun1::PassIsolationCut(const Electron *ele, ElectronTools::E
 
   Bool_t isocut = kFALSE;
   switch (isoType) {
-    case ElectronTools::kTrackJura:
-      isocut = (ele->TrackIsolationDr03() < ele->Pt()*fTrackIsolationCut) &&
-               (ele->EcalRecHitIsoDr03()  < ele->Pt()*fEcalJuraIsoCut) &&
-               (ele->HcalTowerSumEtDr03() < ele->Pt()*fHcalIsolationCut);
-      break;
-    case ElectronTools::kTrackJuraCombined:
-      isocut = (ele->TrackIsolationDr03() + ele->EcalRecHitIsoDr03() 
-                - 1.5 < fCombIsolationCut);
-      break;
-    case ElectronTools::kTrackJuraSliding:
-    {
-      Double_t totalIso = ele->TrackIsolationDr03() + TMath::Max(ele->EcalRecHitIsoDr03() + ele->HcalTowerSumEtDr03() - rho * TMath::Pi() * 0.3 * 0.3, 0.0);
-      if (ele->SCluster()->AbsEta() < 1.479) totalIso = ele->TrackIsolationDr03() + TMath::Max(TMath::Max(ele->EcalRecHitIsoDr03() - 1.0, 0.0) + ele->HcalTowerSumEtDr03() - rho * TMath::Pi() * 0.3 * 0.3, 0.0);
-      if (totalIso < (ele->Pt()*fCombIsolationCut) )
-        isocut = kTRUE;
-    }
-    break;
-    case ElectronTools::kTrackJuraSlidingNoCorrection:
-    {
-      Double_t totalIso = ele->TrackIsolationDr03() + (ele->EcalRecHitIsoDr03() + ele->HcalTowerSumEtDr03());
-      if (ele->SCluster()->AbsEta() < 1.479) totalIso = ele->TrackIsolationDr03() + (TMath::Max(ele->EcalRecHitIsoDr03() - 1.0, 0.0) + ele->HcalTowerSumEtDr03());
-      if (totalIso < (ele->Pt()*fCombIsolationCut) )
-        isocut = kTRUE;
-    }
-    break;
-    case ElectronTools::kCombinedRelativeConeAreaCorrected:
-    {
-      Double_t totalIso = ele->TrackIsolationDr03() + TMath::Max(ele->EcalRecHitIsoDr03() + ele->HcalTowerSumEtDr03() - rho * TMath::Pi() * 0.3 * 0.3, 0.0);
-      if (ele->SCluster()->AbsEta() < 1.5)  { // Barrel
-	if (totalIso < (ele->Pt()*fCombRelativeIsolationCut) )
-	  isocut = kTRUE;
-      } else {
-	if (totalIso < (ele->Pt()*fCombRelativeIsolationCut_EE) )
-	  isocut = kTRUE;
-      }
-    }
-    break;
+    // case ElectronTools::kTrackJura:
+    //   isocut = (ele->TrackIsolationDr03() < ele->Pt()*fTrackIsolationCut) &&
+    //            (ele->EcalRecHitIsoDr03()  < ele->Pt()*fEcalJuraIsoCut) &&
+    //            (ele->HcalTowerSumEtDr03() < ele->Pt()*fHcalIsolationCut);
+    //   break;
+    // case ElectronTools::kTrackJuraCombined:
+    //   isocut = (ele->TrackIsolationDr03() + ele->EcalRecHitIsoDr03() 
+    //             - 1.5 < fCombIsolationCut);
+    //   break;
+    // case ElectronTools::kTrackJuraSliding:
+    // {
+    //   Double_t totalIso = ele->TrackIsolationDr03() + TMath::Max(ele->EcalRecHitIsoDr03() + ele->HcalTowerSumEtDr03() - rho * TMath::Pi() * 0.3 * 0.3, 0.0);
+    //   if (ele->SCluster()->AbsEta() < 1.479) totalIso = ele->TrackIsolationDr03() + TMath::Max(TMath::Max(ele->EcalRecHitIsoDr03() - 1.0, 0.0) + ele->HcalTowerSumEtDr03() - rho * TMath::Pi() * 0.3 * 0.3, 0.0);
+    //   if (totalIso < (ele->Pt()*fCombIsolationCut) )
+    //     isocut = kTRUE;
+    // }
+    // break;
+    // case ElectronTools::kTrackJuraSlidingNoCorrection:
+    // {
+    //   Double_t totalIso = ele->TrackIsolationDr03() + (ele->EcalRecHitIsoDr03() + ele->HcalTowerSumEtDr03());
+    //   if (ele->SCluster()->AbsEta() < 1.479) totalIso = ele->TrackIsolationDr03() + (TMath::Max(ele->EcalRecHitIsoDr03() - 1.0, 0.0) + ele->HcalTowerSumEtDr03());
+    //   if (totalIso < (ele->Pt()*fCombIsolationCut) )
+    //     isocut = kTRUE;
+    // }
+    // break;
+    // case ElectronTools::kCombinedRelativeConeAreaCorrected:
+    // {
+    //   Double_t totalIso = ele->TrackIsolationDr03() + TMath::Max(ele->EcalRecHitIsoDr03() + ele->HcalTowerSumEtDr03() - rho * TMath::Pi() * 0.3 * 0.3, 0.0);
+    //   if (ele->SCluster()->AbsEta() < 1.5)  { // Barrel
+    //     if (totalIso < (ele->Pt()*fCombRelativeIsolationCut) )
+    //       isocut = kTRUE;
+    //   } else {
+    //     if (totalIso < (ele->Pt()*fCombRelativeIsolationCut_EE) )
+    //       isocut = kTRUE;
+    //   }
+    // }
+    // break;
     case ElectronTools::kPFIso:
     {
       Double_t pfIsoCutValue = 9999;
@@ -458,13 +458,13 @@ Bool_t ElectronIDModRun1::PassIsolationCut(const Electron *ele, ElectronTools::E
     case ElectronTools::kVBTFWorkingPoint90CombinedIso:
     case ElectronTools::kVBTFWorkingPoint85CombinedIso:
     case ElectronTools::kVBTFWorkingPoint70CombinedIso:
-      isocut = ElectronTools::PassCustomIso(ele, isoType);
+      isocut = ElectronTools::PassCustomIso(ele, isoType, tracks);
       break;
-    case ElectronTools::kMVAIso_BDTG_IDIsoCombined:
-      isocut = (ele->TrackIsolationDr03() < ele->Pt()*0.2) &&
-               (ele->EcalRecHitIsoDr03()  < ele->Pt()*0.2) &&
-               (ele->HcalTowerSumEtDr03() < ele->Pt()*0.2);
-      break;
+    // case ElectronTools::kMVAIso_BDTG_IDIsoCombined:
+    //   isocut = (ele->TrackIsolationDr03() < ele->Pt()*0.2) &&
+    //            (ele->EcalRecHitIsoDr03()  < ele->Pt()*0.2) &&
+    //            (ele->HcalTowerSumEtDr03() < ele->Pt()*0.2);
+    //   break;
     case ElectronTools::kPFIso_HWW2012TrigV0:
     {
       Bool_t isDebug = kFALSE;
@@ -548,19 +548,19 @@ Bool_t ElectronIDModRun1::PassIsolationCut(const Electron *ele, ElectronTools::E
       if (IsoOverPt < IsoCut) isocut = kTRUE;
     }
       break;
-    case ElectronTools::kMVAIso_BDTG_IDIsoCombinedHWW2012TrigV4:
-    {
-      if (fabs(ele->SCluster()->Eta()) < 1.479) {
-        isocut = ((ele->TrackIsolationDr03() - 1.0) < ele->Pt()*0.2) &&
-          (ele->EcalRecHitIsoDr03()  < ele->Pt()*0.2) &&
-          (ele->HcalTowerSumEtDr03() < ele->Pt()*0.2);
-      } else {
-        isocut = (ele->TrackIsolationDr03() < ele->Pt()*0.2) &&
-          (ele->EcalRecHitIsoDr03()  < ele->Pt()*0.2) &&
-          (ele->HcalTowerSumEtDr03() < ele->Pt()*0.2);
-      }
-    }
-      break;
+    // case ElectronTools::kMVAIso_BDTG_IDIsoCombinedHWW2012TrigV4:
+    // {
+    //   if (fabs(ele->SCluster()->Eta()) < 1.479) {
+    //     isocut = ((ele->TrackIsolationDr03() - 1.0) < ele->Pt()*0.2) &&
+    //       (ele->EcalRecHitIsoDr03()  < ele->Pt()*0.2) &&
+    //       (ele->HcalTowerSumEtDr03() < ele->Pt()*0.2);
+    //   } else {
+    //     isocut = (ele->TrackIsolationDr03() < ele->Pt()*0.2) &&
+    //       (ele->EcalRecHitIsoDr03()  < ele->Pt()*0.2) &&
+    //       (ele->HcalTowerSumEtDr03() < ele->Pt()*0.2);
+    //   }
+    // }
+    //   break;
     case ElectronTools::kNoIso:
       isocut = kTRUE;
       break;
@@ -801,7 +801,7 @@ void ElectronIDModRun1::Process()
     // apply full combined id, using Tight cuts
     if (fCombinedIdCut == kTRUE) {
       LoadEventObject(fConversionBranchName, fConversions);
-      Int_t result = ElectronTools::PassTightId(e, *&fVertices, fConversions, 2);
+      Int_t result = ElectronTools::PassTightId(e, *&fVertices, fTracks, fConversions, 2);
       if (result != 15) continue;
     }
 

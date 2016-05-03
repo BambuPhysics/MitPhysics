@@ -68,31 +68,30 @@ void PFTauIDModRun1::Process()
       // basic selections
       if (tau->Pt() < fPtMin) continue;
       if (fabs(tau->Eta()) > fEtaMax) continue;
-      if (tau->DiscriminationByDecayModeFinding() < 0.5) continue;
+      if (!tau->PFTauIdentifier(PFTau::iDecayModeFinding)) continue;
 
       // default HPS
       if (!fIsLooseId) { 
         // reject leptons 
-        if (tau->DiscriminationByLooseElectronRejection() < 0.5) continue;
-        if (tau->DiscriminationByLooseMuonRejection() < 0.5) continue;
+        if (tau->PFTauDiscriminator(PFTau::kDiscriminationByLooseElectronRejection) < 0.5) continue;
+        if (tau->PFTauDiscriminator(PFTau::kDiscriminationByLooseMuonRejection) < 0.5) continue;
         // default isolation working points
         if (fHPSIso.Contains("loose",TString::kIgnoreCase)) {
-          if (!tau->LooseCombinedIsolationDBSumPtCorr3Hits()) continue;
+          if (!tau->PFTauIdentifier(PFTau::iByLooseCombinedIsolationDeltaBetaCorr3Hits)) continue;
         }
         else if (fHPSIso.Contains("med",TString::kIgnoreCase)) {
-          if (!tau->MediumCombinedIsolationDBSumPtCorr3Hits()) continue;
+          if (!tau->PFTauIdentifier(PFTau::iByMediumCombinedIsolationDeltaBetaCorr3Hits)) continue;
         }
         else if (fHPSIso.Contains("tight",TString::kIgnoreCase)) {
-          if (!tau->TightCombinedIsolationDBSumPtCorr3Hits()) continue;
+          if (!tau->PFTauIdentifier(PFTau::iByTightCombinedIsolationDeltaBetaCorr3Hits)) continue;
         }
         else {
           SendError(kWarning,"Process","ERROR: HPS Isolation not properly defined!");
         }
       }
       // loose Id
-      else {
-        if (tau->RawCombinedIsolationDBSumPtCorr3Hits() >5) continue;
-      }
+      else
+        if (tau->PFTauDiscriminant(PFTau::dByCombinedIsolationDeltaBetaCorrRaw3Hits) >5) continue;
     }
 
     // add good tau to output collection

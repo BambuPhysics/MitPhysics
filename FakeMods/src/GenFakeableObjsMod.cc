@@ -245,10 +245,11 @@ void GenFakeableObjsMod::Process()
       //****************************************************************************************
       // Isolation Cut
       //****************************************************************************************
+      double trackiso = IsolationTools::TrackIsolation(denominator->GsfTrk(), 0.3, 0., 0., 0.2, fTracks);
       Double_t combIso = 
-        denominator->TrackIsolationDr03() + TMath::Max(denominator->EcalRecHitIsoDr03() - 1.0, 0.0) + denominator->HcalTowerSumEtDr03();
+        trackiso + TMath::Max(denominator->EcalRecHitIsoDr03() - 1.0, 0.0) + denominator->HcalTowerSumEtDr03();
       if (fabs(denominator->Eta()) > 1.5) {
-        combIso = denominator->TrackIsolationDr03() + denominator->EcalRecHitIsoDr03() + denominator->HcalTowerSumEtDr03();
+        combIso = trackiso + denominator->EcalRecHitIsoDr03() + denominator->HcalTowerSumEtDr03();
       }
 
       Bool_t passIsolationCut = (combIso / denominator->Pt() < 0.1) ;
@@ -336,10 +337,11 @@ void GenFakeableObjsMod::Process()
      //****************************************************************************************
       // Isolation Cut
       //****************************************************************************************
+      double trackiso = IsolationTools::TrackIsolation(denominator->GsfTrk(), 0.3, 0., 0., 0.2, fTracks);
       Double_t combIso = 
-        denominator->TrackIsolationDr03() + TMath::Max(denominator->EcalRecHitIsoDr03() - 1.0, 0.0) + denominator->HcalTowerSumEtDr03();
+        trackiso + TMath::Max(denominator->EcalRecHitIsoDr03() - 1.0, 0.0) + denominator->HcalTowerSumEtDr03();
       if (fabs(denominator->Eta()) > 1.5) {
-        combIso = denominator->TrackIsolationDr03() + denominator->EcalRecHitIsoDr03() + denominator->HcalTowerSumEtDr03();
+        combIso = trackiso + denominator->EcalRecHitIsoDr03() + denominator->HcalTowerSumEtDr03();
       }
       Bool_t passIsolationCut = (combIso / denominator->Pt() < 0.3) ;
   

@@ -241,7 +241,7 @@ namespace mithep {
                                                      std::vector<double>* kin= NULL // store variables for debugging...
                                                      );// add for mono photon 
 
-    static bool PassVgamma2011Selection(const Photon* ph, double rho);
+    static bool PassVgamma2011Selection(const Photon* ph, double rho, Vertex const*, TrackCol const*);
 
     static EPhotonEffectiveAreaTarget EffectiveAreaTarget(EPhIsoType);
     static Double_t PhotonEffectiveArea(EPhotonEffectiveAreaType, Double_t absEta, EPhotonEffectiveAreaTarget);

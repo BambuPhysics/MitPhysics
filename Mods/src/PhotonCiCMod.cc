@@ -3,6 +3,7 @@
 #include "MitAna/DataTree/interface/PhotonCol.h"
 #include "MitAna/DataTree/interface/EventHeader.h"
 #include "MitPhysics/Init/interface/ModNames.h"
+#include "MitPhysics/Init/interface/Constants.h"
 #include "MitPhysics/Utils/interface/IsolationTools.h"
 #include "MitPhysics/Utils/interface/PhotonTools.h"
 #include "MitPhysics/Mods/interface/PhotonCiCMod.h"
@@ -211,7 +212,7 @@ void PhotonCiCMod::Process()
           }
         }
         if (runRange > -1) {
-          if (fixPhFst[iPair]->IsEB())
+          if (fixPhFst[iPair]->SCluster()->AbsEta() < mithep::gkPhoEBEtaMax)
             if (fixPhFst[iPair]->R9() > 0.94)
               scaleFac1 += fDataEnCorr_EB_hR9[runRange];
             else
@@ -221,7 +222,7 @@ void PhotonCiCMod::Process()
               scaleFac1 += fDataEnCorr_EE_hR9[runRange];
             else
               scaleFac1 += fDataEnCorr_EE_lR9[runRange];
-          if (fixPhSec[iPair]->IsEB())
+          if (fixPhSec[iPair]->SCluster()->AbsEta() < mithep::gkPhoEBEtaMax)
             if (fixPhSec[iPair]->R9() > 0.94)
               scaleFac2 += fDataEnCorr_EB_hR9[runRange];
             else
@@ -241,7 +242,7 @@ void PhotonCiCMod::Process()
 
       double width1 = 0.;
       double width2 = 0.;
-      if (fixPhFst[iPair]->IsEB())
+      if (fixPhFst[iPair]->SCluster()->AbsEta() < mithep::gkPhoEBEtaMax)
         if (fixPhFst[iPair]->R9() > 0.94)
           width1 = fMCSmear_EB_hR9;
         else
@@ -253,7 +254,7 @@ void PhotonCiCMod::Process()
           width1 = fMCSmear_EE_lR9;
 
 
-      if (fixPhSec[iPair]->IsEB())
+      if (fixPhSec[iPair]->SCluster()->AbsEta() < mithep::gkPhoEBEtaMax)
         if (fixPhSec[iPair]->R9() > 0.94)
           width2 = fMCSmear_EB_hR9;
         else
@@ -720,7 +721,7 @@ unsigned int PhotonCiCMod::FindBestVertex(Photon* ph1, Photon* ph2, VertexCol co
       //const mithep::ThreeVector caloPos1(ph1->SCluster()->Point());
       const mithep::ThreeVector caloPos1(ph1->CaloPos());
       zconv  = conv1->Z0EcalVtx(bsp->Position(), caloPos1);
-      if (ph1->IsEB()) {
+      if (ph1->SCluster()->AbsEta() < mithep::gkPhoEBEtaMax) {
         double rho = conv1->Position().Rho();
         if      (rho < 15.)
           dzconv = 0.06;
@@ -743,7 +744,7 @@ unsigned int PhotonCiCMod::FindBestVertex(Photon* ph1, Photon* ph2, VertexCol co
       //const mithep::ThreeVector caloPos2(ph2->SCluster()->Point());
       const mithep::ThreeVector caloPos2(ph2->CaloPos());
       zconv  = conv2->Z0EcalVtx(bsp->Position(), caloPos2);
-      if (ph2->IsEB()) {
+      if (ph2->SCluster()->AbsEta() < mithep::gkPhoEBEtaMax) {
         double rho = conv2->Position().Rho();
         if      (rho < 15.)
           dzconv = 0.06;
@@ -767,7 +768,7 @@ unsigned int PhotonCiCMod::FindBestVertex(Photon* ph1, Photon* ph2, VertexCol co
       const mithep::ThreeVector caloPos1(ph1->CaloPos());
       double z1  = conv1->Z0EcalVtx(bsp->Position(), caloPos1);
       double dz1 = 0.;
-      if (ph1->IsEB()) {
+      if (ph1->SCluster()->AbsEta() < mithep::gkPhoEBEtaMax) {
         double rho = conv1->Position().Rho();
         if      (rho < 15.)
           dz1 = 0.06;
@@ -789,7 +790,7 @@ unsigned int PhotonCiCMod::FindBestVertex(Photon* ph1, Photon* ph2, VertexCol co
       const mithep::ThreeVector caloPos2(ph2->CaloPos());
       double z2  = conv2->Z0EcalVtx(bsp->Position(), caloPos2);
       double dz2 = 0.;
-      if ( ph2->IsEB() ) {
+      if ( ph2->SCluster()->AbsEta() < mithep::gkPhoEBEtaMax) {
         double rho = conv2->Position().Rho();
         if      (rho < 15.)
           dz2 = 0.06;

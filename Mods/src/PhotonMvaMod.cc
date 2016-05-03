@@ -8,6 +8,7 @@
 #include "MitAna/DataTree/interface/StableData.h"
 #include "MitAna/DataTree/interface/StableParticle.h"
 #include "MitPhysics/Init/interface/ModNames.h"
+#include "MitPhysics/Init/interface/Constants.h"
 #include "MitPhysics/Utils/interface/IsolationTools.h"
 #include "MitPhysics/Utils/interface/PhotonTools.h"
 #include "MitPhysics/Utils/interface/VertexTools.h"
@@ -78,7 +79,7 @@ void PhotonMvaMod::Process()
         continue;
       if (ph->HadOverEm()         >  0.15)
         continue;
-      if (ph->IsEB()) {
+      if (ph->SCluster()->AbsEta() < mithep::gkPhoEBEtaMax) {
         if (ph->CoviEtaiEta() > 0.015)
           continue;
       }
@@ -104,9 +105,6 @@ void PhotonMvaMod::Process()
       //if (fRegressionVersion>0)
       //  egcor.CorrectEnergyWithError(outph,pv,fPileUpDen->At(0)->RhoKt6PFJets(),
       //				     fRegressionVersion, fApplyShowerRescaling && !fIsData);
-
-      ThreeVectorC scpos = outph->SCluster()->Point();
-      outph->SetCaloPosXYZ(scpos.X(),scpos.Y(),scpos.Z());
     }
     GoodPhotons->AddOwned(outph);
   }
