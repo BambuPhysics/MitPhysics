@@ -12,6 +12,7 @@
 #include "MitAna/DataTree/interface/Electron.h"
 #include "MitAna/DataTree/interface/DecayParticleCol.h"
 #include "MitAna/DataTree/interface/VertexCol.h"
+#include "MitAna/DataTree/interface/TrackCol.h"
 #include "MitAna/DataTree/interface/BeamSpotCol.h"
 #include "MitAna/DataTree/interface/TriggerObjectCol.h"
 #include "MitAna/DataTree/interface/ElectronCol.h"
@@ -161,12 +162,12 @@ namespace mithep {
                                                   const BaseVertex *vtx, UInt_t nWrongHitsMax=0, Double_t probMin=1e-6,
                                                   Double_t lxyMin = 2.0, Bool_t matchCkf = kTRUE, Bool_t requireArbitratedMerged = kFALSE, Double_t trkptMin = -99.);
     static Bool_t       PassNExpectedHits(Electron const*, EElIdType, Bool_t invert = false);
-    static Bool_t       PassCustomID(const Electron *el, EElIdType idType);
-    static Bool_t       PassCustomIso(const Electron *el, EElIsoType isoType);
+    static Bool_t       PassCustomID(const Electron *el, EElIdType idType, TrackCol const* tracks = 0);
+    static Bool_t       PassCustomIso(const Electron *el, EElIsoType isoType, TrackCol const* tracks);
     static Bool_t       PassID(Electron const*, EElIdType); // new implementation to get rid of PassCustomID
-    static Bool_t       PassIso(Electron const*, EElIsoType); // new implementation to get rid of PassCustomIso
-    static Bool_t       PassPFIso(Electron const*, EElIsoType, PFCandidateCol const* = 0, Vertex const* = 0, MuonCol const* = 0, ElectronCol const* = 0);
-    static Bool_t       PassIsoRhoCorr(Electron const*, EElIsoType, Double_t rho, PFCandidateCol const* = 0, Vertex const* = 0);
+    static Bool_t       PassIso(Electron const*, EElIsoType, TrackCol const* tracks); // new implementation to get rid of PassCustomIso
+    static Bool_t       PassPFIso(Electron const*, EElIsoType, PFCandidateCol const* pf = 0, Vertex const* = 0, MuonCol const* = 0, ElectronCol const* = 0);
+    static Bool_t       PassIsoRhoCorr(Electron const*, EElIsoType, Double_t rho, PFCandidateCol const* pf = 0, Vertex const* = 0);
     static Bool_t       PassIsoFootprintRhoCorr(Electron const*, EElIsoType, Double_t rho, PFCandidateCol const*, Vertex const*);
     static Bool_t       PassD0Cut(Electron const*, VertexCol const*, EElIdType, Int_t iVertex = 0);
     static Bool_t       PassD0Cut(Electron const*, BeamSpotCol const*, EElIdType);
@@ -174,7 +175,7 @@ namespace mithep {
     static Bool_t       PassSpikeRemovalFilter(Electron const*);
     static Bool_t       PassTriggerMatching(Electron const*, TriggerObjectCol const*);
     static Int_t        Classify(const Electron *ele);
-    static Int_t        PassTightId(const Electron *ele, const VertexCol *vertices, 
+    static Int_t        PassTightId(const Electron *ele, const VertexCol *vertices, TrackCol const* tracks,
                                     const DecayParticleCol *conversions, const Int_t typeCuts,
                                     Double_t beta = 1.0);
     static bool         compute_cut(double x, double et, double cut_min, double cut_max, bool gtn=false);

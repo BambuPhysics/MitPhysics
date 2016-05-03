@@ -1,4 +1,5 @@
 #include "MitPhysics/Utils/interface/IsolationTools.h"
+#include "MitPhysics/Init/interface/Constants.h"
 #include "MitAna/DataTree/interface/VertexCol.h"
 #include "MitAna/DataTree/interface/MuonCol.h"
 #include "MitAna/DataTree/interface/ElectronCol.h"
@@ -24,6 +25,36 @@ Double_t IsolationTools::TrackIsolation(const Track *p, Double_t extRadius, Doub
   for (UInt_t i=0; i<tracks->GetEntries();i++) {   
     Double_t tmpPt = tracks->At(i)->Pt();
     Double_t deltaZ = fabs(p->Z0() - tracks->At(i)->Z0());
+
+    //ignore the track if it is below the pt threshold
+    if (tmpPt < ptLow) 
+      continue;    
+    //ingore the track if it is too far away in Z
+    if (deltaZ > maxVtxZDist) 
+      continue;
+           
+    Double_t dr = MathUtils::DeltaR(p->Phi(),p->Eta(),tracks->At(i)->Phi(), tracks->At(i)->Eta());
+    //add the track pt if it is inside the annulus
+    if ( dr < extRadius && 
+         dr >= intRadius ) {
+      ptSum += tmpPt;
+    }
+  }
+  return ptSum;  
+}
+
+//--------------------------------------------------------------------------------------------------
+Double_t IsolationTools::TrackIsolation(const Photon *p, Double_t extRadius, Double_t intRadius,
+                                        Double_t ptLow, Double_t maxVtxZDist, 
+                                        mithep::Vertex const* pv, const Collection<Track> *tracks)
+{
+  // Computes the Track Isolation: Summed Transverse Momentum of all tracks inside an annulus around
+  // the photon.
+
+  Double_t ptSum =0.;  
+  for (UInt_t i=0; i<tracks->GetEntries();i++) {   
+    Double_t tmpPt = tracks->At(i)->Pt();
+    Double_t deltaZ = fabs(pv->Z() - tracks->At(i)->Z0());
 
     //ignore the track if it is below the pt threshold
     if (tmpPt < ptLow) 
@@ -621,7 +652,7 @@ Double_t IsolationTools::PFElectronIsolation2012LepTag(const Electron *ele, cons
             }
             //if (dr < dRMax ) tmpGammaIso_DR += pf->Pt();
             //if (dr < dRMax && ((pf->HasSCluster() && pf->SCluster()!=ele->SCluster()) || !pf->HasSCluster())) tmpGammaIso_DR += pf->Pt();//ming
-            if (dr < dRMax && !(ele->GsfTrk()->NExpectedHitsInner()>0 && pf->MvaGamma() > 0.99 && pf->HasSCluster() && ele->SCluster() == pf->SCluster())) tmpGammaIso_DR += pf->Pt();//ming:HZZ
+            if (dr < dRMax && !(ele->GsfTrk()->NExpectedHitsInner()>0 && pf->PFType() == PFCandidate::eGamma && pf->HasSCluster() && ele->SCluster() == pf->SCluster())) tmpGammaIso_DR += pf->Pt();//ming:HZZ
           }
         }
         //NeutralHadron
@@ -646,6 +677,86 @@ Double_t IsolationTools::PFElectronIsolation2012LepTag(const Electron *ele, cons
   }
 
   return (IsoVar_ChargedIso_DR + IsoVar_NeutralIso_DR);
+}
+
+//--------------------------------------------------------------------------------------------------
+std::map<Double_t, Double_t>
+mithep::IsolationTools::PFIsoDeposit(Particle const& particle, PFCandidateCol const& cands, Double_t minDR, Double_t maxDR, Double_t maxDRho, PFCandidate::EPFType type/* = eX*/)
+{
+  std::map<Double_t, Double_t> deposit;
+
+  for (UInt_t iCand = 0; iCand != cands.GetEntries(); ++iCand) {
+    PFCandidate const& cand = *cands.At(iCand);
+
+    if (type != PFCandidate::eX && cand.PFType() != type)
+      continue;
+
+    Double_t dr = MathUtils::DeltaR(&particle, &cand);
+    
+    if (dr < minDR || dr > maxDR)
+      continue;
+
+    if (particle.ObjType() == kElectron) {
+      auto& track = *static_cast<Electron const&>(particle).GsfTrk();
+      if (track.D0Corrected(cand.SourceVertex()) > maxDRho)
+        continue;
+    }
+
+    Double_t epsilon = 1.e-6;
+    while (!deposit.emplace(dr + epsilon, cand.Pt()).second) // in the very unlikely case of identical doubles
+      epsilon += 1.e-6;
+  }
+
+  return deposit;
+}
+
+//--------------------------------------------------------------------------------------------------
+Double_t
+mithep::IsolationTools::IsoFromDeposit(Particle const& particle, std::map<Double_t, Double_t> const& deposit, Double_t maxDR, Double_t minDRBarrel = 0., Double_t minDREndcap = 0.)
+{
+  Double_t minDR = 0.;
+
+  if (particle.ObjType() == kPFCandidate) {
+    auto& pf = static_cast<PFCandidate const&>(particle);
+    if (std::abs(pf.EtaECal()) < gkEleEBEtaMax)
+      minDR = minDRBarrel;
+    else
+      minDR = minDREndcap;
+  }
+  else if (particle.ObjType() == kElectron) {
+    auto& ele = static_cast<Electron const&>(particle);
+    if (ele.SCluster()->AbsEta() < gkEleEBEtaMax)
+      minDR = minDRBarrel;
+    else
+      minDR = minDREndcap;
+  }
+  else if (particle.ObjType() == kPhoton) {
+    auto& pho = static_cast<Photon const&>(particle);
+    if (pho.SCluster()->AbsEta() < gkPhoEBEtaMax)
+      minDR = minDRBarrel;
+    else
+      minDR = minDREndcap;
+  }
+  else {
+    if (particle.AbsEta() < gkPhoEBEtaMax)
+      minDR = minDRBarrel;
+    else
+      minDR = minDREndcap;
+  }
+
+  Double_t iso = 0.;
+
+  for (auto& dep : deposit) {
+    if (dep.first < minDR)
+      continue;
+
+    if (dep.first > maxDR)
+      break;
+
+    iso += dep.second;
+  }
+
+  return iso;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -929,9 +1040,6 @@ Double_t IsolationTools::CiCTrackIsolation(const Photon* p,
 
     Photon* phTemp = new Photon(*p);
 
-    // RESET CALO_POS!
-    phTemp->SetCaloPosXYZ(p->SCluster()->Point().X(),p->SCluster()->Point().Y(),p->SCluster()->Point().Z());
-
     // compute the ph momentum with respect to this Vtx
     //FourVectorM phMom = p->MomVtx(iVtx->Position());
     FourVectorM phMom = phTemp->MomVtx(iVtx->Position());
@@ -1197,9 +1305,6 @@ Float_t IsolationTools::PFChargedCount(const Photon* p,
     }
     
     Photon* phTemp = new Photon(*p);
-    
-    // RESET CALO_POS! //ming: why?
-    phTemp->SetCaloPosXYZ(p->SCluster()->Point().X(),p->SCluster()->Point().Y(),p->SCluster()->Point().Z());
     
     // compute the ph momentum with respect to this Vtx
     FourVectorM phMom = phTemp->MomVtx(iVtx->Position());

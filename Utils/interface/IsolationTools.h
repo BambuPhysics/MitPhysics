@@ -32,7 +32,10 @@ namespace mithep
   public:
     static Double_t TrackIsolation(const mithep::Track *p, Double_t extRadius, 
                                    Double_t intRadius, Double_t ptLow, Double_t maxVtxZDist, 
-                                   const mithep::TrackCol *tracks); 
+                                   const mithep::TrackCol *tracks); // for electrons
+    static Double_t TrackIsolation(const mithep::Photon *p, Double_t extRadius, 
+                                   Double_t intRadius, Double_t ptLow, Double_t maxVtxZDist, 
+                                   mithep::Vertex const* pv, const mithep::TrackCol *tracks);
     static Double_t EcalIsolation(const SuperCluster *sc, Double_t coneSize, Double_t etLow, 
                                   const mithep::BasicClusterCol *basicClusters);
     static Double_t CaloTowerHadIsolation(const ThreeVector *p,  Double_t extRadius, 
@@ -72,6 +75,11 @@ namespace mithep
                                                   const ElectronCol *goodElectrons = 0,
                                                   const MuonCol *goodMuons = 0,
                                                   Double_t dRMax = 0.3, Bool_t isDebug=kFALSE);
+
+    // first double: dr from cand, second double: pt of candidate
+    // Written to enable electron pf isolation sums calculation on the fly. CMSSW values were not quite reproduced, so not used for now.
+    static std::map<Double_t, Double_t> PFIsoDeposit(Particle const&, PFCandidateCol const&, Double_t minDR, Double_t maxDR, Double_t maxDRho, PFCandidate::EPFType type = PFCandidate::eX);
+    static Double_t IsoFromDeposit(Particle const&, std::map<Double_t, Double_t> const&, Double_t maxDR, Double_t minDRBarrel, Double_t minDREndcap);
 
     static Double_t PFMuonIsolationRhoCorr(Muon const*, Double_t rho, MuonTools::EMuonEffectiveAreaTarget);
 
