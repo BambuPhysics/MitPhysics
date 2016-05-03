@@ -43,6 +43,7 @@
 #include "MitPhysics/Mods/interface/VTagMod.h"
 #include "MitPhysics/Mods/interface/FatJetExtenderMod.h"
 #include "MitPhysics/Mods/interface/MetMod.h"
+#include "MitPhysics/Mods/interface/PFIsolationMod.h"
 #endif
 
 #ifdef __CLING__
@@ -103,4 +104,5 @@
 #pragma link C++ class mithep::VTagMod+;
 #pragma link C++ class mithep::FatJetExtenderMod+;
 #pragma link C++ class mithep::MetMod+;
+#pragma link C++ class mithep::PFIsolationMod+;
 #endif
