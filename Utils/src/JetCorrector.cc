@@ -110,7 +110,7 @@ mithep::JetCorrector::Corrector::Corrector(char const* fileName, FactorType fact
         else
           fFormula = new TFormula(fileName, formula);
 
-        if (fFormula->GetNdim() != int(fFormulaVariables.size())) {
+        if (fFormula->GetNdim() != 0 && fFormula->GetNdim() != int(fFormulaVariables.size())) {
           std::cerr << "File " << fileName << " does not contain a proper JEC formula." << std::endl;
           delete words;
           throw std::runtime_error("Configuration error");
