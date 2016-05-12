@@ -766,8 +766,8 @@ void PhotonPairSelector::Process()
       bdt1 = fTool.GetMVAbdtValue(fixPh1st[iPair],theVtx[iPair],fTracks,fPV,theRho,fPFCands,fElectrons,fApplyEleVeto);
       bdt2 = fTool.GetMVAbdtValue(fixPh2nd[iPair],theVtx[iPair],fTracks,fPV,theRho,fPFCands,fElectrons,fApplyEleVeto);
     }
-    fixPh1st[iPair]->SetIdMva(bdt1);
-    fixPh2nd[iPair]->SetIdMva(bdt2);
+    // fixPh1st[iPair]->SetIdMva(bdt1);
+    // fixPh2nd[iPair]->SetIdMva(bdt2);
     // ---------------------------------------------------------------------------------------------------------------
     // superseedded by above code... (fab)
     //     switch (fIdType) {
@@ -874,8 +874,8 @@ void PhotonPairSelector::Process()
       pass1 = fixPh1st[iPair]->Pt()>leadptcut                                              &&
 	PhotonTools::PassSinglePhotonPresel(fixPh1st[iPair],fElectrons,fConversions,bsp,
 					    fTracks,theVtx[iPair],rho,fApplyEleVeto)       &&
-	( ( fixPh1st[iPair]->SCluster()->AbsEta() < 1.5 && fixPh1st[iPair]->IdMva() > fbdtCutBarrel )
-	  || ( fixPh1st[iPair]->IdMva() > fbdtCutEndcap ) );
+	( ( fixPh1st[iPair]->SCluster()->AbsEta() < 1.5 && bdt1 > fbdtCutBarrel )
+	  || ( bdt1 > fbdtCutEndcap ) );
 	  
 	// we've already compyted the MVA varible above, not needed to redo...
 // 	fTool.PassMVASelection(fixPh1st[iPair],theVtx[iPair],fTracks,fPV,rho,
@@ -886,8 +886,8 @@ void PhotonPairSelector::Process()
 	pass2 = fixPh2nd[iPair]->Pt() > trailptcut                                         &&
 	  PhotonTools::PassSinglePhotonPresel(fixPh2nd[iPair],fElectrons,fConversions,bsp,
 					      fTracks,theVtx[iPair],rho,fApplyEleVeto)     &&
-	( ( fixPh2nd[iPair]->SCluster()->AbsEta() < 1.5 && fixPh2nd[iPair]->IdMva() > fbdtCutBarrel )
-	  || ( fixPh2nd[iPair]->IdMva() > fbdtCutEndcap ) );
+	( ( fixPh2nd[iPair]->SCluster()->AbsEta() < 1.5 && bdt2 > fbdtCutBarrel )
+	  || ( bdt2 > fbdtCutEndcap ) );
 
 // 	  fTool.PassMVASelection(fixPh2nd[iPair],theVtx[iPair],fTracks,fPV,rho,
 // 				 fbdtCutBarrel,fbdtCutEndcap, fElectrons, fApplyEleVeto);

@@ -284,7 +284,7 @@ void PhotonIDModRun1::Process()
     // set the photonIdMVA value of requested...
     double idMvaVal = fTool->GetMVAbdtValue(ph,fPV->At(0),fTracks, fPV, theRho, fPFCands, fElectrons, fApplyElectronVeto);
 
-    ph->SetIdMva(idMvaVal);
+    // ph->SetIdMva(idMvaVal);
 
     // ---------------------------------------------------------------------
     // check if we use the Vgamma2011 Selection. If yes, bypass all the below...
@@ -298,7 +298,7 @@ void PhotonIDModRun1::Process()
     // check if we use the Vgamma2011 Selection. If yes, bypass all the below...
     if( fPhIdType == PhotonTools::kVgamma2011Selection ) {
       if( ph->Pt() > fPhotonPtMin && ph->SCluster()->AbsEta() <= fAbsEtaMax && ph->SCluster()->AbsEta() >= fAbsEtaMin &&
-          PhotonTools::PassVgamma2011Selection(ph, _tRho) )
+          PhotonTools::PassVgamma2011Selection(ph, _tRho, fPV->At(0), fTracks) )
         GoodPhotons->AddOwned(ph);
       continue; // go to next Photons
     }
@@ -377,8 +377,8 @@ void PhotonIDModRun1::Process()
                                               ph, fElectrons, fConversions, bsp, fTracks, fPV->At(0), _tRho,
                                               fApplyElectronVeto
                                               ) &&
-          ( ( isbarrel && ph->IdMva() > fbdtCutBarrel ) ||
-            (             ph->IdMva() > fbdtCutEndcap ) )
+          ( ( isbarrel && idMvaVal > fbdtCutBarrel ) ||
+            (             idMvaVal > fbdtCutEndcap ) )
           )
         GoodPhotons->AddOwned(ph);
       
@@ -446,7 +446,9 @@ void PhotonIDModRun1::Process()
       break;
     case PhotonTools::kCombinedIso:
       {
-        Double_t totalIso = ph->HollowConeTrkIsoDr04()+
+        // parameter values may be wrong - check with CMSSW hollow cone track iso 0.4
+        Double_t trackIso = IsolationTools::TrackIsolation(ph, 0.4, 0.05, 0., 0.2, fPV->At(0), fTracks);
+        Double_t totalIso = trackIso+
           ph->EcalRecHitIsoDr04() +
           ph->HcalTowerSumEtDr04();
         if (totalIso/ph->Pt() < 0.25)
@@ -455,7 +457,9 @@ void PhotonIDModRun1::Process()
       break;
     case PhotonTools::kCustomIso:
       {
-        if ( ph->HollowConeTrkIsoDr04() < (1.5 + 0.001*ph->Pt()) && ph->EcalRecHitIsoDr04()<(2.0+0.006*ph->Pt()) && ph->HcalTowerSumEtDr04()<(2.0+0.0025*ph->Pt()) )
+        // parameter values may be wrong - check with CMSSW hollow cone track iso 0.4
+        Double_t trackIso = IsolationTools::TrackIsolation(ph, 0.4, 0.05, 0., 0.2, fPV->At(0), fTracks);
+        if (trackIso < (1.5 + 0.001*ph->Pt()) && ph->EcalRecHitIsoDr04()<(2.0+0.006*ph->Pt()) && ph->HcalTowerSumEtDr04()<(2.0+0.0025*ph->Pt()) )
           isocut = true;
       }
       break;
@@ -552,11 +556,11 @@ void PhotonIDModRun1::Process()
           phCalc = &fIsoCalcPhEE;
         }
 
-        double corrCHIso(ph->PFChargedHadronIso() - effACH * theRho);
+        double corrCHIso(IsolationTools::PFChargedIsolation(ph, fPV->At(0), 0.3, 0., fPFCands) - effACH * theRho);
         if (corrCHIso < chCalc->Eval(ph->Pt())) {
-          double corrNHIso(ph->PFNeutralHadronIso() - effANH * theRho);
+          double corrNHIso(IsolationTools::PFNeutralHadronIsolation(ph, 0.3, 0., fPFCands) - effANH * theRho);
           if (corrNHIso < nhCalc->Eval(ph->Pt())) {
-            double corrPhIso(ph->PFPhotonIso() - effAPh * theRho);
+            double corrPhIso(IsolationTools::PFGammaIsolation(ph, 0.3, 0., fPFCands) - effAPh * theRho);
             if (corrPhIso < phCalc->Eval(ph->Pt()))
               isocut = kTRUE;
           }

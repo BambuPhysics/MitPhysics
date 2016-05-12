@@ -20,7 +20,7 @@ ElectronTools::ElectronTools()
 
 //--------------------------------------------------------------------------------------------------
 Bool_t
-mithep::ElectronTools::PassCustomID(const Electron *ele, EElIdType idType)
+mithep::ElectronTools::PassCustomID(const Electron *ele, EElIdType idType, mithep::TrackCol const* tracks/* = 0*/)
 {
   Double_t  fCuts[6][8];             //!custom id cuts
 
@@ -160,7 +160,7 @@ mithep::ElectronTools::PassCustomID(const Electron *ele, EElIdType idType)
     return kFALSE;
 
   Int_t cat = 2;
-  if ((ele->IsEB() && fBrem<0.06) || (ele->IsEE() && fBrem<0.1))
+  if ((ele->SCluster()->AbsEta() < mithep::gkEleEBEtaMax && fBrem<0.06) || (ele->SCluster()->AbsEta() > gkEleEEEtaMin && fBrem<0.1))
     cat=1;
   else if (eOverP < 1.2 && eOverP > 0.8)
     cat=0;
@@ -179,7 +179,7 @@ mithep::ElectronTools::PassCustomID(const Electron *ele, EElIdType idType)
   Double_t deltaEtaIn   = TMath::Abs(ele->DeltaEtaSuperClusterTrackAtVtx());
 
   Int_t eb = 1;
-  if (ele->IsEB())
+  if (ele->SCluster()->AbsEta() < mithep::gkEleEBEtaMax)
     eb = 0;
 
   if (hOverE>fCuts[0][cat+4*eb])
@@ -201,8 +201,14 @@ mithep::ElectronTools::PassCustomID(const Electron *ele, EElIdType idType)
   Bool_t isoCut = kTRUE;
   if(idType == kVBTFWorkingPointFakeableId){
     double isoEcal = ele->EcalRecHitIsoDr03();
-    if(ele->IsEB()) isoEcal = isoEcal - 1.0;
-    isoCut = (ele->TrackIsolationDr03() < ele->Pt()*0.2) &&
+    if(ele->SCluster()->AbsEta() < mithep::gkEleEBEtaMax)
+      isoEcal = isoEcal - 1.0;
+
+    if (!tracks)
+      throw std::runtime_error("ElectronTools::PassCustomIso Tracks is NULL");
+
+    double trackiso = IsolationTools::TrackIsolation(ele->GsfTrk(), 0.3, 0., 0., 0.2, tracks);
+    isoCut = (trackiso < ele->Pt()*0.2) &&
              (isoEcal                   < ele->Pt()*0.2) &&
              (ele->HcalTowerSumEtDr03() < ele->Pt()*0.2);
   }
@@ -219,7 +225,7 @@ mithep::ElectronTools::PassCustomID(const Electron *ele, EElIdType idType)
 }
 
 //--------------------------------------------------------------------------------------------------
-Bool_t ElectronTools::PassCustomIso(const Electron *ele, EElIsoType isoType)
+Bool_t ElectronTools::PassCustomIso(const Electron *ele, EElIsoType isoType, TrackCol const* tracks)
 {
   Double_t VBTFWorkingPoint95[4][2] = {
     {0.15 , 0.08   },   //TrkIso
@@ -256,19 +262,21 @@ Bool_t ElectronTools::PassCustomIso(const Electron *ele, EElIsoType isoType)
     {0.04,  0.030  }   //Combined
   };
 
+  double trackiso = IsolationTools::TrackIsolation(ele->GsfTrk(), 0.3, 0., 0., 0.2, tracks);
+
   Double_t isoVal[4] = {
-    ele->TrackIsolationDr03() / ele->Pt(),
+    trackiso / ele->Pt(),
     ele->EcalRecHitIsoDr03() / ele->Pt(),
     ele->HcalTowerSumEtDr03() / ele->Pt(),
     0.
   };
 
-  if (ele->IsEB())
-    isoVal[3] = (ele->TrackIsolationDr03() + TMath::Max(ele->EcalRecHitIsoDr03() - 1.0, 0.0) + ele->HcalTowerSumEtDr03()) / ele->Pt();
+  if (ele->SCluster()->AbsEta() < mithep::gkEleEBEtaMax)
+    isoVal[3] = (trackiso + TMath::Max(ele->EcalRecHitIsoDr03() - 1.0, 0.0) + ele->HcalTowerSumEtDr03()) / ele->Pt();
   else
-    isoVal[3] = (ele->TrackIsolationDr03() + ele->EcalRecHitIsoDr03() + ele->HcalTowerSumEtDr03()) / ele->Pt();
+    isoVal[3] = (trackiso + ele->EcalRecHitIsoDr03() + ele->HcalTowerSumEtDr03()) / ele->Pt();
 
-  unsigned fidId = ele->IsEB() ? 0 : 1;
+  unsigned fidId = ele->SCluster()->AbsEta() < mithep::gkEleEBEtaMax ? 0 : 1;
 
   switch (isoType) {
     case kVBTFWorkingPoint95IndividualIso:
@@ -419,21 +427,23 @@ mithep::ElectronTools::PassID(Electron const* ele, EElIdType type)
 }
 
 Bool_t
-mithep::ElectronTools::PassIso(Electron const* ele, EElIsoType isoType)
+mithep::ElectronTools::PassIso(Electron const* ele, EElIsoType isoType, TrackCol const* tracks)
 {
+  double trackiso = IsolationTools::TrackIsolation(ele->GsfTrk(), 0.3, 0., 0., 0.2, tracks);
+
   switch (isoType) {
     case kMVAIso_BDTG_IDIsoCombined:
-      return (ele->TrackIsolationDr03() < ele->Pt() * 0.2) &&
+      return (trackiso < ele->Pt() * 0.2) &&
         (ele->EcalRecHitIsoDr03() < ele->Pt() * 0.2) &&
         (ele->HcalTowerSumEtDr03() < ele->Pt() * 0.2);
 
     case kMVAIso_BDTG_IDIsoCombinedHWW2012TrigV4:
       if (ele->SCluster()->AbsEta() < gkEleEBEtaMax)
-        return ((ele->TrackIsolationDr03() - 1.0) < ele->Pt() * 0.2) &&
+        return ((trackiso - 1.0) < ele->Pt() * 0.2) &&
           (ele->EcalRecHitIsoDr03()  < ele->Pt() * 0.2) &&
           (ele->HcalTowerSumEtDr03() < ele->Pt() * 0.2);
       else
-        return (ele->TrackIsolationDr03() < ele->Pt() * 0.2) &&
+        return (trackiso < ele->Pt() * 0.2) &&
           (ele->EcalRecHitIsoDr03() < ele->Pt() * 0.2) &&
           (ele->HcalTowerSumEtDr03() < ele->Pt() * 0.2);
   default:
@@ -444,7 +454,8 @@ mithep::ElectronTools::PassIso(Electron const* ele, EElIsoType isoType)
 
 Bool_t
 mithep::ElectronTools::PassPFIso(Electron const* ele, EElIsoType isoType,
-                                 PFCandidateCol const* pfCandidates/* = 0*/, Vertex const* vertex/* = 0*/,
+                                 PFCandidateCol const* pfCandidates/* = 0*/,
+                                 Vertex const* vertex/* = 0*/,
                                  MuonCol const* nonisolatedMuons/* = 0*/, ElectronCol const* nonisolatedElectrons/* = 0*/)
 {
   bool isEB = ele->SCluster()->AbsEta() < gkEleEBEtaMax;
@@ -467,7 +478,8 @@ mithep::ElectronTools::PassPFIso(Electron const* ele, EElIsoType isoType,
 
 Bool_t
 mithep::ElectronTools::PassIsoRhoCorr(Electron const* ele, EElIsoType isoType, Double_t rho,
-                                      PFCandidateCol const* pfCandidates/* = 0*/, Vertex const* vertex/* = 0*/)
+                                      PFCandidateCol const* pfCandidates/* = 0*/,
+                                      Vertex const* vertex/* = 0*/)
 {
   bool isEB = ele->SCluster()->AbsEta() < gkEleEBEtaMax;
 
@@ -873,7 +885,7 @@ mithep::ElectronTools::Classify(const Electron *ele)
   double fBrem  = ele->FBrem();
 
   int cat = -1;
-  if (ele->IsEB()) {
+  if (ele->SCluster()->AbsEta() < mithep::gkEleEBEtaMax) {
     if ((fBrem >= 0.12) and (eOverP > 0.9) and (eOverP < 1.2))
       cat = 0;
     else if (((eta >  .445   and eta <  .45  ) or
@@ -905,7 +917,7 @@ mithep::ElectronTools::Classify(const Electron *ele)
 
 //--------------------------------------------------------------------------------------------------
 Int_t
-mithep::ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices,
+mithep::ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertices, TrackCol const* tracks,
                                    const DecayParticleCol *conversions, const Int_t typeCuts,
                                    Double_t beta)
 {
@@ -925,7 +937,7 @@ mithep::ElectronTools::PassTightId(const Electron *ele, const VertexCol *vertice
   Double_t eSeedOverPin = ele->ESeedClusterOverPIn();
 
   Int_t mishits = ele->BestTrk()->NExpectedHitsInner();
-  Double_t tkIso   = ele->TrackIsolationDr03();
+  Double_t tkIso   = IsolationTools::TrackIsolation(ele->GsfTrk(), 0.3, 0., 0., 0.2, tracks);
   Double_t ecalIso = ele->EcalRecHitIsoDr04()*beta;
   Double_t hcalIso  = ele->HcalTowerSumEtDr04()*beta;
 
@@ -1436,8 +1448,8 @@ mithep::ElectronTools::Likelihood(ElectronLikelihood *LH, const Electron *ele)
 
   LikelihoodMeasurements measurements;
   measurements.pt = ele->Pt();
-  if (ele->IsEB() && ele->AbsEta()<1.0) measurements.subdet = 0;
-  else if (ele->IsEB())                 measurements.subdet = 1;
+  if (ele->SCluster()->AbsEta() < mithep::gkEleEBEtaMax && ele->AbsEta()<1.0) measurements.subdet = 0;
+  else if (ele->SCluster()->AbsEta() < mithep::gkEleEBEtaMax)                 measurements.subdet = 1;
   else                                  measurements.subdet = 2;
   measurements.deltaPhi = TMath::Abs(ele->DeltaPhiSuperClusterTrackAtVtx());
   measurements.deltaEta = TMath::Abs(ele->DeltaEtaSuperClusterTrackAtVtx());

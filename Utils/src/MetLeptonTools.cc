@@ -30,69 +30,6 @@ MetLeptonTools::MetLeptonTools() {
   fTauIsoMVA = new TauIsoMVA();
   fTauIsoMVA->InitializeGBR(dataDir + "/gbrfTauIso_v2.root");
 }
-
-bool MetLeptonTools::looseTauId(const PFTau *iTau,const PileupEnergyDensityCol* iPUEnergyDensity) {
-  if(iTau->Pt() < 19)                                                 return false;
-  if(fabs(iTau->Eta()) > fabs(2.3) )                                  return false;
-  if(!iTau->DiscriminationByDecayModeFinding())                       return false;
-  if(!iTau->DiscriminationByLooseElectronRejection())                 return false;
-  if(!iTau->LooseCombinedIsolationDBSumPtCorr3Hits() < 2.0)           return false;
-  if(!iTau->LooseMuonRejection2())                                    return false;
-  return true;
-}
-bool MetLeptonTools::looseEleId(const Electron *iElectron,const PileupEnergyDensityCol* iPUEnergyDensity,
-				const PFCandidateCol *iCands,const Vertex *iPV,const VertexCol *iVertices) {
-  if(iElectron->SCluster()  == 0)    return false;  
-  if(iElectron->Pt()         < 9.5)  return false;
-  if(fabs(iElectron->Eta())  > 2.5)  return false;
-  if(fabs(iElectron->Eta()) > 1.4442 && fabs(iElectron->Eta()) < 1.566) return false;  
-  if(iElectron->GsfTrk() == 0) return false;
-  if(iElectron->GsfTrk()) if(iElectron->GsfTrk()->NExpectedHitsInner() > 0) return false;
-  if(PFIsolationNoGamma(iElectron,iCands)            > 0.3) return false;
-  if(iElectron->TrackIsolationDr03()/iElectron->Et() > 0.2) return false;        
-  //Electron Veto Id 
-  if(fabs(iElectron->Eta()) < 1.5) { 
-    if(fabs(iElectron->DeltaEtaSuperClusterTrackAtVtx()) > 0.007)   return false;
-    if(fabs(iElectron->DeltaPhiSuperClusterTrackAtVtx()) > 0.8)     return false;
-    if(iElectron->CoviEtaiEta()                          > 0.01)    return false;
-    if(iElectron->HadronicOverEm()                       > 0.15)    return false;
-    double lE = iElectron->SCluster()->Energy();
-    double lP = iElectron->P();
-    if(fabs(1./lE-1./lP)                                 > 0.05 )   return false;
-  } else { 
-    if(fabs(iElectron->DeltaEtaSuperClusterTrackAtVtx()) > 0.009)   return false;
-    if(fabs(iElectron->DeltaPhiSuperClusterTrackAtVtx()) > 0.10)    return false;
-    if(iElectron->CoviEtaiEta()                          > 0.03)    return false;
-    if(iElectron->HadronicOverEm()                       > 0.10)    return false;
-    double lE = iElectron->SCluster()->Energy();
-    double lP = iElectron->P();
-    if(fabs(1./lE-1./lP)                                 > 0.05 )   return false;
-  }
-  return true;
-}
-bool MetLeptonTools::looseMuId(const Muon *iMu,const PFCandidateCol *iCands,const Vertex *iPV,const VertexCol *iVertices) {
-  if(iMu->TrackerTrk()                         == 0  )          return false;
-  if(iMu->Pt()                                  < 9.5)          return false;
-  if(fabs(iMu->BestTrk()->Eta())                > 2.5)          return false;
-  if(iMu->BestTrk()->D0()                       > 2.0)          return false;
-  if(iMu->BestTrk()->RChi2()                    > 10 )          return false;
-  if(iMu->TrackerTrk()->NPixelHits()            < 1  )          return false;
-  if(iMu->TrackerTrk()->NHits()                 < 6  )          return false;
-  if(iMu->NValidHits()                          < 1  )          return false;
-  if(iMu->NMatches()                            < 1  )          return false;
-  if(PFIsolation(iMu,iCands)                    > 0.3)          return false;
-  return true;
-}
-bool MetLeptonTools::loosePhotonId(const Photon *iPhoton) { 
-  if(iPhoton->Pt()        <   20)                                   return false;
-  if(fabs(iPhoton->Eta()) > 1.45)                                   return false; 
-  if(iPhoton->HadOverEm() > 0.05)                                   return false;
-  if(iPhoton->HadOverEm() > 0.05)                                   return false;
-  if(iPhoton->HasPixelSeed())                                       return false;
-  if(iPhoton->CoviEtaiEta() > 0.01)                                 return false;
-  if(iPhoton->HollowConeTrkIsoDr04()    > (2.+0.002*iPhoton->Pt())) return false;
-  return true;
-}
 double MetLeptonTools::vis(const PFTau *iTau) {
   double lPtTot        = 0.;
   double lChargedPtTot = 0.;

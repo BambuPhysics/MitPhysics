@@ -1496,13 +1496,13 @@ PhotonTreeWriterPhoton<NClus>::SetVars(const Photon *p,
     esmearing = p->EnergySmearing();
     eerrsmearing = p->EnergyErrSmearing();
     escale = p->EnergyScale();    
-    idmva = p->IdMva();
+    //    idmva = p->IdMva();
     hcalisodr03 = p->HcalTowerSumEtDr03();
     ecalisodr03 = p->EcalRecHitIsoDr03();        
-    trkisohollowdr03 = p->HollowConeTrkIsoDr03();
+    //    trkisohollowdr03 = p->HollowConeTrkIsoDr03();
     hcalisodr04 = p->HcalTowerSumEtDr04();
     ecalisodr04 = p->EcalRecHitIsoDr04();        
-    trkisohollowdr04 = p->HollowConeTrkIsoDr04();
+    //    trkisohollowdr04 = p->HollowConeTrkIsoDr04();
     
     passeleveto = PhotonTools::PassElectronVetoConvRecovery(p, els, convs, bs);  
     
@@ -2326,7 +2326,7 @@ void PhotonTreeWriter::ApplyLeptonTag(const Photon *phHard,
     fDiphotonEvent-> eleEta = electron->Eta();
     fDiphotonEvent-> elePhi = electron->Phi();
     fDiphotonEvent-> eleSCEta = electron->SCluster()->Eta();
-    fDiphotonEvent-> eleIso1 = (electron->TrackIsolationDr03() + electron->EcalRecHitIsoDr03() + electron->HcalTowerSumEtDr03() - fPileUpDen->At(0)->RhoRandomLowEta() * TMath::Pi() * 0.3 * 0.3)/fDiphotonEvent-> elePt;
+    //    fDiphotonEvent-> eleIso1 = (electron->TrackIsolationDr03() + electron->EcalRecHitIsoDr03() + electron->HcalTowerSumEtDr03() - fPileUpDen->At(0)->RhoRandomLowEta() * TMath::Pi() * 0.3 * 0.3)/fDiphotonEvent-> elePt;
     
     fDiphotonEvent-> eleIso2 = -99.;
     
@@ -2343,8 +2343,8 @@ void PhotonTreeWriter::ApplyLeptonTag(const Photon *phHard,
     }
     
     
-    fDiphotonEvent-> eleIso3 = (electron->TrackIsolationDr03() + electron->EcalRecHitIsoDr03() + electron->HcalTowerSumEtDr03() - fPileUpDen->At(0)->RhoLowEta() * TMath::Pi() * 0.3 * 0.3)/fDiphotonEvent-> elePt;
-    fDiphotonEvent-> eleIso4 = (electron->TrackIsolationDr03() + electron->EcalRecHitIsoDr03() + electron->HcalTowerSumEtDr03() - fPileUpDen->At(0)->Rho() * TMath::Pi() * 0.3 * 0.3)/fDiphotonEvent-> elePt;
+    //    fDiphotonEvent-> eleIso3 = (electron->TrackIsolationDr03() + electron->EcalRecHitIsoDr03() + electron->HcalTowerSumEtDr03() - fPileUpDen->At(0)->RhoLowEta() * TMath::Pi() * 0.3 * 0.3)/fDiphotonEvent-> elePt;
+    //    fDiphotonEvent-> eleIso4 = (electron->TrackIsolationDr03() + electron->EcalRecHitIsoDr03() + electron->HcalTowerSumEtDr03() - fPileUpDen->At(0)->Rho() * TMath::Pi() * 0.3 * 0.3)/fDiphotonEvent-> elePt;
     fDiphotonEvent-> eleDist = electron->ConvPartnerDist();
     fDiphotonEvent-> eleDcot = electron->ConvPartnerDCotTheta();
     fDiphotonEvent-> eleCoviee = electron->CoviEtaiEta();

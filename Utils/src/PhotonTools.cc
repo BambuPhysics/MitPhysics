@@ -207,12 +207,6 @@ mithep::PhotonTools::PassIsoFootprintRhoCorr(Photon const* pho, EPhIsoType isoTy
   return PassIsoRhoCorr(pho, isoType, rho, chIso, nhIso, phIso);
 }
 
-Bool_t
-mithep::PhotonTools::PassIsoRhoCorr(Photon const* pho, EPhIsoType isoType, Double_t rho)
-{
-  return PassIsoRhoCorr(pho, isoType, rho, pho->PFChargedHadronIso(), pho->PFNeutralHadronIso(), pho->PFPhotonIso());
-}
-
 void
 mithep::PhotonTools::IsoLeakageCorrection(Photon const* pho, EPhIsoType isoType, Double_t& chIso, Double_t& nhIso, Double_t& phIso)
 {
@@ -442,11 +436,11 @@ Bool_t PhotonTools::PassConversionId(const Photon *p, const DecayParticle *c) {
   Double_t dphi = MathUtils::DeltaPhi(c->Phi(),dirconvsc.Phi());
   Double_t eoverp = p->SCluster()->Energy()/c->P();
   
-  if (p->IsEB() && eoverp>2.0) return kFALSE;
-  if (p->IsEE() && eoverp>3.0) return kFALSE;
+  if (p->SCluster()->AbsEta() < mithep::gkEleEBEtaMax && eoverp>2.0) return kFALSE;
+  if (p->SCluster()->AbsEta() > gkPhoEEEtaMin && eoverp>3.0) return kFALSE;
   
-  if (p->IsEE() && TMath::Abs(deta)>0.01) return kFALSE;
-  if (p->IsEE() && TMath::Abs(dphi)>0.01) return kFALSE;
+  if (p->SCluster()->AbsEta() > gkPhoEEEtaMin && TMath::Abs(deta)>0.01) return kFALSE;
+  if (p->SCluster()->AbsEta() > gkPhoEEEtaMin && TMath::Abs(dphi)>0.01) return kFALSE;
 
   return kTRUE;
     
@@ -658,7 +652,7 @@ const DecayParticle *PhotonTools::MatchedConversion(const Track *t, const DecayP
 
 PhotonTools::DiphotonR9EtaCats PhotonTools::DiphotonR9EtaCat(const Photon *p1, const Photon *p2) {
   
-  if (p1->IsEB() && p2->IsEB()) {
+  if (p1->SCluster()->AbsEta() < mithep::gkEleEBEtaMax && p2->SCluster()->AbsEta() < mithep::gkEleEBEtaMax) {
     if (p1->R9()>0.93 && p2->R9()>0.93) return kCat1;
     else return kCat2;
     
@@ -675,7 +669,7 @@ PhotonTools::DiphotonR9EtaConversionCats PhotonTools::DiphotonR9EtaConversionCat
   const DecayParticle *conv1 = MatchedConversion(p1, conversions, v);
   const DecayParticle *conv2 = MatchedConversion(p2, conversions, v);
     
-  if (p1->IsEB() && p2->IsEB()) {
+  if (p1->SCluster()->AbsEta() < mithep::gkEleEBEtaMax && p2->SCluster()->AbsEta() < mithep::gkEleEBEtaMax) {
     if (p1->R9()>0.93 && p2->R9()>0.93) return kNewCat1;
     else if (conv1||conv2) return kNewCat2;
     else return kNewCat3;
@@ -1112,7 +1106,7 @@ bool PhotonTools::PassEgammaMediumSelectionWithEleVeto(const Photon* ph,
   //<< " ph->Pt() " << ph->Pt()
   //<< " ph->Eta() " << ph->Eta()
   //<< " ph->IsEB() " << ph->IsEB()
-  //<< " ph->IsEE() " << ph->IsEE()
+  //<< " ph->SCluster()->AbsEta() > gkPhoEEEtaMin " << ph->SCluster()->AbsEta() > gkPhoEEEtaMin
   //<< " PassEleVeto " << PassEleVeto
   //<< std::endl;
   
@@ -1166,7 +1160,7 @@ bool PhotonTools::PassEgammaMediumSelectionWithEleVeto(const Photon* ph,
   float passCuts = 1.;
   if (ph->Pt() <= ptmin) 
     passCuts = -1.;
-  if (!ph->IsEB() && !ph->IsEE()) 
+  if (ph->SCluster()->AbsEta() > mithep::gkEleEBEtaMax && ph->SCluster()->AbsEta() < gkPhoEEEtaMin) 
     passCuts = -1.;
   if( !(
       HoE < egmedium_all_cuts[_tCat-1+0*2]
@@ -1253,7 +1247,7 @@ Bool_t  PhotonTools::PassSinglePhotonPresel(const Photon *p,const ElectronCol *e
   float CovIEtaIEta=p->CoviEtaiEta();
   float EcalIsoDr03=p->EcalRecHitIsoDr03();
   float HcalIsoDr03=p->HcalTowerSumEtDr03();
-  float TrkIsoHollowDr03=p->HollowConeTrkIsoDr03();
+  float TrkIsoHollowDr03=IsolationTools::TrackIsolation(p, 0.3, 0., 0., 0.2, vtx, trackCol);
   float NewEcalIso=EcalIsoDr03-0.012*Et;
   float NewHcalIso=HcalIsoDr03-0.005*Et;
   float NewTrkIsoHollowDr03=TrkIsoHollowDr03-0.002*Et;
@@ -1323,7 +1317,7 @@ Bool_t  PhotonTools::PassSinglePhotonPreselPFISO(const Photon *p,const ElectronC
   float CovIEtaIEta=p->CoviEtaiEta();
   float EcalIsoDr03=p->EcalRecHitIsoDr03();
   float HcalIsoDr03=p->HcalTowerSumEtDr03();
-  float TrkIsoHollowDr03=p->HollowConeTrkIsoDr03();
+  float TrkIsoHollowDr03=IsolationTools::TrackIsolation(p, 0.3, 0., 0., 0.2, vtx, trackCol);
 
   float NewEcalIso=EcalIsoDr03-0.012*Et;
   float NewHcalIso=HcalIsoDr03-0.005*Et;
@@ -1356,14 +1350,16 @@ Bool_t  PhotonTools::PassSinglePhotonPreselPFISO(const Photon *p,const ElectronC
   return kFALSE;
 }
 
-bool PhotonTools::PassVgamma2011Selection(const Photon* ph, double rho) {
+bool PhotonTools::PassVgamma2011Selection(const Photon* ph, double rho, Vertex const* vtx, TrackCol const* tracks) {
 
   bool isEB = (ph->SCluster()->AbsEta()<1.5);
+
+  double trackiso = IsolationTools::TrackIsolation(ph, 0.4, 0., 0., 0.2, vtx, tracks);
   
   if (ph->HasPixelSeed())                                           return false;  // ? is this what we want ?
   if (ph->HadOverEm()            > 0.05)                            return false;
   if (ph->CoviEtaiEta()          > (isEB ? 0.011 : 0.03) )          return false;
-  if (ph->HollowConeTrkIsoDr04() > ( 2.0 + 0.001 *ph->Pt() + 
+  if (trackiso                   > ( 2.0 + 0.001 *ph->Pt() + 
                                      (isEB ? 0.0167 : 0.032)*rho )) return false; 
   if (ph->EcalRecHitIsoDr04()    > ( 4.2 + 0.006 *ph->Pt() + 
                                      (isEB ? 0.183  : 0.090)*rho )) return false; 
@@ -1387,7 +1383,7 @@ Bool_t  PhotonTools::PassSinglePhotonPreselPFISONoEcal(const Photon *p,const Ele
   float HoE=p->HadOverEm();
   float CovIEtaIEta=p->CoviEtaiEta();
   float HcalIsoDr03=p->HcalTowerSumEtDr03();
-  float TrkIsoHollowDr03=p->HollowConeTrkIsoDr03();
+  float TrkIsoHollowDr03=IsolationTools::TrackIsolation(p, 0.3, 0., 0., 0.2, vtx, trackCol);
 
   float NewHcalIso=HcalIsoDr03-0.005*Et;
   float NewTrkIsoHollowDr03=TrkIsoHollowDr03-0.002*Et;
@@ -1428,7 +1424,7 @@ Bool_t  PhotonTools::PassSinglePhotonPreselPFISONoEcalNoPFChargedIso(const Photo
   float HoE=p->HadOverEm();
   float CovIEtaIEta=p->CoviEtaiEta();
   float HcalIsoDr03=p->HcalTowerSumEtDr03();
-  float TrkIsoHollowDr03=p->HollowConeTrkIsoDr03();
+  float TrkIsoHollowDr03=IsolationTools::TrackIsolation(p, 0.3, 0., 0., 0.2, vtx, trackCol);
 
   float NewHcalIso=HcalIsoDr03-0.005*Et;
   float NewTrkIsoHollowDr03=TrkIsoHollowDr03-0.002*Et;

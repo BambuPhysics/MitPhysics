@@ -271,16 +271,6 @@ mithep::ElectronIdMod::PassIsolationCut(Electron const& ele)
                                       GetNonIsolatedElectrons());
     }
 
-  case ElectronTools::kVBTFWorkingPoint95IndividualIso:
-  case ElectronTools::kVBTFWorkingPoint90IndividualIso:
-  case ElectronTools::kVBTFWorkingPoint85IndividualIso:
-  case ElectronTools::kVBTFWorkingPoint70IndividualIso:
-  case ElectronTools::kVBTFWorkingPoint95CombinedIso:
-  case ElectronTools::kVBTFWorkingPoint90CombinedIso:
-  case ElectronTools::kVBTFWorkingPoint85CombinedIso:
-  case ElectronTools::kVBTFWorkingPoint70CombinedIso:
-    return ElectronTools::PassCustomIso(&ele, ElectronTools::EElIsoType(fIsoType));
-
   case ElectronTools::kSummer15FakeIso:
   case ElectronTools::kSummer15Fake50nsIso:
     return ElectronTools::PassPFIso(&ele, ElectronTools::EElIsoType(fIsoType));
