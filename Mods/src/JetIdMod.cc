@@ -95,27 +95,29 @@ mithep::JetIdMod::IsGood(mithep::Jet const& jet)
   PFJet const* pfJet = dynamic_cast<mithep::PFJet const*>(&jet);
 
   if (pfJet) {
-    double chargedHadronFraction = pfJet->ChargedHadronEnergy() / pfJet->E();
+    auto&& rawP(pfJet->RawMom());
+
+    double chargedHadronFraction = pfJet->ChargedHadronEnergy() / rawP.E();
     if (pfJet->AbsEta()<2.4 && (chargedHadronFraction < fMinChargedHadronFraction || chargedHadronFraction > fMaxChargedHadronFraction))
       return false;
     fCutFlow->Fill(cChargedHFrac);
 
-    double neutralHadronFraction = pfJet->NeutralHadronEnergy() / pfJet->E();
+    double neutralHadronFraction = pfJet->NeutralHadronEnergy() / rawP.E();
     if (neutralHadronFraction < fMinNeutralHadronFraction || neutralHadronFraction > fMaxNeutralHadronFraction)
       return false;
     fCutFlow->Fill(cNeutralHFrac);
 
-    double chargedEMFraction = pfJet->ChargedEmEnergy() / pfJet->E();
+    double chargedEMFraction = pfJet->ChargedEmEnergy() / rawP.E();
     if (pfJet->AbsEta()<2.4 && (chargedEMFraction < fMinChargedEMFraction || chargedEMFraction > fMaxChargedEMFraction))
       return false;
     fCutFlow->Fill(cChargedEMFrac);
 
-    double neutralEMFraction = pfJet->NeutralEmEnergy() / pfJet->E();
+    double neutralEMFraction = pfJet->NeutralEmEnergy() / rawP.E();
     if (neutralEMFraction < fMinNeutralEMFraction || neutralEMFraction > fMaxNeutralEMFraction)
       return false;
     fCutFlow->Fill(cNeutralEMFrac);
 
-    double muonFraction = pfJet->MuonEnergy() / pfJet->E();
+    double muonFraction = pfJet->MuonEnergy() / rawP.E();
     if (muonFraction < fMinMuonFraction || muonFraction > fMaxMuonFraction)
       return false;
     fCutFlow->Fill(cMuonFrac);
