@@ -4,7 +4,6 @@
 #include "MitAna/DataTree/interface/PFJet.h"
 #include "MitAna/DataTree/interface/Names.h"
 #include "MitCommon/MathTools/interface/MathUtils.h"
-#include "MitAna/DataTree/interface/EventHeader.h"
 
 ClassImp(mithep::JetIdMod)
 
