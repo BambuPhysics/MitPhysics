@@ -664,6 +664,54 @@ JetTools::frac(const PFJet *iJet, Double_t iDRMax, Double_t iDRMin, Int_t iPFTyp
 }
 
 Double_t
+JetTools::pull(PFJet const* iPFJet, Bool_t reproduceCMSSW76Bug/* = false*/)
+{
+  double sumW2(0.);
+  double dEtaAve(0.);
+  double dPhiAve(0.);
+
+  for (unsigned iP(0); iP != iPFJet->NPFCands(); ++iP) {
+    auto* part = iPFJet->PFCand(iP);
+    if (!part)
+      continue;
+
+    double w2(part->Pt() * part->Pt());
+    sumW2 += w2;
+    dEtaAve += (iPFJet->Eta() - part->Eta()) * w2;
+    dPhiAve += MathUtils::DeltaPhi(iPFJet->Phi(), part->Phi()) * w2;
+  }
+
+  if (sumW2 == 0.)
+    return 0.;
+
+  dEtaAve /= sumW2;
+  dPhiAve /= sumW2;
+
+  double ddEtaRAve(0.);
+  double ddPhiRAve(0.);
+  
+  for (unsigned iP(0); iP != iPFJet->NPFCands(); ++iP) {
+    auto* part = iPFJet->PFCand(iP);
+    if (!part)
+      continue;
+
+    double w2(part->Pt() * part->Pt());
+    double dEta(iPFJet->Eta() - part->Eta());
+    double dPhi(MathUtils::DeltaPhi(iPFJet->Phi(), part->Phi()));
+    double ddEta(dEta - dEtaAve);
+    double ddPhi(dPhi - dPhiAve);
+    double ddR(std::sqrt(ddEta * ddEta + ddPhi * ddPhi));
+    ddEtaRAve += ddR * ddEta * w2;
+    ddPhiRAve += ddR * ddPhi * w2;
+  }
+
+  ddEtaRAve /= sumW2;
+  ddPhiRAve /= sumW2;
+
+  return std::sqrt(ddEtaRAve * ddEtaRAve + ddPhiRAve * ddPhiRAve);
+}
+
+Double_t
 JetTools::betaStar(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVertices,Double_t iDZCut)
 {
   // (sum pt of jet tracks associated to non-primary vertices) / (sum pt of jet tracks)

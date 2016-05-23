@@ -35,13 +35,17 @@ JetIDMVA::JetIDMVA() :
     "DRweighted",
     "rho",
     "nTot",
+    "nParticles",
     "nCh",
     "axisMajor",
+    "majW",
     "axisMinor",
+    "minW",
     "fRing0",
     "fRing1",
     "fRing2",
     "fRing3",
+    "pull",
     "min(pull,0.1)",
     "jetR",
     "jetRchg",
@@ -174,18 +178,15 @@ JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
     spectators = {kJetPt, kJetEta};
     break;
   case k74CHS:
-    variables.push_back({kDRWeighted, kRho, kNTot, kNCh, kAxisMajor, kAxisMinor,
-          kFRing0, kFRing1, kFRing2, kFRing3, kPtD, kBeta, kBetaStar,
-          kMinPull01, kJetR, kJetRchg});
-    variables.push_back({kDRWeighted, kRho, kNTot, kAxisMajor, kAxisMinor,
-          kFRing0, kFRing1, kFRing2, kFRing3, kPtD, kMinPull01, kJetR});
+    variables.push_back({kDR2Mean, kRho, kNParticles, kNCharged, kMajW, kMinW, kFrac01, kFrac02, kFrac03, kFrac04, kPtD, kBeta, kBetaStar, kPull, kJetR, kJetRchg});
+    variables.push_back({kDR2Mean, kRho, kNParticles, kMajW, kMinW, kFrac01, kFrac02, kFrac03, kFrac04, kPtD, kPull, kJetR});
     spectators = {kP4Pt, kP4Eta, kNTrueInt, kDRMatch};
     fEtaBins.push_back(2.);
-    varIndexForBin.push_back(0);
+    varIndexForBin.push_back(0); // variable set for [2-2.5]
     fEtaBins.push_back(2.5);
-    varIndexForBin.push_back(0);
+    varIndexForBin.push_back(0); // variable set for [2.5-3]
     fEtaBins.push_back(3.);
-    varIndexForBin.push_back(1);
+    varIndexForBin.push_back(1); // variable set for [3-5]
     break;
   case k53MET:
     variables.push_back({kNvtx, kJetPt, kJetEta, kJetPhi, kDZ, kBeta, kBetaStar, kNCharged, kNNeutrals,
@@ -349,8 +350,12 @@ JetIDMVA::MVAValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is th
     fVariables[kNNeutrals] = iJet->NeutralMultiplicity();
   if (fVariableUsed[kPtD])
     fVariables[kPtD] = covariance.ptD;
-  if (fVariableUsed[kDRMean] || fVariableUsed[kMinPull01])
-    fVariables[kDRMean] = fVariables[kMinPull01] = JetTools::dRMean(iJet, -1);
+  if (fVariableUsed[kPull] || fVariableUsed[kMinPull01]) {
+    fVariables[kPull] = JetTools::pull(iJet);
+    fVariables[kMinPull01] = std::min(double(fVariables[kPull]), 0.1);
+  }
+  if (fVariableUsed[kDRMean])
+    fVariables[kDRMean] = JetTools::dRMean(iJet, -1);
   if (fVariableUsed[kDR2Mean] || fVariableUsed[kDRWeighted])
     fVariables[kDR2Mean] = fVariables[kDRWeighted] = JetTools::dR2Mean(iJet, -1);
   if (fVariableUsed[kFrac01] || fVariableUsed[kFRing0])
@@ -363,12 +368,12 @@ JetIDMVA::MVAValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is th
     fVariables[kFrac04] = fVariables[kFRing3] = JetTools::frac(iJet, 0.4, 0.3, -1);
   if (fVariableUsed[kFrac05])
     fVariables[kFrac05] = JetTools::frac(iJet, 0.5, 0.4, -1);
-  if (fVariableUsed[kNTot])
-    fVariables[kNTot] = iJet->NConstituents();
-  if (fVariableUsed[kAxisMajor])
-    fVariables[kAxisMajor] = covariance.majW;
-  if (fVariableUsed[kAxisMinor])
-    fVariables[kAxisMinor] = covariance.minW;
+  if (fVariableUsed[kNTot] || fVariableUsed[kNParticles])
+    fVariables[kNTot] = fVariables[kNParticles] = iJet->NConstituents();
+  if (fVariableUsed[kAxisMajor] || fVariableUsed[kMajW])
+    fVariables[kAxisMajor] = fVariables[kMajW] = covariance.majW;
+  if (fVariableUsed[kAxisMinor] || fVariableUsed[kMinW])
+    fVariables[kAxisMinor] = fVariables[kMinW] = covariance.minW;
   if (fVariableUsed[kJetR]) {
     auto* leadCand = JetTools::leadCand(iJet, false, -1);
     if (leadCand) // has to be nonnull
@@ -473,22 +478,39 @@ JetIDMVA::QGValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is the
 Bool_t
 JetIDMVA::InitializeCuts(TString const& fileName, TString const& cutId, TString const& cutType)
 {
+  std::cout << "start" << std::endl;
+
   //Load Cut Matrix
   std::ifstream cutFile(fileName);
 
   //flag cuts being set. for fType == kCut we need two sets of cuts
   bool cutsSet[2] = {false, fType != kCut};
 
+  std::string line;
   while (true) {
-    std::string line;
+    std::cout << "getline" << std::endl;
     std::getline(cutFile, line);
+    std::cout << line << std::endl;
     if (!cutFile.good())
       break;
 
+    std::cout << "pound" << std::endl;
+    std::cout << line.size() << std::endl;
+
+    if (line.size() == 0 || line[0] == '#') {
+      std::cout << "returning" << std::endl;
+      continue;
+    }
+
+    std::cout << "sstreawm" << std::endl;
+
     // restream the line into words
     std::stringstream ss;
+    std::cout << "str" << std::endl;
     ss.str(line);
     std::string word;
+
+    std::cout << ss.str() << std::endl;
 
     // first word: cut ID (e.g. full_53x_wp)
     ss >> word;

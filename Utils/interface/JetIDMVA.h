@@ -66,13 +66,17 @@ namespace mithep {
       kDRWeighted,
       kRho,
       kNTot,
+      kNParticles,
       kNCh,
       kAxisMajor,
+      kMajW,
       kAxisMinor,
+      kMinW,
       kFRing0,
       kFRing1,
       kFRing2,
       kFRing3,
+      kPull,
       kMinPull01,
       kJetR,
       kJetRchg,
@@ -133,7 +137,6 @@ namespace mithep {
 
     Float_t       fVariables[nVariables]{};
     Bool_t        fVariableUsed[nVariables]{};
-    TString       fVarNames[nVariables]; // initialized in the Ctor
 
     ClassDef(JetIDMVA,0)
   };
