@@ -865,7 +865,7 @@ JetTools::passPFId(const PFJet* iJet, PFIdWorkingPoint wp)
 
 //Jet Width Variables
 JetTools::Covariance
-JetTools::W(const PFJet *iJet, int iPFType/* = -1*/, bool isBitMask/* = false*/)
+JetTools::W(const PFJet *iJet, int iPFType/* = -1*/, bool isBitMask/* = false*/, bool reproduceDEtaBug/* = false*/)
 {
   Covariance cov;
   double lSumPt  = 0;
@@ -885,8 +885,11 @@ JetTools::W(const PFJet *iJet, int iPFType/* = -1*/, bool isBitMask/* = false*/)
     }
 
     double weight(pCand->Pt() * pCand->Pt());
-    double dEta(std::abs(iJet->Eta() - pCand->Eta())); // why ABS??? I believe this is a bug, but synching with CMSSW here.. (YI 2016.05.23)
+    double dEta(iJet->Eta() - pCand->Eta());
     double dPhi(MathUtils::DeltaPhi(iJet->Phi(), pCand->Phi()));
+
+    if (reproduceDEtaBug && dEta < 0.)
+      dEta *= -1.;
 
     lCovMatrix(0,0) += weight * dEta * dEta;
     lCovMatrix(0,1) += weight * dEta * dPhi;
