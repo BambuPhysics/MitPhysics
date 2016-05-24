@@ -76,7 +76,7 @@ namespace mithep {
     static Double_t betaStar(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVertices,
 				       Double_t iDZCut=0.2);
     static Bool_t passPFId(const PFJet *iJet, PFIdWorkingPoint);
-    static Covariance W(const PFJet *iJet, int iPFType = -1, bool isBitMask = false);
+    static Covariance W(const PFJet *iJet, int iPFType = -1, bool isBitMask = false, bool reproduceDEtaBug = false);
     ClassDef(JetTools, 1)
   };
 

@@ -100,6 +100,7 @@ namespace mithep {
     Bool_t IsInitialized() const { return fIsInitialized; }
 
     void SetReproducePullBug(Bool_t b) { fReproducePullBug = b; }
+    void SetReproduceCovarianceBug(Bool_t b) { fReproduceCovarianceBug = b; }
 
     //Cut Based
     Bool_t passCut(PFJet const*, Vertex const*, VertexCol const*);
@@ -137,6 +138,7 @@ namespace mithep {
     TString       fVarNames[nVariables]; // initialized in the Ctor
 
     Bool_t        fReproducePullBug = kFALSE; // CMSSW <= 7_6 had a bug in pull computation
+    Bool_t        fReproduceCovarianceBug = kFALSE; // CMSSW <= 8_0 had a bug in covariance computation
 
     ClassDef(JetIDMVA,0)
   };

@@ -313,7 +313,7 @@ JetIDMVA::MVAValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is th
   if (!JetTools::passPFId(iJet, JetTools::kPFLoose))
     return -2.;
 
-  auto&& covariance(JetTools::W(iJet));
+  auto&& covariance(JetTools::W(iJet, -1, false, fReproduceCovarianceBug));
   double sumPt = JetTools::sumPt(iJet);
 
   //set all input variables
