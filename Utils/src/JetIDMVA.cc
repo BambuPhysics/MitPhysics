@@ -34,19 +34,18 @@ JetIDMVA::JetIDMVA() :
     "dR2Mean",
     "DRweighted",
     "rho",
-    "nTot",
+    "nParticles",
     "nCh",
-    "axisMajor",
-    "axisMinor",
+    "majW",
+    "minW",
     "fRing0",
     "fRing1",
     "fRing2",
     "fRing3",
+    "pull",
     "min(pull,0.1)",
     "jetR",
     "jetRchg",
-    "p4.fCoordinates.fPt",
-    "p4.fCoordinates.fEta",
     "nTrueInt",
     "dRMatch"
   }
@@ -144,7 +143,7 @@ JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
 
   std::vector<std::vector<unsigned>> variables;
   std::vector<unsigned> spectators;
-  fEtaBins.assign(1, 0.);
+  fEtaBinLowEdges.assign(1, 0.);
   std::vector<unsigned> varIndexForBin(1, 0);
     
   switch (fType) {
@@ -174,18 +173,17 @@ JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
     spectators = {kJetPt, kJetEta};
     break;
   case k74CHS:
-    variables.push_back({kDRWeighted, kRho, kNTot, kNCh, kAxisMajor, kAxisMinor,
-          kFRing0, kFRing1, kFRing2, kFRing3, kPtD, kBeta, kBetaStar,
-          kMinPull01, kJetR, kJetRchg});
-    variables.push_back({kDRWeighted, kRho, kNTot, kAxisMajor, kAxisMinor,
-          kFRing0, kFRing1, kFRing2, kFRing3, kPtD, kMinPull01, kJetR});
-    spectators = {kP4Pt, kP4Eta, kNTrueInt, kDRMatch};
-    fEtaBins.push_back(2.);
-    varIndexForBin.push_back(0);
-    fEtaBins.push_back(2.5);
-    varIndexForBin.push_back(0);
-    fEtaBins.push_back(3.);
-    varIndexForBin.push_back(1);
+    variables.push_back({kDR2Mean, kRho, kNParticles, kNCharged, kAxisMajor, kAxisMinor,
+          kFrac01, kFrac02, kFrac03, kFrac04, kPtD, kBeta, kBetaStar, kPull, kJetR, kJetRchg});
+    variables.push_back({kDR2Mean, kRho, kNParticles, kAxisMajor, kAxisMinor,
+          kFrac01, kFrac02, kFrac03, kFrac04, kPtD, kPull, kJetR});
+    spectators = {kJetPt, kJetEta, kNTrueInt, kDRMatch};
+    fEtaBinLowEdges.push_back(2.);
+    varIndexForBin.push_back(0); // variable set for [2-2.5]
+    fEtaBinLowEdges.push_back(2.5);
+    varIndexForBin.push_back(0); // variable set for [2.5-3]
+    fEtaBinLowEdges.push_back(3.);
+    varIndexForBin.push_back(1); // variable set for [3-5]
     break;
   case k53MET:
     variables.push_back({kNvtx, kJetPt, kJetEta, kJetPhi, kDZ, kBeta, kBetaStar, kNCharged, kNNeutrals,
@@ -198,9 +196,9 @@ JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
   default:
     break;
   }
-  fEtaBins.push_back(5.);
+  fEtaBinLowEdges.push_back(5.);
 
-  if (weightsConfig.size() != fEtaBins.size() - 1)
+  if (weightsConfig.size() != fEtaBinLowEdges.size() - 1)
     throw std::runtime_error("JetIDMVA wrong number of weight files!");
 
   for (bool& used : fVariableUsed)
@@ -250,7 +248,7 @@ JetIDMVA::passCut(const PFJet *iJet, const Vertex *iVertex, const VertexCol *iVe
 
 //--------------------------------------------------------------------------------------------------
 Bool_t
-JetIDMVA::pass(const PFJet *iJet, const Vertex *iVertex, const VertexCol *iVertices)
+JetIDMVA::pass(const PFJet *iJet, const Vertex *iVertex, const VertexCol *iVertices, Double_t rho)
 {
   // A PF Jet with L1+L2+L3 corrections is expected.
   if (iJet->Corrections() != fgCorrectionMask)
@@ -290,7 +288,7 @@ JetIDMVA::pass(const PFJet *iJet, const Vertex *iVertex, const VertexCol *iVerti
       return true;
   }
   else {
-    double lMVA = MVAValue(iJet, iVertex, iVertices);
+    double lMVA = MVAValue(iJet, iVertex, iVertices, rho);
     double lMVACut = fMVACut[lPtId][lEtaId];
     if (lMVA > lMVACut)
       return true;
@@ -302,7 +300,7 @@ JetIDMVA::pass(const PFJet *iJet, const Vertex *iVertex, const VertexCol *iVerti
 //--------------------------------------------------------------------------------------------------
 Double_t
 JetIDMVA::MVAValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is the PV
-                   const VertexCol *iVertices,
+                   const VertexCol *iVertices, Double_t rho,
                    Bool_t printDebug)
 {
   if (!fIsInitialized)
@@ -315,16 +313,18 @@ JetIDMVA::MVAValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is th
   if (!JetTools::passPFId(iJet, JetTools::kPFLoose))
     return -2.;
 
-  auto&& covariance(JetTools::W(iJet, -1));
-  double sumPt = JetTools::sumPt(iJet, -1);
+  auto&& covariance(JetTools::W(iJet));
+  double sumPt = JetTools::sumPt(iJet);
 
   //set all input variables
-  if (fVariableUsed[kNvtx] || fVariableUsed[kRho])
-    fVariables[kNvtx]  = fVariables[kRho] = iVertices->GetEntries();
-  if (fVariableUsed[kJetPt] || fVariableUsed[kP4Pt])
-    fVariables[kJetPt] = fVariables[kP4Pt] = iJet->Pt();
-  if (fVariableUsed[kJetEta] || fVariableUsed[kP4Eta])
-    fVariables[kJetEta] = fVariables[kP4Eta] = iJet->Eta();
+  if (fVariableUsed[kNvtx])
+    fVariables[kNvtx]  = iVertices->GetEntries();
+  if (fVariableUsed[kRho])
+    fVariables[kRho] = rho;
+  if (fVariableUsed[kJetPt])
+    fVariables[kJetPt] = iJet->Pt();
+  if (fVariableUsed[kJetEta])
+    fVariables[kJetEta] = iJet->Eta();
   if (fVariableUsed[kJetPhi])
     fVariables[kJetPhi]    = iJet->Phi();
   if (fVariableUsed[kD0])
@@ -349,58 +349,62 @@ JetIDMVA::MVAValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is th
     fVariables[kNNeutrals] = iJet->NeutralMultiplicity();
   if (fVariableUsed[kPtD])
     fVariables[kPtD] = covariance.ptD;
-  if (fVariableUsed[kDRMean] || fVariableUsed[kMinPull01])
-    fVariables[kDRMean] = fVariables[kMinPull01] = JetTools::dRMean(iJet, -1);
+  if (fVariableUsed[kPull] || fVariableUsed[kMinPull01]) {
+    fVariables[kPull] = JetTools::pull(iJet, fReproducePullBug);
+    fVariables[kMinPull01] = std::min(double(fVariables[kPull]), 0.1);
+  }
+  if (fVariableUsed[kDRMean])
+    fVariables[kDRMean] = JetTools::dRMean(iJet);
   if (fVariableUsed[kDR2Mean] || fVariableUsed[kDRWeighted])
-    fVariables[kDR2Mean] = fVariables[kDRWeighted] = JetTools::dR2Mean(iJet, -1);
+    fVariables[kDR2Mean] = fVariables[kDRWeighted] = JetTools::dR2Mean(iJet);
   if (fVariableUsed[kFrac01] || fVariableUsed[kFRing0])
     fVariables[kFrac01] = fVariables[kFRing0] = JetTools::frac(iJet, 0.1, 0.,  -1);
   if (fVariableUsed[kFrac02] || fVariableUsed[kFRing1])
-    fVariables[kFrac02] = fVariables[kFRing1] = JetTools::frac(iJet, 0.2, 0.1, -1);
+    fVariables[kFrac02] = fVariables[kFRing1] = JetTools::frac(iJet, 0.2, 0.1);
   if (fVariableUsed[kFrac03] || fVariableUsed[kFRing2])
-    fVariables[kFrac03] = fVariables[kFRing2] = JetTools::frac(iJet, 0.3, 0.2, -1);
+    fVariables[kFrac03] = fVariables[kFRing2] = JetTools::frac(iJet, 0.3, 0.2);
   if (fVariableUsed[kFrac04] || fVariableUsed[kFRing3])
-    fVariables[kFrac04] = fVariables[kFRing3] = JetTools::frac(iJet, 0.4, 0.3, -1);
+    fVariables[kFrac04] = fVariables[kFRing3] = JetTools::frac(iJet, 0.4, 0.3);
   if (fVariableUsed[kFrac05])
-    fVariables[kFrac05] = JetTools::frac(iJet, 0.5, 0.4, -1);
-  if (fVariableUsed[kNTot])
-    fVariables[kNTot] = iJet->NConstituents();
+    fVariables[kFrac05] = JetTools::frac(iJet, 0.5, 0.4);
+  if (fVariableUsed[kNParticles])
+    fVariables[kNParticles] = iJet->NConstituents();
   if (fVariableUsed[kAxisMajor])
     fVariables[kAxisMajor] = covariance.majW;
   if (fVariableUsed[kAxisMinor])
     fVariables[kAxisMinor] = covariance.minW;
   if (fVariableUsed[kJetR]) {
-    auto* leadCand = JetTools::leadCand(iJet, false, -1);
+    auto* leadCand = JetTools::leadCand(iJet, false);
     if (leadCand) // has to be nonnull
       fVariables[kJetR] = leadCand->Pt() / sumPt;
   }
   if (fVariableUsed[kJetRchg]) {
     auto* leadEmCand = JetTools::leadCand(iJet, false, PFCandidate::eGamma);
     if (!leadEmCand)
-      leadEmCand = JetTools::trailCand(iJet, -1);
+      leadEmCand = JetTools::trailCand(iJet);
     fVariables[kJetRchg] = leadEmCand->Pt() / sumPt;
   }
   if (fVariableUsed[kNTrueInt]) // never used!
     fVariables[kNTrueInt] = 0.;
-  if (fVariableUsed[kDRMatch]) {
-    int mask = (1 << PFCandidate::eHadron) | (1 << PFCandidate::eElectron) || (1 << PFCandidate::eMuon);
-    fVariables[kDRMatch] = JetTools::frac(iJet, 0.2, 0.1, mask, true);
-  }
+  if (fVariableUsed[kDRMatch])
+    fVariables[kDRMatch] = JetTools::dRMin(iJet);
 
   double absEta = iJet->AbsEta();
-  if (absEta >= 5.)
-    absEta = 4.99;
+  if (absEta >= fEtaBinLowEdges.back())
+    absEta = fEtaBinLowEdges.back() - 0.01;
 
-  unsigned iBin = 0;
-  while (absEta < fEtaBins[iBin])
+  int iBin = -1;
+  while (fEtaBinLowEdges[iBin + 1] < absEta)
     ++iBin;
 
   double lMVA = fReaders[iBin]->EvaluateMVA(fMethodName);
 
   if (printDebug) {
     std::cout << "Debug Jet MVA:" << std::endl;
-    for (unsigned iV = 0; iV != nVariables; ++iV)
-      std::cout << fVarNames[iV] << " = " << fVariables[iV] << std::endl;
+    for (unsigned iV = 0; iV != nVariables; ++iV) {
+      if (fVariableUsed[iV])
+        std::cout << fVarNames[iV] << " = " << fVariables[iV] << std::endl;
+    }
     std::cout << "=== : === " << std::endl;
     std::cout << "MVA value " << lMVA << std::endl;
   }
@@ -449,18 +453,18 @@ JetIDMVA::QGValue(const PFJet *iJet, const Vertex *iVertex, //Vertex here is the
   fVariables[kPtD]       = JetTools::W(iJet,-1).ptD;
   fVariables[kDRMean]    = JetTools::dRMean(iJet,-1);
   fVariables[kDR2Mean]   = JetTools::dR2Mean(iJet,-1);
-  fVariables[kFrac01]    = JetTools::frac(iJet,0.1,0., -1);
-  fVariables[kFrac02]    = JetTools::frac(iJet,0.2,0.1,-1);
-  fVariables[kFrac03]    = JetTools::frac(iJet,0.3,0.2,-1);
-  fVariables[kFrac04]    = JetTools::frac(iJet,0.4,0.3,-1);
-  fVariables[kFrac05]    = JetTools::frac(iJet,0.5,0.4,-1);
+  fVariables[kFrac01]    = JetTools::frac(iJet,0.1,0.);
+  fVariables[kFrac02]    = JetTools::frac(iJet,0.2,0.1);
+  fVariables[kFrac03]    = JetTools::frac(iJet,0.3,0.2);
+  fVariables[kFrac04]    = JetTools::frac(iJet,0.4,0.3);
+  fVariables[kFrac05]    = JetTools::frac(iJet,0.5,0.4);
 
   double absEta = iJet->AbsEta();
   if (absEta >= 5.)
     absEta = 4.99;
 
-  unsigned iBin = 0;
-  while (absEta < fEtaBins[iBin])
+  int iBin = -1;
+  while (fEtaBinLowEdges[iBin + 1] < absEta)
     ++iBin;
 
   lId[0] = fReaders[iBin]->EvaluateMulticlass(fMethodName)[0];
