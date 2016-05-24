@@ -138,7 +138,7 @@ mithep::JetIdMod::IsGood(mithep::Jet const& jet)
       return false;
     fCutFlow->Fill(cBeta);
 
-    if (fJetIDMVA && !fJetIDMVA->pass(pfJet, GetVertices()->At(0), GetVertices()))
+    if (fJetIDMVA && !fJetIDMVA->pass(pfJet, GetVertices()->At(0), GetVertices(), GetPileupEnergyDensity()->At(0)->Rho(fMVARhoAlgo)))
       return false;
     fCutFlow->Fill(cMVA);
   }
