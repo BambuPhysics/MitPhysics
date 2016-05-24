@@ -65,7 +65,7 @@ namespace mithep {
       kDR2Mean,
       kDRWeighted,
       kRho,
-      kNTot,
+      kNParticles,
       kNCh,
       kAxisMajor,
       kAxisMinor,
@@ -73,11 +73,10 @@ namespace mithep {
       kFRing1,
       kFRing2,
       kFRing3,
+      kPull,
       kMinPull01,
       kJetR,
       kJetRchg,
-      kP4Pt,
-      kP4Eta,
       kNTrueInt,
       kDRMatch,
       nVariables
@@ -100,11 +99,13 @@ namespace mithep {
 
     Bool_t IsInitialized() const { return fIsInitialized; }
 
+    void SetReproducePullBug(Bool_t b) { fReproducePullBug = b; }
+
     //Cut Based
     Bool_t passCut(PFJet const*, Vertex const*, VertexCol const*);
 
     //Corrected Jets
-    Bool_t pass(PFJet const*, Vertex const*, VertexCol const*);
+    Bool_t pass(PFJet const*, Vertex const*, VertexCol const*, Double_t rho = 0.);
 
     //What is this function? (Y.I. 2015.07.01)
     Double_t* QGValue(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices, //Vertex here is the PV
@@ -112,7 +113,7 @@ namespace mithep {
                       Bool_t printDebug);
 
     //Corrected Jets
-    Double_t MVAValue(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices,
+    Double_t MVAValue(const PFJet *iJet,const Vertex *iVertex,const VertexCol *iVertices, Double_t rho,
                       Bool_t printDebug=false);
 
     Float_t fDZCut = 0.2;             // dZ cut used in beta and beta* calculation to define association to PV
@@ -122,7 +123,7 @@ namespace mithep {
   protected:
     Bool_t InitializeCuts(TString const& fileName, TString const& cutId, TString const& cutType);
 
-    std::vector<double> fEtaBins; // bin low edges (size fReaders + 1)
+    std::vector<double> fEtaBinLowEdges; // bin low edges (size fReaders + 1)
     std::vector<TMVA::Reader*> fReaders;
     TString       fMethodName = "JetIDMVAHighPt";
     MVAType       fType = nMVATypes;
@@ -134,6 +135,8 @@ namespace mithep {
     Float_t       fVariables[nVariables]{};
     Bool_t        fVariableUsed[nVariables]{};
     TString       fVarNames[nVariables]; // initialized in the Ctor
+
+    Bool_t        fReproducePullBug = kFALSE; // CMSSW <= 7_6 had a bug in pull computation
 
     ClassDef(JetIDMVA,0)
   };

@@ -59,6 +59,7 @@ namespace mithep {
     void SetMVACutWP(UInt_t w)                   { fMVACutWP = w; }
     void SetMVAWeightsFile(char const*, UInt_t idx = 0);
     void SetMVACutsFile(char const* n)           { fMVACutsFile = n; }
+    void SetMVARhoAlgo(UInt_t a)                 { fMVARhoAlgo = a; }
     void SetUseClassicBetaForMVA(Bool_t b)       { fUseClassicBetaForMVA = b; }
     void SetMinNPFCandidates(UInt_t n)           { fMinNPFCandidates = n; }
     void SetMinNChargedPFCandidates(UInt_t n)    { fMinNChargedPFCandidates = n; }
@@ -118,6 +119,7 @@ namespace mithep {
     UInt_t   fMVACutWP = JetIDMVA::kLoose; //JetIDMVA::CutType
     std::vector<TString>  fMVAWeightsFile{""};
     TString  fMVACutsFile = "";
+    UInt_t   fMVARhoAlgo = 0;
     Bool_t   fUseClassicBetaForMVA = kFALSE; //set to true to replicate CMSSW PU jet ID on MiniAOD
 
     Bool_t    fOwnJetIDMVA = kFALSE;

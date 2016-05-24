@@ -8,13 +8,13 @@ ClassImp(mithep::JetTools)
 
 using namespace mithep;
 
- 
+
 JetTools::JetTools()
 {
    // Constructor
 }
 
-JetTools::~JetTools() 
+JetTools::~JetTools()
 {
   // Destructor.
 }
@@ -30,10 +30,10 @@ JetTools::NJettiness(const ParticleOArr *particles, const JetOArr *jets, double 
   Double_t fvalpart;
 
   for (int i=0;i<int(particles->GetEntries());i++) {
-    fvalpart = (particles->At(i)->Pt()) * TMath::Exp(-TMath::Abs(particles->At(i)->Eta()-Y)); 
+    fvalpart = (particles->At(i)->Pt()) * TMath::Exp(-TMath::Abs(particles->At(i)->Eta()-Y));
 
     for (int j=0;j<int(jets->GetEntries());j++){
-      fvalpart = TMath::Min(fvalpart,(jets->At(j)->Pt()) * 
+      fvalpart = TMath::Min(fvalpart,(jets->At(j)->Pt()) *
                  (2 * TMath::CosH(TMath::Abs(jets->At(j)->Eta()-particles->At(i)->Eta()))
                   - 2 * TMath::Cos(fabs(MathUtils::DeltaPhi(jets->At(j)->Phi(),particles->At(i)->Phi())))));
     }
@@ -54,10 +54,10 @@ JetTools::NJettiness(const PFCandidateOArr *pfCandidates, const JetOArr *jets, d
   Double_t fvalpart;
 
   for (int i=0;i<int(pfCandidates->GetEntries());i++) {
-    fvalpart = (pfCandidates->At(i)->Pt()) * TMath::Exp(-TMath::Abs(pfCandidates->At(i)->Eta()-Y)); 
+    fvalpart = (pfCandidates->At(i)->Pt()) * TMath::Exp(-TMath::Abs(pfCandidates->At(i)->Eta()-Y));
 
     for (int j=0;j<int(jets->GetEntries());j++) {
-      fvalpart = TMath::Min(fvalpart,(jets->At(j)->Pt()) * 
+      fvalpart = TMath::Min(fvalpart,(jets->At(j)->Pt()) *
                  (2 * TMath::CosH(TMath::Abs(jets->At(j)->Eta()-pfCandidates->At(i)->Eta()))
                   - 2 * TMath::Cos(fabs(MathUtils::DeltaPhi(jets->At(j)->Phi(),pfCandidates->At(i)->Phi())))));
     }
@@ -78,17 +78,17 @@ JetTools::NJettiness(const TrackOArr *tracks, const JetOArr *jets, double Q, dou
   Double_t fvalpart;
 
   for (int i=0;i<int(tracks->GetEntries());i++) {
-    fvalpart = (tracks->At(i)->Pt()) * TMath::Exp(-TMath::Abs(tracks->At(i)->Eta()-Y));     
+    fvalpart = (tracks->At(i)->Pt()) * TMath::Exp(-TMath::Abs(tracks->At(i)->Eta()-Y));
 
     for (int j=0;j<int(jets->GetEntries());j++) {
-      fvalpart = TMath::Min(fvalpart,(jets->At(j)->Pt()) * 
+      fvalpart = TMath::Min(fvalpart,(jets->At(j)->Pt()) *
                  (2 * TMath::CosH(TMath::Abs(jets->At(j)->Eta()-tracks->At(i)->Eta()))
                   - 2 * TMath::Cos(fabs(MathUtils::DeltaPhi(jets->At(j)->Phi(),tracks->At(i)->Phi())))));
     }
     fval = fval + fvalpart;
   }
   fval = fval/Q;
-  
+
   return fval;
 }
 
@@ -102,17 +102,17 @@ JetTools::NJettiness(const JetOArr *jetsS, const JetOArr *jets, double Q, double
   Double_t fvalpart;
 
   for (int i=0;i<int(jetsS->GetEntries());i++) {
-    fvalpart = (jetsS->At(i)->Pt()) * TMath::Exp(-TMath::Abs(jetsS->At(i)->Eta()-Y));     
+    fvalpart = (jetsS->At(i)->Pt()) * TMath::Exp(-TMath::Abs(jetsS->At(i)->Eta()-Y));
 
     for (int j=0;j<int(jets->GetEntries());j++) {
-      fvalpart = TMath::Min(fvalpart,(jets->At(j)->Pt()) * 
+      fvalpart = TMath::Min(fvalpart,(jets->At(j)->Pt()) *
                  (2 * TMath::CosH(TMath::Abs(jets->At(j)->Eta()-jetsS->At(i)->Eta()))
                   - 2 * TMath::Cos(fabs(MathUtils::DeltaPhi(jets->At(j)->Phi(),jetsS->At(i)->Phi())))));
     }
     fval = fval + fvalpart;
   }
   fval = fval/Q;
-  
+
   return fval;
 }
 
@@ -126,17 +126,17 @@ JetTools::NJettiness(const CaloTowerOArr *calos, const JetOArr *jets, double Q, 
   Double_t fvalpart;
 
   for (int i=0;i<int(calos->GetEntries());i++) {
-    fvalpart = (calos->At(i)->Pt()) * TMath::Exp(-TMath::Abs(calos->At(i)->Eta()-Y));     
+    fvalpart = (calos->At(i)->Pt()) * TMath::Exp(-TMath::Abs(calos->At(i)->Eta()-Y));
 
     for (int j=0;j<int(jets->GetEntries());j++) {
-      fvalpart = TMath::Min(fvalpart,(jets->At(j)->Pt()) * 
+      fvalpart = TMath::Min(fvalpart,(jets->At(j)->Pt()) *
                  (2 * TMath::CosH(TMath::Abs(jets->At(j)->Eta()-calos->At(i)->Eta()))
                   - 2 * TMath::Cos(fabs(MathUtils::DeltaPhi(jets->At(j)->Phi(),calos->At(i)->Phi())))));
     }
     fval = fval + fvalpart;
   }
   fval = fval/Q;
-  
+
   return fval;
 }
 
@@ -200,9 +200,9 @@ JetTools::Razor(const ParticleOArr *particles, const Met *met)
 
   Double_t mr  = M_r(particles);
   Double_t mrt = M_r_t(particles,met);
-  
+
   if(mr != 0) return mrt/mr;
-  
+
   return -999.;
 }
 
@@ -243,7 +243,7 @@ JetTools::MtHiggs(const ParticleOArr * leptons,
   CompositeParticle *dilepton = new CompositeParticle();
   dilepton->AddDaughter(leptons->At(0));
   dilepton->AddDaughter(leptons->At(1));
-  
+
   if     (nsel == 0){ // Use of Mt mass and mnu == mll
     enell = TMath::Sqrt(dilepton->Pt()*dilepton->Pt() + dilepton->Mt()*dilepton->Mt());
     enenn = TMath::Sqrt(met->Pt() *met->Pt()  + dilepton->Mt()*dilepton->Mt());
@@ -313,7 +313,7 @@ JetTools::MtHiggs(const ParticleOArr * leptons,
       - leptons->At(0)->Px()*leptons->At(1)->Px() - leptons->At(0)->Py()*leptons->At(1)->Py());
   }
   else if(nsel == 7){ // Use of M mass and mnu == 0
-    double deltaPhiDileptonMet = fabs(MathUtils::DeltaPhi(dilepton->Phi(), 
+    double deltaPhiDileptonMet = fabs(MathUtils::DeltaPhi(dilepton->Phi(),
                                                           met->Phi()));
     mtHiggs = 2.0*dilepton->Pt()*met->Pt()*(1.0 - cos(deltaPhiDileptonMet));
   }
@@ -371,7 +371,7 @@ JetTools::BetaClassic(const PFJet *jet, const Vertex *vertex)
   std::map<Track const*, double> pvTracks;
   for (unsigned iT = 0; iT != vertex->NTracks(); ++iT)
     pvTracks.emplace(vertex->Trk(iT), vertex->TrackWeight(iT));
-  
+
   for(UInt_t i=0;i<jet->NPFCands();i++){
     auto* cand = jet->PFCand(i);
     if(cand->TrackerTrk()){
@@ -429,7 +429,7 @@ JetTools::PassBetaVertexAssociationCut(const PFJet *jet, const Vertex *reference
     if(Beta_other > Beta) passBetaCut = kFALSE;
   }
 
-  return passBetaCut; 
+  return passBetaCut;
 
 }
 
@@ -448,12 +448,12 @@ JetTools::PassBeta2VertexAssociationCut(const PFJet *jet, const Vertex *referenc
     if(Beta_other > Beta) passBetaCut = kFALSE;
   }
 
-  return passBetaCut; 
+  return passBetaCut;
 }
 
 Int_t
 JetTools::MaxBetaVertexIndex(const PFJet *jet, const VertexCol *vertices, Double_t  delta_z=0.2)
-{ 
+{
   Int_t vertexIndex = -1;
   double beta = -0.1;
   for (UInt_t v=0; v < vertices->GetEntries(); v++){
@@ -468,7 +468,7 @@ JetTools::MaxBetaVertexIndex(const PFJet *jet, const VertexCol *vertices, Double
 
 Int_t
 JetTools::MaxBeta2VertexIndex(const PFJet *jet, const VertexCol *vertices, Double_t  delta_z=0.2)
-{  
+{
   Int_t vertexIndex = -1;
   double beta = -0.1;
   for (UInt_t v=0; v < vertices->GetEntries(); v++){
@@ -501,7 +501,7 @@ JetTools::JetToPVAssociation(const PFJet *jet, const VertexCol *vertices, Double
   }
 
   Int_t vertexIndex = 0;
-  float pt2Max = 0; 
+  float pt2Max = 0;
   for (uint i=0; i < verticesPt2.size(); ++i){
     if (pt2Max < verticesPt2[i]) {
       pt2Max = verticesPt2[i];
@@ -512,7 +512,7 @@ JetTools::JetToPVAssociation(const PFJet *jet, const VertexCol *vertices, Double
 }
 
 const PFCandidate*
-JetTools::leadCand(const PFJet *iJet, bool wantSecond, int iPFType, bool isBitMask/* = false*/)
+JetTools::leadCand(const PFJet *iJet, bool wantSecond, int iPFType/* = -1*/, bool isBitMask/* = false*/)
 {
   PFCandidate const* lead = 0;
   PFCandidate const* second = 0;
@@ -540,7 +540,7 @@ JetTools::leadCand(const PFJet *iJet, bool wantSecond, int iPFType, bool isBitMa
 }
 
 const PFCandidate*
-JetTools::trailCand(const PFJet *iJet, int iPFType, bool isBitMask/* = false*/)
+JetTools::trailCand(const PFJet *iJet, int iPFType/* = -1*/, bool isBitMask/* = false*/)
 {
   PFCandidate const* trail = 0;
 
@@ -566,7 +566,7 @@ Double_t
 JetTools::impactParameter(const PFJet *iJet,const Vertex *iVertex,bool iDZ)
 {
   double lDZCorr = -1000;
-  for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) { 
+  for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) {
     const PFCandidate *pCand = iJet->PFCand(i0);
     if(pCand->TrackerTrk() == 0) continue;
     //if(pCand->Pt() < 1.) continue; => previous iterations
@@ -578,10 +578,10 @@ JetTools::impactParameter(const PFJet *iJet,const Vertex *iVertex,bool iDZ)
 }
 
 Double_t
-JetTools::dRMean(const PFJet *iJet,int iPFType, bool isBitMask/* = false*/)
+JetTools::dRMean(const PFJet *iJet,int iPFType/* = -1*/, bool isBitMask/* = false*/)
 {
   double lDRMean = 0;
-  for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) { 
+  for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) {
     const PFCandidate *pCand = iJet->PFCand(i0);
     if(iPFType != -1) {
       if (isBitMask) {
@@ -598,11 +598,11 @@ JetTools::dRMean(const PFJet *iJet,int iPFType, bool isBitMask/* = false*/)
 }
 
 Double_t
-JetTools::dR2Mean(const PFJet *iJet,int iPFType, bool isBitMask/* = false*/)
+JetTools::dR2Mean(const PFJet *iJet,int iPFType/* = -1*/, bool isBitMask/* = false*/)
 {
   double lDR2Mean = 0;
   double lSumPt2 = 0;
-  for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) { 
+  for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) {
     const PFCandidate *pCand = iJet->PFCand(i0);
     if(iPFType != -1) {
       if (isBitMask) {
@@ -621,7 +621,7 @@ JetTools::dR2Mean(const PFJet *iJet,int iPFType, bool isBitMask/* = false*/)
 }
 
 Double_t
-JetTools::sumPt(PFJet const* iJet, int iPFType, bool isBitMask/* = false*/)
+JetTools::sumPt(PFJet const* iJet, int iPFType/* = -1*/, bool isBitMask/* = false*/)
 {
   double result = 0.;
   for (unsigned iC = 0; iC != iJet->NPFCands(); ++iC) {
@@ -664,11 +664,76 @@ JetTools::frac(const PFJet *iJet, Double_t iDRMax, Double_t iDRMin, Int_t iPFTyp
 }
 
 Double_t
+JetTools::dRMin(const PFJet* iJet)
+{
+  double drmin = 1000;
+  for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) {
+    const PFCandidate *pCand = iJet->PFCand(i0);
+
+    Double_t pDR = MathUtils::DeltaR(iJet->Mom(),pCand->Mom());
+    if (pDR < drmin)
+      drmin = pDR;
+  }
+  return drmin;
+}
+
+Double_t
+JetTools::pull(PFJet const* iPFJet, Bool_t reproduceCMSSW76Bug/* = false*/)
+{
+  double sumW2(0.);
+  double dEtaAve(0.);
+  double dPhiAve(0.);
+
+  for (unsigned iP(0); iP != iPFJet->NPFCands(); ++iP) {
+    auto* part = iPFJet->PFCand(iP);
+    if (!part)
+      continue;
+
+    double w2(part->Pt() * part->Pt());
+    sumW2 += w2;
+    dEtaAve += (iPFJet->Eta() - part->Eta()) * w2;
+    dPhiAve += MathUtils::DeltaPhi(iPFJet->Phi(), part->Phi()) * w2;
+  }
+
+  if (sumW2 == 0.)
+    return 0.;
+
+  if (reproduceCMSSW76Bug) {
+    // CMSSW <= 7_6 was not dividing averages
+    dEtaAve = 0.;
+    dPhiAve = 0.;
+  }
+
+  double ddEtaRAve(0.);
+  double ddPhiRAve(0.);
+
+  for (unsigned iP(0); iP != iPFJet->NPFCands(); ++iP) {
+    auto* part = iPFJet->PFCand(iP);
+    if (!part)
+      continue;
+
+    double w2(part->Pt() * part->Pt());
+    double dEta(iPFJet->Eta() - part->Eta());
+    double dPhi(MathUtils::DeltaPhi(iPFJet->Phi(), part->Phi()));
+    double ddEta(dEta - dEtaAve);
+    double ddPhi(dPhi - dPhiAve);
+    double ddR(std::sqrt(ddEta * ddEta + ddPhi * ddPhi));
+    ddEtaRAve += ddR * ddEta * w2;
+    ddPhiRAve += ddR * ddPhi * w2;
+  }
+
+  ddEtaRAve /= sumW2;
+  ddPhiRAve /= sumW2;
+
+  return std::sqrt(ddEtaRAve * ddEtaRAve + ddPhiRAve * ddPhiRAve);
+}
+
+Double_t
 JetTools::betaStar(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVertices,Double_t iDZCut)
 {
   // (sum pt of jet tracks associated to non-primary vertices) / (sum pt of jet tracks)
   // association is defined by |dZ| < iDZCut
-  Double_t lTotal = 0;  
+  Double_t lTotal = 0;
   Double_t lPileup = 0;
 
   std::vector<Vertex const*> goodVertices;
@@ -695,9 +760,9 @@ JetTools::betaStar(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVer
     for (Vertex const* vtx : goodVertices)
       pDZMin = TMath::Min(pDZMin, std::abs(pTrack->DzCorrected(*vtx)));
 
-    //       if(pDZPV > 0.2 && pDZMin < 0.2) lPileup += pTrack->Pt(); 
+    //       if(pDZPV > 0.2 && pDZMin < 0.2) lPileup += pTrack->Pt();
     if(pDZPV > 0.2 && pDZMin < 0.2)
-      lPileup += pPF->Pt(); 
+      lPileup += pPF->Pt();
   }
   if (lTotal == 0.)
     lTotal = 1.;
@@ -708,7 +773,7 @@ JetTools::betaStar(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVer
 Double_t
 JetTools::betaStarClassic(const PFJet *iJet,const Vertex *iVertex,const VertexCol* iVertices)
 {
-  Double_t lTotal = 0;  
+  Double_t lTotal = 0;
   Double_t lPileup = 0;
 
   // in CMSSW (RecoJets/JetProducers/src/PileupJetIdAlgo), "associated to non-primary vertex"
@@ -740,7 +805,7 @@ JetTools::betaStarClassic(const PFJet *iJet,const Vertex *iVertex,const VertexCo
 
     auto itr = pvTracks.find(pTrack);
     if (itr == pvTracks.end() || itr->second <= 0.)
-      lPileup += pTrack->Pt(); 
+      lPileup += pTrack->Pt();
   }
   if (lTotal == 0)
     lTotal = 1.;
@@ -800,16 +865,15 @@ JetTools::passPFId(const PFJet* iJet, PFIdWorkingPoint wp)
 
 //Jet Width Variables
 JetTools::Covariance
-JetTools::W(const PFJet *iJet, int iPFType, bool isBitMask/* = false*/)
-{ 
+JetTools::W(const PFJet *iJet, int iPFType/* = -1*/, bool isBitMask/* = false*/)
+{
   Covariance cov;
-  double lPtD2   = 0;
-  double lSumPt  = 0; 
+  double lSumPt  = 0;
   double lSumPt2 = 0;
   TMatrixDSym lCovMatrix(2);
   lCovMatrix = 0.;
 
-  for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) { 
+  for(UInt_t i0 = 0; i0 < iJet->NPFCands(); i0++) {
     const PFCandidate *pCand = iJet->PFCand(i0);
     if(iPFType != -1) {
       if (isBitMask) {
@@ -820,27 +884,31 @@ JetTools::W(const PFJet *iJet, int iPFType, bool isBitMask/* = false*/)
         continue;
     }
 
-    double pDEta = iJet->Eta() - pCand->Eta(); 
-    double pDPhi = fabs(iJet->Phi()-pCand->Phi()); if(pDPhi > 2.*TMath::Pi() - pDPhi) pDPhi =  2.*TMath::Pi() - pDPhi;
-    lCovMatrix(0,0) += pCand->Pt()*pCand->Pt()*pDEta*pDEta;
-    lCovMatrix(0,1) += pCand->Pt()*pCand->Pt()*pDEta*pDPhi;
-    lCovMatrix(1,1) += pCand->Pt()*pCand->Pt()*pDPhi*pDPhi;
-    lPtD2           += pCand->Pt()*pCand->Pt();
+    double weight(pCand->Pt() * pCand->Pt());
+    double dEta(std::abs(iJet->Eta() - pCand->Eta())); // why ABS??? I believe this is a bug, but synching with CMSSW here.. (YI 2016.05.23)
+    double dPhi(MathUtils::DeltaPhi(iJet->Phi(), pCand->Phi()));
+
+    lCovMatrix(0,0) += weight * dEta * dEta;
+    lCovMatrix(0,1) += weight * dEta * dPhi;
+    lCovMatrix(1,1) += weight * dPhi * dPhi;
     lSumPt          += pCand->Pt();
-    lSumPt2         += pCand->Pt()*pCand->Pt();
+    lSumPt2         += weight;
   }
   lCovMatrix(0,0) /= lSumPt2;
   lCovMatrix(0,1) /= lSumPt2;
   lCovMatrix(1,1) /= lSumPt2;
   lCovMatrix(1,0)  = lCovMatrix(0,1);
 
-  cov.ptD = sqrt(lPtD2) / lSumPt;
-  cov.etaW = sqrt(lCovMatrix(0,0));
-  cov.phiW = sqrt(lCovMatrix(1,1));
-  cov.jetW = 0.5 * (cov.etaW + cov.phiW);
+  cov.ptD = sqrt(lSumPt2) / lSumPt;
+  cov.etaW = std::sqrt(lCovMatrix(0, 0));
+  cov.phiW = std::sqrt(lCovMatrix(1, 1));
+  cov.jetW = 0.5  * (cov.etaW + cov.phiW);
+
   TVectorD lEigVals(TMatrixDSymEigen(lCovMatrix).GetEigenValues());
-  cov.majW = sqrt(fabs(lEigVals(0)));
-  cov.minW = sqrt(fabs(lEigVals(1)));
+  cov.majW = std::sqrt(std::abs(lEigVals(0)));
+  cov.minW = std::sqrt(std::abs(lEigVals(1)));
+  if (cov.majW < cov.minW)
+    std::swap(cov.majW, cov.minW);
 
   return cov;
 }
