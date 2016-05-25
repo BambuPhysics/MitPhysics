@@ -110,6 +110,12 @@ JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
   case k74CHS:
     lCutId = "full_74x_chs_wp";
     break;
+  case k76CHS:
+    lCutId = "full_76x_chs_wp";
+    break;
+  case k80CHS:
+    lCutId = "full_80x_chs_wp";
+    break;
   default:
      lCutId = "default";
     break;
@@ -181,6 +187,20 @@ JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
     fEtaBinLowEdges.push_back(2.);
     varIndexForBin.push_back(0); // variable set for [2-2.5]
     fEtaBinLowEdges.push_back(2.5);
+    varIndexForBin.push_back(0); // variable set for [2.5-3]
+    fEtaBinLowEdges.push_back(3.);
+    varIndexForBin.push_back(1); // variable set for [3-5]
+    break;
+  case k76CHS:
+  case k80CHS:
+    variables.push_back({kNvtx, kDR2Mean, kNParticles, kNCharged, kAxisMajor, kAxisMinor,
+          kFrac01, kFrac02, kFrac03, kFrac04, kPtD, kBeta, kPull, kJetR, kJetRchg});
+    variables.push_back({kNvtx, kDR2Mean, kNParticles, kAxisMajor, kAxisMinor,
+          kFrac01, kFrac02, kFrac03, kFrac04, kPtD, kPull, kJetR});
+    spectators = {kJetPt, kJetEta};
+    fEtaBinLowEdges.push_back(2.5);
+    varIndexForBin.push_back(0); // variable set for [2-2.5]
+    fEtaBinLowEdges.push_back(2.75);
     varIndexForBin.push_back(0); // variable set for [2.5-3]
     fEtaBinLowEdges.push_back(3.);
     varIndexForBin.push_back(1); // variable set for [3-5]
