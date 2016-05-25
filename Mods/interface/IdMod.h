@@ -95,6 +95,7 @@ namespace mithep {
       kConversions,
       kElectrons,
       kVertices,
+      kAllVertices,
       kBeamSpot,
       kPFCandidates,
       kPFNoPileupCandidates,
@@ -115,6 +116,8 @@ namespace mithep {
     { return GetAuxInput<mithep::ElectronCol>(kElectrons); }
     mithep::VertexCol const* GetVertices()
     { return GetAuxInput<mithep::VertexCol>(kVertices); }
+    mithep::VertexCol const* GetAllVertices()
+    { return GetAuxInput<mithep::VertexCol>(kAllVertices); }
     mithep::BeamSpotCol const* GetBeamSpot()
     { return GetAuxInput<mithep::BeamSpotCol>(kBeamSpot); }
     mithep::PFCandidateCol const* GetPFCandidates()
@@ -162,6 +165,7 @@ namespace mithep {
     fAuxInputNames[kConversions] = Names::gkMvfConversionBrn;
     fAuxInputNames[kElectrons] = Names::gkElectronBrn;
     fAuxInputNames[kVertices] = ModNames::gkGoodVertexesName;
+    fAuxInputNames[kAllVertices] = Names::gkPVBrn;
     fAuxInputNames[kBeamSpot] = Names::gkBeamSpotBrn;
     fAuxInputNames[kPFCandidates] = Names::gkPFCandidatesBrn;
     fAuxInputNames[kPileupEnergyDensity] = Names::gkPileupEnergyDensityBrn;
