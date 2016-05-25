@@ -61,6 +61,8 @@ namespace mithep {
     void SetMVACutsFile(char const* n)           { fMVACutsFile = n; }
     void SetMVARhoAlgo(UInt_t a)                 { fMVARhoAlgo = a; }
     void SetUseClassicBetaForMVA(Bool_t b)       { fUseClassicBetaForMVA = b; }
+    void SetUseBuggyPullForMVA(Bool_t b)         { fUseBuggyPullForMVA = b; }
+    void SetUseBuggyCovarianceForMVA(Bool_t b)   { fUseBuggyCovarianceForMVA = b; }
     void SetMinNPFCandidates(UInt_t n)           { fMinNPFCandidates = n; }
     void SetMinNChargedPFCandidates(UInt_t n)    { fMinNChargedPFCandidates = n; }
 
@@ -121,6 +123,8 @@ namespace mithep {
     TString  fMVACutsFile = "";
     UInt_t   fMVARhoAlgo = 0;
     Bool_t   fUseClassicBetaForMVA = kFALSE; //set to true to replicate CMSSW PU jet ID on MiniAOD
+    Bool_t   fUseBuggyPullForMVA = kFALSE; // set to true to replicate CMSSW <= 76X
+    Bool_t   fUseBuggyCovarianceForMVA = kFALSE; // set to true to replicate CMSSW <= 80X
 
     Bool_t    fOwnJetIDMVA = kFALSE;
     JetIDMVA* fJetIDMVA = 0;

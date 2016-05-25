@@ -31,6 +31,8 @@ mithep::JetIdMod::IdBegin()
   if (fMVATrainingSet != JetIDMVA::nMVATypes && !fJetIDMVA) {
     fJetIDMVA = new JetIDMVA();
     fJetIDMVA->Initialize(JetIDMVA::CutType(fMVACutWP), JetIDMVA::MVAType(fMVATrainingSet), fMVAWeightsFile, fMVACutsFile);
+    fJetIDMVA->SetReproducePullBug(fUseBuggyPullForMVA);
+    fJetIDMVA->SetReproduceCovarianceBug(fUseBuggyCovarianceForMVA);
 
     fOwnJetIDMVA = true;
   }
@@ -138,7 +140,7 @@ mithep::JetIdMod::IsGood(mithep::Jet const& jet)
       return false;
     fCutFlow->Fill(cBeta);
 
-    if (fJetIDMVA && !fJetIDMVA->pass(pfJet, GetVertices()->At(0), GetVertices(), GetPileupEnergyDensity()->At(0)->Rho(fMVARhoAlgo)))
+    if (fJetIDMVA && !fJetIDMVA->pass(pfJet, GetAllVertices()->At(0), GetVertices(), GetPileupEnergyDensity()->At(0)->Rho(fMVARhoAlgo)))
       return false;
     fCutFlow->Fill(cMVA);
   }
