@@ -703,6 +703,10 @@ JetTools::pull(PFJet const* iPFJet, Bool_t reproduceCMSSW76Bug/* = false*/)
     dEtaAve = 0.;
     dPhiAve = 0.;
   }
+  else {
+    dEtaAve /= sumW2;
+    dPhiAve /= sumW2;
+  }
 
   double ddEtaRAve(0.);
   double ddPhiRAve(0.);
