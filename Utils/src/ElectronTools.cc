@@ -420,7 +420,8 @@ mithep::ElectronTools::PassID(Electron const* ele, EElIdType type)
     return false;
   if (ele->HadOverEmTow() > hOverECut)
     return false;
-  if (std::abs(1. / ele->SCluster()->Energy() - 1. / ele->GsfTrk()->P()) > ooEmooPCut)
+  //if (std::abs(1. / ele->SCluster()->Energy() - 1. / ele->GsfTrk()->P()) > ooEmooPCut)
+  if (std::abs(1.0/ele->EcalEnergy() - ele->ESuperClusterOverP()/ele->EcalEnergy()) > ooEmooPCut)
     return false;
 
   return true;
@@ -469,7 +470,7 @@ mithep::ElectronTools::PassPFIso(Electron const* ele, EElIsoType isoType,
 
   case kSummer15FakeIso:
   case kSummer15Fake50nsIso:
-    return ele->PFPhotonIso() / ele->Pt() < 0.45 && ele->PFNeutralHadronIso() / ele->Pt() < 0.25 && ele->PFChargedHadronIso() / ele->Pt() < 0.2;
+    return ele->EcalPFClusterIso() / ele->Pt() < 0.45 && ele->HcalPFClusterIso() / ele->Pt() < 0.25 && ele->PFChargedHadronIso() / ele->Pt() < 0.2;
 
   default:
     return false;

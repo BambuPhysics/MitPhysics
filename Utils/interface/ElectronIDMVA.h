@@ -40,12 +40,13 @@ namespace mithep {
         kIDEGamma2012TrigV0,        // EGamma certified (Spring 2012) ID-only MVA
         kIDEGamma2012NonTrigV0,     // EGamma certified (Spring 2012) ID-only MVA
         kIDEGamma2012NonTrigV1,     // EGamma certified (Spring 2012) ID-only MVA, "official" version
-        kIDEGamma2015Trig25ns,
-        kIDEGamma2015NonTrig25ns,
         kIsoRingsV0,                // Isolation MVA with IsoRings as input
         kIDHWW2012TrigV0,           // HWW certified (Spring 2012) ID-only MVA
-        kIDIsoCombinedHWW2012TrigV4 // HWW ID+Iso Combined for trig ele
+        kIDIsoCombinedHWW2012TrigV4,// HWW ID+Iso Combined for trig ele
+        kIDEGamma2015Trig25ns,      // EGamma certified (Spring 2015) ID-only MVA (25ns)
+        kIDEGamma2015NonTrig25ns   // EGamma certified (Spring 2015) ID-only MVA (25ns) non trigger
       };
+
 
       void     Initialize(std::string const& methodName,
                           std::string const& weightsfile,
@@ -57,12 +58,12 @@ namespace mithep {
                           std::vector<std::string> const& weightsfiles,
 			  UInt_t = mithep::PileupEnergyDensity::kHighEta);
       void     Initialize(TString const& methodName,
-                          TString const& Subdet0Pt10To20Weights , 
-                          TString const& Subdet1Pt10To20Weights , 
-                          TString const& Subdet2Pt10To20Weights,
-                          TString const& Subdet0Pt20ToInfWeights, 
-                          TString const& Subdet1Pt20ToInfWeights, 
-                          TString const& Subdet2Pt20ToInfWeights,
+                          TString const& Subdet0Pt0Weights , 
+                          TString const& Subdet1Pt0Weights , 
+                          TString const& Subdet2Pt0Weights,
+                          TString const& Subdet0Pt1Weights, 
+                          TString const& Subdet1Pt1Weights, 
+                          TString const& Subdet2Pt1Weights,
                           ElectronIDMVA::MVAType,
 			  UInt_t = mithep::PileupEnergyDensity::kHighEta);
       
@@ -204,6 +205,8 @@ namespace mithep {
       Float_t                   fMVAVar_EleIP3d; 
       Float_t                   fMVAVar_EleIP3dSig; 
       Float_t                   fMVAVar_EleGsfTrackChi2OverNdof;
+      Float_t                   fMVAVar_EleGsfTrackNumberOfHits;
+      Float_t                   fMVAVar_EleGsfExpectedMissingInnerHits;
       Float_t                   fMVAVar_EledEtaCalo;
       Float_t                   fMVAVar_EledPhiCalo;
       Float_t                   fMVAVar_EleR9;
@@ -218,10 +221,12 @@ namespace mithep {
       Float_t                   fMVAVar_EleNeutralHadronIso04OverPt;
       Float_t                   fMVAVar_EleGammaIso04OverPt;
 
+      
       Float_t                   fMVAVar_EleEEleClusterOverPout;
       Float_t                   fMVAVar_EleKFTrkChiSqr;
       Float_t                   fMVAVar_EleKFTrkNHits;
       Float_t                   fMVAVar_EleKFTrkNLayers;
+      Float_t                   fMVAVar_EleConvVtxFitProbability;
       Float_t                   fMVAVar_EleE1x5OverE5x5;
       Float_t                   fMVAVar_EleOneMinusE1x5OverE5x5;
 
@@ -242,6 +247,16 @@ namespace mithep {
       Float_t                   fMVAVar_NeutralHadronIso_DR0p4To0p5;
 
       Float_t                   fMVAVar_Rho;
+      // spectators
+      Float_t                   fMVAVar_isBarrel            ; 
+      Float_t                   fMVAVar_isEndcap            ; 
+      Float_t                   fMVAVar_sclEta              ; 
+      Float_t                   fMVAVar_eClass              ; 
+      Float_t                   fMVAVar_pfRelIso            ; 
+      Float_t                   fMVAVar_expectedInnerHits   ; 
+      Float_t                   fMVAVar_vtxconv             ; 
+      Float_t                   fMVAVar_mcEventWeight       ; 
+      Float_t                   fMVAVar_mcCBmatchingCategory; 
 
     ClassDef(ElectronIDMVA, 1) // Muon tools
       };

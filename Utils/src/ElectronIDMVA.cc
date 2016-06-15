@@ -47,22 +47,22 @@ void ElectronIDMVA::Initialize(std::string const& methodName,
 
 //--------------------------------------------------------------------------------------------------
 void ElectronIDMVA::Initialize(TString const& methodName,
-                               TString const& Subdet0Pt10To20Weights , 
-                               TString const& Subdet1Pt10To20Weights , 
-                               TString const& Subdet2Pt10To20Weights,
-                               TString const& Subdet0Pt20ToInfWeights,
-                               TString const& Subdet1Pt20ToInfWeights, 
-                               TString const& Subdet2Pt20ToInfWeights,
+                               TString const& Subdet0Pt0Weights , 
+                               TString const& Subdet1Pt0Weights , 
+                               TString const& Subdet2Pt0Weights,
+                               TString const& Subdet0Pt1Weights,
+                               TString const& Subdet1Pt1Weights, 
+                               TString const& Subdet2Pt1Weights,
                                ElectronIDMVA::MVAType type,
 			       UInt_t algo/* = kHighEta*/)
 {
   std::vector<std::string> tempWeightFileVector;
-  tempWeightFileVector.push_back(std::string(Subdet0Pt10To20Weights.Data()));
-  tempWeightFileVector.push_back(std::string(Subdet1Pt10To20Weights.Data()));
-  tempWeightFileVector.push_back(std::string(Subdet2Pt10To20Weights.Data()));
-  tempWeightFileVector.push_back(std::string(Subdet0Pt20ToInfWeights.Data()));
-  tempWeightFileVector.push_back(std::string(Subdet1Pt20ToInfWeights.Data()));
-  tempWeightFileVector.push_back(std::string(Subdet2Pt20ToInfWeights.Data()));
+  tempWeightFileVector.push_back(std::string(Subdet0Pt0Weights.Data()));
+  tempWeightFileVector.push_back(std::string(Subdet1Pt0Weights.Data()));
+  tempWeightFileVector.push_back(std::string(Subdet2Pt0Weights.Data()));
+  tempWeightFileVector.push_back(std::string(Subdet0Pt1Weights.Data()));
+  tempWeightFileVector.push_back(std::string(Subdet1Pt1Weights.Data()));
+  tempWeightFileVector.push_back(std::string(Subdet2Pt1Weights.Data()));
   Initialize(std::string(methodName.Data()),type,kTRUE,tempWeightFileVector,algo);
 }
 
@@ -101,12 +101,15 @@ void ElectronIDMVA::Initialize(std::string const& methodName,
              type == kIDEGamma2012NonTrigV0 || 
              type == kIDEGamma2012NonTrigV1 || 
              type == kIDHWW2012TrigV0 ||
-             type == kIDIsoCombinedHWW2012TrigV4
-             
+             type == kIDIsoCombinedHWW2012TrigV4 ||
+             type == kIDEGamma2015NonTrig25ns             
     ) {
     ExpectedNBins = 6;
   } else if (type == kIsoRingsV0) {
     ExpectedNBins = 4;
+  } else if (type == kIDEGamma2015Trig25ns
+    ) {
+    ExpectedNBins = 3;
   }
   fNMVABins = ExpectedNBins;
 
@@ -354,6 +357,75 @@ void ElectronIDMVA::Initialize(std::string const& methodName,
 
     }
 
+    if (type == kIDEGamma2015NonTrig25ns) {
+      tmpTMVAReader->AddVariable( "ele_oldsigmaietaieta",         &fMVAVar_EleSigmaIEtaIEta            );
+      tmpTMVAReader->AddVariable( "ele_oldsigmaiphiiphi",         &fMVAVar_EleSigmaIPhiIPhi            );
+      tmpTMVAReader->AddVariable( "ele_oldcircularity",           &fMVAVar_EleE1x5OverE5x5             );
+      tmpTMVAReader->AddVariable( "ele_oldr9",                     &fMVAVar_EleR9                       );
+      tmpTMVAReader->AddVariable( "ele_scletawidth",               &fMVAVar_EleSCEtaWidth               );
+      tmpTMVAReader->AddVariable( "ele_sclphiwidth",               &fMVAVar_EleSCPhiWidth               );
+      tmpTMVAReader->AddVariable( "ele_he",                    &fMVAVar_EleHoverE                   );
+      if (i==2 || i==5)  {
+        tmpTMVAReader->AddVariable("ele_psEoverEraw",&fMVAVar_ElePreShowerOverRaw);
+      }
+      tmpTMVAReader->AddVariable( "ele_kfhits",       &fMVAVar_EleKFTrkNHits);
+      tmpTMVAReader->AddVariable( "ele_kfchi2",          &fMVAVar_EleKFTrkChiSqr);
+      tmpTMVAReader->AddVariable( "ele_gsfchi2",         &fMVAVar_EleGsfTrackChi2OverNdof);
+      tmpTMVAReader->AddVariable( "ele_fbrem",           &fMVAVar_EleFBrem);
+      tmpTMVAReader->AddVariable( "ele_gsfhits",        &fMVAVar_EleGsfTrackNumberOfHits);
+      tmpTMVAReader->AddVariable( "ele_expected_inner_hits", &fMVAVar_EleGsfExpectedMissingInnerHits); 
+      tmpTMVAReader->AddVariable( "ele_conversionVertexFitProbability", &fMVAVar_EleConvVtxFitProbability       );
+      tmpTMVAReader->AddVariable( "ele_ep",                &fMVAVar_EleEOverP                   );
+      tmpTMVAReader->AddVariable( "ele_eelepout",  &fMVAVar_EleESeedClusterOverPout     );
+      tmpTMVAReader->AddVariable("ele_IoEmIop",         &fMVAVar_EleOneOverEMinusOneOverP);
+      tmpTMVAReader->AddVariable("ele_deltaetain",            &fMVAVar_EleDEtaIn);
+      tmpTMVAReader->AddVariable("ele_deltaphiin",            &fMVAVar_EleDPhiIn);
+      tmpTMVAReader->AddVariable("ele_deltaetaseed",        &fMVAVar_EledEtaCalo);
+      // spectator variables
+      tmpTMVAReader->AddSpectator("ele_pT",                         &fMVAVar_ElePt                );
+      tmpTMVAReader->AddSpectator("ele_isbarrel",                   &fMVAVar_isBarrel             );
+      tmpTMVAReader->AddSpectator("ele_isendcap",                   &fMVAVar_isEndcap             );
+      tmpTMVAReader->AddSpectator("scl_eta",                        &fMVAVar_sclEta               );
+      tmpTMVAReader->AddSpectator("ele_eClass",                     &fMVAVar_eClass               );
+      tmpTMVAReader->AddSpectator("ele_pfRelIso",                   &fMVAVar_pfRelIso             );
+      tmpTMVAReader->AddSpectator("ele_expected_inner_hits",        &fMVAVar_expectedInnerHits    );
+      tmpTMVAReader->AddSpectator("ele_vtxconv",                    &fMVAVar_vtxconv              );
+      tmpTMVAReader->AddSpectator("mc_event_weight",                &fMVAVar_mcEventWeight        );
+      tmpTMVAReader->AddSpectator("mc_ele_CBmatching_category",     &fMVAVar_mcCBmatchingCategory );
+
+
+
+
+
+
+    }
+    if (type == kIDEGamma2015Trig25ns) {
+      tmpTMVAReader->AddVariable( "ele_oldsigmaietaieta",         &fMVAVar_EleSigmaIEtaIEta            );
+      tmpTMVAReader->AddVariable( "ele_oldsigmaiphiiphi",         &fMVAVar_EleSigmaIPhiIPhi            );
+      tmpTMVAReader->AddVariable( "ele_oldcircularity",           &fMVAVar_EleE1x5OverE5x5             );
+      tmpTMVAReader->AddVariable( "ele_oldr9",                     &fMVAVar_EleR9                       );
+      tmpTMVAReader->AddVariable( "ele_scletawidth",               &fMVAVar_EleSCEtaWidth               );
+      tmpTMVAReader->AddVariable( "ele_sclphiwidth",               &fMVAVar_EleSCPhiWidth               );
+      tmpTMVAReader->AddVariable( "ele_he",                    &fMVAVar_EleHoverE                   );
+      if (i==2)  {
+        tmpTMVAReader->AddVariable("ele_psEoverEraw",&fMVAVar_ElePreShowerOverRaw);
+      }
+      tmpTMVAReader->AddVariable( "ele_kfhits",       &fMVAVar_EleKFTrkNHits);
+      tmpTMVAReader->AddVariable( "ele_kfchi2",          &fMVAVar_EleKFTrkChiSqr);
+      tmpTMVAReader->AddVariable( "ele_gsfchi2",         &fMVAVar_EleGsfTrackChi2OverNdof);
+      tmpTMVAReader->AddVariable( "ele_fbrem",           &fMVAVar_EleFBrem);
+      tmpTMVAReader->AddVariable( "ele_gsfhits",        &fMVAVar_EleGsfTrackNumberOfHits);
+      tmpTMVAReader->AddVariable( "ele_expected_inner_hits", &fMVAVar_EleGsfExpectedMissingInnerHits); 
+      tmpTMVAReader->AddVariable( "ele_conversionVertexFitProbability", &fMVAVar_EleConvVtxFitProbability       );
+      tmpTMVAReader->AddVariable( "ele_ep",                &fMVAVar_EleEOverP                   );
+      tmpTMVAReader->AddVariable( "ele_eelepout",  &fMVAVar_EleESeedClusterOverPout     );
+      //tmpTMVAReader->AddVariable( "ESeedClusterOverPIn",   &fMVAVar_EleESeedClusterOverPIn      );
+      tmpTMVAReader->AddVariable("ele_IoEmIop",         &fMVAVar_EleOneOverEMinusOneOverP);
+      tmpTMVAReader->AddVariable("ele_deltaetain",            &fMVAVar_EleDEtaIn);
+      tmpTMVAReader->AddVariable("ele_deltaphiin",            &fMVAVar_EleDPhiIn);
+      tmpTMVAReader->AddVariable("ele_deltaetaseed",        &fMVAVar_EledEtaCalo);
+ 
+    }
 
     tmpTMVAReader->BookMVA(fMethodname , weightsfiles[i] );
     std::cout << "MVABin " << i << " : MethodName = " << fMethodname 
@@ -396,7 +468,8 @@ UInt_t ElectronIDMVA::GetMVABin( double eta, double pt) const {
     }
 
     if (fMVAType == ElectronIDMVA::kIDEGamma2012NonTrigV0 ||
-	fMVAType == ElectronIDMVA::kIDEGamma2012NonTrigV1) {
+	fMVAType == ElectronIDMVA::kIDEGamma2012NonTrigV1 ||
+    fMVAType == ElectronIDMVA::kIDEGamma2015NonTrig25ns) {
       bin = 0;
       if (pt < 10 && fabs(eta) < 0.8) bin = 0;
       if (pt < 10 && fabs(eta) >= 0.8 && fabs(eta) < 1.479 ) bin = 1;
@@ -418,7 +491,14 @@ UInt_t ElectronIDMVA::GetMVABin( double eta, double pt) const {
       if (pt >= 20 && fabs(eta) >= 0.8 && fabs(eta) < 1.479 ) bin = 4;
       if (pt >= 20 && fabs(eta) >= 1.479) bin = 5;
     }
-
+    
+    if(fMVAType == ElectronIDMVA::kIDEGamma2015Trig25ns
+    ) {
+      if(fabs(eta) < 0.8) bin=0;
+      if(fabs(eta) >= 0.8 && fabs(eta) < 1.479) bin = 1;
+      if(fabs(eta)>=1.479) bin=2;
+    }
+    
     return bin;
 }
 
@@ -936,6 +1016,56 @@ Double_t ElectronIDMVA::MVAValue(const Electron *ele, const Vertex *vertex,
     fMVAVar_EleGsfTrackChi2OverNdof = TMath::Min(double( ele->BestTrk()->Chi2() / ele->BestTrk()->Ndof()),200.0);
     fMVAVar_EledEtaCalo =  ele->DeltaEtaSeedClusterTrackAtCalo();
     fMVAVar_EleR9 = TMath::Min(double(ele->SCluster()->R9()), 5.0);   
+  }
+  else if (fMVAType == ElectronIDMVA::kIDEGamma2015NonTrig25ns) {
+    // Variables
+    fMVAVar_EleDEtaIn = TMath::Min(fabs(double(ele->DeltaEtaSuperClusterTrackAtVtx())),0.06); ; 
+    fMVAVar_EleDPhiIn = TMath::Min(fabs(double(ele->DeltaPhiSuperClusterTrackAtVtx())),0.6); 
+    fMVAVar_EleFBrem = TMath::Max(double(ele->FBrem()),-1.0); 
+    fMVAVar_EleEOverP = TMath::Min(double(ele->ESuperClusterOverP()), 20.0); 
+    fMVAVar_EleESeedClusterOverPout = TMath::Min(double(ele->ESeedClusterOverPout()),20.0); 
+    fMVAVar_EleEEleClusterOverPout = TMath::Min(double(ele->EEleClusterOverPout()),20.0); 
+    fMVAVar_EleOneOverEMinusOneOverP = (1.0/(ele->EcalEnergy())) - 1.0 / ele->P(); 
+    fMVAVar_EleGsfTrackChi2OverNdof = TMath::Min(double( ele->BestTrk()->Chi2() / ele->BestTrk()->Ndof()),200.0);
+    fMVAVar_EledEtaCalo =  TMath::Min(fabs(double(ele->DeltaEtaSeedClusterTrackAtCalo())),0.2);
+    fMVAVar_EleR9 = TMath::Min(double(ele->SCluster()->R9()), 5.0);   
+    fMVAVar_EleConvVtxFitProbability       = -1;
+    if(ele->MatchesVertexConversion()) {
+      fMVAVar_EleConvVtxFitProbability = ele->ConvPartnerTrk()->Prob();
+    }
+    fMVAVar_EleGsfTrackNumberOfHits        = ele->BestTrk()->NHits(); // new 2015
+    fMVAVar_EleGsfExpectedMissingInnerHits = ele->BestTrk()->NExpectedHitsInner();
+
+    // Spectators
+    fMVAVar_ElePt                = 999;
+    fMVAVar_isBarrel             = 999;
+    fMVAVar_isEndcap             = 999;
+    fMVAVar_sclEta               = 999;
+    fMVAVar_eClass               = 999;
+    fMVAVar_pfRelIso             = 999;
+    fMVAVar_expectedInnerHits    = 999;
+    fMVAVar_vtxconv              = 999;
+    fMVAVar_mcEventWeight        = 999;
+    fMVAVar_mcCBmatchingCategory = 999;
+
+  } 
+  else if (fMVAType == ElectronIDMVA::kIDEGamma2015Trig25ns ) {
+    fMVAVar_EleDEtaIn = TMath::Min(fabs(double(ele->DeltaEtaSuperClusterTrackAtVtx())),0.06); ; 
+    fMVAVar_EleDPhiIn = TMath::Min(fabs(double(ele->DeltaPhiSuperClusterTrackAtVtx())),0.6); 
+    fMVAVar_EleFBrem = TMath::Max(double(ele->FBrem()),-1.0); 
+    fMVAVar_EleEOverP = TMath::Min(double(ele->ESuperClusterOverP()), 20.0); 
+    fMVAVar_EleESeedClusterOverPout = TMath::Min(double(ele->ESeedClusterOverPout()),20.0); 
+    fMVAVar_EleEEleClusterOverPout = TMath::Min(double(ele->EEleClusterOverPout()),20.0); 
+    fMVAVar_EleOneOverEMinusOneOverP = (1.0/(ele->EcalEnergy())) - 1.0 / ele->P(); 
+    fMVAVar_EleGsfTrackChi2OverNdof = TMath::Min(double( ele->BestTrk()->Chi2() / ele->BestTrk()->Ndof()),200.0);
+    fMVAVar_EledEtaCalo =  TMath::Min(fabs(double(ele->DeltaEtaSeedClusterTrackAtCalo())),0.2);
+    fMVAVar_EleR9 = TMath::Min(double(ele->SCluster()->R9()), 5.0);   
+    fMVAVar_EleConvVtxFitProbability       = -1;
+    if(ele->MatchesVertexConversion()) {
+      fMVAVar_EleConvVtxFitProbability = ele->ConvPartnerTrk()->Prob();
+    }
+    fMVAVar_EleGsfTrackNumberOfHits        = ele->BestTrk()->NHits(); // new 2015
+    fMVAVar_EleGsfExpectedMissingInnerHits = ele->BestTrk()->NExpectedHitsInner();
   }
   else {
     fMVAVar_EleDEtaIn = ele->DeltaEtaSuperClusterTrackAtVtx();  
