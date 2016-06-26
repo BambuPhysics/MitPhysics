@@ -78,7 +78,7 @@ mithep::JetCorrector::Corrector::Corrector(char const* fileName, FactorType fact
     std::string::size_type close(linebuf.find('}'));
     if (open != std::string::npos && close != std::string::npos && open < close) {
       auto* words(TString(linebuf.substr(open + 1, close - open - 1).c_str()).Tokenize(" "));
-      if (words->GetEntries() < 6) {
+      if (words->GetEntries() < 5) {
         std::cerr << "File " << fileName << " does not contain a proper JEC definition." << std::endl;
         delete words;
         throw std::runtime_error("Configuration error");
@@ -275,7 +275,7 @@ mithep::JetCorrector::Corrector::EvalScaleFactor(Double_t variables[nVarTypes]) 
 
   if (iRecord == fRecords.size()) {
     // no record found
-    std::cerr << "JetCorrector uncertainty out of range" << std::endl;
+    std::cerr << "JetCorrector scale factor out of range" << std::endl;
     return 1.;
   }
 

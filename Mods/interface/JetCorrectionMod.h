@@ -37,7 +37,7 @@ namespace mithep
       char const*   GetOutputName() const        { return GetCorrectedJetsName(); }
       JetCorrector* GetCorrector() const         { return fCorrector; }
 
-      void AddCorrectionFromFile(char const* file);
+      void AddCorrectionFromFile(char const* file, JetCorrector::Corrector::FactorType = JetCorrector::Corrector::nFactorTypes);
       void SetCorrectedJetsName(char const* name)    { fCorrectedJets.SetName(name); }
       void SetCorrectedName(char const* name)        { SetCorrectedJetsName(name); }
       void SetInputName(char const* name)            { fJetsName = name; }

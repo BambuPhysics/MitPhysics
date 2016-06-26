@@ -271,7 +271,7 @@ Bool_t
 JetIDMVA::pass(const PFJet *iJet, const Vertex *iVertex, const VertexCol *iVertices, Double_t rho)
 {
   // A PF Jet with L1+L2+L3 corrections is expected.
-  if (iJet->Corrections() != fgCorrectionMask)
+  if ((iJet->Corrections() & fgCorrectionMask) != fgCorrectionMask)
     throw std::runtime_error("JetIDMVA works only with L1+L2+L3 corrected jets");
 
   double lEta = iJet->AbsEta();
@@ -281,7 +281,8 @@ JetIDMVA::pass(const PFJet *iJet, const Vertex *iVertex, const VertexCol *iVerti
   if(!JetTools::passPFId(iJet, JetTools::kPFLoose))
     return false;
 
-  double lPt = iJet->Pt(); // use corrected Pt
+ // use corrected Pt
+  double lPt = iJet->Pt();
 
   int lPtId = 3;
   if (lPt <= 10.)

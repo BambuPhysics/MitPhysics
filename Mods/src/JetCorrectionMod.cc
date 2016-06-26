@@ -123,10 +123,10 @@ JetCorrectionMod::Process()
 
 //--------------------------------------------------------------------------------------------------
 void
-JetCorrectionMod::AddCorrectionFromFile(char const* fileName)
+JetCorrectionMod::AddCorrectionFromFile(char const* fileName, mithep::JetCorrector::Corrector::FactorType factorType/* = nFactortypes*/)
 {
   MakeCorrector();
-  fCorrector->AddParameterFile(fileName);
+  fCorrector->AddParameterFile(fileName, factorType);
 }
 
 //--------------------------------------------------------------------------------------------------
