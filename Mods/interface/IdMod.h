@@ -203,6 +203,9 @@ namespace mithep {
     RetractObj(GetOutputName());
   
     IdTerminate();
+
+    if (GetFillHist())
+      SaveNEventsProcessed("hDPassedEvents" + TString(GetName()));
   }
   
   template<class O>
@@ -248,6 +251,8 @@ namespace mithep {
       // sort according to pt
       fGoodObjects.Sort();
     }
+
+    IncNEventsProcessed();
   }
 
   template<class O>
