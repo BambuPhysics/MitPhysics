@@ -7,6 +7,7 @@
 #include "TObjArray.h"
 
 #include <algorithm>
+#include <cstring>
 
 ClassImp(mithep::BadEventsFilterMod)
 
@@ -17,6 +18,22 @@ mithep::BadEventsFilterMod::BadEventsFilterMod(char const* name, char const* tit
 {
   fFilterNames.SetName("BadEventsFilterNames");
   fFilterNames.SetOwner(true);
+}
+
+void
+mithep::BadEventsFilterMod::SetFilter(char const* name, Bool_t enable/* = kTRUE*/)
+{
+  auto itr(std::find(fEnabledFilters.begin(), fEnabledFilters.end(), name));
+  if (enable && itr == fEnabledFilters.end())
+    fEnabledFilters.emplace_back(name);
+  else if (!enable && itr != fEnabledFilters.end())
+    fEnabledFilters.erase(itr);
+}
+
+void
+mithep::BadEventsFilterMod::AddFilter(char const* filterName, char const* modName, UInt_t index)
+{
+  fAdditionalFilters.emplace(filterName, std::pair<std::string, unsigned>(modName, index));
 }
 
 void
@@ -49,7 +66,7 @@ void
 mithep::BadEventsFilterMod::SlaveBegin()
 {
   if (GetFillHist()) {
-    AddTH1(hCounter, "hMETFilterCounter", "Number of events flagged bad", fEnabledFilters.size(), 0., double(fEnabledFilters.size()));
+    AddTH1(hCounter, "hMETFilterCounter", "Number of events flagged bad", 1, 0., 1.);
   }
 
   if (fTaggingMode) {
@@ -59,19 +76,28 @@ mithep::BadEventsFilterMod::SlaveBegin()
 }
 
 void
+mithep::BadEventsFilterMod::SlaveTerminate()
+{
+  if (fTaggingMode)
+    RetractObj(fTagResults.GetName());
+}
+
+void
 mithep::BadEventsFilterMod::BeginRun()
 {
   if (fReload == 1) {
     fBitMask = 0;
 
     fFilterNames.Clear();
-    fTagResults.Clear();
+    if (fTaggingMode)
+      fTagResults.Clear();
 
     auto* file = GetCurrentFile();
     if (!file)
       return;
 
     auto* nameTree = dynamic_cast<TTree*>(file->Get(fLabelTreeName));
+
     if (!nameTree) {
       // is bambu version <= 042
       SendError(kWarning, "BeginRun", "EvtSelData label names are not stored in the file.");
@@ -114,11 +140,12 @@ mithep::BadEventsFilterMod::BeginRun()
       if (hCounter) {
         int iX = 1;
         for (unsigned iB = 0; iB != nStaticFilters; ++iB) {
-          if (((fBitMask >> iB) & 1) != 0)
+          if (((fBitMask >> iB) & 1) != 0) {
+            if (iX > 1)
+              hCounter->SetBins(iX, 0, double(iX));
             hCounter->GetXaxis()->SetBinLabel(iX++, filterNames[iB]);
+          }
         }
-        for (auto& nameAndList : fEventLists)
-          hCounter->GetXaxis()->SetBinLabel(iX++, nameAndList.first.c_str());
       }
 
       if (fTaggingMode) {
@@ -128,52 +155,73 @@ mithep::BadEventsFilterMod::BeginRun()
             fTagResults.Add(kFALSE);
           }
         }
-
-        for (auto& nameAndList : fEventLists) {
-          fFilterNames.Add(new TObjString(nameAndList.first.c_str()));
-          fTagResults.Add(kFALSE);
-        }
       }
 
       // 2 -> never try reload again
       fReload = 2;
-      return;
+    }
+    else {
+      fReload = 0;
+
+      std::vector<std::string>* filterLabels(new std::vector<std::string>);
+      TBranch* labelBranch(0);
+      nameTree->SetBranchAddress(fLabelBranchName, &filterLabels, &labelBranch);
+      if (!labelBranch)
+        SendError(kAbortAnalysis, "BeginRun", "EvtSelData label names are not stored in the file.");
+
+      labelBranch->GetEntry(0);
+
+      for (auto& filt : fEnabledFilters) {
+        auto itr(std::find(filterLabels->begin(), filterLabels->end(), filt));
+        if (itr == filterLabels->end())
+          SendError(kAbortAnalysis, "BeginRun", ("MET filter with label " + filt + " is not defined.").c_str());
+
+        fBitMask |= (1 << (itr - filterLabels->begin()));
+      }
+
+      if (hCounter) {
+        int iX = 1;
+        for (unsigned iB = 0; iB != filterLabels->size(); ++iB) {
+          if (((fBitMask >> iB) & 1) != 0) {
+            if (iX > 1)
+              hCounter->SetBins(iX, 0, double(iX));
+            hCounter->GetXaxis()->SetBinLabel(iX++, filterLabels->at(iB).c_str());
+          }
+        }
+      }
+
+      if (fTaggingMode) {
+        for (unsigned iB = 0; iB != filterLabels->size(); ++iB) {
+          if (((fBitMask >> iB) & 1) != 0) {
+            fFilterNames.Add(new TObjString(filterLabels->at(iB).c_str()));
+            fTagResults.Add(kFALSE);
+          }
+        }
+      }
+
+      delete filterLabels;
     }
 
-    fReload = 0;
-
-    std::vector<std::string>* filterLabels(new std::vector<std::string>);
-    TBranch* labelBranch(0);
-    nameTree->SetBranchAddress(fLabelBranchName, &filterLabels, &labelBranch);
-    if (!labelBranch)
-      SendError(kAbortAnalysis, "BeginRun", "EvtSelData label names are not stored in the file.");
-
-    labelBranch->GetEntry(0);
-
-    for (auto& filt : fEnabledFilters) {
-      auto itr(std::find(filterLabels->begin(), filterLabels->end(), filt));
-      if (itr == filterLabels->end())
-        SendError(kAbortAnalysis, "BeginRun", ("MET filter with label " + filt + " is not defined.").c_str());
-
-      fBitMask |= (1 << (itr - filterLabels->begin()));
-    }
+    delete nameTree;
 
     if (hCounter) {
-      int iX = 1;
-      for (unsigned iB = 0; iB != filterLabels->size(); ++iB) {
-        if (((fBitMask >> iB) & 1) != 0)
-          hCounter->GetXaxis()->SetBinLabel(iX++, filterLabels->at(iB).c_str());
-      }
+      int nBins(hCounter->GetNbinsX() + fAdditionalFilters.size() + fEventLists.size());
+
+      int iX(hCounter->GetNbinsX());
+
+      hCounter->SetBins(nBins, 0., double(nBins));
+
+      for (auto& nameAndDef : fAdditionalFilters)
+        hCounter->GetXaxis()->SetBinLabel(++iX, nameAndDef.first.c_str());
+
       for (auto& nameAndList : fEventLists)
-        hCounter->GetXaxis()->SetBinLabel(iX++, nameAndList.first.c_str());
+        hCounter->GetXaxis()->SetBinLabel(++iX, nameAndList.first.c_str());
     }
 
     if (fTaggingMode) {
-      for (unsigned iB = 0; iB != filterLabels->size(); ++iB) {
-        if (((fBitMask >> iB) & 1) != 0) {
-          fFilterNames.Add(new TObjString(filterLabels->at(iB).c_str()));
-          fTagResults.Add(kFALSE);
-        }
+      for (auto& nameAndDef : fAdditionalFilters) {
+        fFilterNames.Add(new TObjString(nameAndDef.first.c_str()));
+        fTagResults.Add(kFALSE);
       }
 
       for (auto& nameAndList : fEventLists) {
@@ -181,9 +229,6 @@ mithep::BadEventsFilterMod::BeginRun()
         fTagResults.Add(kFALSE);
       }
     }
-
-    delete nameTree;
-    delete filterLabels;
   }
 }
 
@@ -206,9 +251,9 @@ mithep::BadEventsFilterMod::Process()
   }
 
   Int_t word = evtSelData->metFiltersWord();
+  int iX = 1;
 
   if (GetFillHist()) {
-    int iX = 1;
     for (unsigned iB = 0; iB != 8 * sizeof(Int_t); ++iB) {
       if (((fBitMask >> iB) & 1) == 0)
         continue;
@@ -240,20 +285,49 @@ mithep::BadEventsFilterMod::Process()
 
   bool badEvent = (fBitMask & word) != fBitMask;
 
+  if ((fTaggingMode || GetFillHist() || !badEvent) && fAdditionalFilters.size() != 0) {
+    for (auto& nameAndDef : fAdditionalFilters) {
+      auto& def(nameAndDef.second);
+      auto* boolArr(GetObject<NFArrBool>(def.first.c_str()));
+      if (boolArr->At(def.second)) { // flagged event
+        badEvent = true;
+        if (fTaggingMode)
+          fTagResults.At(iF) = fNormalDecision;
+        if (GetFillHist())
+          hCounter->Fill(iX - 0.5);
+
+        if (!fTaggingMode && !GetFillHist())
+          break;
+      }
+      else if (fTaggingMode)
+        fTagResults.At(iF) = !fNormalDecision;
+
+      ++iF;
+      ++iX;
+    }
+  }
+
   if ((fTaggingMode || !badEvent) && fEventLists.size() != 0) {
     EventID id(GetEventHeader()->RunNum(), GetEventHeader()->LumiSec(), GetEventHeader()->EvtNum());
 
     for (auto& nameAndList : fEventLists) {
       auto& list(nameAndList.second);
-      auto itr = list.find(id);
+      auto itr(list.find(id));
       if (itr != list.end()) { // event found in the list
         badEvent = true;
-        fTagResults.At(iF) = fNormalDecision;
+        if (fTaggingMode)
+          fTagResults.At(iF) = fNormalDecision;
+        if (GetFillHist())
+          hCounter->Fill(iX - 0.5);
+
+        if (!fTaggingMode && !GetFillHist())
+          break;
       }
-      else
+      else if (fTaggingMode)
         fTagResults.At(iF) = !fNormalDecision;
 
       ++iF;
+      ++iX;
     }
   }
 
@@ -263,14 +337,4 @@ mithep::BadEventsFilterMod::Process()
     else if (!fNormalDecision && !badEvent)
       SkipEvent();
   }
-}
-
-void
-mithep::BadEventsFilterMod::SetFilter(char const* name, Bool_t enable/* = kTRUE*/)
-{
-  auto itr(std::find(fEnabledFilters.begin(), fEnabledFilters.end(), name));
-  if (enable && itr == fEnabledFilters.end())
-    fEnabledFilters.emplace_back(name);
-  else if (!enable && itr != fEnabledFilters.end())
-    fEnabledFilters.erase(itr);
 }

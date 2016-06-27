@@ -21,6 +21,7 @@
 #include "MitPhysics/SelMods/interface/HwwExampleAnalysisMod.h"
 #include "MitPhysics/SelMods/interface/WBFExampleAnalysisMod.h"
 #include "MitPhysics/SelMods/interface/EventCategoryMod.h"
+#include "MitPhysics/SelMods/interface/BadPFTrackFilterMod.h"
 #include "MitPhysics/SelMods/interface/BadEventsFilterMod.h"
 #endif
  
@@ -51,5 +52,6 @@
 #pragma link C++ class mithep::HwwExampleAnalysisMod+;
 #pragma link C++ class mithep::WBFExampleAnalysisMod+;
 #pragma link C++ class mithep::EventCategoryMod+;
+#pragma link C++ class mithep::BadPFTrackFilterMod+;
 #pragma link C++ class mithep::BadEventsFilterMod+;
 #endif

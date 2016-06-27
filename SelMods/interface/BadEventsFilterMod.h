@@ -15,6 +15,12 @@
 #include "TH1D.h"
 #include "TObjArray.h"
 
+#include <set>
+#include <vector>
+#include <map>
+#include <string>
+#include <utility>
+
 namespace mithep {
 
   class BadEventsFilterMod : public BaseMod {
@@ -30,6 +36,7 @@ namespace mithep {
     void SetOutputName(char const* n) { fTagResults.SetName(n); fFilterNames.SetName(TString(n) + "Names"); }
 
     void SetFilter(char const* name, Bool_t enable = kTRUE);
+    void AddFilter(char const* filterName, char const* modName, UInt_t index);
     void AddEventList(char const* name, char const* fileName);
 
     char const* GetOutputName() const { return fTagResults.GetName(); }
@@ -47,6 +54,7 @@ namespace mithep {
 
   protected:
     void SlaveBegin() override;
+    void SlaveTerminate() override;
     void Process() override;
     void BeginRun() override;
     Bool_t Notify() override;
@@ -55,6 +63,7 @@ namespace mithep {
     TString fLabelTreeName{"EvtSelBits"};
     TString fLabelBranchName{"FilterLabels"};
     std::vector<std::string> fEnabledFilters{};
+    std::map<std::string, std::pair<std::string, unsigned>> fAdditionalFilters{};
     std::map<std::string, EventList> fEventLists{};
     Int_t fBitMask{0};
 
