@@ -613,9 +613,11 @@ mithep::JetCorrector::Smear(mithep::Jet& jet, Double_t rho, mithep::GenJetCol co
 
   if (genJets) {
     for (unsigned iJ = 0; iJ != genJets->GetEntries(); ++iJ) {
-      genJet = genJets->At(iJ);
-      if (mithep::MathUtils::DeltaR(*genJet, jet) < fGenJetMatchRadius && std::abs(genJet->Pt() - corrMom.Pt()) < 3. * ptres)
+      auto& gen(*genJets->At(iJ));
+      if (mithep::MathUtils::DeltaR(gen, jet) < fGenJetMatchRadius && std::abs(gen.Pt() - corrMom.Pt()) < 3. * ptres) {
+        genJet = &gen;
         break;
+      }
     }
   }
 
@@ -624,7 +626,7 @@ mithep::JetCorrector::Smear(mithep::Jet& jet, Double_t rho, mithep::GenJetCol co
     ptScale = std::max(0., genJet->Pt() + (corrMom.Pt() - genJet->Pt()) * sf) / corrMom.Pt();
     newPhi = TVector2::Phi_mpi_pi(genJet->Phi() + (corrMom.Phi() - genJet->Phi()) * sf);
   }
-  else {
+  else if (sf > 1.) {
     // apply additional smearing
     ptScale = std::max(0., fRandom.Gaus(corrMom.Pt(), std::sqrt(sf * sf - 1.) * ptres)) / corrMom.Pt();
     if (phiResolution) {
