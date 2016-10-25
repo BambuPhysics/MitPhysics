@@ -825,7 +825,7 @@ JetTools::passPFId(const PFJet* iJet, PFIdWorkingPoint wp)
     return false;
 
   double absEta = iJet->AbsEta();
-  if (absEta <= 3.) {
+  if (absEta <= 2.7) {
     if (wp == kPFLoose) {
       if (iJet->NeutralHadronEnergy() / energy >= 0.99 ||
           iJet->NeutralEmEnergy() / energy >= 0.99)
@@ -857,6 +857,12 @@ JetTools::passPFId(const PFJet* iJet, PFIdWorkingPoint wp)
           return false;
       }
     }
+  }
+  else if (absEta <= 3.) {
+    if (iJet->NeutralEmEnergy() / energy >= 0.9)
+      return false;
+    if (iJet->NeutralMultiplicity() < 3)
+      return false;
   }
   else {
     if (iJet->NeutralEmEnergy() / energy >= 0.9 ||

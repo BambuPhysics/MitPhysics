@@ -35,6 +35,7 @@ namespace mithep {
       k74CHS,
       k76CHS,
       k80CHS,
+      k81CHS,
       nMVATypes
     };
 
