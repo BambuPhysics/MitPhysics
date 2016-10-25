@@ -116,6 +116,9 @@ JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
   case k80CHS:
     lCutId = "full_80x_chs_wp";
     break;
+  case k81CHS:
+    lCutId = "full_81x_chs_wp";
+    break;
   default:
      lCutId = "default";
     break;
@@ -150,7 +153,7 @@ JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
   std::vector<std::vector<unsigned>> variables;
   std::vector<unsigned> spectators;
   fEtaBinLowEdges.assign(1, 0.);
-  std::vector<unsigned> varIndexForBin(1, 0);
+  std::vector<unsigned> varIndexForBin(1, 0); // variable set for the first eta bin
     
   switch (fType) {
   case kBaseline:
@@ -193,15 +196,16 @@ JetIDMVA::Initialize(JetIDMVA::CutType cutType, JetIDMVA::MVAType mvaType,
     break;
   case k76CHS:
   case k80CHS:
+  case k81CHS:
     variables.push_back({kNvtx, kDR2Mean, kNParticles, kNCharged, kAxisMajor, kAxisMinor,
           kFrac01, kFrac02, kFrac03, kFrac04, kPtD, kBeta, kPull, kJetR, kJetRchg});
     variables.push_back({kNvtx, kDR2Mean, kNParticles, kAxisMajor, kAxisMinor,
           kFrac01, kFrac02, kFrac03, kFrac04, kPtD, kPull, kJetR});
     spectators = {kJetPt, kJetEta};
     fEtaBinLowEdges.push_back(2.5);
-    varIndexForBin.push_back(0); // variable set for [2-2.5]
+    varIndexForBin.push_back(0); // variable set for [2.5-2.75]
     fEtaBinLowEdges.push_back(2.75);
-    varIndexForBin.push_back(0); // variable set for [2.5-3]
+    varIndexForBin.push_back(0); // variable set for [2.75-3]
     fEtaBinLowEdges.push_back(3.);
     varIndexForBin.push_back(1); // variable set for [3-5]
     break;
